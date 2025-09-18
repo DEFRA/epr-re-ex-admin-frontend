@@ -1,10 +1,8 @@
-# epr-re-ex-admin-frontend
+# Admin UI for the Re-Ex packaging Extended Producer Responsibilities service (pEPR)
 
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_epr-re-ex-admin-frontend&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=DEFRA_epr-re-ex-admin-frontend)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_epr-re-ex-admin-frontend&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=DEFRA_epr-re-ex-admin-frontend)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_epr-re-ex-admin-frontend&metric=coverage)](https://sonarcloud.io/summary/new_code?id=DEFRA_epr-re-ex-admin-frontend)
-
-Core delivery platform Node.js Frontend Template.
 
 - [Requirements](#requirements)
   - [Node.js](#nodejs)
