@@ -28,7 +28,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: |
-          npm ci
+          npm ci --ignore-scripts
           npm run build:frontend
           npm run format:check
           npm run lint
@@ -38,7 +38,6 @@ jobs:
         uses: DEFRA/cdp-build-action/build-hotfix@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
 #      - name: SonarCloud Scan
 #        uses: SonarSource/sonarqube-scan-action@v5.3.1 #  (or check latest version on https://github.com/marketplace/actions/official-sonarqube-scan)
 #        env:
