@@ -59,7 +59,7 @@ Within a specific route's folder the files will not repeat the name of the folde
 
 Different components will be kept in different folders in a flat structure, i.e. all components will live directly under `components/`. This allows us to start with the simplest approach, which is also the one with the least cognitive load for the developer, in line with best practices.
 
-This implies that sub-component is a dynamic concept, i.e. a component becomes a sub-component of another when referenced inside another component and not dictated by the folder structure. This is meant to facilitate refactoring.
+This implies that sub-component is a dynamic concept, i.e. a component becomes a sub-component of another when it's referenced (inside the parent component) and not dictated by the folder structure. This is meant to facilitate refactoring.
 
 ```
 project-root/
