@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "allowJs": true, // Required to process .js files
+    "checkJs": true, // Enable checking on .js files
+    "noEmit": true, // Don't output compiled files (just check)
+
+    // Reduce noise: Disable full strict mode and implicit any checks
+    "strict": false, // Turns off all strict flags (we'll enable selectively below)
+    "noImplicitAny": false, // Allow implicit 'any' without errors (key to minimizing noise)
+
+    // Keep these for usefulness without much noise
+    "noUnusedLocals": true, // Flag unused local variables
+    "noUnusedParameters": true, // Flag unused function parameters
+    "noFallthroughCasesInSwitch": true, // Prevent switch case fallthrough
+    "noImplicitReturns": true, // Ensure all code paths in a function return a value
+
+    // Module/import validation (core to your use case)
+    "moduleResolution": "node", // Or "bundler" if using Vite/Webpack/etc. – match your setup
+    "module": "esnext", // Or "commonjs" – match your project's module style
+    "target": "es2020", // Match your runtime (e.g., Node.js version)
+
+    // Optional performance tweaks
+    "skipLibCheck": true, // Skip checking node_modules types (faster, less noise)
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["src/**/*"], // Adjust to your project's source files
+  "types": ["jest"] // Tells tsc to load @types/jest
+}
