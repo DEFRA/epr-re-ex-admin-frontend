@@ -4,7 +4,7 @@
  */
 export const homeController = {
   handler(_request, h) {
-    return h.view('home/index', {
+    return h.view('routes/home/index', {
       pageTitle: 'Home',
       heading: 'Home'
     })
