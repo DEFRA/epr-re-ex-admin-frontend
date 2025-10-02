@@ -23,6 +23,14 @@ export const config = convict({
     default: null,
     env: 'SERVICE_VERSION'
   },
+  get appBaseUrl() {
+    return {
+      doc: 'Application base URL',
+      format: String,
+      default: `http://localhost:${this.port.default}`,
+      env: 'APP_BASE_URL'
+    }
+  },
   host: {
     doc: 'The IP address to bind',
     format: 'ipaddress',
@@ -117,6 +125,38 @@ export const config = convict({
     format: Boolean,
     default: isProduction,
     env: 'ENABLE_METRICS'
+  },
+  oidc: {
+    azureAD: {
+      tenantId: {
+        doc: 'Azure Active Directory Tenant ID',
+        format: String,
+        env: 'AZURE_TENANT_ID',
+        default: '6f504113-6b64-43f2-ade9-242e05780007'
+      },
+      clientId: {
+        doc: 'Azure App Client ID (for configured tenantId)',
+        format: String,
+        env: 'AZURE_CLIENT_ID',
+        default: 'bd06da51-53f6-46d0-a9f0-ac562864c887'
+      },
+      clientSecret: {
+        doc: 'Azure App Client Secret (for configured tenantId)',
+        format: String,
+        sensitive: true,
+        env: 'AZURE_CLIENT_SECRET',
+        default: 'test_value'
+      },
+      get wellKnownUrl() {
+        return {
+          doc: 'OIDC .well-known configuration URL. Defaults to the stub',
+          format: String,
+          env: 'OIDC_WELL_KNOWN_URL',
+          // default: `http://cdp.127.0.0.1.sslip.io:3939/${this.azureTenantId.default}/v2.0/.well-known/openid-configuration`
+          default: `https://login.microsoftonline.com/${this.tenantId.default}/v2.0/.well-known/openid-configuration`
+        }
+      }
+    }
   },
   session: {
     cache: {
