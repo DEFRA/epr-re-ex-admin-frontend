@@ -4,28 +4,10 @@
 {% from "govuk/components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 {% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
 
-{# Import custom components globally #}
-{% from "heading/macro.njk" import heading %}
-{% from "service-header/macro.njk" import appHeading with context%}
-{% from "service-nav-li/macro.njk" import appServiceNavLi with context %}
+{% from "service-header/macro.njk" import appServiceHeader with context%}
 
 {% set mainClasses = "app-main-wrapper" %}
 
-{% set navigationEnd %}
-  <ul class="app-navigation__actions">
-    {% for item in navigation.actions %}
-      {{ appServiceNavLi(item) }}
-    {% endfor %}
-
-    {% if navigation.admin | length %}
-      <ul class="app-navigation__admin">
-        {% for item in navigation.admin %}
-          {{ appServiceNavLi(item) }}
-        {% endfor %}
-      </ul>
-    {% endif %}
-  </ul>
-{% endset %}
 
 {% block head %}
   <link href="{{ getAssetPath('stylesheets/application.scss') }}" rel="stylesheet">

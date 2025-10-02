@@ -1,12 +1,8 @@
 {% from "icons/user-icon/macro.njk" import appUserIcon %}
 
-{% set serviceHeaderClasses = [
-  "app-service-header", "app-service-header--sensitive-environment" if params.isSensitiveEnvironment
-] | join(" ") | trim %}
+{% set serviceHeaderClasses = "app-service-header" %}
 
-{% set iconClasses = [
-  "app-icon--tiny", "app-user-icon--elevated-permissions" if userSession.hasBreakGlass
-] | join(" ") | trim %}
+{% set iconClasses = "app-icon--tiny" %}
 
 <header class="{{ serviceHeaderClasses }}" role="banner" data-testid="app-service-header">
   <div class="app-service-header__container app-service-header__container--full-width">
@@ -16,10 +12,6 @@
          data-testid="app-service-header-service-name">
         {{ params.serviceName }}
       </a>
-
-      {% if serviceEnvironment === "infra-dev" %}
-        <span class="app-service-header__service-environment">{{ serviceEnvironment | title }}</span>
-      {% endif %}
 
     </div>
     <div class="app-service-header__actions">
