@@ -4,7 +4,7 @@ describe('Service Header Component', () => {
   let $header
 
   beforeEach(() => {
-    $header = renderTestComponent('heading', {
+    $header = renderTestComponent('service-header', {
       params: {
         serviceName: 'Totally MEGA service portal',
         serviceUrl: '/'
