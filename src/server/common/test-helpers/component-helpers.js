@@ -36,7 +36,7 @@ export function renderTestComponent(componentName, options = {}) {
   const context = options?.context ?? {}
 
   const macroPath = `${componentName}/macro.njk`
-  const macroName = `app${upperFirst(camelCase(componentName.replace('icons', '')))}`
+  const macroName = `app${upperFirst(camelCase(componentName))}`
   const macroParams = JSON.stringify(params, null, 2)
   let macroString = `{%- from "${macroPath}" import ${macroName} with context -%}`
 
