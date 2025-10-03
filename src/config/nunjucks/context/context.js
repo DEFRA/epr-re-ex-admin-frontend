@@ -30,6 +30,7 @@ export async function context(request) {
     serviceUrl: '/',
     breadcrumbs: [],
     userSession,
+    isAuthenticated: userSession?.isAuthenticated ?? false,
     navigation: buildNavigation(request),
     getAssetPath(asset) {
       const webpackAssetPath = webpackManifest?.[asset]

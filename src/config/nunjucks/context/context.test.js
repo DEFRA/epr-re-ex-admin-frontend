@@ -11,6 +11,7 @@ vi.mock('node:fs', async () => {
     readFileSync: () => mockReadFileSync()
   }
 })
+
 vi.mock('../../../server/common/helpers/logging/logger.js', () => ({
   createLogger: () => ({ error: (...args) => mockLoggerError(...args) })
 }))
@@ -25,7 +26,9 @@ describe('context and cache', () => {
   describe('#context', () => {
     const mockRequest = {
       path: '/',
-      getUserSession: vi.fn().mockResolvedValue({ userId: '123' })
+      getUserSession: vi
+        .fn()
+        .mockResolvedValue({ userId: '123', isAuthenticated: true })
     }
 
     describe('When webpack manifest file read succeeds', () => {
@@ -65,7 +68,8 @@ describe('context and cache', () => {
           ],
           serviceName: 'epr-re-ex-admin-frontend',
           serviceUrl: '/',
-          userSession: { userId: '123' }
+          userSession: { userId: '123', isAuthenticated: true },
+          isAuthenticated: true
         })
       })
 
@@ -90,7 +94,9 @@ describe('context and cache', () => {
       let contextImport
       const mockRequest = {
         path: '/',
-        getUserSession: vi.fn().mockResolvedValue({ userId: '123' })
+        getUserSession: vi
+          .fn()
+          .mockResolvedValue({ userId: '123', isAuthenticated: true })
       }
 
       beforeAll(async () => {
@@ -114,7 +120,9 @@ describe('context and cache', () => {
   describe('#context cache', () => {
     const mockRequest = {
       path: '/',
-      getUserSession: vi.fn().mockResolvedValue({ userId: '123' })
+      getUserSession: vi
+        .fn()
+        .mockResolvedValue({ userId: '123', isAuthenticated: true })
     }
     let contextResult
 
@@ -162,7 +170,8 @@ describe('context and cache', () => {
           ],
           serviceName: 'epr-re-ex-admin-frontend',
           serviceUrl: '/',
-          userSession: { userId: '123' }
+          userSession: { userId: '123', isAuthenticated: true },
+          isAuthenticated: true
         })
       })
     })
