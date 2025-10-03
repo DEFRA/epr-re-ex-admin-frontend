@@ -1,0 +1,65 @@
+@use "govuk-frontend" as *;
+@use "icons/block-icon/block-icon";
+@use "icons/cancel-icon/cancel-icon";
+@use "icons/copy-icon/copy-icon";
+@use "icons/database-icon/database-icon";
+@use "icons/error-icon/error-icon";
+@use "icons/github-icon/github-icon";
+@use "icons/instance-failed-icon/instance-failed-icon";
+@use "icons/instance-icon/instance-icon";
+@use "icons/instance-pending-icon/instance-pending-icon";
+@use "icons/instance-stopped-icon/instance-stopped-icon";
+@use "icons/instance-success-icon/instance-success-icon";
+@use "icons/instance-undeployed-icon/instance-undeployed-icon";
+@use "icons/internal-icon/internal-icon";
+@use "icons/pending-icon/pending-icon";
+@use "icons/question-icon/question-icon";
+@use "icons/schema-icon/schema-icon";
+@use "icons/star-icon/star-icon";
+@use "icons/terminal-icon/terminal-icon";
+@use "icons/tick-icon/tick-icon";
+@use "icons/user-icon/user-icon";
+@use "icons/warning-icon/warning-icon";
+
+.app-icon {
+  width: 40px;
+  min-width: 40px;
+  max-width: 40px;
+  height: 40px;
+}
+
+.app-icon--medium {
+  width: 32px;
+  min-width: 32px;
+  max-width: 32px;
+  height: 32px;
+}
+
+.app-icon--small {
+  width: 24px;
+  min-width: 24px;
+  max-width: 24px;
+  height: 24px;
+}
+
+.app-icon--tiny {
+  width: 20px;
+  min-width: 20px;
+  max-width: 20px;
+  height: 20px;
+}
+
+.app-icon--minuscule {
+  width: 16px;
+  min-width: 16px;
+  max-width: 16px;
+  height: 16px;
+}
+
+.app-icon--fill-blue {
+  fill: govuk-colour("blue");
+}
+
+.app-icon--fill-red {
+  fill: govuk-colour("red");
+}
