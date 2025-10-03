@@ -4,7 +4,7 @@
 {% from "govuk/components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 {% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
 
-{% from "service-header/macro.njk" import appServiceHeader with context%}
+{% from "heading/macro.njk" import appHeading with context%}
 
 {% set mainClasses = "app-main-wrapper" %}
 
@@ -14,7 +14,7 @@
 {% endblock %}
 
 {% block header %}
-  {{ appServiceHeader({
+  {{ appHeading({
     serviceName: serviceName,
     serviceUrl: "/",
     loginText: "Sign out" if isAuthenticated else "Sign in",
