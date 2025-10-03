@@ -169,6 +169,10 @@ docker run -e PORT=3002 -p 3002:3002 epr-re-ex-admin-frontend
 
 ### Docker Compose
 
+> [!IMPORTANT]
+>
+> Please ensure you have at least version 2.22.0 of Docker Compose installed.
+
 A local environment with:
 
 - Localstack for AWS services (S3, SQS)
@@ -177,7 +181,7 @@ A local environment with:
 - A commented out backend example.
 
 ```bash
-docker compose up --build -d
+docker compose up --build -d --watch
 ```
 
 See the running services with:
