@@ -1,6 +1,4 @@
-version: '3.4'
 services:
-
   localstack:
     image: localstack/localstack:3.0.2
     ports:
@@ -32,25 +30,34 @@ services:
     networks:
       - cdp-tenant
 
-  mongodb:
-    image: mongo:6.0.13
-    networks:
-      - cdp-tenant
-    ports:
-      - '27017:27017'
-    volumes:
-      - mongodb-data:/data
-    restart: always
-
 ################################################################################
 
-  your-frontend:
-    build: ./
+  ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.local
     ports:
-      - '3000:3000'
+      - '3002:3002'
     links:
       - 'localstack:localstack'
       - 'redis:redis'
+    develop:
+      watch:
+        - path: src/
+          action: sync
+          target: /app/src/
+          ignore:
+            - node_modules/
+        - path: .browserslistrc
+          action: rebuild
+        - path: babel.config.cjs
+          action: rebuild
+        - path: nodemon.json
+          action: rebuild
+        - path: package.json
+          action: rebuild
+        - path: webpack.config.js
+          action: rebuild
     depends_on:
       localstack:
         condition: service_healthy
@@ -59,7 +66,7 @@ services:
     env_file:
       - 'compose/aws.env'
     environment:
-      PORT: 3000
+      PORT: 3002
       NODE_ENV: development
       REDIS_HOST: redis
       LOCALSTACK_ENDPOINT: http://localstack:4566
@@ -89,9 +96,6 @@ services:
   #     - cdp-tenant
 
 ################################################################################
-
-volumes:
-  mongodb-data:
 
 networks:
   cdp-tenant:
