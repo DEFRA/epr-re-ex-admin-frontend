@@ -1,0 +1,34 @@
+{% from "icons/user-icon/macro.njk" import appUserIcon %}
+
+{% set serviceHeaderClasses = "app-service-header" %}
+{% set iconClasses = "app-icon--tiny" %}
+
+<header class="{{ serviceHeaderClasses }}" role="banner" data-testid="app-service-header">
+  <div class="app-service-header__container app-service-header__container--full-width">
+    <div class="app-service-header__content">
+      <a href="{{ params.serviceUrl }}"
+         class="app-service-header__link app-service-header__service-name"
+         data-testid="app-service-header-service-name">
+        {{ params.serviceName }}
+      </a>
+
+    </div>
+    <div class="app-service-header__actions">
+      {% if userSession.displayName %}
+        {{ appUserIcon({ classes: iconClasses }) }}
+        <span data-testid="app-login-username">
+          {{ userSession.displayName }}
+        </span>
+      {% endif %}
+
+      <span class="app-service-header__login{% if isAuthenticated %} app-service-header__login--logged-in{% endif %}">
+        <a href="{{ params.loginUrl }}"
+           class="app-service-header__link app-service-header__login-link"
+           data-testid="app-login-link">
+            {{ params.loginText }}
+        </a>
+      </span>
+
+    </div>
+  </div>
+</header>

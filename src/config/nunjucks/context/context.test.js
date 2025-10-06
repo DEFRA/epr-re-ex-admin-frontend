@@ -11,6 +11,7 @@ vi.mock('node:fs', async () => {
     readFileSync: () => mockReadFileSync()
   }
 })
+
 vi.mock('../../../server/common/helpers/logging/logger.js', () => ({
   createLogger: () => ({ error: (...args) => mockLoggerError(...args) })
 }))
@@ -23,7 +24,12 @@ describe('context and cache', () => {
   })
 
   describe('#context', () => {
-    const mockRequest = { path: '/' }
+    const mockRequest = {
+      path: '/',
+      getUserSession: vi
+        .fn()
+        .mockResolvedValue({ userId: '123', isAuthenticated: true })
+    }
 
     describe('When webpack manifest file read succeeds', () => {
       let contextImport
@@ -33,14 +39,14 @@ describe('context and cache', () => {
         contextImport = await import('./context.js')
       })
 
-      beforeEach(() => {
+      beforeEach(async () => {
         // Return JSON string
         mockReadFileSync.mockReturnValue(`{
         "application.js": "javascripts/application.js",
         "stylesheets/application.scss": "stylesheets/application.css"
       }`)
 
-        contextResult = contextImport.context(mockRequest)
+        contextResult = await contextImport.context(mockRequest)
       })
 
       test('Should provide expected context', () => {
@@ -61,7 +67,9 @@ describe('context and cache', () => {
             }
           ],
           serviceName: 'epr-re-ex-admin-frontend',
-          serviceUrl: '/'
+          serviceUrl: '/',
+          userSession: { userId: '123', isAuthenticated: true },
+          isAuthenticated: true
         })
       })
 
@@ -84,15 +92,21 @@ describe('context and cache', () => {
 
     describe('When webpack manifest file read fails', () => {
       let contextImport
+      const mockRequest = {
+        path: '/',
+        getUserSession: vi
+          .fn()
+          .mockResolvedValue({ userId: '123', isAuthenticated: true })
+      }
 
       beforeAll(async () => {
         contextImport = await import('./context.js')
       })
 
-      beforeEach(() => {
+      beforeEach(async () => {
         mockReadFileSync.mockReturnValue(new Error('File not found'))
 
-        contextImport.context(mockRequest)
+        await contextImport.context(mockRequest)
       })
 
       test('Should log that the Webpack Manifest file is not available', () => {
@@ -104,7 +118,12 @@ describe('context and cache', () => {
   })
 
   describe('#context cache', () => {
-    const mockRequest = { path: '/' }
+    const mockRequest = {
+      path: '/',
+      getUserSession: vi
+        .fn()
+        .mockResolvedValue({ userId: '123', isAuthenticated: true })
+    }
     let contextResult
 
     describe('Webpack manifest file cache', () => {
@@ -114,14 +133,14 @@ describe('context and cache', () => {
         contextImport = await import('./context.js')
       })
 
-      beforeEach(() => {
+      beforeEach(async () => {
         // Return JSON string
         mockReadFileSync.mockReturnValue(`{
         "application.js": "javascripts/application.js",
         "stylesheets/application.scss": "stylesheets/application.css"
       }`)
 
-        contextResult = contextImport.context(mockRequest)
+        contextResult = await contextImport.context(mockRequest)
       })
 
       test('Should read file', () => {
@@ -150,7 +169,9 @@ describe('context and cache', () => {
             }
           ],
           serviceName: 'epr-re-ex-admin-frontend',
-          serviceUrl: '/'
+          serviceUrl: '/',
+          userSession: { userId: '123', isAuthenticated: true },
+          isAuthenticated: true
         })
       })
     })

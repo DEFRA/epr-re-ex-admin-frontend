@@ -14,7 +14,8 @@ const manifestPath = path.join(
 
 let webpackManifest
 
-export function context(request) {
+export async function context(request) {
+  const userSession = await request.getUserSession()
   if (!webpackManifest) {
     try {
       webpackManifest = JSON.parse(readFileSync(manifestPath, 'utf-8'))
@@ -28,6 +29,8 @@ export function context(request) {
     serviceName: config.get('serviceName'),
     serviceUrl: '/',
     breadcrumbs: [],
+    userSession,
+    isAuthenticated: userSession?.isAuthenticated ?? false,
     navigation: buildNavigation(request),
     getAssetPath(asset) {
       const webpackAssetPath = webpackManifest?.[asset]

@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import path from 'path'
 import nunjucks from 'nunjucks'
 import { load } from 'cheerio'
-import { camelCase } from 'lodash'
+import { camelCase, upperFirst } from 'lodash'
 
 import * as filters from '../../../config/nunjucks/filters/filters.js'
 import * as globals from '../../../config/nunjucks/globals/globals.js'
@@ -30,19 +30,21 @@ Object.entries(filters).forEach(([name, filter]) => {
   nunjucksTestEnv.addFilter(name, filter)
 })
 
-export function renderComponent(componentName, params, callBlock) {
-  const macroPath = `${componentName}/macro.njk`
-  const macroName = `app${
-    componentName.charAt(0).toUpperCase() + camelCase(componentName.slice(1))
-  }`
-  const macroParams = JSON.stringify(params, null, 2)
-  let macroString = `{%- from "${macroPath}" import ${macroName} -%}`
+export function renderTestComponent(componentName, options = {}) {
+  const params = options?.params ?? {}
+  const callBlock = options?.callBlock ?? []
+  const context = options?.context ?? {}
 
-  if (callBlock) {
-    macroString += `{%- call ${macroName}(${macroParams}) -%}${callBlock}{%- endcall -%}`
+  const macroPath = `${componentName}/macro.njk`
+  const macroName = `app${upperFirst(camelCase(componentName))}`
+  const macroParams = JSON.stringify(params, null, 2)
+  let macroString = `{%- from "${macroPath}" import ${macroName} with context -%}`
+
+  if (Array.isArray(callBlock) && callBlock.length > 0) {
+    macroString += `{%- call ${macroName}(${macroParams}) -%}${callBlock.join(' ')}{%- endcall -%}`
   } else {
     macroString += `{{- ${macroName}(${macroParams}) -}}`
   }
 
-  return load(nunjucksTestEnv.renderString(macroString, {}))
+  return load(nunjucksTestEnv.renderString(macroString, context))
 }
