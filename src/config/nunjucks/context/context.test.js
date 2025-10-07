@@ -16,6 +16,10 @@ vi.mock('../../../server/common/helpers/logging/logger.js', () => ({
   createLogger: () => ({ error: (...args) => mockLoggerError(...args) })
 }))
 
+vi.mock('../../../server/routes/auth/index.js', () => ({
+  getUserSession: () => ({ userId: '123', isAuthenticated: true })
+}))
+
 describe('context and cache', () => {
   beforeEach(() => {
     mockReadFileSync.mockReset()
@@ -25,10 +29,7 @@ describe('context and cache', () => {
 
   describe('#context', () => {
     const mockRequest = {
-      path: '/',
-      getUserSession: vi
-        .fn()
-        .mockResolvedValue({ userId: '123', isAuthenticated: true })
+      path: '/'
     }
 
     describe('When webpack manifest file read succeeds', () => {
