@@ -219,6 +219,35 @@ export const config = convict({
       default: 'x-cdp-request-id',
       env: 'TRACING_HEADER'
     }
+  },
+  entraId: {
+    tenantId: {
+      doc: 'Azure Active Directory Tenant ID',
+      format: String,
+      env: 'ENTRA_TENANT_ID',
+      default: null
+    },
+    clientId: {
+      doc: 'Azure App Client ID',
+      format: String,
+      env: 'ENTRA_CLIENT_ID',
+      default: null
+    },
+    clientSecret: {
+      doc: 'Azure App Client Secret. Defaults to stub secret',
+      format: String,
+      sensitive: true,
+      env: 'ENTRA_CLIENT_SECRET',
+      default: null
+    },
+    get oidcWellKnownConfigurationUrl() {
+      return {
+        doc: 'OIDC .well-known configuration URL. Defaults to the stub',
+        format: String,
+        env: 'OIDC_WELL_KNOWN_CONFIGURATION_URL',
+        default: null
+      }
+    }
   }
 })
 

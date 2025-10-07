@@ -12,6 +12,9 @@ export const signin = {
         {
           method: 'GET',
           path: '/signin',
+          options: {
+            auth: 'entra-id'
+          },
           ...signinController
         }
       ])
