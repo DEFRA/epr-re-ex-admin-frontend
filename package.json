@@ -5,6 +5,10 @@
   "sideEffects": false,
   "main": "src/index.js",
   "type": "module",
+  "imports": {
+    "#config/*": "./src/config/*",
+    "#server/*": "./src/server/*"
+  },
   "engines": {
     "node": ">=22.16.0"
   },
