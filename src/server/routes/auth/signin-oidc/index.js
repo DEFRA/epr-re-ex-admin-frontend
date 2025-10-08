@@ -1,10 +1,11 @@
-import { getSafeRedirect } from '../../../common/helpers/auth/get-safe-redirect.js'
 import { verifyToken } from '../../../common/helpers/auth/verify-token.js'
+import { createUserSession } from '../../../common/helpers/auth/create-user-session.js'
 
 export default {
   method: 'GET',
   path: '/auth/signin-oidc',
   options: {
+    // TO-DO: Should we fail like in Will's PoC?
     auth: { strategy: 'entra-id', mode: 'try' }
   },
   handler: async function (request, h) {
@@ -24,13 +25,12 @@ export default {
       token
     }
 
-    await request.server.app.cache.set(profile.sessionId, userSession)
+    // TO-DO: Is a sessionId really available in the profile
+    await createUserSession(request, profile.sessionId, userSession)
 
     request.cookieAuth.set({ sessionId: profile.sessionId })
 
-    const redirect = request.yar.get('redirect') ?? '/'
-    request.yar.clear('redirect')
-    const safeRedirect = getSafeRedirect(redirect)
-    return h.redirect(safeRedirect)
+    // TO-DO:: We should redirect the user to their original destination
+    return h.redirect('/')
   }
 }
