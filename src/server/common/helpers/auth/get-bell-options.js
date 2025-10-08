@@ -10,7 +10,7 @@ export function getBellOptions(oidcConfig) {
       useParamsAuth: true,
       auth: oidcConfig.authorization_endpoint,
       token: oidcConfig.token_endpoint,
-      scope: ['openid', 'offline_access', config.get('entraId.clientId')],
+      scope: ['openid', 'profile', 'email'],
       profile: function (credentials, _params, _get) {
         const payload = Jwt.token.decode(credentials.token).decoded.payload
 

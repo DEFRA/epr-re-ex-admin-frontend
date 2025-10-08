@@ -1,5 +1,5 @@
 import Wreck from '@hapi/wreck'
-import config from '../../../../config/index.js'
+import { config } from '../../../../config/config.js'
 
 async function getOidcConfig() {
   // Fetch the OpenID Connect configuration from the well-known endpoint
