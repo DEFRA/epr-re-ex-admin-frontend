@@ -1,28 +1,28 @@
 import { config } from '../../../../config/config.js'
+import { getUserSession } from './get-user-session.js'
 
 export function getCookieOptions() {
   return {
     cookie: {
-      password: config.get('cookie.password'),
+      password: config.get('session.cookie.password'),
       path: '/',
-      isSecure: config.get('isProd'),
+      isSecure: config.get('isProduction'),
       isSameSite: 'Lax'
     },
-    redirectTo: function (request) {
-      return `/sign-in?redirect=${request.url.pathname}${request.url.search}`
+    redirectTo: function () {
+      // TO-DO: Add a redirect parameter to handle sending user back to the page they were on
+      return `/auth/signin`
     },
-    validate: async function (request, session) {
-      const userSession = await request.server.app.cache.get(session.sessionId)
+    validate: async function (request) {
+      const userSession = getUserSession(request)
 
       // If session does not exist, return an invalid session
       if (!userSession) {
         return { isValid: false }
       }
 
-      // TO-DO: Verify Defra Identity token has not expired
-
-      // Set the user's details on the request object and allow the request to continue
-      // Depending on the service, additional checks can be performed here before returning `isValid: true`
+      // TODO: check token expiry (& optionally refresh)
+      // We should make sure the token has NOT expired
       return { isValid: true, credentials: userSession }
     }
   }
