@@ -225,28 +225,30 @@ export const config = convict({
       doc: 'Azure Active Directory Tenant ID',
       format: String,
       env: 'ENTRA_TENANT_ID',
-      default: null
+      default: null,
+      nullable: true
     },
     clientId: {
       doc: 'Azure App Client ID',
       format: String,
       env: 'ENTRA_CLIENT_ID',
-      default: null
+      default: null,
+      nullable: true
     },
     clientSecret: {
-      doc: 'Azure App Client Secret. Defaults to stub secret',
+      doc: 'Azure App Client Secret',
       format: String,
       sensitive: true,
       env: 'ENTRA_CLIENT_SECRET',
-      default: null
+      default: null,
+      nullable: true
     },
-    get oidcWellKnownConfigurationUrl() {
-      return {
-        doc: 'OIDC .well-known configuration URL. Defaults to the stub',
-        format: String,
-        env: 'OIDC_WELL_KNOWN_CONFIGURATION_URL',
-        default: null
-      }
+    oidcWellKnownConfigurationUrl: {
+      doc: 'OIDC .well-known configuration URL',
+      format: String,
+      env: 'OIDC_WELL_KNOWN_CONFIGURATION_URL',
+      default: null,
+      nullable: true
     }
   }
 })
