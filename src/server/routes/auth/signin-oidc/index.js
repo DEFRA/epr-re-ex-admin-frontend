@@ -2,6 +2,11 @@ import { getSafeRedirect } from '../../../common/helpers/auth/get-safe-redirect.
 import { verifyToken } from '../../../common/helpers/auth/verify-token.js'
 
 export default {
+  method: 'GET',
+  path: '/auth/signin-oidc',
+  options: {
+    auth: { strategy: 'entra-id', mode: 'try' }
+  },
   handler: async function (request, h) {
     if (!request.auth.isAuthenticated) {
       return h.view('unauthorised')

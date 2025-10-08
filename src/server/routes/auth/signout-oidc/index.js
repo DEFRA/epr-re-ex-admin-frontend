@@ -1,7 +1,7 @@
 export default [
   {
     method: 'GET',
-    path: '/auth/signout',
+    path: '/auth/signout-oidc',
     options: {
       auth: false
     },

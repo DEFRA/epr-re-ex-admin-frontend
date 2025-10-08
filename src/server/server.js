@@ -16,7 +16,7 @@ import { sessionCache } from './common/helpers/session-cache/session-cache.js'
 import { getCacheEngine } from './common/helpers/session-cache/cache-engine.js'
 import { secureContext } from '@defra/hapi-secure-context'
 import { contentSecurityPolicy } from './common/helpers/content-security-policy.js'
-import { auth } from './plugins/auth.js'
+import { authPlugin } from './plugins/auth-plugin.js'
 
 export async function createServer() {
   setupProxy()
@@ -67,7 +67,7 @@ export async function createServer() {
     contentSecurityPolicy,
     Bell,
     Cookie,
-    auth,
+    authPlugin,
     router
   ])
 
