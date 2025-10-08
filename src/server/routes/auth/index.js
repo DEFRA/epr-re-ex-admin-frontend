@@ -33,15 +33,13 @@ export default {
             request.auth.credentials
           // TODO verify token (see FCP example)
 
-          console.log('WAC profile', profile)
-
           // Store token and all useful data in the session cache
           await createUserSession(request, sessionId, {
             isAuthenticated: true,
             id: profile.id,
             email: profile.email,
             displayName: profile.displayName,
-            scopes: profile.scopes,
+            scope: profile.scope,
             token,
             refreshToken,
             expiresIn
@@ -132,7 +130,7 @@ async function aadBellOptions() {
           id: decodedPayload.oid,
           displayName: decodedPayload.name,
           email: decodedPayload.upn ?? decodedPayload.preferred_username,
-          scopes: ['some-role'] // TODO populate this by looking up from config
+          scope: ['service_maintainer'] // TODO populate this by looking up from config
         }
       }
     },
