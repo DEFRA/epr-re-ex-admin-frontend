@@ -1,6 +1,6 @@
-import { callback } from './callback'
-import { signin } from './signin'
-import { signout } from './signout'
+import callback from './callback/index.js'
+import signin from './signin/index.js'
+import signout from './signout/index.js'
 
 const auth = {
   plugin: {

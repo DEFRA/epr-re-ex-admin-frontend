@@ -1,10 +1,10 @@
+import authController from './controller.js'
+
 export default {
   method: 'GET',
-  path: '/home',
+  path: '/auth/callback',
   options: {
-    auth: { scope: ['user'] }
+    auth: { strategy: 'entra-id', mode: 'try' }
   },
-  handler: (_request, h) => {
-    return h.view('home')
-  }
+  ...authController
 }

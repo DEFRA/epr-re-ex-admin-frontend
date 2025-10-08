@@ -1,4 +1,4 @@
-import { signinController } from './controller.js'
+import { signinController } from '../auth/signin/controller.js'
 
 /**
  * Sets up the routes used in the /signin page.
@@ -13,7 +13,7 @@ export const signin = {
           method: 'GET',
           path: '/signin',
           options: {
-            auth: 'entra-id'
+            auth: false
           },
           ...signinController
         }
