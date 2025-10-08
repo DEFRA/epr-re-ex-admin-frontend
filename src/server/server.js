@@ -1,6 +1,8 @@
 import path from 'path'
 import hapi from '@hapi/hapi'
 import Scooter from '@hapi/scooter'
+import Bell from '@hapi/bell'
+import Cookie from '@hapi/cookie'
 
 import { router } from './router.js'
 import { config } from '../config/config.js'
@@ -14,6 +16,7 @@ import { sessionCache } from './common/helpers/session-cache/session-cache.js'
 import { getCacheEngine } from './common/helpers/session-cache/cache-engine.js'
 import { secureContext } from '@defra/hapi-secure-context'
 import { contentSecurityPolicy } from './common/helpers/content-security-policy.js'
+import { auth } from './plugins/auth.js'
 
 export async function createServer() {
   setupProxy()
@@ -62,10 +65,12 @@ export async function createServer() {
     nunjucksConfig,
     Scooter,
     contentSecurityPolicy,
-    router // Register all the controllers/routes defined in src/server/router.js
+    Bell,
+    Cookie,
+    auth,
+    router
   ])
 
-  addDecorators(server)
   server.ext('onPreResponse', catchAll)
 
   return server
