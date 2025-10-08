@@ -1,24 +1,4 @@
-/**
- * @typedef {object} UserSession
- * @property {string} id
- * @property {string} email
- * @property {string} displayName
- * @property {boolean} isAuthenticated
- */
-
-const hardcodedUser = {
-  id: '1111',
-  email: 'john.doe@example.com',
-  displayName: 'John Doe',
-  isAuthenticated: true
+export async function getUserSession(request) {
+  const sessionId = request.state?.userSessionCookie?.sessionId
+  return sessionId ? await request.server.app.cache.get(sessionId) : null
 }
-
-/**
- * Get the user session from the cache
- * @returns {Promise<UserSession | null>}
- */
-async function getUserSession() {
-  return hardcodedUser
-}
-
-export { getUserSession }
