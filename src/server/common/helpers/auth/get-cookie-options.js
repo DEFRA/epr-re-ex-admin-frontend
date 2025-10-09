@@ -9,10 +9,7 @@ export function getCookieOptions() {
       isSecure: config.get('isProduction'),
       isSameSite: 'Lax'
     },
-    redirectTo: function () {
-      // TO-DO: Add a redirect parameter to handle sending user back to the page they were on
-      return `/auth/signin`
-    },
+    redirectTo: false,
     validate: async function (request) {
       const userSession = getUserSession(request)
 

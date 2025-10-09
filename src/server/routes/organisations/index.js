@@ -12,9 +12,6 @@ export const organisations = {
         {
           method: 'GET',
           path: '/organisations',
-          options: {
-            auth: false
-          },
           ...organisationsController
         }
       ])
