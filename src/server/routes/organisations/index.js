@@ -1,10 +1,10 @@
-import { aboutController } from './controller.js'
+import { organisationsController } from './controller.js'
 
 /**
  * Sets up the routes used in the /about page.
  * These routes are registered in src/server/router.js.
  */
-export const about = {
+export const organisations = {
   plugin: {
     name: 'about',
     register(server) {
@@ -15,7 +15,7 @@ export const about = {
           options: {
             auth: false
           },
-          ...aboutController
+          ...organisationsController
         }
       ])
     }

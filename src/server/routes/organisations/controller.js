@@ -2,18 +2,18 @@
  * A GDS styled example about page controller.
  * Provided as an example, remove or modify as required.
  */
-export const aboutController = {
+export const organisationsController = {
   handler(_request, h) {
-    return h.view('routes/about/index', {
-      pageTitle: 'About',
-      heading: 'About',
+    return h.view('routes/organisations/index', {
+      pageTitle: 'Organisations',
+      heading: 'Organisations',
       breadcrumbs: [
         {
           text: 'Home',
           href: '/'
         },
         {
-          text: 'About'
+          text: 'Organisations'
         }
       ]
     })

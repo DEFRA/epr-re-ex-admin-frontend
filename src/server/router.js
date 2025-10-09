@@ -3,7 +3,7 @@ import inert from '@hapi/inert'
 import { health } from './routes/health/index.js'
 
 import { home } from './routes/home/index.js'
-import { about } from './routes/about/index.js'
+import { organisations } from './routes/organisations/index.js'
 import { auth } from './routes/auth/index.js'
 
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
@@ -18,7 +18,7 @@ export const router = {
 
       // These are the routes containing our application logic
       // Some routes contain nested routes
-      await server.register([home, about, auth])
+      await server.register([home, organisations, auth])
 
       await server.register([serveStaticFiles])
     }
