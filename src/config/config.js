@@ -72,14 +72,14 @@ export const config = convict({
     format: Boolean,
     default: isTest
   },
-  // get appBaseUrl() {
-  //   return {
-  //     doc: 'Application base URL',
-  //     format: String,
-  //     default: `http://localhost:${this.port.default}`,
-  //     env: 'APP_BASE_URL'
-  //   }
-  // },
+  get appBaseUrl() {
+    return {
+      doc: 'Application base URL',
+      format: String,
+      default: `http://localhost:${this.port.default}`,
+      env: 'APP_BASE_URL'
+    }
+  },
   log: {
     enabled: {
       doc: 'Is logging enabled',
