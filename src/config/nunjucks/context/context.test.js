@@ -62,8 +62,8 @@ describe('context and cache', () => {
             },
             {
               current: false,
-              text: 'About',
-              href: '/about'
+              text: 'Organisations',
+              href: '/organisations'
             }
           ],
           serviceName: 'epr-re-ex-admin-frontend',
@@ -164,8 +164,8 @@ describe('context and cache', () => {
             },
             {
               current: false,
-              text: 'About',
-              href: '/about'
+              text: 'Organisations',
+              href: '/organisations'
             }
           ],
           serviceName: 'epr-re-ex-admin-frontend',

@@ -1,5 +1,5 @@
 /**
- * A GDS styled example about page controller.
+ * A GDS styled example organisations page controller.
  * Provided as an example, remove or modify as required.
  */
 export const organisationsController = {
