@@ -1,11 +1,5 @@
 import { vi } from 'vitest'
-
-const mockUserSession = {
-  sessionId: '123',
-  displayName: ' John Doe',
-  isAuthenticated: true,
-  token: 'aaaaaa'
-}
+import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 
 const mockGetUserSession = vi.fn().mockResolvedValue(mockUserSession)
 
