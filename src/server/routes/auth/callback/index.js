@@ -1,4 +1,4 @@
-import { createUserSession } from '../../../common/helpers/auth/create-user-session.js'
+import { createUserSession } from '#server/common/helpers/auth/create-user-session.js'
 import { randomUUID } from 'node:crypto'
 
 export default {
@@ -19,7 +19,7 @@ export default {
     // This is left for a future PR
     // await verifyToken(token)
 
-    // TO-DO: `id` , `email` or `loginHint` are missing in profile
+    // TO-DO: `id` , `email` or `loginHint` are missing in the `profile` object we receive from DefraDev at the moment
     const { displayName } = profile
 
     // TO-DO: Here we can extract decide the user role based on their profile info
@@ -36,7 +36,6 @@ export default {
       refreshToken: request.auth.credentials.refreshToken
     }
 
-    // TO-DO: Is a sessionId really available in the profile
     await createUserSession(request, userSession)
 
     // TO-DO:: We should redirect the user to their original destination
