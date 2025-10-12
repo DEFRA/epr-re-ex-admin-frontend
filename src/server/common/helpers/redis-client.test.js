@@ -2,7 +2,7 @@ import { vi } from 'vitest'
 
 import { Cluster, Redis } from 'ioredis'
 
-import { config } from '../../../config/config.js'
+import { config } from '#config/config.js'
 import { buildRedisClient } from './redis-client.js'
 
 vi.mock('ioredis', () => ({
@@ -14,7 +14,8 @@ vi.mock('ioredis', () => ({
 describe('#buildRedisClient', () => {
   describe('When Redis Single InstanceCache is requested', () => {
     beforeEach(() => {
-      buildRedisClient(config.get('redis'))
+      const redisConfig = config.get('redis')
+      buildRedisClient(redisConfig)
     })
 
     test('Should instantiate a single Redis client', () => {
