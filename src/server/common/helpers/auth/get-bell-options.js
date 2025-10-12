@@ -1,0 +1,41 @@
+import Jwt from '@hapi/jwt'
+import { config } from '../../../../config/config.js'
+
+export function getBellOptions(oidcConfig) {
+  return {
+    provider: {
+      name: 'entra-id',
+      protocol: 'oauth2',
+      useParamsAuth: true,
+      auth: oidcConfig.authorization_endpoint,
+      token: oidcConfig.token_endpoint,
+      scope: ['openid', 'profile', 'email'],
+      profile: function (credentials, _params, _get) {
+        const payload = Jwt.token.decode(credentials.token).decoded.payload
+
+        // TO-DO: Evaluate if we need less or more in this profile object
+        credentials.profile = {
+          ...payload,
+          displayName:
+            payload.name ||
+            `${payload.given_name || ''} ${payload.family_name || ''}`.trim()
+        }
+      }
+    },
+    clientId: config.get('entraId.clientId'),
+    clientSecret: config.get('entraId.clientSecret'),
+    password: config.get('session.cookie.password'),
+    isSecure: config.get('isProduction'),
+    forceHttps: config.get('isProduction'),
+    location: function () {
+      return `${config.get('appBaseUrl')}/auth/callback`
+    },
+
+    // TO-DO: Not sure we need `ttl` here, leaving it out until we figure out exactly what it does
+    providerParams: function (_request) {
+      return {
+        response_mode: 'query'
+      }
+    }
+  }
+}
