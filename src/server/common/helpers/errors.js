@@ -1,20 +1,5 @@
 import { statusCodes } from '../constants/status-codes.js'
 
-function statusCodeMessage(statusCode) {
-  switch (statusCode) {
-    case statusCodes.notFound:
-      return 'Page not found'
-    case statusCodes.forbidden:
-      return 'Forbidden'
-    case statusCodes.unauthorized:
-      return 'Unauthorized'
-    case statusCodes.badRequest:
-      return 'Bad Request'
-    default:
-      return 'Something went wrong'
-  }
-}
-
 export function catchAll(request, h) {
   const { response } = request
 
@@ -23,17 +8,38 @@ export function catchAll(request, h) {
   }
 
   const statusCode = response.output.statusCode
-  const errorMessage = statusCodeMessage(statusCode)
 
-  if (statusCode >= statusCodes.internalServerError) {
-    request.logger.error(response?.stack)
+  let template = '500'
+
+  if (statusCode === statusCodes.forbidden) {
+    template = '403'
   }
 
-  return h
-    .view('error/index', {
-      pageTitle: errorMessage,
-      heading: statusCode,
-      message: errorMessage
+  if (statusCode === statusCodes.unauthorized) {
+    template = 'unauthorised'
+  }
+
+  if (statusCode === statusCodes.notFound) {
+    template = '404'
+  }
+
+  if (statusCode >= statusCodes.internalServerError) {
+    request.log(['error'], {
+      statusCode,
+      message: response.message,
+      stack: response.data?.stack
     })
-    .code(statusCode)
+  }
+
+  const viewResponse = h.view(template).code(statusCode)
+
+  const originalHeaders = response.headers || response.output?.headers || {}
+  for (const [key, value] of Object.entries(originalHeaders)) {
+    if (key.toLowerCase() === 'content-type') {
+      continue
+    }
+    viewResponse.header(key, value)
+  }
+
+  return viewResponse
 }
