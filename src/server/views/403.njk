@@ -1,0 +1,13 @@
+{% extends 'layout.njk' %}
+
+{% set mainClasses = "govuk-main-wrapper--l" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-l">Sorry, you are not authorised to perform that action.</h1>
+      <p class="govuk-body">Please <a class="govuk-link" href="/auth/signin">sign in</a> with an appropriate account.</p>
+    </div>
+  </div>
+{% endblock %}
+
