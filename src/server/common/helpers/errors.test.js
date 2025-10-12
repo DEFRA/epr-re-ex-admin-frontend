@@ -4,7 +4,7 @@ import { catchAll } from './errors.js'
 import { createServer } from '#server/server.js'
 import { statusCodes } from '../constants/status-codes.js'
 
-describe('#errors', () => {
+describe('#errors integration', () => {
   let server
 
   beforeAll(async () => {
@@ -22,105 +22,182 @@ describe('#errors', () => {
       url: '/non-existent-path'
     })
 
-    expect(result).toEqual(
-      expect.stringContaining('Page not found | epr-re-ex-admin-frontend')
-    )
+    expect(result).toEqual(expect.stringContaining('Page not found'))
     expect(statusCode).toBe(statusCodes.notFound)
   })
 })
 
-describe('#catchAll', () => {
-  const mockErrorLogger = vi.fn()
+describe('#catchAll unit tests', () => {
+  const mockLog = vi.fn()
   const mockStack = 'Mock error stack'
-  const errorPage = 'error/index'
-  const mockRequest = (statusCode) => ({
+  const mockMessage = 'Mock error message'
+
+  const mockRequest = (statusCode, headers = {}) => ({
     response: {
       isBoom: true,
-      stack: mockStack,
-      output: {
-        statusCode
-      }
+      message: mockMessage,
+      data: { stack: mockStack },
+      output: { statusCode, headers },
+      headers
     },
-    logger: { error: mockErrorLogger }
+    log: mockLog
   })
+
   const mockToolkitView = vi.fn()
   const mockToolkitCode = vi.fn()
+  const mockToolkitHeader = vi.fn()
+  const mockContinue = Symbol('continue')
   const mockToolkit = {
-    view: mockToolkitView.mockReturnThis(),
-    code: mockToolkitCode.mockReturnThis()
+    continue: mockContinue,
+    view: mockToolkitView.mockReturnValue({
+      code: mockToolkitCode.mockReturnValue({
+        header: mockToolkitHeader.mockReturnThis()
+      }),
+      header: mockToolkitHeader.mockReturnThis()
+    }),
+    code: mockToolkitCode.mockReturnThis(),
+    header: mockToolkitHeader.mockReturnThis()
   }
 
-  test('Should provide expected "Not Found" page', () => {
-    catchAll(mockRequest(statusCodes.notFound), mockToolkit)
-
-    expect(mockErrorLogger).not.toHaveBeenCalledWith(mockStack)
-    expect(mockToolkitView).toHaveBeenCalledWith(errorPage, {
-      pageTitle: 'Page not found',
-      heading: statusCodes.notFound,
-      message: 'Page not found'
-    })
-    expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.notFound)
+  beforeEach(() => {
+    vi.clearAllMocks()
   })
 
-  test('Should provide expected "Forbidden" page', () => {
+  test('Should return early if response does not have isBoom property', () => {
+    const nonBoomRequest = {
+      response: {}
+    }
+
+    const result = catchAll(nonBoomRequest, mockToolkit)
+
+    expect(result).toEqual(mockContinue)
+    expect(mockToolkitView).not.toHaveBeenCalled()
+    expect(mockLog).not.toHaveBeenCalled()
+  })
+
+  test('Should render 403 template for forbidden status', () => {
     catchAll(mockRequest(statusCodes.forbidden), mockToolkit)
 
-    expect(mockErrorLogger).not.toHaveBeenCalledWith(mockStack)
-    expect(mockToolkitView).toHaveBeenCalledWith(errorPage, {
-      pageTitle: 'Forbidden',
-      heading: statusCodes.forbidden,
-      message: 'Forbidden'
-    })
+    expect(mockToolkitView).toHaveBeenCalledWith('403')
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.forbidden)
+    expect(mockLog).not.toHaveBeenCalled()
   })
 
-  test('Should provide expected "Unauthorized" page', () => {
+  test('Should render 404 template for not found status', () => {
+    catchAll(mockRequest(statusCodes.notFound), mockToolkit)
+
+    expect(mockToolkitView).toHaveBeenCalledWith('404')
+    expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.notFound)
+    expect(mockLog).not.toHaveBeenCalled()
+  })
+
+  test('Should render unauthorised template for unauthorized status', () => {
     catchAll(mockRequest(statusCodes.unauthorized), mockToolkit)
 
-    expect(mockErrorLogger).not.toHaveBeenCalledWith(mockStack)
-    expect(mockToolkitView).toHaveBeenCalledWith(errorPage, {
-      pageTitle: 'Unauthorized',
-      heading: statusCodes.unauthorized,
-      message: 'Unauthorized'
-    })
+    expect(mockToolkitView).toHaveBeenCalledWith('unauthorised')
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.unauthorized)
+    expect(mockLog).not.toHaveBeenCalled()
   })
 
-  test('Should provide expected "Bad Request" page', () => {
+  test('Should render 500 template for bad request status (uncategorised)', () => {
     catchAll(mockRequest(statusCodes.badRequest), mockToolkit)
 
-    expect(mockErrorLogger).not.toHaveBeenCalledWith(mockStack)
-    expect(mockToolkitView).toHaveBeenCalledWith(errorPage, {
-      pageTitle: 'Bad Request',
-      heading: statusCodes.badRequest,
-      message: 'Bad Request'
-    })
+    expect(mockToolkitView).toHaveBeenCalledWith('500')
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.badRequest)
+    expect(mockLog).not.toHaveBeenCalled()
   })
 
-  test('Should provide expected default page', () => {
+  test('Should render 500 template for unknown status codes (uncategorised)', () => {
     catchAll(mockRequest(statusCodes.imATeapot), mockToolkit)
 
-    expect(mockErrorLogger).not.toHaveBeenCalledWith(mockStack)
-    expect(mockToolkitView).toHaveBeenCalledWith(errorPage, {
-      pageTitle: 'Something went wrong',
-      heading: statusCodes.imATeapot,
-      message: 'Something went wrong'
-    })
+    expect(mockToolkitView).toHaveBeenCalledWith('500')
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.imATeapot)
+    expect(mockLog).not.toHaveBeenCalled()
   })
 
-  test('Should provide expected "Something went wrong" page and log error for internalServerError', () => {
+  test('Should render 500 template and log error for internal server error', () => {
     catchAll(mockRequest(statusCodes.internalServerError), mockToolkit)
 
-    expect(mockErrorLogger).toHaveBeenCalledWith(mockStack)
-    expect(mockToolkitView).toHaveBeenCalledWith(errorPage, {
-      pageTitle: 'Something went wrong',
-      heading: statusCodes.internalServerError,
-      message: 'Something went wrong'
-    })
+    expect(mockToolkitView).toHaveBeenCalledWith('500')
     expect(mockToolkitCode).toHaveBeenCalledWith(
       statusCodes.internalServerError
     )
+    expect(mockLog).toHaveBeenCalledWith(['error'], {
+      statusCode: statusCodes.internalServerError,
+      message: mockMessage,
+      stack: mockStack
+    })
+  })
+
+  test('Should log error for any status >= 500', () => {
+    const customServerErrorCode = 503
+    catchAll(mockRequest(customServerErrorCode), mockToolkit)
+
+    expect(mockToolkitView).toHaveBeenCalledWith('500')
+    expect(mockToolkitCode).toHaveBeenCalledWith(customServerErrorCode)
+    expect(mockLog).toHaveBeenCalledWith(['error'], {
+      statusCode: customServerErrorCode,
+      message: mockMessage,
+      stack: mockStack
+    })
+  })
+
+  test('Should preserve original headers except content-type', () => {
+    const originalHeaders = {
+      'x-custom-header': 'custom-value',
+      'content-type': 'application/json',
+      'cache-control': 'no-cache'
+    }
+
+    catchAll(mockRequest(statusCodes.notFound, originalHeaders), mockToolkit)
+
+    expect(mockToolkitHeader).toHaveBeenCalledWith(
+      'x-custom-header',
+      'custom-value'
+    )
+    expect(mockToolkitHeader).toHaveBeenCalledWith('cache-control', 'no-cache')
+    expect(mockToolkitHeader).not.toHaveBeenCalledWith(
+      'content-type',
+      'application/json'
+    )
+  })
+
+  test('Should handle headers from response.output.headers when response.headers is not available', () => {
+    const request = {
+      response: {
+        isBoom: true,
+        message: mockMessage,
+        data: { stack: mockStack },
+        output: {
+          statusCode: statusCodes.notFound,
+          headers: { 'x-output-header': 'output-value' }
+        }
+      },
+      log: mockLog
+    }
+
+    catchAll(request, mockToolkit)
+
+    expect(mockToolkitHeader).toHaveBeenCalledWith(
+      'x-output-header',
+      'output-value'
+    )
+  })
+
+  test('Should handle missing headers gracefully', () => {
+    const request = {
+      response: {
+        isBoom: true,
+        message: mockMessage,
+        data: { stack: mockStack },
+        output: { statusCode: statusCodes.notFound }
+      },
+      log: mockLog
+    }
+
+    catchAll(request, mockToolkit)
+
+    expect(mockToolkitView).toHaveBeenCalledWith('404')
+    expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.notFound)
   })
 })
