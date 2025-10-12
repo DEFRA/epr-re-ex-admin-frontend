@@ -72,6 +72,15 @@ export const config = convict({
     format: Boolean,
     default: isTest
   },
+  // TO-DO: We will most likely need to set up this env var in CDP
+  get appBaseUrl() {
+    return {
+      doc: 'Application base URL',
+      format: String,
+      default: `http://localhost:${this.port.default}`,
+      env: 'APP_BASE_URL'
+    }
+  },
   log: {
     enabled: {
       doc: 'Is logging enabled',
@@ -218,6 +227,37 @@ export const config = convict({
       format: String,
       default: 'x-cdp-request-id',
       env: 'TRACING_HEADER'
+    }
+  },
+  entraId: {
+    tenantId: {
+      doc: 'Azure Active Directory Tenant ID',
+      format: String,
+      env: 'ENTRA_TENANT_ID',
+      default: null,
+      nullable: true
+    },
+    clientId: {
+      doc: 'Azure App Client ID',
+      format: String,
+      env: 'ENTRA_CLIENT_ID',
+      default: null,
+      nullable: true
+    },
+    clientSecret: {
+      doc: 'Azure App Client Secret',
+      format: String,
+      sensitive: true,
+      env: 'ENTRA_CLIENT_SECRET',
+      default: null,
+      nullable: true
+    },
+    oidcWellKnownConfigurationUrl: {
+      doc: 'OIDC .well-known configuration URL',
+      format: String,
+      env: 'OIDC_WELL_KNOWN_CONFIGURATION_URL',
+      default: null,
+      nullable: true
     }
   }
 })

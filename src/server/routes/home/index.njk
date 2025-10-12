@@ -1,10 +1,14 @@
-{% extends 'layouts/page.njk' %}
+{% extends 'layout.njk' %}
 
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <div class="govuk-body" data-testid="app-page-body">
-        <p></p>
+        <p>Welcome!</p>
+        <p>You have
+{% if isAuthenticated %}{{ "ACTUALLY" }}{% else %}{{ "NOT" }}{% endif %}
+          signed in.
+        </p>
       </div>
     </div>
   </div>
