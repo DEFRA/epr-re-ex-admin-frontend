@@ -1,5 +1,18 @@
 import { vi } from 'vitest'
 
+const mockUserSession = {
+  sessionId: '123',
+  displayName: ' John Doe',
+  isAuthenticated: true,
+  token: 'aaaaaa'
+}
+
+const mockGetUserSession = vi.fn().mockResolvedValue(mockUserSession)
+
+vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
+  getUserSession: mockGetUserSession
+}))
+
 const mockReadFileSync = vi.fn()
 const mockLoggerError = vi.fn()
 
@@ -25,10 +38,7 @@ describe('context and cache', () => {
 
   describe('#context', () => {
     const mockRequest = {
-      path: '/',
-      getUserSession: vi
-        .fn()
-        .mockResolvedValue({ userId: '123', isAuthenticated: true })
+      path: '/'
     }
 
     describe('When webpack manifest file read succeeds', () => {
@@ -68,7 +78,7 @@ describe('context and cache', () => {
           ],
           serviceName: 'epr-re-ex-admin-frontend',
           serviceUrl: '/',
-          userSession: { userId: '123', isAuthenticated: true },
+          userSession: mockUserSession,
           isAuthenticated: true
         })
       })
@@ -119,10 +129,7 @@ describe('context and cache', () => {
 
   describe('#context cache', () => {
     const mockRequest = {
-      path: '/',
-      getUserSession: vi
-        .fn()
-        .mockResolvedValue({ userId: '123', isAuthenticated: true })
+      path: '/'
     }
     let contextResult
 
@@ -170,7 +177,7 @@ describe('context and cache', () => {
           ],
           serviceName: 'epr-re-ex-admin-frontend',
           serviceUrl: '/',
-          userSession: { userId: '123', isAuthenticated: true },
+          userSession: mockUserSession,
           isAuthenticated: true
         })
       })
