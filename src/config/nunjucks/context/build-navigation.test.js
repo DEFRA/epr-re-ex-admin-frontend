@@ -16,8 +16,8 @@ describe('#buildNavigation', () => {
       },
       {
         current: false,
-        text: 'About',
-        href: '/about'
+        text: 'Organisations',
+        href: '/organisations'
       }
     ])
   })
@@ -31,8 +31,8 @@ describe('#buildNavigation', () => {
       },
       {
         current: false,
-        text: 'About',
-        href: '/about'
+        text: 'Organisations',
+        href: '/organisations'
       }
     ])
   })
