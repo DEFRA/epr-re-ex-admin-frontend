@@ -6,8 +6,3 @@ $defra-brand-colour: govuk-organisation-colour(
 );
 $app-brand-background-colour: govuk-tint($govuk-brand-colour, 85%);
 $app-brand-background-colour-light: govuk-tint($govuk-brand-colour, 95%);
-
-// TODO: These variables were borrowed from CDP Portal frontent
-// and may not match the Design System (GDS). We may want to check when we have time
-$app-brand-border-colour: govuk-tint($govuk-brand-colour, 80%);
-$app-brand-border-colour-light: govuk-tint($govuk-brand-colour, 50%);
