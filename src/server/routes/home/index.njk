@@ -4,11 +4,12 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <div class="govuk-body" data-testid="app-page-body">
-        <p>Welcome!</p>
-        <p>You have
-{% if isAuthenticated %}{{ "ACTUALLY" }}{% else %}{{ "NOT" }}{% endif %}
-          signed in.
-        </p>
+        {% if userSession.displayName %}
+          <h1>Welcome {{ userSession.displayName }}!</h1>
+        {% else %}
+          <h1>Welcome!</h1>
+        {% endif %}
+        <p>This is the home page.</p>
       </div>
     </div>
   </div>

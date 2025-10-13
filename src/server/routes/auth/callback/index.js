@@ -14,7 +14,7 @@ export default {
 
     const { profile, token } = request.auth.credentials
 
-    const { displayName } = profile
+    const { displayName = '' } = profile
 
     const sessionId = randomUUID()
 

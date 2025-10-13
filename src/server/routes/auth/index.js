@@ -1,12 +1,12 @@
-import signin from './signin/index.js'
-import signout from './signout/index.js'
-import signinOidc from './callback/index.js'
+import signIn from './sign-in/index.js'
+import signOut from './sign-out/index.js'
+import signInOidc from './callback/index.js'
 
 const auth = {
   plugin: {
     name: 'auth',
     register: (server) => {
-      server.route([signin, signinOidc, signout])
+      server.route([signIn, signInOidc, signOut])
     }
   }
 }

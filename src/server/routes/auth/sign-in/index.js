@@ -1,6 +1,6 @@
 export default {
   method: 'GET',
-  path: '/auth/signin',
+  path: '/auth/sign-in',
   options: {
     auth: 'entra-id'
   },

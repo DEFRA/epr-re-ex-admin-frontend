@@ -4,7 +4,7 @@ import { getOidcConfig } from '#server/common/helpers/auth/get-oidc-config.js'
 
 export default {
   method: 'GET',
-  path: '/auth/signout',
+  path: '/auth/sign-out',
   handler: async (request, h) => {
     if (!request.auth.isAuthenticated) {
       // User is already signed-out
