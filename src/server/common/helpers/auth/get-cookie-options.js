@@ -1,4 +1,4 @@
-import { config } from '../../../../config/config.js'
+import { config } from '#config/config.js'
 import { getUserSession } from './get-user-session.js'
 
 export function getCookieOptions() {
@@ -18,8 +18,6 @@ export function getCookieOptions() {
         return { isValid: false }
       }
 
-      // TODO: check token expiry (& optionally refresh)
-      // We should make sure the token has NOT expired
       return { isValid: true, credentials: userSession }
     }
   }

@@ -72,7 +72,6 @@ export const config = convict({
     format: Boolean,
     default: isTest
   },
-  // TO-DO: We will most likely need to set up this env var in CDP
   get appBaseUrl() {
     return {
       doc: 'Application base URL',

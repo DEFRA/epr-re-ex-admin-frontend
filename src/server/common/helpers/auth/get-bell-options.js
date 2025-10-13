@@ -1,5 +1,5 @@
 import Jwt from '@hapi/jwt'
-import { config } from '../../../../config/config.js'
+import { config } from '#config/config.js'
 
 export function getBellOptions(oidcConfig) {
   return {
@@ -13,7 +13,6 @@ export function getBellOptions(oidcConfig) {
       profile: function (credentials, _params, _get) {
         const payload = Jwt.token.decode(credentials.token).decoded.payload
 
-        // TO-DO: Evaluate if we need less or more in this profile object
         credentials.profile = {
           ...payload,
           displayName:
@@ -31,7 +30,6 @@ export function getBellOptions(oidcConfig) {
       return `${config.get('appBaseUrl')}/auth/callback`
     },
 
-    // TO-DO: Not sure we need `ttl` here, leaving it out until we figure out exactly what it does
     providerParams: function (_request) {
       return {
         response_mode: 'query'

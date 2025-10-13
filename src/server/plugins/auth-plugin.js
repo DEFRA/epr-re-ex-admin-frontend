@@ -1,6 +1,6 @@
-import { getOidcConfig } from '../common/helpers/auth/get-oidc-config.js'
-import { getBellOptions } from '../common/helpers/auth/get-bell-options.js'
-import { getCookieOptions } from '../common/helpers/auth/get-cookie-options.js'
+import { getOidcConfig } from '#server/common/helpers/auth/get-oidc-config.js'
+import { getBellOptions } from '#server/common/helpers/auth/get-bell-options.js'
+import { getCookieOptions } from '#server/common/helpers/auth/get-cookie-options.js'
 
 export const authPlugin = {
   plugin: {
