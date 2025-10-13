@@ -5,13 +5,8 @@
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      {% if isAuthenticated %}
-        <h1 class="govuk-heading-l">Unauthorised</h1>
-        <p class="govuk-body">Please, check with you have the required permissions.</p>
-      {% else %}
-        <h1 class="govuk-heading-l">You need to sign in</h1>
-        <p class="govuk-body"><a class="govuk-link" href="/auth/signin">Sign in</a>.</p>
-      {% endif %}
+      <h1 class="govuk-heading-l">Unauthorised</h1>
+      <p class="govuk-body">Sign in with an appropriate account.</p>
     </div>
   </div>
 {% endblock %}
