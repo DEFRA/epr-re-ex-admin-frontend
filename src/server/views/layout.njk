@@ -1,0 +1,66 @@
+{% extends "govuk/template.njk" %}
+
+{# Import GOVUK components globally #}
+{% from "govuk/components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
+
+{% from "service-header/macro.njk" import appServiceHeader with context%}
+
+{% set mainClasses = "app-main-wrapper" %}
+
+
+{% block head %}
+  <link href="{{ getAssetPath('stylesheets/application.scss') }}" rel="stylesheet">
+{% endblock %}
+
+{% block header %}
+  {{ appServiceHeader({
+    serviceName: serviceName,
+    serviceUrl: "/",
+    loginText: "Sign out" if isAuthenticated else "Sign in",
+    loginUrl: ("/auth/signout" if isAuthenticated else "/auth/signin")
+  }) }}
+
+  {{ govukServiceNavigation({
+    navigation: navigation
+  }) }}
+{% endblock %}
+
+{% block pageTitle %}
+  {{ pageTitle }} | {{ serviceName }}
+{% endblock %}
+
+{% block beforeContent %}
+  {% if breadcrumbs.length > 1 %}
+    {{ govukBreadcrumbs({
+      items: breadcrumbs
+    }) }}
+  {% endif %}
+{% endblock %}
+
+{% block content %}{% endblock %}
+
+{% block footer %}
+  {{ govukFooter({
+    meta: {
+      items: [
+        {
+          href: "https://www.gov.uk/help/privacy-notice",
+          text: "Privacy"
+        },
+        {
+          href: "https://www.gov.uk/help/cookies",
+          text: "Cookies"
+        },
+        {
+          href: "https://www.gov.uk/help/accessibility-statement",
+          text: "Accessibility statement"
+        }
+      ]
+    }
+  }) }}
+{% endblock %}
+
+{% block bodyEnd %}
+  <script type="module" src="{{ getAssetPath('application.js') }}"></script>
+{% endblock %}
