@@ -12,19 +12,16 @@ export function catchAll(request, h) {
 
   let template = '500'
 
-  switch (statusCode) {
-    case statusCodes.unauthorised:
-      template = 'unauthorised'
-      break
-    case statusCodes.forbidden:
-      template = '403'
-      break
-    case statusCodes.notFound:
-      template = '404'
-      break
-    case statusCodes.internalServerError:
-    default:
-      break
+  if (statusCode === statusCodes.unauthorised) {
+    template = 'unauthorised'
+  }
+
+  if (statusCode === statusCodes.forbidden) {
+    template = '403'
+  }
+
+  if (statusCode === statusCodes.notFound) {
+    template = '404'
   }
 
   // TODO: Think what other types of errors we may want to log
