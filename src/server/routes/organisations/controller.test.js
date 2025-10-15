@@ -3,6 +3,7 @@ import { createServer } from '#server/server.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
+import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 
 vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
   getUserSession: vi.fn().mockReturnValue(null)
@@ -12,8 +13,8 @@ describe('#organisationsController', () => {
   let server
 
   beforeAll(async () => {
-    getUserSession.mockReturnValue(mockUserSession)
     server = await createServer()
+    createMockOidcServer()
     await server.initialize()
   })
 
@@ -21,9 +22,22 @@ describe('#organisationsController', () => {
     await server.stop({ timeout: 0 })
   })
 
+  describe('When user is unauthenticated', () => {
+    test('Should return unauthorised status code and unauthorised view', async () => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/organisations'
+      })
+
+      expect(statusCode).toBe(statusCodes.unauthorised)
+      expect(result).toEqual(expect.stringContaining('Unauthorised'))
+    })
+  })
+
   describe('When user is authenticated', () => {
-    // TO-DO: We may find easier to write our tests if we combine our route definition, with its controller
-    test('Should provide expected response', async () => {
+    test('Should provide return OK status code and show the protected page', async () => {
+      getUserSession.mockReturnValue(mockUserSession)
+
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url: '/organisations',
@@ -33,7 +47,10 @@ describe('#organisationsController', () => {
         }
       })
 
-      expect(result).toEqual(expect.stringContaining('Organisations |'))
+      expect(result).not.toEqual(expect.stringContaining('Sign in'))
+      expect(result).toEqual(
+        expect.stringContaining('This is the organisations protected page')
+      )
       expect(statusCode).toBe(statusCodes.ok)
     })
   })
