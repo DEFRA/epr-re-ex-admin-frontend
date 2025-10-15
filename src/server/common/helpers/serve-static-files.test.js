@@ -1,11 +1,14 @@
 import { startServer } from './start-server.js'
 import { statusCodes } from '../constants/status-codes.js'
+import { server as mswServer } from '../../../../.vite/setup-msw.js'
+import { mockOidcCall } from '../test-helpers/mock-oidc-call.js'
 
 describe('#serveStaticFiles', () => {
   let server
 
   describe('When secure context is disabled', () => {
     beforeEach(async () => {
+      mswServer.use(mockOidcCall())
       server = await startServer()
     })
 
