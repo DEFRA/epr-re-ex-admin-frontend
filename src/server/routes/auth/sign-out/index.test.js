@@ -10,9 +10,9 @@ vi.mock('#server/common/helpers/auth/clear-user-session.js')
 vi.mock('#server/common/helpers/auth/get-oidc-config.js')
 
 describe('#signOut route', () => {
-  const mockAppBaseUrl = 'https://fake-app.test'
+  const mockAppBaseUrl = 'https://example-app.test'
   const mockOidcConfig = {
-    end_session_endpoint: 'https://fake-oidc.test/oauth/logout'
+    end_session_endpoint: 'https://example-oidc.test/oauth/logout'
   }
 
   const mockToolkit = {
@@ -95,9 +95,9 @@ describe('#signOut route', () => {
 
   test('Should handle different app base URLs', async () => {
     const testUrls = [
-      'https://fake-dev.test',
-      'https://fake-staging.test',
-      'https://fake-prod.test'
+      'https://example-dev.test',
+      'https://example-staging.test',
+      'https://example-prod.test'
     ]
 
     for (const url of testUrls) {
@@ -123,9 +123,9 @@ describe('#signOut route', () => {
 
   test('Should handle different end session endpoints', async () => {
     const testEndpoints = [
-      'https://fake-oidc-1.test/oauth/logout',
-      'https://fake-oidc-2.test/oauth/logout',
-      'https://fake-provider.test/logout'
+      'https://example-oidc-1.test/oauth/logout',
+      'https://example-oidc-2.test/oauth/logout',
+      'https://example-provider.test/logout'
     ]
 
     for (const endpoint of testEndpoints) {
@@ -260,7 +260,7 @@ describe('#signOut route', () => {
   })
 
   test('Should handle URL encoding correctly', async () => {
-    const urlWithSpaces = 'https://fake-app.test/app with spaces'
+    const urlWithSpaces = 'https://example-app.test/app with spaces'
     config.get = vi.fn().mockReturnValue(urlWithSpaces)
 
     const mockRequest = {

@@ -11,9 +11,9 @@ vi.mock('#server/common/helpers/auth/get-cookie-options.js')
 
 describe('#authPlugin', () => {
   const mockOidcConfig = {
-    authorization_endpoint: 'https://fake-auth.test/oauth/authorize',
-    token_endpoint: 'https://fake-auth.test/oauth/token',
-    end_session_endpoint: 'https://fake-auth.test/oauth/logout'
+    authorization_endpoint: 'https://example-auth.test/oauth/authorize',
+    token_endpoint: 'https://example-auth.test/oauth/token',
+    end_session_endpoint: 'https://example-auth.test/oauth/logout'
   }
 
   const mockBellOptions = {
@@ -228,9 +228,9 @@ describe('#authPlugin', () => {
 
   test('Should work with different OIDC configurations', async () => {
     const differentOidcConfig = {
-      authorization_endpoint: 'https://fake-provider-2.test/auth',
-      token_endpoint: 'https://fake-provider-2.test/token',
-      end_session_endpoint: 'https://fake-provider-2.test/logout'
+      authorization_endpoint: 'https://example-provider-2.test/auth',
+      token_endpoint: 'https://example-provider-2.test/token',
+      end_session_endpoint: 'https://example-provider-2.test/logout'
     }
 
     getOidcConfig.mockResolvedValue(differentOidcConfig)

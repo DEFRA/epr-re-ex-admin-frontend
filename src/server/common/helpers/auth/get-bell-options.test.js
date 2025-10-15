@@ -9,8 +9,8 @@ vi.mock('@hapi/jwt')
 
 describe('#getBellOptions', () => {
   const mockOidcConfig = {
-    authorization_endpoint: 'https://fake-oidc.test/auth',
-    token_endpoint: 'https://fake-oidc.test/token'
+    authorization_endpoint: 'https://example-oidc.test/auth',
+    token_endpoint: 'https://example-oidc.test/token'
   }
 
   const mockConfig = {
@@ -18,14 +18,14 @@ describe('#getBellOptions', () => {
     'entraId.clientSecret': 'test-client-secret',
     'session.cookie.password': 'test-cookie-password',
     isProduction: false,
-    appBaseUrl: 'https://fake-app.test'
+    appBaseUrl: 'https://example-app.test'
   }
 
   const mockJwtPayload = {
     name: 'John Doe',
     given_name: 'John',
     family_name: 'Doe',
-    email: 'john.doe@fake-user.test'
+    email: 'john.doe@example-user.test'
   }
 
   beforeEach(() => {
@@ -90,7 +90,7 @@ describe('#getBellOptions', () => {
     const result = getBellOptions(mockOidcConfig)
     const locationUrl = result.location()
 
-    expect(locationUrl).toBe('https://fake-app.test/auth/callback')
+    expect(locationUrl).toBe('https://example-app.test/auth/callback')
     expect(config.get).toHaveBeenCalledWith('appBaseUrl')
   })
 
@@ -122,7 +122,7 @@ describe('#getBellOptions', () => {
     const partialPayload = {
       given_name: 'John',
       family_name: 'Doe',
-      email: 'john.doe@fake-user.test'
+      email: 'john.doe@example-user.test'
     }
 
     Jwt.token.decode = vi.fn().mockReturnValue({
@@ -147,7 +147,7 @@ describe('#getBellOptions', () => {
   test('Should handle displayName with only given name', () => {
     const givenNameOnlyPayload = {
       given_name: 'John',
-      email: 'john@fake-user.test'
+      email: 'john@example-user.test'
     }
 
     Jwt.token.decode = vi.fn().mockReturnValue({
@@ -172,7 +172,7 @@ describe('#getBellOptions', () => {
   test('Should handle displayName with only family name', () => {
     const familyNameOnlyPayload = {
       family_name: 'Doe',
-      email: 'doe@fake-user.test'
+      email: 'doe@example-user.test'
     }
 
     Jwt.token.decode = vi.fn().mockReturnValue({
@@ -196,7 +196,7 @@ describe('#getBellOptions', () => {
 
   test('Should handle displayName fallback to empty when no names available', () => {
     const noNamePayload = {
-      email: 'user@fake-user.test',
+      email: 'user@example-user.test',
       sub: 'user-id'
     }
 
@@ -224,7 +224,7 @@ describe('#getBellOptions', () => {
       name: 'Jane Smith',
       given_name: 'John',
       family_name: 'Doe',
-      email: 'jane@fake-user.test'
+      email: 'jane@example-user.test'
     }
 
     Jwt.token.decode = vi.fn().mockReturnValue({
@@ -248,9 +248,9 @@ describe('#getBellOptions', () => {
 
   test('Should handle different app base URLs', () => {
     const testUrls = [
-      'https://fake-dev.test',
-      'https://fake-staging.test',
-      'https://fake-prod.test'
+      'https://example-dev.test',
+      'https://example-staging.test',
+      'https://example-prod.test'
     ]
 
     testUrls.forEach((url) => {

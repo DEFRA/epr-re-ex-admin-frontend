@@ -15,7 +15,7 @@ describe('#callback route', () => {
 
   const mockProfile = {
     displayName: 'John Doe',
-    email: 'john.doe@fake-user.test',
+    email: 'john.doe@example-user.test',
     sub: 'user-id-123'
   }
 
@@ -97,7 +97,7 @@ describe('#callback route', () => {
 
   test('Should handle missing displayName in profile', async () => {
     const profileWithoutDisplayName = {
-      email: 'test@fake-user.test',
+      email: 'test@example-user.test',
       sub: 'user-id'
     }
 
@@ -309,7 +309,7 @@ describe('#callback route', () => {
   test('Should handle different profile structures', async () => {
     const complexProfile = {
       displayName: 'Jane Smith',
-      email: 'jane@fake-user.test',
+      email: 'jane@example-user.test',
       sub: 'user-456',
       given_name: 'Jane',
       family_name: 'Smith',

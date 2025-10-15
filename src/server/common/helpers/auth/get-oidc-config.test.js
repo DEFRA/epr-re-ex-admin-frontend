@@ -7,13 +7,13 @@ import { config } from '#config/config.js'
 vi.mock('#config/config.js')
 
 describe('#getOidcConfig', () => {
-  const mockOidcUrl = 'https://fake-oidc.test/.well-known/openid-configuration'
+  const mockOidcUrl = 'https://example-oidc.test/.well-known/openid-configuration'
   const mockOidcResponse = {
-    authorization_endpoint: 'https://fake-oidc.test/oauth/authorize',
-    token_endpoint: 'https://fake-oidc.test/oauth/token',
-    end_session_endpoint: 'https://fake-oidc.test/oauth/logout',
-    issuer: 'https://fake-oidc.test',
-    userinfo_endpoint: 'https://fake-graph.test/userinfo'
+    authorization_endpoint: 'https://example-oidc.test/oauth/authorize',
+    token_endpoint: 'https://example-oidc.test/oauth/token',
+    end_session_endpoint: 'https://example-oidc.test/oauth/logout',
+    issuer: 'https://example-oidc.test',
+    userinfo_endpoint: 'https://example-graph.test/userinfo'
   }
 
   beforeEach(() => {
@@ -122,7 +122,7 @@ describe('#getOidcConfig', () => {
 
   test('Should use config URL for requests', async () => {
     const customUrl =
-      'https://fake-custom-oidc.test/.well-known/openid-configuration'
+      'https://example-custom-oidc.test/.well-known/openid-configuration'
     config.get = vi.fn().mockReturnValue(customUrl)
 
     server.use(

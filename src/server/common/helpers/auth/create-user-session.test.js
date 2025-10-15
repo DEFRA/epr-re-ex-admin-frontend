@@ -22,7 +22,7 @@ describe('#createUserSession', () => {
   const mockPayload = {
     sessionId: 'test-session-id-123',
     userId: 'user-456',
-    email: 'test@fake-user.test',
+    email: 'test@example-user.test',
     roles: ['admin']
   }
 
