@@ -7,7 +7,8 @@ import { config } from '#config/config.js'
 vi.mock('#config/config.js')
 
 describe('#getOidcConfig', () => {
-  const mockOidcUrl = 'https://example-oidc.test/.well-known/openid-configuration'
+  const mockOidcUrl =
+    'https://example-oidc.test/.well-known/openid-configuration'
   const mockOidcResponse = {
     authorization_endpoint: 'https://example-oidc.test/oauth/authorize',
     token_endpoint: 'https://example-oidc.test/oauth/token',
