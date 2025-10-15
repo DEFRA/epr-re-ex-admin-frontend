@@ -1,3 +1,5 @@
+import { statusCodes } from '#server/common/constants/status-codes.js'
+
 export function handleAuthFailure(request, h) {
   const { response } = request
 
@@ -6,8 +8,8 @@ export function handleAuthFailure(request, h) {
   }
 
   // Handle 401 Unauthorized responses from cookie authentication
-  if (response.output.statusCode === 401) {
-    return h.view('views/unauthorised').code(401)
+  if (response.output.statusCode === statusCodes.unauthorised) {
+    return h.view('views/unauthorised').code(statusCodes.unauthorised)
   }
 
   return h.continue
