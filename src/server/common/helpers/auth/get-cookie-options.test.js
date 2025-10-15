@@ -92,7 +92,7 @@ describe('#getCookieOptions', () => {
       const mockUserSession = {
         sessionId: 'test-session-123',
         userId: 'user-456',
-        email: 'test@example.com'
+        email: 'test@fake-user.test'
       }
 
       getUserSession.mockResolvedValue(mockUserSession)
