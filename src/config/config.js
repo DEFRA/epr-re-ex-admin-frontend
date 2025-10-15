@@ -233,26 +233,27 @@ export const config = convict({
       doc: 'Azure Active Directory Tenant ID',
       format: String,
       env: 'ENTRA_TENANT_ID',
-      default: ''
+      default: '6f504113-6b64-43f2-ade9-242e05780007'
     },
     clientId: {
       doc: 'Azure App Client ID',
       format: String,
       env: 'ENTRA_CLIENT_ID',
-      default: ''
+      default: 'bd06da51-53f6-46d0-a9f0-ac562864c887'
     },
     clientSecret: {
       doc: 'Azure App Client Secret',
       format: String,
       sensitive: true,
       env: 'ENTRA_CLIENT_SECRET',
-      default: ''
+      default: 'test'
     },
     oidcWellKnownConfigurationUrl: {
       doc: 'OIDC .well-known configuration URL',
       format: String,
       env: 'OIDC_WELL_KNOWN_CONFIGURATION_URL',
-      default: ''
+      default:
+        'https://login.microsoftonline.com/6f504113-6b64-43f2-ade9-242e05780007/v2.0/.well-known/openid-configuration'
     }
   }
 })
