@@ -3,12 +3,15 @@ import { config } from '#config/config.js'
 
 function mockOidcCall() {
   return http.get(config.get('entraId.oidcWellKnownConfigurationUrl'), () => {
+    // TODO: This shouldn't need to be a real miscroft url
+    const baseUrl = `https://login.microsoftonline.com/${config.get('entraId.tenantId')}`
+
     return HttpResponse.json({
-      authorization_endpoint: `https://login.microsoftonline.com/${config.get('entraId.tenantId')}/oauth2/v2.0/authorize`,
-      token_endpoint: `https://login.microsoftonline.com/${config.get('entraId.tenantId')}/oauth2/v2.0/token`,
-      end_session_endpoint: `https://login.microsoftonline.com/${config.get('entraId.tenantId')}/oauth2/v2.0/logout`,
-      issuer: `https://login.microsoftonline.com/${config.get('entraId.tenantId')}/v2.0`,
-      jwks_uri: `https://login.microsoftonline.com/${config.get('entraId.tenantId')}/discovery/v2.0/keys`
+      authorization_endpoint: `${baseUrl}/oauth2/v2.0/authorize`,
+      token_endpoint: `${baseUrl}/oauth2/v2.0/token`,
+      end_session_endpoint: `${baseUrl}/oauth2/v2.0/logout`,
+      issuer: `${baseUrl}/v2.0`,
+      jwks_uri: `${baseUrl}/discovery/v2.0/keys`
     })
   })
 }
