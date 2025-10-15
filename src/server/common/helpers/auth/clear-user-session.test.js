@@ -7,7 +7,6 @@ vi.mock('#config/config.js')
 
 describe('#clearUserSession', () => {
   const mockCookieAuthClear = vi.fn()
-  const mockYarClear = vi.fn().mockResolvedValue(undefined)
   const mockSessionName = 'test-session-cache'
 
   const mockRequest = {
@@ -15,7 +14,7 @@ describe('#clearUserSession', () => {
       clear: mockCookieAuthClear
     },
     yar: {
-      clear: mockYarClear
+      clear: vi.fn().mockResolvedValue(undefined)
     }
   }
 
@@ -43,34 +42,34 @@ describe('#clearUserSession', () => {
   test('Should clear yar session with correct session name', async () => {
     await clearUserSession(mockRequest)
 
-    expect(mockYarClear).toHaveBeenCalledWith(mockSessionName)
+    expect(mockRequest.yar.clear).toHaveBeenCalledWith(mockSessionName)
   })
 
   test('Should call both cookieAuth.clear and yar.clear', async () => {
     await clearUserSession(mockRequest)
 
     expect(mockCookieAuthClear).toHaveBeenCalledTimes(1)
-    expect(mockYarClear).toHaveBeenCalledTimes(1)
+    expect(mockRequest.yar.clear).toHaveBeenCalledTimes(1)
   })
 
   test('Should handle async yar.clear behavior', async () => {
-    const delayedYarClear = vi.fn().mockImplementation(
-      () =>
-        new Promise((resolve) => {
-          setTimeout(() => resolve(undefined), 10)
-        })
-    )
-
     const requestWithDelayedYar = {
       ...mockRequest,
       yar: {
-        clear: delayedYarClear
+        clear: vi.fn().mockImplementation(
+          () =>
+            new Promise((resolve) => {
+              setTimeout(() => resolve(undefined), 10)
+            })
+        )
       }
     }
 
     await clearUserSession(requestWithDelayedYar)
 
-    expect(delayedYarClear).toHaveBeenCalledWith(mockSessionName)
+    expect(requestWithDelayedYar.yar.clear).toHaveBeenCalledWith(
+      mockSessionName
+    )
   })
 
   test('Should use session name from config variations', async () => {
@@ -79,7 +78,7 @@ describe('#clearUserSession', () => {
 
     await clearUserSession(mockRequest)
 
-    expect(mockYarClear).toHaveBeenCalledWith(customSessionName)
+    expect(mockRequest.yar.clear).toHaveBeenCalledWith(customSessionName)
   })
 
   test('Should call cookieAuth.clear before yar.clear', async () => {
@@ -87,7 +86,7 @@ describe('#clearUserSession', () => {
     mockCookieAuthClear.mockImplementation(() => {
       callOrder.push('cookieAuth.clear')
     })
-    mockYarClear.mockImplementation(() => {
+    mockRequest.yar.clear.mockImplementation(() => {
       callOrder.push('yar.clear')
       return Promise.resolve()
     })
@@ -106,7 +105,7 @@ describe('#clearUserSession', () => {
 
       await clearUserSession(mockRequest)
 
-      expect(mockYarClear).toHaveBeenCalledWith(sessionName)
+      expect(mockRequest.yar.clear).toHaveBeenCalledWith(sessionName)
     }
   })
 })
