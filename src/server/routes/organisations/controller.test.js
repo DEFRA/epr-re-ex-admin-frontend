@@ -13,8 +13,8 @@ describe('#organisationsController', () => {
   let server
 
   beforeAll(async () => {
-    server = await createServer()
     createMockOidcServer()
+    server = await createServer()
     await server.initialize()
   })
 
