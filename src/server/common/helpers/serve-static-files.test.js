@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { startServer } from './start-server.js'
 import { statusCodes } from '../constants/status-codes.js'
 import { server as mswServer } from '../../../../.vite/setup-msw.js'
@@ -5,6 +6,14 @@ import { mockOidcCall } from '#server/common/test-helpers/mock-oidc.js'
 
 describe('#serveStaticFiles', () => {
   let server
+
+  beforeAll(() => {
+    vi.stubEnv('PORT', '3098')
+  })
+
+  afterAll(() => {
+    vi.unstubAllEnvs()
+  })
 
   describe('When secure context is disabled', () => {
     beforeEach(async () => {
