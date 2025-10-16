@@ -15,9 +15,7 @@ export function getBellOptions(oidcConfig) {
 
         credentials.profile = {
           ...payload,
-          displayName:
-            payload.name ||
-            `${payload.given_name || ''} ${payload.family_name || ''}`.trim()
+          displayName: payload.name?.trim() || ''
         }
       }
     },

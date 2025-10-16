@@ -23,8 +23,6 @@ describe('#getBellOptions', () => {
 
   const mockJwtPayload = {
     name: 'John Doe',
-    given_name: 'John',
-    family_name: 'Doe',
     email: 'john.doe@example-user.test'
   }
 
@@ -118,82 +116,6 @@ describe('#getBellOptions', () => {
     })
   })
 
-  test('Should handle displayName with partial names', () => {
-    const partialPayload = {
-      given_name: 'John',
-      family_name: 'Doe',
-      email: 'john.doe@example-user.test'
-    }
-
-    Jwt.token.decode = vi.fn().mockReturnValue({
-      decoded: {
-        payload: partialPayload
-      }
-    })
-
-    const result = getBellOptions(mockOidcConfig)
-    const mockCredentials = {
-      token: 'mock-jwt-token'
-    }
-
-    result.provider.profile(mockCredentials, {}, {})
-
-    expect(mockCredentials.profile).toEqual({
-      ...partialPayload,
-      displayName: 'John Doe'
-    })
-  })
-
-  test('Should handle displayName with only given name', () => {
-    const givenNameOnlyPayload = {
-      given_name: 'John',
-      email: 'john@example-user.test'
-    }
-
-    Jwt.token.decode = vi.fn().mockReturnValue({
-      decoded: {
-        payload: givenNameOnlyPayload
-      }
-    })
-
-    const result = getBellOptions(mockOidcConfig)
-    const mockCredentials = {
-      token: 'mock-jwt-token'
-    }
-
-    result.provider.profile(mockCredentials, {}, {})
-
-    expect(mockCredentials.profile).toEqual({
-      ...givenNameOnlyPayload,
-      displayName: 'John'
-    })
-  })
-
-  test('Should handle displayName with only family name', () => {
-    const familyNameOnlyPayload = {
-      family_name: 'Doe',
-      email: 'doe@example-user.test'
-    }
-
-    Jwt.token.decode = vi.fn().mockReturnValue({
-      decoded: {
-        payload: familyNameOnlyPayload
-      }
-    })
-
-    const result = getBellOptions(mockOidcConfig)
-    const mockCredentials = {
-      token: 'mock-jwt-token'
-    }
-
-    result.provider.profile(mockCredentials, {}, {})
-
-    expect(mockCredentials.profile).toEqual({
-      ...familyNameOnlyPayload,
-      displayName: 'Doe'
-    })
-  })
-
   test('Should handle displayName fallback to empty when no names available', () => {
     const noNamePayload = {
       email: 'user@example-user.test',
@@ -216,33 +138,6 @@ describe('#getBellOptions', () => {
     expect(mockCredentials.profile).toEqual({
       ...noNamePayload,
       displayName: ''
-    })
-  })
-
-  test('Should prefer name field over constructed displayName', () => {
-    const payloadWithName = {
-      name: 'Jane Smith',
-      given_name: 'John',
-      family_name: 'Doe',
-      email: 'jane@example-user.test'
-    }
-
-    Jwt.token.decode = vi.fn().mockReturnValue({
-      decoded: {
-        payload: payloadWithName
-      }
-    })
-
-    const result = getBellOptions(mockOidcConfig)
-    const mockCredentials = {
-      token: 'mock-jwt-token'
-    }
-
-    result.provider.profile(mockCredentials, {}, {})
-
-    expect(mockCredentials.profile).toEqual({
-      ...payloadWithName,
-      displayName: 'Jane Smith'
     })
   })
 
