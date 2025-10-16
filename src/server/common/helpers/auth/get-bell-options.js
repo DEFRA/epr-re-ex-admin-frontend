@@ -12,9 +12,12 @@ export function getBellOptions(oidcConfig) {
       scope: ['openid', 'profile', 'email'],
       profile: function (credentials, _params, _get) {
         const payload = Jwt.token.decode(credentials.token).decoded.payload
+        const { name = '', sub = '', email = '' } = payload
 
         credentials.profile = {
-          ...payload,
+          name,
+          email,
+          sub,
           displayName: payload.name?.trim() || ''
         }
       }

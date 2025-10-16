@@ -21,7 +21,7 @@ export default {
     const userSession = {
       sessionId,
       displayName,
-      isAuthenticated: request.auth.isAuthenticated,
+      isAuthenticated: true,
       token
     }
 

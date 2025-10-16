@@ -112,6 +112,7 @@ describe('#getBellOptions', () => {
     expect(Jwt.token.decode).toHaveBeenCalledWith('mock-jwt-token')
     expect(mockCredentials.profile).toEqual({
       ...mockJwtPayload,
+      sub: '',
       displayName: 'John Doe'
     })
   })
@@ -137,6 +138,7 @@ describe('#getBellOptions', () => {
 
     expect(mockCredentials.profile).toEqual({
       ...noNamePayload,
+      name: '',
       displayName: ''
     })
   })
