@@ -22,8 +22,7 @@ export default {
       sessionId,
       displayName,
       isAuthenticated: request.auth.isAuthenticated,
-      token,
-      refreshToken: request.auth.credentials.refreshToken
+      token
     }
 
     await createUserSession(request, userSession)

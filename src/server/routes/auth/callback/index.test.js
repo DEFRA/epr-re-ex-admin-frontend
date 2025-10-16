@@ -20,7 +20,6 @@ describe('#callback route', () => {
   }
 
   const mockToken = 'mock-jwt-token'
-  const mockRefreshToken = 'mock-refresh-token'
   const mockSessionId = 'generated-session-id-456'
 
   beforeEach(() => {
@@ -75,8 +74,7 @@ describe('#callback route', () => {
         isAuthenticated: true,
         credentials: {
           profile: mockProfile,
-          token: mockToken,
-          refreshToken: mockRefreshToken
+          token: mockToken
         }
       }
     }
@@ -88,8 +86,7 @@ describe('#callback route', () => {
       sessionId: mockSessionId,
       displayName: mockProfile.displayName,
       isAuthenticated: true,
-      token: mockToken,
-      refreshToken: mockRefreshToken
+      token: mockToken
     })
     expect(mockToolkit.redirect).toHaveBeenCalledWith('/')
     expect(result).toBe('redirect-result')
@@ -106,8 +103,7 @@ describe('#callback route', () => {
         isAuthenticated: true,
         credentials: {
           profile: profileWithoutDisplayName,
-          token: mockToken,
-          refreshToken: mockRefreshToken
+          token: mockToken
         }
       }
     }
@@ -118,8 +114,7 @@ describe('#callback route', () => {
       sessionId: mockSessionId,
       displayName: '',
       isAuthenticated: true,
-      token: mockToken,
-      refreshToken: mockRefreshToken
+      token: mockToken
     })
   })
 
@@ -129,8 +124,7 @@ describe('#callback route', () => {
         isAuthenticated: true,
         credentials: {
           profile: {},
-          token: mockToken,
-          refreshToken: mockRefreshToken
+          token: mockToken
         }
       }
     }
@@ -141,8 +135,7 @@ describe('#callback route', () => {
       sessionId: mockSessionId,
       displayName: '',
       isAuthenticated: true,
-      token: mockToken,
-      refreshToken: mockRefreshToken
+      token: mockToken
     })
   })
 
@@ -158,8 +151,7 @@ describe('#callback route', () => {
         isAuthenticated: true,
         credentials: {
           profile: mockProfile,
-          token: mockToken,
-          refreshToken: mockRefreshToken
+          token: mockToken
         }
       }
     }
@@ -188,8 +180,7 @@ describe('#callback route', () => {
         isAuthenticated: true,
         credentials: {
           profile: mockProfile,
-          token: mockToken,
-          refreshToken: mockRefreshToken
+          token: mockToken
         }
       }
     }
@@ -213,8 +204,7 @@ describe('#callback route', () => {
         isAuthenticated: true,
         credentials: {
           profile: mockProfile,
-          token: mockToken,
-          refreshToken: mockRefreshToken
+          token: mockToken
         }
       }
     }
@@ -233,8 +223,7 @@ describe('#callback route', () => {
         isAuthenticated: true,
         credentials: {
           profile: mockProfile,
-          token: mockToken,
-          refreshToken: mockRefreshToken
+          token: mockToken
         }
       }
     }
@@ -245,8 +234,7 @@ describe('#callback route', () => {
       sessionId: mockSessionId,
       displayName: mockProfile.displayName,
       isAuthenticated: true,
-      token: mockToken,
-      refreshToken: mockRefreshToken
+      token: mockToken
     }
 
     expect(createUserSession).toHaveBeenCalledWith(
@@ -273,8 +261,7 @@ describe('#callback route', () => {
       auth: {
         isAuthenticated: true,
         credentials: {
-          token: mockToken,
-          refreshToken: mockRefreshToken
+          token: mockToken
         }
       }
     }
@@ -289,8 +276,7 @@ describe('#callback route', () => {
       auth: {
         isAuthenticated: true,
         credentials: {
-          profile: mockProfile,
-          refreshToken: mockRefreshToken
+          profile: mockProfile
         }
       }
     }
@@ -300,8 +286,7 @@ describe('#callback route', () => {
     expect(createUserSession).toHaveBeenCalledWith(
       mockRequest,
       expect.objectContaining({
-        token: undefined,
-        refreshToken: mockRefreshToken
+        token: undefined
       })
     )
   })
@@ -321,8 +306,7 @@ describe('#callback route', () => {
         isAuthenticated: true,
         credentials: {
           profile: complexProfile,
-          token: mockToken,
-          refreshToken: mockRefreshToken
+          token: mockToken
         }
       }
     }
@@ -333,8 +317,7 @@ describe('#callback route', () => {
       sessionId: mockSessionId,
       displayName: complexProfile.displayName,
       isAuthenticated: true,
-      token: mockToken,
-      refreshToken: mockRefreshToken
+      token: mockToken
     })
   })
 
@@ -360,8 +343,7 @@ describe('#callback route', () => {
         isAuthenticated: true,
         credentials: {
           profile: mockProfile,
-          token: mockToken,
-          refreshToken: mockRefreshToken
+          token: mockToken
         }
       }
     }
