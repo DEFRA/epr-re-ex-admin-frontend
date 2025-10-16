@@ -1,8 +1,7 @@
 import { vi } from 'vitest'
 import { startServer } from './start-server.js'
 import { statusCodes } from '../constants/status-codes.js'
-import { server as mswServer } from '../../../../.vite/setup-msw.js'
-import { mockOidcCall } from '#server/common/test-helpers/mock-oidc.js'
+import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 
 describe('#serveStaticFiles', () => {
   let server
@@ -17,7 +16,7 @@ describe('#serveStaticFiles', () => {
 
   describe('When secure context is disabled', () => {
     beforeEach(async () => {
-      mswServer.use(mockOidcCall())
+      createMockOidcServer()
       server = await startServer()
     })
 
