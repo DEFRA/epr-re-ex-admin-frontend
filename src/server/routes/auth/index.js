@@ -6,6 +6,11 @@ import { fetchWellknown } from './fetch-well-known.js'
 import { config } from '../../../config/config.js'
 import escape from 'lodash/escape.js'
 import { randomUUID } from 'node:crypto'
+import Wreck from '@hapi/wreck'
+import jwkToPem from 'jwk-to-pem'
+
+const signInStrategy = 'aad'
+// const signInStrategy = 'defra-id'
 
 export default {
   name: 'auth',
@@ -20,18 +25,27 @@ export default {
     await server.register([bell, cookie])
 
     server.auth.strategy('aad', 'bell', await aadBellOptions())
+    server.auth.strategy('defra-id', 'bell', await defraIdBellOptions())
     server.auth.strategy('session', 'cookie', await cookieOptions())
 
     server.route([
       {
         method: 'GET',
         path: '/auth/callback',
+        options: {
+          auth: 'aad',
+          response: {
+            failAction: () => Boom.boomify(Boom.unauthorized())
+          }
+        },
         handler: async function GET(request, h) {
           const sessionId = randomUUID()
 
           const { profile, refreshToken, token, expiresIn } =
             request.auth.credentials
-          // TODO verify token (see FCP example)
+
+          // TODO enable verification once access token returned from AAD is fixed (ie not a Microsoft Graph specific key)
+          // await verifyToken(token, (await fetchWellknown(config.get('oidc.azureAD.wellKnownUrl'))).jwks_uri)
 
           // Store token and all useful data in the session cache
           await createUserSession(request, sessionId, {
@@ -57,12 +71,53 @@ export default {
               `<html><head><meta http-equiv="refresh" content="0;URL='${escape('/')}'"></head><body></body></html>`
             )
             .takeover()
-        },
+        }
+      },
+      {
+        method: 'GET',
+        path: '/auth/sign-in-oidc',
         options: {
-          auth: 'aad',
+          auth: 'defra-id',
           response: {
             failAction: () => Boom.boomify(Boom.unauthorized())
           }
+        },
+        handler: async function GET(request, h) {
+          const sessionId = randomUUID()
+
+          const { profile, refreshToken, token, expiresIn } =
+            request.auth.credentials
+
+          await verifyToken(
+            token,
+            (await fetchWellknown(config.get('oidc.defraId.wellKnownUrl')))
+              .jwks_uri
+          )
+
+          // Store token and all useful data in the session cache
+          await createUserSession(request, sessionId, {
+            isAuthenticated: true,
+            id: profile.id,
+            email: profile.email,
+            displayName: profile.displayName,
+            scope: profile.scope,
+            token,
+            refreshToken,
+            expiresIn
+          })
+
+          // store session ID in cookie
+          // from fcp example - the request is automagically decorated with cookieAuth by @hapi/cookie (see https://hapi.dev/module/cookie/api/?v=12.0.1)
+          request.cookieAuth.set({ sessionId })
+
+          // TODO redirect to page user originally tried to access (see FCP example)
+          // TODO ensure safe redirect (from FCP example)
+          // redirectWithRefresh (from CDP example)
+          return h
+            .response(
+              `<html><head><meta http-equiv="refresh" content="0;URL='${escape('/')}'"></head><body></body></html>`
+            )
+            .takeover()
         }
       },
       {
@@ -72,7 +127,7 @@ export default {
           return h.redirect('/')
         },
         options: {
-          auth: 'aad'
+          auth: signInStrategy
         }
       },
       {
@@ -87,7 +142,13 @@ export default {
           // from fcp example - the request is automagically decorated with cookieAuth by @hapi/cookie (see https://hapi.dev/module/cookie/api/?v=12.0.1)
           request.cookieAuth.clear()
 
-          const { end_session_endpoint: aadLogoutUrl } = await fetchWellknown()
+          const wellKnownUrl = {
+            aad: config.get('oidc.azureAD.wellKnownUrl'),
+            'defra-id': config.get('oidc.defraId.wellKnownUrl')
+          }[signInStrategy]
+
+          const { end_session_endpoint: aadLogoutUrl } =
+            await fetchWellknown(wellKnownUrl)
 
           const logoutUrl = encodeURI(
             `${aadLogoutUrl}?post_logout_redirect_uri=${config.get('appBaseUrl')}/`
@@ -104,7 +165,7 @@ async function aadBellOptions() {
   const {
     authorization_endpoint: aadAuthEndpoint,
     token_endpoint: aadTokenEndpoint
-  } = await fetchWellknown()
+  } = await fetchWellknown(config.get('oidc.azureAD.wellKnownUrl'))
 
   return {
     location: (request) => {
@@ -121,7 +182,18 @@ async function aadBellOptions() {
       useParamsAuth: true,
       auth: aadAuthEndpoint,
       token: aadTokenEndpoint,
-      scope: ['openid', 'profile', 'email'],
+      scope: [
+        'openid',
+        'profile',
+        'email',
+        'offline_access' // adding this makes the response include a refreshToken
+        /*
+         * TODO include this api://... scope (once its been set up in Entra ID)
+         * - this is needed to make the aud in the returned token be our clientId
+         * (without this Entra ID returns a token where the audience is Microsoft Graph API)
+         */
+        // `api://${config.get('oidc.azureAD.clientId')}/.default`
+      ],
       profile: async function (credentials, _params, get) {
         const decodedPayload = jwt.token.decode(credentials.token).decoded
           .payload
@@ -129,8 +201,7 @@ async function aadBellOptions() {
         credentials.profile = {
           id: decodedPayload.oid,
           displayName: decodedPayload.name,
-          email: decodedPayload.upn ?? decodedPayload.preferred_username,
-          scope: ['service_maintainer'] // TODO populate this by looking up from config
+          email: decodedPayload.upn ?? decodedPayload.preferred_username
         }
       }
     },
@@ -143,6 +214,52 @@ async function aadBellOptions() {
     ttl: config.get('session.cookie.ttl'),
     config: {
       tenant: config.get('oidc.azureAD.tenantId')
+    }
+  }
+}
+
+async function defraIdBellOptions() {
+  const {
+    authorization_endpoint: aadAuthEndpoint,
+    token_endpoint: aadTokenEndpoint
+  } = await fetchWellknown(config.get('oidc.defraId.wellKnownUrl'))
+
+  return {
+    provider: {
+      name: 'defra-id',
+      protocol: 'oauth2',
+      useParamsAuth: true,
+      auth: aadAuthEndpoint,
+      token: aadTokenEndpoint,
+      scope: ['openid', 'offline_access', config.get('oidc.defraId.clientId')],
+      profile: function (credentials, _params, _get) {
+        const decodedPayload = jwt.token.decode(credentials.token).decoded
+          .payload
+
+        // note decodedPayload parsed differently for AAD vs Defra ID token
+        credentials.profile = {
+          id: decodedPayload.contactId,
+          displayName: `${decodedPayload.firstName} ${decodedPayload.lastName}`,
+          email: decodedPayload.email
+        }
+      }
+    },
+    clientId: config.get('oidc.defraId.clientId'),
+    clientSecret: config.get('oidc.defraId.clientSecret'),
+    password: config.get('session.cookie.password'),
+    isSecure: config.get('session.cookie.secure'),
+    ttl: config.get('session.cookie.ttl'),
+    location: function (request) {
+      // has to be port 3000 to match whats configured in Defra ID for this client
+      return `${config.get('appBaseUrl')}/auth/sign-in-oidc`
+    },
+    providerParams: function (request) {
+      const params = {
+        serviceId: config.get('oidc.defraId.serviceId'),
+        p: config.get('oidc.defraId.policy'),
+        response_mode: 'query'
+      }
+      return params
     }
   }
 }
@@ -184,8 +301,23 @@ async function createUserSession(request, sessionId, payload) {
 async function clearUserSession(request) {
   const sessionId = request.state?.userSessionCookie?.sessionId
   if (sessionId) {
-    // TODO abstract clear user session data in cache
-    // Clear the session cache
     await request.server.app.cache.drop(sessionId)
   }
+}
+
+async function verifyToken(token, jwksUri) {
+  const { payload } = await Wreck.get(jwksUri, {
+    json: true
+  })
+  const { keys } = payload
+
+  const decoded = jwt.token.decode(token)
+
+  const key = keys.find((k) => k.kid === decoded.decoded.header.kid)
+
+  // Convert the JSON Web Key (JWK) to a PEM-encoded public key so that it can be used to verify the token
+  const pem = jwkToPem(key)
+
+  // Verify the (decoded) token is signed with the appropriate key by verifying the signature using the public key
+  jwt.token.verify(decoded, { key: pem, algorithm: 'RS256' })
 }

@@ -1,4 +1,5 @@
 {% extends 'layouts/page.njk' %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 
 {% block content %}
   <div class="govuk-grid-row">
@@ -7,6 +8,35 @@
         <p>
           If you are seeing this you are signed in!
         </p>
+        <h2>Token data determined by backend</h2>
+        {{ govukSummaryList({
+          rows: [
+            {
+              key: {
+                text: "ID"
+              },
+              value: {
+                text: data.id
+              }
+            },
+            {
+              key: {
+                text: "Email"
+              },
+              value: {
+                text: data.email
+              }
+            },
+            {
+              key: {
+                text: "Token issuer"
+              },
+              value: {
+                text: data.issuer
+              }
+            }
+          ]
+        }) }}
       </div>
     </div>
   </div>

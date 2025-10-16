@@ -40,7 +40,7 @@ export const config = convict({
   port: {
     doc: 'The port to bind.',
     format: 'port',
-    default: 3002,
+    default: 3000,
     env: 'PORT'
   },
   staticCacheTimeout: {
@@ -90,7 +90,7 @@ export const config = convict({
     level: {
       doc: 'Logging level',
       format: ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'],
-      default: 'info',
+      default: 'warn',
       env: 'LOG_LEVEL'
     },
     format: {
@@ -149,12 +149,45 @@ export const config = convict({
       },
       get wellKnownUrl() {
         return {
-          doc: 'OIDC .well-known configuration URL. Defaults to the stub',
+          doc: 'Azure AD OIDC .well-known configuration URL',
           format: String,
-          env: 'OIDC_WELL_KNOWN_URL',
-          // default: `http://cdp.127.0.0.1.sslip.io:3939/${this.azureTenantId.default}/v2.0/.well-known/openid-configuration`
-          default: `https://login.microsoftonline.com/${this.tenantId.default}/v2.0/.well-known/openid-configuration`
+          // default: `http://cdp.127.0.0.1.sslip.io:3939/${this.azureTenantId.default}/v2.0/.well-known/openid-configuration`,
+          default: `https://login.microsoftonline.com/${this.tenantId.default}/v2.0/.well-known/openid-configuration`,
+          env: 'AZURE_OIDC_WELL_KNOWN_URL'
         }
+      }
+    },
+    defraId: {
+      clientId: {
+        doc: 'The Defra Identity client ID.',
+        format: String,
+        default: 'test-value',
+        env: 'DEFRA_ID_CLIENT_ID'
+      },
+      clientSecret: {
+        doc: 'The Defra Identity client secret.',
+        format: String,
+        default: 'test-value',
+        env: 'DEFRA_ID_CLIENT_SECRET'
+      },
+      serviceId: {
+        doc: 'The Defra Identity service ID.',
+        format: String,
+        default: 'test-value',
+        env: 'DEFRA_ID_SERVICE_ID'
+      },
+      policy: {
+        doc: 'The Defra Identity policy.',
+        format: String,
+        default: 'test-value',
+        env: 'DEFRA_ID_POLICY'
+      },
+      wellKnownUrl: {
+        doc: 'The Defra Identity well known URL.',
+        format: String,
+        default:
+          'https://login.microsoftonline.com/6f504113-6b64-43f2-ade9-242e05780007/v2.0/.well-known/openid-configuration', // TODO Replace with Defra ID well known URL
+        env: 'DEFRA_ID_OIDC_WELL_KNOWN_URL'
       }
     }
   },
