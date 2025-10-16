@@ -7,7 +7,7 @@ export const sessionCache = {
   plugin: yar,
   options: {
     name: sessionConfig.cache.name,
-    maxCookieSize: 0, // This forces the cookie to be stored server-side (only the session id is stored in a client cookie)
+    maxCookieSize: 0, // This forces the session data to be stored server-side (only the session id is stored in a client cookie)
     cache: {
       cache: sessionConfig.cache.name,
       expiresIn: sessionConfig.cache.ttl
