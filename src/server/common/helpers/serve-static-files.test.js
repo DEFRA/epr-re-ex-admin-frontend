@@ -1,18 +1,24 @@
+import { vi } from 'vitest'
 import { startServer } from './start-server.js'
 import { statusCodes } from '../constants/status-codes.js'
+import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 
 describe('#serveStaticFiles', () => {
   let server
 
+  beforeAll(async () => {
+    vi.stubEnv('PORT', '3098')
+    vi.resetModules()
+    createMockOidcServer()
+    server = await startServer()
+  })
+
+  afterAll(async () => {
+    await server.stop({ timeout: 0 })
+    vi.unstubAllEnvs()
+  })
+
   describe('When secure context is disabled', () => {
-    beforeEach(async () => {
-      server = await startServer()
-    })
-
-    afterEach(async () => {
-      await server.stop({ timeout: 0 })
-    })
-
     test('Should serve favicon as expected', async () => {
       const { statusCode } = await server.inject({
         method: 'GET',

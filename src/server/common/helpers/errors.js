@@ -24,7 +24,6 @@ export function catchAll(request, h) {
     template = '404'
   }
 
-  // TODO: Think what other types of errors we may want to log
   if (statusCode >= statusCodes.internalServerError) {
     request.log(['error'], {
       statusCode,

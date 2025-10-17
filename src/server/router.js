@@ -3,6 +3,8 @@ import inert from '@hapi/inert'
 import { home } from './routes/home/index.js'
 import { organisations } from './routes/organisations/index.js'
 import { health } from './routes/health/index.js'
+import { auth } from './routes/auth/index.js'
+
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
 
 export const router = {
@@ -11,13 +13,12 @@ export const router = {
     async register(server) {
       await server.register([inert])
 
-      // Health-check route. Used by platform to check if service is running, do not remove!
       await server.register([health])
 
-      // Application specific routes, add your own routes here
-      await server.register([home, organisations])
+      // These are the routes containing our application logic
+      // Some routes contain nested routes
+      await server.register([home, organisations, auth])
 
-      // Static assets
       await server.register([serveStaticFiles])
     }
   }

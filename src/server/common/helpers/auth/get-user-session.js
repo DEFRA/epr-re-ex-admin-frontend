@@ -1,24 +1,12 @@
-/**
- * @typedef {object} UserSession
- * @property {string} id
- * @property {string} email
- * @property {string} displayName
- * @property {boolean} isAuthenticated
- */
+import { config } from '#config/config.js'
 
-const hardcodedUser = {
-  id: '1111',
-  email: 'john.doe@example.com',
-  displayName: 'John Doe',
-  isAuthenticated: true
+export async function getUserSession(request) {
+  try {
+    const sessionCookieName = config.get('session.cache.name')
+    const userSession = await request.yar.get(sessionCookieName)
+
+    return userSession
+  } catch {
+    return null
+  }
 }
-
-/**
- * Get the user session from the cache
- * @returns {Promise<UserSession | null>}
- */
-async function getUserSession() {
-  return hardcodedUser
-}
-
-export { getUserSession }

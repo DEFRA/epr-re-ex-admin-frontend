@@ -20,7 +20,6 @@ const formatters = {
 export const loggerOptions = {
   enabled: logConfig.enabled,
   ignorePaths: ['/health'],
-  // TODO: We should verify we are not leaking information in our logs and, if necessary, tweak our log configuration in config.js
   redact: {
     paths: logConfig.redact,
     remove: true
