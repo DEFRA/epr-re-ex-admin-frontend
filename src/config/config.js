@@ -262,7 +262,7 @@ export const config = convict({
     format: String,
     default: 'http://localhost:3001/v1',
     env: 'EPR_BACKEND_URL'
-  },
+  }
 })
 
 config.validate({ allowed: 'strict' })

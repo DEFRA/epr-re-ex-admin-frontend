@@ -1,7 +1,9 @@
-import { config } from "#config/config.js";
+import { config } from '#config/config.js'
 
 const getLatestStatus = (statusHistory) => {
-  const orderedStatus = statusHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+  const orderedStatus = statusHistory.sort(
+    (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
+  )
 
   return orderedStatus[0]
 }
@@ -18,12 +20,18 @@ export const organisationsController = {
 
     const data = await response.json()
 
-    const  organisations = data.map(({ orgId, statusHistory, companyDetails: { name, registrationNumber} }) => ({
-      orgId,
-      name,
-      registrationNumber,
-      status: getLatestStatus(statusHistory).status
-    }));
+    const organisations = data.map(
+      ({
+        orgId,
+        statusHistory,
+        companyDetails: { name, registrationNumber }
+      }) => ({
+        orgId,
+        name,
+        registrationNumber,
+        status: getLatestStatus(statusHistory).status
+      })
+    )
 
     return h.view('routes/organisations/index', {
       pageTitle: 'Organisations',

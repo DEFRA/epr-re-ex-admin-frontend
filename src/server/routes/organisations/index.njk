@@ -8,10 +8,6 @@
     <div class="govuk-grid-column-two-thirds">
       <div class="govuk-body" data-testid="app-page-body">
 
-{{ govukInsetText({
-  text: "This is the organisations protected page"
-}) }}
-
 {# Render a table when organisations data is provided, otherwise show a message #}
 {% if organisations and organisations.length %}
   {% set tableRows = [] %}
@@ -25,9 +21,7 @@
     {% set statusCell = { html: govukTag({
       text: org.status
     }) } %}
-
-    {% set actionHtml = '<a class="govuk-link" href="/organisations/' ~ orgId ~ '">Edit</a>' %}
-    {% set actionCell = { html: actionHtml } %}
+    {% set actionCell = { html:  '<a class="govuk-link" href="/organisations/' ~ orgId ~ '">Edit</a>' } %}
 
     {% set row = [ nameCell, orgIdCell, regCell, statusCell, actionCell ] %}
     {% set tableRows = tableRows.concat([row]) %}
