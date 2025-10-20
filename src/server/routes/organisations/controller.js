@@ -7,7 +7,7 @@ const getLatestStatus = (statusHistory) => {
     return {}
   }
 
-  const orderedStatus = statusHistory.sort(
+  const orderedStatus = statusHistory.toSorted(
     (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
   )
 

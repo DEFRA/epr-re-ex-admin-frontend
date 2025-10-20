@@ -37,13 +37,4 @@ describe('#handleBackendError', () => {
     expect(h.view).toHaveBeenCalledWith('500')
     expect(result).toBe(viewReturn)
   })
-
-  test('Should do nothing (return undefined) when response is OK', async () => {
-    const response = { status: statusCodes.ok, ok: true }
-
-    const result = await handleBackendError(h, response)
-
-    expect(h.view).not.toHaveBeenCalled()
-    expect(result).toBeUndefined()
-  })
 })

@@ -16,7 +16,5 @@ export const handleBackendError = async (h, response) => {
     return h.view('unauthorised')
   }
 
-  if (!response?.ok) {
-    return h.view('500')
-  }
+  return h.view('500')
 }
