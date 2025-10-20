@@ -61,6 +61,9 @@ describe('#organisationsController', () => {
       ]
 
       const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
         json: async () => mockOrganisations
       })
 
@@ -106,6 +109,113 @@ describe('#organisationsController', () => {
       expect(fetchMock).toHaveBeenCalledWith(
         expect.stringMatching(/\/organisations$/)
       )
+    })
+
+    test('Should show 500 error page when backend returns a non-OK response', async () => {
+      getUserSession.mockReturnValue(mockUserSession)
+
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 502,
+        statusText: 'Bad Gateway',
+        json: async () => ({ message: 'Upstream error' })
+      })
+
+      vi.stubGlobal('fetch', fetchMock)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/organisations',
+        auth: {
+          strategy: 'session',
+          credentials: mockUserSession
+        }
+      })
+
+      expect(result).toEqual(
+        expect.stringContaining('Sorry, there is a problem with the service')
+      )
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+    })
+
+    test('Should show 500 error page when backend fetch throws', async () => {
+      getUserSession.mockReturnValue(mockUserSession)
+
+      const fetchMock = vi.fn().mockRejectedValue(new Error('network down'))
+
+      vi.stubGlobal('fetch', fetchMock)
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/organisations',
+        auth: {
+          strategy: 'session',
+          credentials: mockUserSession
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toEqual(
+        expect.stringContaining('Sorry, there is a problem with the service')
+      )
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+    })
+
+    test('Should render without status when statusHistory is empty', async () => {
+      // Mock an authenticated session
+      getUserSession.mockReturnValue(mockUserSession)
+
+      // Organisation with empty statusHistory
+      const mockOrganisations = [
+        {
+          orgId: 'org-2',
+          statusHistory: [],
+          companyDetails: {
+            name: 'Beta Corp',
+            registrationNumber: '87654321'
+          }
+        }
+      ]
+
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: async () => mockOrganisations
+      })
+
+      vi.stubGlobal('fetch', fetchMock)
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/organisations',
+        auth: {
+          strategy: 'session',
+          credentials: mockUserSession
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      // Page and table basics
+      expect(result).toEqual(expect.stringContaining('Organisations'))
+      expect(result).toEqual(expect.stringContaining('Name'))
+      expect(result).toEqual(expect.stringContaining('Organisation ID'))
+      expect(result).toEqual(expect.stringContaining('Registration Number'))
+      expect(result).toEqual(expect.stringContaining('Status'))
+
+      // Row content excluding status value
+      expect(result).toEqual(expect.stringContaining('Beta Corp'))
+      expect(result).toEqual(expect.stringContaining('org-2'))
+      expect(result).toEqual(expect.stringContaining('87654321'))
+
+      // Ensure status text is not the string 'undefined'
+      expect(result).not.toEqual(expect.stringContaining('undefined'))
+
+      // govukTag should still be present but with empty content
+      expect(result).toEqual(expect.stringContaining('govuk-tag'))
+
+      expect(fetchMock).toHaveBeenCalledTimes(1)
     })
   })
 })

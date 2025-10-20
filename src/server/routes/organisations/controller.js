@@ -1,6 +1,12 @@
 import { config } from '#config/config.js'
+import { handleBackendError } from '#server/common/helpers/handleBackendError.js'
 
 const getLatestStatus = (statusHistory) => {
+  // Handle missing or empty status history gracefully
+  if (!Array.isArray(statusHistory) || statusHistory.length === 0) {
+    return {}
+  }
+
   const orderedStatus = statusHistory.sort(
     (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
   )
@@ -18,9 +24,13 @@ export const organisationsController = {
 
     const response = await fetch(`${eprBackendUrl}/organisations`)
 
+    if (!response?.ok) {
+      return handleBackendError(h, response)
+    }
+
     const data = await response.json()
 
-    const organisations = data.map(
+    const organisations = (Array.isArray(data) ? data : []).map(
       ({
         orgId,
         statusHistory,
@@ -29,7 +39,7 @@ export const organisationsController = {
         orgId,
         name,
         registrationNumber,
-        status: getLatestStatus(statusHistory).status
+        status: getLatestStatus(statusHistory)?.status
       })
     )
 
