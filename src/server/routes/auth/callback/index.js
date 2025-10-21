@@ -1,5 +1,6 @@
 import { createUserSession } from '#server/common/helpers/auth/create-user-session.js'
 import { randomUUID } from 'node:crypto'
+import { verifyToken } from '#server/common/helpers/auth/verify-token.js'
 
 export default {
   method: 'GET',
@@ -13,6 +14,8 @@ export default {
     }
 
     const { profile, token } = request.auth.credentials
+
+    verifyToken(token)
 
     const { displayName = '' } = profile
 
