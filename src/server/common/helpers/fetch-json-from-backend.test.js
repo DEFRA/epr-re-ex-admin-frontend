@@ -8,7 +8,7 @@ import {
   expect
 } from 'vitest'
 
-import { fetchJsonFromBackend } from './fetchJsonFromBackend.js'
+import { fetchJsonFromBackend } from './fetch-json-from-backend.js'
 import { config } from '#config/config.js'
 
 const mockLoggerError = vi.fn()

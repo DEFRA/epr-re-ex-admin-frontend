@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetchJsonFromBackend.js'
+import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
 const getLatestStatus = (statusHistory) => {
   // Handle missing or empty status history gracefully
