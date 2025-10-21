@@ -214,5 +214,37 @@ describe('#organisationsController', () => {
 
       expect(fetchMock).toHaveBeenCalledTimes(1)
     })
+
+    test('Should display message when backend returns non array', async () => {
+      // Mock an authenticated session
+      getUserSession.mockReturnValue(mockUserSession)
+
+      // Backend returns empty list
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: async () => ({})
+      })
+
+      vi.stubGlobal('fetch', fetchMock)
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/organisations',
+        auth: {
+          strategy: 'session',
+          credentials: mockUserSession
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      // Should render the inset text message instead of a table
+      expect(result).toEqual(expect.stringContaining('No organisations found.'))
+      expect(result).not.toEqual(expect.stringContaining('Organisation ID'))
+
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+    })
   })
 })
