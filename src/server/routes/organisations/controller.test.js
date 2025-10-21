@@ -142,7 +142,7 @@ describe('#organisationsController', () => {
 
       vi.stubGlobal('fetch', fetchMock)
 
-      const { result, statusCode } = await server.inject({
+      const { result } = await server.inject({
         method: 'GET',
         url: '/organisations',
         auth: {
