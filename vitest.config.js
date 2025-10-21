@@ -6,6 +6,8 @@ export default defineConfig({
     environment: 'node',
     clearMocks: true,
     setupFiles: ['.vite/setup-files.js', '.vite/setup-msw.js'],
+    hookTimeout: 60000,
+    fileParallelism: !process.env.CI,
     coverage: {
       provider: 'v8',
       reportsDirectory: './coverage',
@@ -17,7 +19,13 @@ export default defineConfig({
         'coverage',
         'postcss.config.js',
         'stylelint.config.js'
-      ]
+      ],
+      thresholds: {
+        lines: 100,
+        statements: 100,
+        branches: 100,
+        functions: 100
+      }
     }
   }
 })
