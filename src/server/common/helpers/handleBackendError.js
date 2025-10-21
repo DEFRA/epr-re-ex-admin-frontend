@@ -9,9 +9,9 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
  *
  * @param h
  * @param response
- * @returns {Promise<*>}
+ * @return {Object} Hapi view response
  */
-export const handleBackendError = async (h, response) => {
+export const handleBackendError = (h, response) => {
   if (response.status === statusCodes.unauthorised) {
     return h.view('unauthorised')
   }

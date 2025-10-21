@@ -22,7 +22,12 @@ export const organisationsController = {
   async handler(_request, h) {
     const eprBackendUrl = config.get('eprBackendUrl')
 
-    const response = await fetch(`${eprBackendUrl}/organisations`)
+    let response
+    try {
+      response = await fetch(`${eprBackendUrl}/organisations`)
+    } catch (_e) {
+      return h.view('500')
+    }
 
     if (!response?.ok) {
       return handleBackendError(h, response)
