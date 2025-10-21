@@ -4,6 +4,11 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
+import {
+  http,
+  server as mswServer,
+  HttpResponse
+} from '../../../../.vite/setup-msw.js'
 
 vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
   getUserSession: vi.fn().mockReturnValue(null)
@@ -62,14 +67,16 @@ describe('#organisationsController', () => {
         }
       ]
 
-      const fetchMock = vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        statusText: 'OK',
-        json: async () => mockOrganisations
-      })
+      const getOrganisationsHandler = http.get(
+        'http://localhost:3001/v1/organisations',
+        () => {
+          return HttpResponse.json(mockOrganisations)
+        }
+      )
 
-      vi.stubGlobal('fetch', fetchMock)
+      mswServer.use(getOrganisationsHandler)
+      const requestSpy = vi.fn()
+      mswServer.events.on('request:start', requestSpy)
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -101,12 +108,7 @@ describe('#organisationsController', () => {
       expect(result).toEqual(expect.stringContaining('/organisations/org-1'))
       expect(result).toEqual(expect.stringContaining('Edit'))
 
-      // Ensure backend was called for organisations
-      expect(fetchMock).toHaveBeenCalledTimes(1)
-      expect(fetchMock).toHaveBeenCalledWith(
-        expect.stringMatching(/\/organisations$/),
-        undefined
-      )
+      expect(requestSpy).toHaveBeenCalledTimes(1)
     })
 
     test('Should show 500 error page when backend returns a non-OK response', async () => {
