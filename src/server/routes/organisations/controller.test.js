@@ -104,7 +104,8 @@ describe('#organisationsController', () => {
       // Ensure backend was called for organisations
       expect(fetchMock).toHaveBeenCalledTimes(1)
       expect(fetchMock).toHaveBeenCalledWith(
-        expect.stringMatching(/\/organisations$/)
+        expect.stringMatching(/\/organisations$/),
+        undefined
       )
     })
 

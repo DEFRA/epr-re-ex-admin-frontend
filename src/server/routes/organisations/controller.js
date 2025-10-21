@@ -1,5 +1,4 @@
-import { config } from '#config/config.js'
-import { handleBackendError } from '#server/common/helpers/handleBackendError.js'
+import { fetchJsonFromBackend } from '#server/common/helpers/fetchJsonFromBackend.js'
 
 const getLatestStatus = (statusHistory) => {
   // Handle missing or empty status history gracefully
@@ -20,20 +19,11 @@ const getLatestStatus = (statusHistory) => {
  */
 export const organisationsController = {
   async handler(_request, h) {
-    const eprBackendUrl = config.get('eprBackendUrl')
+    const { data, errorView } = await fetchJsonFromBackend(`/organisations`)
 
-    let response
-    try {
-      response = await fetch(`${eprBackendUrl}/organisations`)
-    } catch (_e) {
-      return h.view('500')
+    if (errorView) {
+      return h.view(errorView)
     }
-
-    if (!response?.ok) {
-      return handleBackendError(h, response)
-    }
-
-    const data = await response.json()
 
     const organisations = (Array.isArray(data) ? data : []).map(
       ({
