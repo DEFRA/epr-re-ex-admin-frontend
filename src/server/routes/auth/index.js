@@ -44,8 +44,11 @@ export default {
           const { profile, refreshToken, token, expiresIn } =
             request.auth.credentials
 
-          // TODO enable verification once access token returned from AAD is fixed (ie not a Microsoft Graph specific key)
-          // await verifyToken(token, (await fetchWellknown(config.get('oidc.azureAD.wellKnownUrl'))).jwks_uri)
+          await verifyToken(
+            token,
+            (await fetchWellknown(config.get('oidc.azureAD.wellKnownUrl')))
+              .jwks_uri
+          )
 
           // Store token and all useful data in the session cache
           await createUserSession(request, sessionId, {
@@ -186,13 +189,15 @@ async function aadBellOptions() {
         'openid',
         'profile',
         'email',
-        'offline_access' // adding this makes the response include a refreshToken
         /*
-         * TODO include this api://... scope (once its been set up in Entra ID)
-         * - this is needed to make the aud in the returned token be our clientId
+         * offline_access scope needed to make Entra ID return refresh token during token exchange
+         */
+        'offline_access',
+        /*
+         * api://... scope needed to make the aud in the returned token be the service's clientId
          * (without this Entra ID returns a token where the audience is Microsoft Graph API)
          */
-        // `api://${config.get('oidc.azureAD.clientId')}/.default`
+        `api://${config.get('oidc.azureAD.clientId')}/.default`
       ],
       profile: async function (credentials, _params, get) {
         const decodedPayload = jwt.token.decode(credentials.token).decoded

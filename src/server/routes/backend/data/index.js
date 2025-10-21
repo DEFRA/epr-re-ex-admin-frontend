@@ -9,11 +9,22 @@ export const data = {
     async register(server) {
       await server.register([jwt])
 
-      server.auth.strategy('aad-access-token', 'jwt', await aadJwtOptions())
+      const entraWellKnownDetails = await fetchWellknown(
+        config.get('oidc.azureAD.wellKnownUrl')
+      )
+      const defraIdWellKnownDetails = await fetchWellknown(
+        config.get('oidc.defraId.wellKnownUrl')
+      )
+
+      server.auth.strategy(
+        'aad-access-token',
+        'jwt',
+        aadJwtOptions(entraWellKnownDetails)
+      )
       server.auth.strategy(
         'defra-id-access-token',
         'jwt',
-        await defraIdJwtOptions()
+        defraIdJwtOptions(defraIdWellKnownDetails)
       )
 
       server.auth.scheme('delegating', delegatingAuthScheme)
@@ -22,14 +33,14 @@ export const data = {
         candidateStrategies: [
           {
             strategy: 'aad-access-token',
-            test(issuer) {
-              return issuer.includes('sts.windows.net')
+            test(token) {
+              return token.iss === entraWellKnownDetails.issuer
             }
           },
           {
             strategy: 'defra-id-access-token',
-            test(issuer) {
-              return issuer.includes('dcidmtest.b2clogin.com')
+            test(token) {
+              return token.iss === defraIdWellKnownDetails.issuer
             }
           }
         ]
@@ -57,27 +68,20 @@ export const data = {
   }
 }
 
-async function aadJwtOptions() {
-  const { jwks_uri: jwksUri } = await fetchWellknown(
-    config.get('oidc.azureAD.wellKnownUrl')
-  )
-
+function aadJwtOptions({ jwks_uri: jwksUri, issuer }) {
   return {
     keys: {
       uri: jwksUri
     },
-    verify: false,
-    // verify: {
-    //   aud: config.get('oidc.azureAD.clientId'),
-    //   // aud: '00000003-0000-0000-c000-000000000000', // TODO why is aud on AAD token this? Answer: this is the UUID for Microsoft Graph API!
-    //   iss: `https://sts.windows.net/${config.get('oidc.azureAD.clientId')}/`, // TODO issuer in well known response not matching issuer of AAD access token!
-    //   // iss: issuer,
-    //   sub: false,
-    //   nbf: true,
-    //   exp: true,
-    //   maxAgeSec: 5400, // 90 minutes
-    //   timeSkewSec: 15
-    // },
+    verify: {
+      aud: config.get('oidc.azureAD.clientId'),
+      iss: issuer,
+      sub: false,
+      nbf: true,
+      exp: true,
+      maxAgeSec: 5400, // 90 minutes
+      timeSkewSec: 15
+    },
     validate: async (artifacts) => {
       const tokenPayload = artifacts.decoded.payload
 
@@ -94,11 +98,7 @@ async function aadJwtOptions() {
   }
 }
 
-async function defraIdJwtOptions() {
-  const { jwks_uri: jwksUri, issuer } = await fetchWellknown(
-    config.get('oidc.defraId.wellKnownUrl')
-  )
-
+function defraIdJwtOptions({ jwks_uri: jwksUri, issuer }) {
   return {
     keys: {
       uri: jwksUri
@@ -149,7 +149,7 @@ function delegatingAuthScheme(server, { candidateStrategies }) {
       const decodedToken = extractAndDecodeBearerToken(request)
 
       const delegateTo = candidateStrategies.find((candidate) =>
-        candidate.test(decodedToken.iss)
+        candidate.test(decodedToken)
       )
 
       // TODO throw Boom.unauthorized if no strategy found to delgate to
