@@ -16,6 +16,7 @@ import { sessionCache } from './common/helpers/session-cache/session-cache.js'
 import { getCacheEngine } from './common/helpers/session-cache/cache-engine.js'
 import { secureContext } from '@defra/hapi-secure-context'
 import { contentSecurityPolicy } from './common/helpers/content-security-policy.js'
+import { userAgentProtection } from './common/helpers/useragent-protection.js'
 import { authPlugin } from './plugins/auth-plugin.js'
 
 export async function createServer() {
@@ -63,6 +64,7 @@ export async function createServer() {
     pulse,
     sessionCache,
     nunjucksConfig,
+    userAgentProtection, // Must be registered before Scooter to intercept malicious User-Agents
     Scooter,
     contentSecurityPolicy,
     Bell,
