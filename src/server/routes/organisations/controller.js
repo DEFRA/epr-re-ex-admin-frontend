@@ -13,10 +13,6 @@ const getLatestStatus = (statusHistory) => {
   return orderedStatus[0]
 }
 
-/**
- * A GDS styled organisations page controller.
- * Provided as an example, remove or modify as required.
- */
 export const organisationsController = {
   async handler(_request, h) {
     const { data, errorView } = await fetchJsonFromBackend(`/organisations`)
