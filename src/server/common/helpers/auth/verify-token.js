@@ -1,25 +1,16 @@
-import Wreck from '@hapi/wreck'
-import Jwt from '@hapi/jwt'
-import jwkToPem from 'jwk-to-pem'
+import * as jose from 'jose'
 import { getOidcConfig } from './get-oidc-config.js'
 
 async function verifyToken(token) {
   const { jwks_uri: uri } = await getOidcConfig()
 
-  const { payload } = await Wreck.get(uri, {
-    json: true
+  const JWKS = jose.createRemoteJWKSet(new URL(uri))
+
+  const { payload } = await jose.jwtVerify(token, JWKS, {
+    algorithms: ['RS256']
   })
-  const { keys } = payload
 
-  const decoded = Jwt.token.decode(token)
-
-  const key = keys.find((k) => k.kid === decoded.decoded.header.kid)
-
-  // Convert the JSON Web Key (JWK) to a PEM-encoded public key so that it can be used to verify the token
-  const pem = jwkToPem(key)
-
-  // Check that the token is signed with the appropriate key by decoding it and verifying the signature using the public key
-  Jwt.token.verify(decoded, { key: pem, algorithm: 'RS256' })
+  return payload
 }
 
 export { verifyToken }
