@@ -256,6 +256,12 @@ export const config = convict({
         default: `https://login.microsoftonline.com/${this.tenantId.default}/v2.0/.well-known/openid-configuration`
       }
     }
+  },
+  eprBackendUrl: {
+    doc: 'EPR Backend API base URL',
+    format: String,
+    default: 'http://localhost:3001/v1',
+    env: 'EPR_BACKEND_URL'
   }
 })
 

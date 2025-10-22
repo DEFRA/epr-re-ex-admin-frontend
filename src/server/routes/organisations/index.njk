@@ -1,5 +1,6 @@
 {% extends 'layout.njk' %}
 {% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/tag/macro.njk" import govukTag %}
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 
 {% block content %}
@@ -7,50 +8,42 @@
     <div class="govuk-grid-column-two-thirds">
       <div class="govuk-body" data-testid="app-page-body">
 
-{{ govukInsetText({
-  text: "This is the organisations protected page"
-}) }}
+{# Render a table when organisations data is provided, otherwise show a message #}
+{% if organisations and organisations.length %}
+  {% set tableRows = [] %}
+  {% for org in organisations %}
+    {% set orgId = org.orgId %}
 
+    {# build cells as objects expected by govukTable #}
+    {% set nameCell = { text: org.name } %}
+    {% set regCell = { text: org.registrationNumber } %}
+    {% set orgIdCell = { text: orgId } %}
+    {% set statusCell = { html: govukTag({
+      text: org.status
+    }) } %}
+    {% set actionCell = { html:  '<a class="govuk-link" href="/organisations/' ~ orgId ~ '">Edit</a>' } %}
 
-{{ govukTable({
-  caption: "Dates and amounts (mock data)",
-  captionClasses: "govuk-table__caption--m",
-  firstCellIsHeader: true,
-  head: [
-    {
-      text: "Date"
-    },
-    {
-      text: "Amount"
-    }
-  ],
-  rows: [
-    [
-      {
-        text: "First 6 weeks"
-      },
-      {
-        text: "£109.80 per week"
-      }
+    {% set row = [ nameCell, orgIdCell, regCell, statusCell, actionCell ] %}
+    {% set tableRows = tableRows.concat([row]) %}
+  {% endfor %}
+
+  {{ govukTable({
+    caption: "Organisations",
+    captionClasses: "govuk-table__caption--m",
+    firstCellIsHeader: true,
+    head: [
+      { text: "Name" },
+      { text: "Organisation ID" },
+      { text: "Registration Number" },
+      { text: "Status" },
+      { text: "Actions" }
     ],
-    [
-      {
-        text: "Next 33 weeks"
-      },
-      {
-        text: "£109.80 per week"
-      }
-    ],
-    [
-      {
-        text: "Total estimated pay"
-      },
-      {
-        text: "£4,282.20"
-      }
-    ]
-  ]
-}) }}
+    rows: tableRows
+  }) }}
+
+  {% else %}
+    {{ govukInsetText({ text: "No organisations found." }) }}
+  {% endif %}
       </div>
     </div>
   </div>
