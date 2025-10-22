@@ -50,7 +50,13 @@ describe('#getBellOptions', () => {
     expect(result.provider.useParamsAuth).toBe(true)
     expect(result.provider.auth).toBe(mockOidcConfig.authorization_endpoint)
     expect(result.provider.token).toBe(mockOidcConfig.token_endpoint)
-    expect(result.provider.scope).toEqual(['openid', 'profile', 'email'])
+    expect(result.provider.scope).toEqual([
+      'openid',
+      'profile',
+      'email',
+      'offline_access',
+      'api://test-client-id/.default'
+    ])
   })
 
   test('Should use config values for client credentials', () => {

@@ -1,7 +1,21 @@
 import { http, server, HttpResponse } from '../../../../.vite/setup-msw.js'
 import { config } from '#config/config.js'
+import { generateKeyPairSync } from 'crypto'
 
-const mockEntraIdBaseUrl = `https://example-oidc.test`
+const { privateKey, publicKey } = generateKeyPairSync('rsa', {
+  modulusLength: 4096,
+  publicKeyEncoding: {
+    type: 'spki',
+    format: 'jwk'
+  },
+  privateKeyEncoding: {
+    type: 'pkcs8',
+    format: 'pem'
+  }
+})
+
+const tenantId = config.get('entraId.tenantId')
+const mockEntraIdBaseUrl = `https://login.microsoftonline.com/${tenantId}`
 
 const mockOidcResponse = {
   authorization_endpoint: `${mockEntraIdBaseUrl}/oauth2/v2.0/authorize`,
@@ -11,14 +25,50 @@ const mockOidcResponse = {
   jwks_uri: `${mockEntraIdBaseUrl}/discovery/v2.0/keys`
 }
 
+const mockJwksResponse = {
+  keys: [{ ...publicKey, kid: 'test-key-id' }]
+}
+
+const capturedRequests = []
+
 function mockOidcCall() {
-  return http.get(config.get('entraId.oidcWellKnownConfigurationUrl'), () => {
+  const oidcWellKnownConfigurationUrl = config.get(
+    'entraId.oidcWellKnownConfigurationUrl'
+  )
+
+  // Capture request details for inspection
+  capturedRequests.push({
+    url: oidcWellKnownConfigurationUrl,
+    method: 'GET'
+  })
+
+  return http.get(oidcWellKnownConfigurationUrl, () => {
     return HttpResponse.json(mockOidcResponse)
+  })
+}
+
+function mockJwksCall() {
+  return http.get(mockOidcResponse.jwks_uri, () => {
+    // Capture request details for inspection
+    capturedRequests.push({
+      url: mockOidcResponse.jwks_uri,
+      method: 'GET'
+    })
+
+    return HttpResponse.json(mockJwksResponse)
   })
 }
 
 const createMockOidcServer = () => {
   server.use(mockOidcCall())
+  server.use(mockJwksCall())
 }
 
-export { mockOidcCall, mockOidcResponse, createMockOidcServer }
+export {
+  mockOidcCall,
+  mockJwksCall,
+  mockOidcResponse,
+  createMockOidcServer,
+  privateKey,
+  capturedRequests
+}
