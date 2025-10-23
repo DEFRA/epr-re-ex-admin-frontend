@@ -4,6 +4,22 @@ import { getUserSession } from './get-user-session.js'
 import { refreshTokens } from './refresh-tokens.js'
 import Jwt from '@hapi/jwt'
 
+async function validateAndRefreshSession(userSession) {
+  try {
+    const decoded = Jwt.token.decode(userSession.token)
+    // Allow 60 second tolerance for clock skew between servers
+    Jwt.token.verifyTime(decoded, { timeSkewSec: 60 })
+    return userSession
+  } catch {
+    const { access_token: token, refresh_token: refreshToken } =
+      await refreshTokens(userSession.refreshToken)
+
+    const updatedSession = { ...userSession, token, refreshToken }
+    await createUserSession(userSession.sessionId, updatedSession)
+    return updatedSession
+  }
+}
+
 export function getCookieOptions() {
   return {
     cookie: {
@@ -21,21 +37,10 @@ export function getCookieOptions() {
         return { isValid: false }
       }
 
-      // Verify auth token has not expired
-      try {
-        const decoded = Jwt.token.decode(userSession.token)
-        // Allow 60 second tolerance for clock skew between servers
-        Jwt.token.verifyTime(decoded, { timeSkewSec: 60 })
-      } catch {
-        const { access_token: token, refresh_token: refreshToken } =
-          await refreshTokens(userSession.refreshToken)
-        userSession.token = token
-        userSession.refreshToken = refreshToken
-
-        await createUserSession(userSession.sessionId, userSession)
-      }
-
-      return { isValid: true, credentials: userSession }
+      const validatedSession = await validateAndRefreshSession(userSession)
+      return { isValid: true, credentials: validatedSession }
     }
   }
 }
+
+export { validateAndRefreshSession }
