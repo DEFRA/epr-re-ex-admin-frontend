@@ -260,7 +260,7 @@ export const config = convict({
   eprBackendUrl: {
     doc: 'EPR Backend API base URL',
     format: String,
-    default: 'http://localhost:3001/v1',
+    default: 'http://localhost:3001',
     env: 'EPR_BACKEND_URL'
   }
 })
