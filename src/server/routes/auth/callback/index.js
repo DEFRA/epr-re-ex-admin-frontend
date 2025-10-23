@@ -1,6 +1,10 @@
 import { createUserSession } from '#server/common/helpers/auth/create-user-session.js'
 import { randomUUID } from 'node:crypto'
 import { verifyToken } from '#server/common/helpers/auth/verify-token.js'
+import { addSeconds } from 'date-fns'
+
+export const getExpiresAtFromExpiresIn = (expiresInSeconds) =>
+  addSeconds(new Date(), expiresInSeconds)
 
 export default {
   method: 'GET',
@@ -13,7 +17,7 @@ export default {
       return h.view('unauthorised')
     }
 
-    const { profile, token } = request.auth.credentials
+    const { profile, token, refreshToken } = request.auth.credentials
 
     verifyToken(token)
 
@@ -25,7 +29,8 @@ export default {
       sessionId,
       displayName,
       isAuthenticated: true,
-      token
+      token,
+      refreshToken
     }
 
     await createUserSession(request, userSession)
