@@ -3,6 +3,7 @@ import { vi, beforeEach, afterEach, describe, test, expect } from 'vitest'
 import { getCookieOptions } from './get-cookie-options.js'
 import { config } from '#config/config.js'
 import { getUserSession } from './get-user-session.js'
+import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 
 vi.mock('#config/config.js')
 vi.mock('./get-user-session.js')
@@ -110,7 +111,6 @@ describe('#getCookieOptions', () => {
     })
 
     test('Should call getUserSession with request', async () => {
-      const mockUserSession = { sessionId: 'test-session' }
       getUserSession.mockResolvedValue(mockUserSession)
 
       const result = getCookieOptions()
