@@ -21,7 +21,7 @@
     {% set statusCell = { html: govukTag({
       text: org.status
     }) } %}
-    {% set actionCell = { html:  '<a class="govuk-link" href="/organisations/' ~ orgId ~ '">Edit</a>' } %}
+    {% set actionCell = { html:  '<a class="govuk-link" href="/organisations/' ~ org.id ~ '">Edit</a>' } %}
 
     {% set row = [ nameCell, orgIdCell, regCell, statusCell, actionCell ] %}
     {% set tableRows = tableRows.concat([row]) %}

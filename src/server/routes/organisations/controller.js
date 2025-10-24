@@ -1,5 +1,4 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
-import { homeBreadcrumb } from '#server/routes/home/controller.js'
 
 const getLatestStatus = (statusHistory) => {
   // Handle missing or empty status history gracefully
@@ -14,6 +13,11 @@ const getLatestStatus = (statusHistory) => {
   return orderedStatus[0]
 }
 
+export const organisationsBreadcrumb = {
+  text: 'Organisations',
+  href: '/organisations'
+}
+
 export const organisationsController = {
   async handler(_request, h) {
     const { data, errorView } = await fetchJsonFromBackend(`/v1/organisations`)
@@ -24,10 +28,12 @@ export const organisationsController = {
 
     const organisations = (Array.isArray(data) ? data : []).map(
       ({
+        id,
         orgId,
         statusHistory,
         companyDetails: { name, registrationNumber }
       }) => ({
+        id,
         orgId,
         name,
         registrationNumber,
@@ -38,8 +44,7 @@ export const organisationsController = {
     return h.view('routes/organisations/index', {
       pageTitle: 'Organisations',
       heading: 'Organisations',
-      organisations,
-      breadcrumbs: [homeBreadcrumb]
+      organisations
     })
   }
 }

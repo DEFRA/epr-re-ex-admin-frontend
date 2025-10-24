@@ -6,6 +6,7 @@ import { health } from './routes/health/index.js'
 import { auth } from './routes/auth/index.js'
 
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
+import { organisation } from '#server/routes/organisation/index.js'
 
 export const router = {
   plugin: {
@@ -17,7 +18,7 @@ export const router = {
 
       // These are the routes containing our application logic
       // Some routes contain nested routes
-      await server.register([home, organisations, auth])
+      await server.register([home, organisations, organisation, auth])
 
       await server.register([serveStaticFiles])
     }
