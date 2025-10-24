@@ -1,12 +1,14 @@
-import { vi, beforeEach, afterEach, describe, test, expect } from 'vitest'
+import { vi, beforeEach, describe, test, expect } from 'vitest'
 
 import { getCookieOptions } from './get-cookie-options.js'
 import { config } from '#config/config.js'
 import { getUserSession } from './get-user-session.js'
+import { validateAndRefreshSession } from './validate-and-refresh-session.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 
 vi.mock('#config/config.js')
 vi.mock('./get-user-session.js')
+vi.mock('./validate-and-refresh-session.js')
 
 describe('#getCookieOptions', () => {
   const mockConfig = {
@@ -17,10 +19,10 @@ describe('#getCookieOptions', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     config.get = vi.fn().mockImplementation((key) => mockConfig[key])
-  })
-
-  afterEach(() => {
-    vi.resetAllMocks()
+    // Set up default mock for validateAndRefreshSession to return the input
+    validateAndRefreshSession.mockImplementation((userSession) =>
+      Promise.resolve(userSession)
+    )
   })
 
   test('Should return cookie configuration object', () => {
@@ -97,6 +99,7 @@ describe('#getCookieOptions', () => {
       }
 
       getUserSession.mockResolvedValue(mockUserSession)
+      validateAndRefreshSession.mockResolvedValue(mockUserSession)
 
       const result = getCookieOptions()
       const mockRequest = {}
@@ -104,6 +107,7 @@ describe('#getCookieOptions', () => {
       const validation = await result.validate(mockRequest)
 
       expect(getUserSession).toHaveBeenCalledWith(mockRequest)
+      expect(validateAndRefreshSession).toHaveBeenCalledWith(mockUserSession)
       expect(validation).toEqual({
         isValid: true,
         credentials: mockUserSession
@@ -146,12 +150,14 @@ describe('#getCookieOptions', () => {
       }
 
       getUserSession.mockResolvedValue(complexUserSession)
+      validateAndRefreshSession.mockResolvedValue(complexUserSession)
 
       const result = getCookieOptions()
       const mockRequest = {}
 
       const validation = await result.validate(mockRequest)
 
+      expect(validateAndRefreshSession).toHaveBeenCalledWith(complexUserSession)
       expect(validation).toEqual({
         isValid: true,
         credentials: complexUserSession
@@ -184,6 +190,7 @@ describe('#getCookieOptions', () => {
 
       for (const value of truthyValues) {
         getUserSession.mockResolvedValue(value)
+        validateAndRefreshSession.mockResolvedValue(value)
 
         const result = getCookieOptions()
         const validation = await result.validate({})
