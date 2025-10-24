@@ -3,10 +3,13 @@ import { vi, beforeEach, afterEach, describe, test, expect } from 'vitest'
 import signOutRoute from './index.js'
 import { config } from '#config/config.js'
 import { clearUserSession } from '#server/common/helpers/auth/clear-user-session.js'
+import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
 import { getOidcConfig } from '#server/common/helpers/auth/get-oidc-config.js'
+import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 
 vi.mock('#config/config.js')
 vi.mock('#server/common/helpers/auth/clear-user-session.js')
+vi.mock('#server/common/helpers/auth/get-user-session.js')
 vi.mock('#server/common/helpers/auth/get-oidc-config.js')
 
 describe('#signOut route', () => {
@@ -26,6 +29,7 @@ describe('#signOut route', () => {
     config.get = vi.fn().mockReturnValue(mockAppBaseUrl)
     getOidcConfig.mockResolvedValue(mockOidcConfig)
     clearUserSession.mockResolvedValue()
+    getUserSession.mockResolvedValue(mockUserSession)
   })
 
   afterEach(() => {
@@ -45,14 +49,10 @@ describe('#signOut route', () => {
     expect(signOutRoute.handler.constructor.name).toBe('AsyncFunction')
   })
 
-  test('Should redirect to home if user is not authenticated', async () => {
-    const mockRequest = {
-      auth: {
-        isAuthenticated: false
-      }
-    }
+  test('Should redirect to home if there is no user session', async () => {
+    getUserSession.mockResolvedValue(null)
 
-    const result = await signOutRoute.handler(mockRequest, mockToolkit)
+    const result = await signOutRoute.handler({}, mockToolkit)
 
     expect(mockToolkit.redirect).toHaveBeenCalledWith('/')
     expect(result).toBe('redirect-result')
@@ -153,17 +153,11 @@ describe('#signOut route', () => {
     const error = new Error('Failed to get OIDC config')
     getOidcConfig.mockRejectedValue(error)
 
-    const mockRequest = {
-      auth: {
-        isAuthenticated: true
-      }
-    }
+    await expect(signOutRoute.handler({}, mockToolkit)).rejects.toThrow(
+      'Failed to get OIDC config'
+    )
 
-    await expect(
-      signOutRoute.handler(mockRequest, mockToolkit)
-    ).rejects.toThrow('Failed to get OIDC config')
-
-    expect(clearUserSession).toHaveBeenCalledWith(mockRequest)
+    expect(clearUserSession).not.toHaveBeenCalledWith()
     expect(mockToolkit.redirect).not.toHaveBeenCalled()
   })
 
@@ -183,7 +177,6 @@ describe('#signOut route', () => {
       signOutRoute.handler(mockRequest, mockToolkit)
     ).rejects.toThrow('Failed to clear session')
 
-    expect(getOidcConfig).not.toHaveBeenCalled()
     expect(mockToolkit.redirect).not.toHaveBeenCalled()
   })
 
@@ -235,9 +228,9 @@ describe('#signOut route', () => {
     await signOutRoute.handler(mockRequest, mockToolkit)
 
     expect(callOrder).toEqual([
-      'clearUserSession',
       'getOidcConfig',
       'config.get',
+      'clearUserSession',
       'redirect'
     ])
   })
