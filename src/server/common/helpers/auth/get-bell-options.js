@@ -1,7 +1,10 @@
 import Jwt from '@hapi/jwt'
 import { config } from '#config/config.js'
+import { getScopesForAuth } from './get-scopes-for-auth.js'
 
 export function getBellOptions(oidcConfig) {
+  const scopes = getScopesForAuth()
+
   return {
     provider: {
       name: 'entra-id',
@@ -9,13 +12,7 @@ export function getBellOptions(oidcConfig) {
       useParamsAuth: true,
       auth: oidcConfig.authorization_endpoint,
       token: oidcConfig.token_endpoint,
-      scope: [
-        'openid',
-        'profile',
-        'email',
-        'offline_access',
-        `api://${config.get('entraId.clientId')}/.default`
-      ],
+      scope: scopes,
       profile: function (credentials, _params, _get) {
         const payload = Jwt.token.decode(credentials.token).decoded.payload
         const { name = '', sub = '', email = '' } = payload
