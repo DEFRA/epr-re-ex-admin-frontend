@@ -3,8 +3,10 @@ import { vi, beforeEach, afterEach, describe, test, expect } from 'vitest'
 import callbackRoute from './index.js'
 import { createUserSession } from '#server/common/helpers/auth/create-user-session.js'
 import { randomUUID } from 'node:crypto'
+import { verifyToken } from '#server/common/helpers/auth/verify-token.js'
 
 vi.mock('#server/common/helpers/auth/create-user-session.js')
+vi.mock('#server/common/helpers/auth/verify-token.js')
 vi.mock('node:crypto')
 
 describe('#callback route', () => {
@@ -28,6 +30,7 @@ describe('#callback route', () => {
     mockToolkit.view.mockReturnValue('unauthorised-view-result')
     mockToolkit.redirect.mockReturnValue('redirect-result')
     createUserSession.mockResolvedValue()
+    verifyToken.mockResolvedValue()
     randomUUID.mockReturnValue(mockSessionId)
   })
 

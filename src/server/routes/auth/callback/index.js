@@ -15,7 +15,7 @@ export default {
 
     const { profile, token } = request.auth.credentials
 
-    verifyToken(token)
+    await verifyToken(token)
 
     const { displayName = '' } = profile
 
