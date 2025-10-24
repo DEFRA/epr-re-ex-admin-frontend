@@ -92,9 +92,8 @@ describe('#getBellOptions', () => {
 
   test('Should return correct location callback URL', () => {
     const result = getBellOptions(mockOidcConfig)
-    const locationUrl = result.location()
 
-    expect(locationUrl).toBe('https://example-app.test/auth/callback')
+    expect(result.location).toBe('https://example-app.test/auth/callback')
     expect(config.get).toHaveBeenCalledWith('appBaseUrl')
   })
 
@@ -163,9 +162,8 @@ describe('#getBellOptions', () => {
       })
 
       const result = getBellOptions(mockOidcConfig)
-      const locationUrl = result.location()
 
-      expect(locationUrl).toBe(`${url}/auth/callback`)
+      expect(result.location).toBe(`${url}/auth/callback`)
     })
   })
 })

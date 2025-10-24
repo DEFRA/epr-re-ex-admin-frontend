@@ -33,10 +33,7 @@ export function getBellOptions(oidcConfig) {
     password: config.get('session.cookie.password'),
     isSecure: config.get('isProduction'),
     forceHttps: config.get('isProduction'),
-    location: function () {
-      return `${config.get('appBaseUrl')}/auth/callback`
-    },
-
+    location: `${config.get('appBaseUrl')}/auth/callback`,
     providerParams: function (_request) {
       return {
         response_mode: 'query'
