@@ -5,9 +5,9 @@ import { Cluster, Redis } from 'ioredis'
 import { config } from '#config/config.js'
 import { buildRedisClient } from './redis-client.js'
 
-let mockLoggerInfo
-let mockLoggerError
-let mockOn
+const mockLoggerInfo = vi.fn()
+const mockLoggerError = vi.fn()
+const mockOn = vi.fn()
 
 vi.mock('./logging/logger.js', () => ({
   createLogger: () => ({
@@ -18,17 +18,19 @@ vi.mock('./logging/logger.js', () => ({
 
 vi.mock('ioredis', () => ({
   ...vi.importActual('ioredis'),
-  Cluster: vi.fn(() => ({ on: (...args) => mockOn(...args) })),
-  Redis: vi.fn(() => ({ on: (...args) => mockOn(...args) }))
+  Cluster: vi.fn(
+    class {
+      on = (...args) => mockOn(...args)
+    }
+  ),
+  Redis: vi.fn(
+    class {
+      on = (...args) => mockOn(...args)
+    }
+  )
 }))
 
 describe('#buildRedisClient', () => {
-  beforeEach(() => {
-    mockLoggerInfo = vi.fn()
-    mockLoggerError = vi.fn()
-    mockOn = vi.fn()
-  })
-
   describe('When Redis Single InstanceCache is requested', () => {
     beforeEach(() => {
       const redisConfig = config.get('redis')

@@ -15,10 +15,14 @@ export default defineConfig({
       include: ['src/**'],
       exclude: [
         ...configDefaults.exclude,
+        '.server',
         '.public',
+        '.gitkeep',
         'coverage',
-        'postcss.config.js',
-        'stylelint.config.js'
+        'src/server/common/test-helpers',
+        'src/**/*.scss',
+        'src/index.js',
+        '**/index.js'
       ],
       thresholds: {
         lines: 100,
