@@ -19,7 +19,6 @@ describe('#getCookieOptions', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     config.get = vi.fn().mockImplementation((key) => mockConfig[key])
-    // Set up default mock for validateAndRefreshSession to return the input
     validateAndRefreshSession.mockImplementation((userSession) =>
       Promise.resolve(userSession)
     )
