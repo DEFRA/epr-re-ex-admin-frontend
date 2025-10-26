@@ -4,12 +4,21 @@ import Jwt from '@hapi/jwt'
 import {
   createMockOidcServer,
   capturedRequests,
+  clearCapturedRequests,
   privateKey,
   mockOidcResponse
 } from '#server/common/test-helpers/mock-oidc.js'
+import { config } from '#config/config.js'
+
+const clientId = config.get('entraId.clientId')
+const tenantId = config.get('entraId.tenantId')
 
 const mockToken = Jwt.token.generate(
-  { name: 'John Doe' },
+  {
+    name: 'John Doe',
+    aud: clientId,
+    iss: `https://login.microsoftonline.com/${tenantId}/v2.0`
+  },
   { key: privateKey, algorithm: 'RS256' },
   { header: { kid: 'test-key-id' } }
 )
@@ -18,6 +27,7 @@ const { verifyToken } = await import('./verify-token.js')
 
 describe('verifyToken', () => {
   beforeEach(async () => {
+    clearCapturedRequests()
     createMockOidcServer()
   })
 
