@@ -2,7 +2,7 @@ import { createUserSession } from './create-user-session.js'
 import { refreshTokens } from './refresh-tokens.js'
 import Jwt from '@hapi/jwt'
 
-async function validateAndRefreshSession(userSession) {
+async function validateAndRefreshSession(request, userSession) {
   try {
     const decoded = Jwt.token.decode(userSession.token)
     // Allow 60 second tolerance for clock skew between servers
@@ -13,7 +13,7 @@ async function validateAndRefreshSession(userSession) {
       await refreshTokens(userSession.refreshToken)
 
     const updatedSession = { ...userSession, token, refreshToken }
-    await createUserSession(userSession.sessionId, updatedSession)
+    await createUserSession(request, updatedSession)
     return updatedSession
   }
 }

@@ -38,7 +38,7 @@ describe('#validateAndRefreshSession', () => {
       .spyOn(Jwt.token, 'verifyTime')
       .mockImplementation(() => {})
 
-    const result = await validateAndRefreshSession(mockUserSession)
+    const result = await validateAndRefreshSession({}, mockUserSession)
 
     expect(decodeSpy).toHaveBeenCalledWith(mockUserSession.token)
     expect(verifyTimeSpy).toHaveBeenCalledWith(mockDecoded, { timeSkewSec: 60 })
@@ -71,7 +71,7 @@ describe('#validateAndRefreshSession', () => {
       })
     )
 
-    const result = await validateAndRefreshSession(mockUserSession)
+    const result = await validateAndRefreshSession({}, mockUserSession)
 
     expect(decodeSpy).toHaveBeenCalledWith(mockUserSession.token)
     expect(result).toEqual({
@@ -106,7 +106,7 @@ describe('#validateAndRefreshSession', () => {
       })
     )
 
-    const result = await validateAndRefreshSession(mockUserSession)
+    const result = await validateAndRefreshSession({}, mockUserSession)
 
     expect(decodeSpy).toHaveBeenCalledWith(mockUserSession.token)
     expect(verifyTimeSpy).toHaveBeenCalledWith(mockDecoded, { timeSkewSec: 60 })

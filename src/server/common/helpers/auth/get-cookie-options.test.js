@@ -106,7 +106,10 @@ describe('#getCookieOptions', () => {
       const validation = await result.validate(mockRequest)
 
       expect(getUserSession).toHaveBeenCalledWith(mockRequest)
-      expect(validateAndRefreshSession).toHaveBeenCalledWith(mockUserSession)
+      expect(validateAndRefreshSession).toHaveBeenCalledWith(
+        mockRequest,
+        mockUserSession
+      )
       expect(validation).toEqual({
         isValid: true,
         credentials: mockUserSession
@@ -156,7 +159,10 @@ describe('#getCookieOptions', () => {
 
       const validation = await result.validate(mockRequest)
 
-      expect(validateAndRefreshSession).toHaveBeenCalledWith(complexUserSession)
+      expect(validateAndRefreshSession).toHaveBeenCalledWith(
+        mockRequest,
+        complexUserSession
+      )
       expect(validation).toEqual({
         isValid: true,
         credentials: complexUserSession
