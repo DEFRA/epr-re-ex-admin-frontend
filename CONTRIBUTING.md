@@ -85,6 +85,8 @@ Unit tests can be run with:
 npm test
 ```
 
+By default, tests run with `v8` for code coverage. You can opt-in to using `istanbul` by setting `PREFER_ISTANBUL_COVERAGE="true"` in your environment.
+
 ### Development
 
 > [!TIP]
