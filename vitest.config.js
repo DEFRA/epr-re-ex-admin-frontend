@@ -22,8 +22,8 @@ export default defineConfig({
         'src/server/common/test-helpers',
         'src/server/components/icons',
         'src/**/*.scss',
-        'src/index.js',
-        '**/index.js'
+        'src/**/*.njk', // Vitest can't parse them anyway
+        'src/index.js'
       ],
       thresholds: {
         lines: 100,
