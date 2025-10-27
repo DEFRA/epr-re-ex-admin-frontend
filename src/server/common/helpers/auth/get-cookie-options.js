@@ -9,7 +9,8 @@ export function getCookieOptions() {
       path: '/',
       isSecure: config.get('isProduction'),
       ttl: config.get('session.cookie.ttl'),
-      isSameSite: 'Lax'
+      isSameSite: 'Lax',
+      clearInvalid: true
     },
     keepAlive: true,
     redirectTo: false,
