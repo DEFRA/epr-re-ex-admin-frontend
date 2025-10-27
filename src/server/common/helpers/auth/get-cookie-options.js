@@ -8,6 +8,7 @@ export function getCookieOptions() {
       password: config.get('session.cookie.password'),
       path: '/',
       isSecure: config.get('isProduction'),
+      ttl: config.get('session.cookie.ttl'),
       isSameSite: 'Lax'
     },
     redirectTo: false,
