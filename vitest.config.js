@@ -1,5 +1,7 @@
 import { defineConfig, configDefaults } from 'vitest/config'
 
+const preferIstanbul = process.env?.PREFER_ISTANBUL_COVERAGE === 'true'
+
 export default defineConfig({
   test: {
     globals: true,
@@ -9,7 +11,7 @@ export default defineConfig({
     hookTimeout: 60000,
     fileParallelism: !process.env.CI,
     coverage: {
-      provider: 'v8',
+      provider: preferIstanbul ? 'istanbul' : 'v8',
       reportsDirectory: './coverage',
       reporter: ['text', 'lcov'],
       include: ['src/**'],
