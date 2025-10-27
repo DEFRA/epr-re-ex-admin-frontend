@@ -31,18 +31,22 @@ const mockJwksResponse = {
 
 const capturedRequests = []
 
+function clearCapturedRequests() {
+  capturedRequests.length = 0
+}
+
 function mockOidcCall() {
   const oidcWellKnownConfigurationUrl = config.get(
     'entraId.oidcWellKnownConfigurationUrl'
   )
 
-  // Capture request details for inspection
-  capturedRequests.push({
-    url: oidcWellKnownConfigurationUrl,
-    method: 'GET'
-  })
-
   return http.get(oidcWellKnownConfigurationUrl, () => {
+    // Capture request details for inspection
+    capturedRequests.push({
+      url: oidcWellKnownConfigurationUrl,
+      method: 'GET'
+    })
+
     return HttpResponse.json(mockOidcResponse)
   })
 }
@@ -70,5 +74,6 @@ export {
   mockOidcResponse,
   createMockOidcServer,
   privateKey,
-  capturedRequests
+  capturedRequests,
+  clearCapturedRequests
 }
