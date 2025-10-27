@@ -1,6 +1,10 @@
+import { readFileSync } from 'node:fs'
 import { defineConfig, configDefaults } from 'vitest/config'
+import parse from 'parse-gitignore'
 
 const preferIstanbul = process.env?.PREFER_ISTANBUL_COVERAGE === 'true'
+const parsedGitignore =
+  parse(readFileSync('.gitignore', 'utf-8')).patterns || []
 
 export default defineConfig({
   test: {
@@ -17,10 +21,9 @@ export default defineConfig({
       include: ['src/**'],
       exclude: [
         ...configDefaults.exclude,
+        ...parsedGitignore,
         '.server',
-        '.public',
         '.gitkeep',
-        'coverage',
         'src/server/common/test-helpers',
         'src/server/components/icons',
         'src/**/*.scss',
