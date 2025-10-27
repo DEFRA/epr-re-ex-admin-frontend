@@ -19,7 +19,10 @@ export function getCookieOptions() {
         return { isValid: false }
       }
 
-      const validatedSession = await validateAndRefreshSession(userSession)
+      const validatedSession = await validateAndRefreshSession(
+        request,
+        userSession
+      )
       return { isValid: true, credentials: validatedSession }
     }
   }
