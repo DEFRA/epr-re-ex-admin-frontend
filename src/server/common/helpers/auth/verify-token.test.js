@@ -66,4 +66,32 @@ describe('verifyToken', () => {
 
     await expect(verifyToken(wrongToken)).rejects.toThrow()
   })
+
+  test('should throw error if token has wrong audience', async () => {
+    const wrongAudienceToken = Jwt.token.generate(
+      {
+        name: 'John Doe',
+        aud: 'wrong-audience',
+        iss: `https://login.microsoftonline.com/${tenantId}/v2.0`
+      },
+      { key: privateKey, algorithm: 'RS256' },
+      { header: { kid: 'test-key-id' } }
+    )
+
+    await expect(verifyToken(wrongAudienceToken)).rejects.toThrow()
+  })
+
+  test('should throw error if token has wrong issuer', async () => {
+    const wrongIssuerToken = Jwt.token.generate(
+      {
+        name: 'John Doe',
+        aud: clientId,
+        iss: 'https://wrong-issuer.com'
+      },
+      { key: privateKey, algorithm: 'RS256' },
+      { header: { kid: 'test-key-id' } }
+    )
+
+    await expect(verifyToken(wrongIssuerToken)).rejects.toThrow()
+  })
 })
