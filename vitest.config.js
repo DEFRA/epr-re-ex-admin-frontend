@@ -20,6 +20,7 @@ export default defineConfig({
         '.gitkeep',
         'coverage',
         'src/server/common/test-helpers',
+        'src/server/components/icons',
         'src/**/*.scss',
         'src/index.js',
         '**/index.js'
