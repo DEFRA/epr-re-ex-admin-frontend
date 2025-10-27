@@ -11,6 +11,7 @@ export function getCookieOptions() {
       ttl: config.get('session.cookie.ttl'),
       isSameSite: 'Lax'
     },
+    keepAlive: true,
     redirectTo: false,
     validate: async function (request) {
       const userSession = await getUserSession(request)
