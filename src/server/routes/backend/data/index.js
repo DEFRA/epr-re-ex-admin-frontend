@@ -54,7 +54,7 @@ export const data = {
             auth: {
               strategy: 'access-token',
               access: {
-                scope: ['+service_maintainer'] // only permit access to this page if (logged in) user has service_maintainer scope
+                scope: ['service_maintainer', 'user'] // only permit access to this page if (logged in) user has service_maintainer or user scope
               }
             }
           },
@@ -85,12 +85,16 @@ function aadJwtOptions({ jwks_uri: jwksUri, issuer }) {
     validate: async (artifacts) => {
       const tokenPayload = artifacts.decoded.payload
 
-      // parsing payload depends on whether its a Defra ID or AAD token
+      const email = tokenPayload.upn ?? tokenPayload.preferred_username
+
+      // Entra ID specific token parsing
       const credentials = {
         id: tokenPayload.oid,
-        email: tokenPayload.upn,
+        email,
         issuer: tokenPayload.iss,
-        scope: lookupUserRoles(tokenPayload.upn)
+        scope: isEntraUserInServiceMaintainersAllowList(email)
+          ? ['service_maintainer']
+          : []
       }
 
       return { isValid: true, credentials }
@@ -112,15 +116,15 @@ function defraIdJwtOptions({ jwks_uri: jwksUri, issuer }) {
       maxAgeSec: 5400, // 90 minutes
       timeSkewSec: 15
     },
-    validate: async (artifacts) => {
+    validate: async (artifacts, request) => {
       const tokenPayload = artifacts.decoded.payload
 
-      // parsing payload depends on whether its a Defra ID or AAD token
+      // Defra ID specific token parsing
       const credentials = {
         id: tokenPayload.contactId,
         email: tokenPayload.email,
         issuer: tokenPayload.iss,
-        scope: lookupUserRoles(tokenPayload.contactId)
+        scope: lookupDefraUserRoles(tokenPayload, request)
       }
 
       return { isValid: true, credentials }
@@ -128,9 +132,14 @@ function defraIdJwtOptions({ jwks_uri: jwksUri, issuer }) {
   }
 }
 
+function isEntraUserInServiceMaintainersAllowList(emailAddress) {
+  // TODO look for token.email in configured list of service maintainers
+  return true
+}
+
 // illustrative - real lookup would be based on ???
-function lookupUserRoles(emailAddress) {
-  return ['service_maintainer']
+function lookupDefraUserRoles(token, request) {
+  return ['user']
 }
 
 function delegatingAuthScheme(server, { candidateStrategies }) {
