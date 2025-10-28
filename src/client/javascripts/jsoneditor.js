@@ -15,6 +15,18 @@ if (container) {
       mode: 'tree',
       modes: ['text', 'tree', 'preview'],
 
+      // ✅ inline autocomplete based on schema enums
+      autocomplete: {
+        getOptions: (text, path) => {
+          const subschema = findSchemaNode(schema, path)
+          if (subschema?.enum && Array.isArray(subschema.enum)) {
+            // You can filter here if desired (case-insensitive match)
+            return subschema.enum.map((v) => v.toString())
+          }
+          return []
+        }
+      },
+
       onEditable: (node) => {
         // skip root/meta nodes
         if (!node || !Array.isArray(node.path)) return true
