@@ -13,6 +13,7 @@ vi.mock('./validate-and-refresh-session.js')
 describe('#getCookieOptions', () => {
   const mockConfig = {
     'session.cookie.password': 'test-cookie-password',
+    'session.cookie.ttl': 1000,
     isProduction: false
   }
 
@@ -31,7 +32,9 @@ describe('#getCookieOptions', () => {
       password: 'test-cookie-password',
       path: '/',
       isSecure: false,
-      isSameSite: 'Lax'
+      isSameSite: 'Lax',
+      clearInvalid: true,
+      ttl: 1000
     })
   })
 
