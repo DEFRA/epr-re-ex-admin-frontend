@@ -13,6 +13,7 @@
     "node": "22.20.0"
   },
   "scripts": {
+    "schema:compile": "ajv compile --all-errors --verbose --data -c ajv-formats -s ./src/server/common/schemas/organisation.json -o ./src/server/common/schemas/organisation.ajv.js --code-es5",
     "build:frontend": "NODE_ENV=production webpack",
     "dev": "run-p frontend:watch server:watch",
     "dev:debug": "run-p frontend:watch server:debug",
@@ -53,6 +54,7 @@
     "@hapi/vision": "7.0.3",
     "@hapi/wreck": "18.1.0",
     "@hapi/yar": "11.0.3",
+    "ajv": "6.12.6",
     "aws-embedded-metrics": "4.2.0",
     "blankie": "5.0.0",
     "convict": "6.2.4",
@@ -78,6 +80,8 @@
   "devDependencies": {
     "@babel/preset-env": "7.28.3",
     "@vitest/coverage-v8": "3.2.4",
+    "ajv-cli": "5.0.0",
+    "ajv-formats": "3.0.1",
     "autoprefixer": "10.4.21",
     "babel-loader": "10.0.0",
     "cheerio": "1.1.2",

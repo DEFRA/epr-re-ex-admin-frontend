@@ -58,6 +58,10 @@ export default {
   module: {
     rules: [
       {
+        test: /\.ajv\.js$/,
+        type: 'javascript/auto' // 👈 Treat as CommonJS
+      },
+      {
         test: /\.(js|mjs|scss)$/,
         loader: 'source-map-loader',
         enforce: 'pre'
