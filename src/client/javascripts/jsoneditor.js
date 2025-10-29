@@ -6,10 +6,24 @@ import schema from '#server/common/schemas/organisation.json'
 const container = document.getElementById('jsoneditor')
 if (container) {
   try {
+    const STORAGE_KEY = 'organisation-jsoneditor-draft' // 🆕 define unique key
+
     const payloadEl = document.getElementById('organisation-json')
     const originalData = payloadEl
       ? JSON.parse(payloadEl.textContent || '{}')
       : {}
+
+    // 🆕 Load from localStorage if exists
+    let savedData = null
+    try {
+      const saved = window.localStorage.getItem(STORAGE_KEY)
+      if (saved) {
+        savedData = JSON.parse(saved)
+        console.info('[JSONEditor] Loaded draft from localStorage')
+      }
+    } catch (err) {
+      console.warn('Failed to load localStorage draft:', err)
+    }
 
     const editor = new JSONEditor(container, {
       mode: 'tree',
@@ -29,9 +43,18 @@ if (container) {
 
       // ... all your other options like onEditable, onValidate, autocomplete, etc.
       onEvent: (node, event) => {
-        // Highlight changes on blur
-        if (event.type === 'blur') {
-          highlightChanges(editor, editor.get(), originalData)
+        if (event.type === 'blur' || event.type === 'change') {
+          const current = editor.get()
+
+          // 🆕 Save to localStorage on each change
+          try {
+            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(current))
+          } catch (err) {
+            console.warn('Failed to save to localStorage:', err)
+          }
+
+          // 🧩 Highlight changes after save
+          highlightChanges(editor, current, originalData)
         }
       },
       onExpand: () => {
@@ -104,13 +127,20 @@ if (container) {
       }
     })
 
-    editor.set(originalData)
+    // 🆕 Set editor data: prefer saved draft > original
+    editor.set(savedData || originalData)
 
-    // Wire up reset button
+    // 🆕 Immediately highlight changes if draft differs
+    highlightChanges(editor, savedData || originalData, originalData)
+
     const resetButton = document.getElementById('jsoneditor-reset-button')
     resetButton.addEventListener('click', () => {
-      window.confirm('Are you sure you want to reset all changes?') &&
+      if (window.confirm('Are you sure you want to reset all changes?')) {
+        // 🆕 Clear localStorage and reset
+        window.localStorage.removeItem(STORAGE_KEY)
         editor.set(originalData)
+        highlightChanges(editor, originalData, originalData)
+      }
     })
   } catch (err) {
     console.error('Failed to initialise JSONEditor:', err)
