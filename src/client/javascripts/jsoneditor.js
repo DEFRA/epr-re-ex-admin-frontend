@@ -27,11 +27,24 @@ if (container) {
         }
       },
 
+      // ... all your other options like onEditable, onValidate, autocomplete, etc.
+      onEvent: (node, event) => {
+        // Highlight changes on blur
+        if (event.type === 'blur') {
+          highlightChanges(editor, editor.get(), originalData)
+        }
+      },
+      onExpand: () => {
+        highlightChanges(editor, editor.get(), originalData)
+      },
+
       onEditable: (node) => {
         // skip root/meta nodes
         if (!node || !Array.isArray(node.path)) return true
 
         const subschema = findSchemaNode(schema, node.path)
+
+        if (subschema === null) return false
 
         // 1️⃣ Read-only fields: completely locked
         if (isReadOnlySchema(subschema)) return false
@@ -92,6 +105,13 @@ if (container) {
     })
 
     editor.set(originalData)
+
+    // Wire up reset button
+    const resetButton = document.getElementById('jsoneditor-reset-button')
+    resetButton.addEventListener('click', () => {
+      window.confirm('Are you sure you want to reset all changes?') &&
+        editor.set(originalData)
+    })
   } catch (err) {
     console.error('Failed to initialise JSONEditor:', err)
   }
@@ -179,4 +199,42 @@ function checkReadOnlyChanges(data, original, schema, path = [], errors = []) {
   }
 
   return errors
+}
+
+function highlightChanges(editor, current, original, path = []) {
+  const changed = !deepEqual(current, original)
+
+  // Try to find the node in the editor’s tree
+  const node = editor.node?.findNodeByPath?.(path)
+  if (node) {
+    // Safely find a value element, covering strings, numbers, booleans, etc.
+    const el =
+      node.dom?.value ||
+      node.dom?.field ||
+      node.dom?.tr?.querySelector('.jsoneditor-value') ||
+      node.dom?.tr?.querySelector('.jsoneditor-field')
+
+    if (el) {
+      if (changed) {
+        el.classList.add('jsoneditor-changed')
+      } else {
+        el.classList.remove('jsoneditor-changed')
+      }
+    }
+  }
+
+  // Recurse into children
+  if (typeof current === 'object' && current !== null) {
+    const keys = new Set([
+      ...Object.keys(current || {}),
+      ...Object.keys(original || {})
+    ])
+    for (const key of keys) {
+      highlightChanges(editor, current?.[key], original?.[key], [...path, key])
+    }
+  } else if (Array.isArray(current)) {
+    current?.forEach((v, i) => {
+      highlightChanges(editor, v, original?.[i], [...path, i])
+    })
+  }
 }
