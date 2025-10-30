@@ -61,6 +61,18 @@ if (container) {
         highlightChanges(editor, editor.get(), originalData)
       },
 
+      onChangeJSON: (updatedJSON) => {
+        try {
+          // Save to localStorage whenever JSON changes (including deletions)
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedJSON))
+        } catch (err) {
+          console.warn('Failed to save to localStorage:', err)
+        }
+
+        // Highlight changes
+        highlightChanges(editor, updatedJSON, originalData)
+      },
+
       onEditable: (node) => {
         // skip root/meta nodes
         if (!node || !Array.isArray(node.path)) return true
@@ -237,7 +249,6 @@ function highlightChanges(editor, current, original, path = []) {
   // Try to find the node in the editor’s tree
   const node = editor.node?.findNodeByPath?.(path)
   if (node) {
-    // Safely find a value element, covering strings, numbers, booleans, etc.
     const el =
       node.dom?.value ||
       node.dom?.field ||
@@ -254,7 +265,27 @@ function highlightChanges(editor, current, original, path = []) {
   }
 
   // Recurse into children
-  if (typeof current === 'object' && current !== null) {
+  if (Array.isArray(current) || Array.isArray(original)) {
+    // handle arrays specially — highlight removals/additions
+    const maxLength = Math.max(
+      Array.isArray(current) ? current.length : 0,
+      Array.isArray(original) ? original.length : 0
+    )
+    for (let i = 0; i < maxLength; i++) {
+      highlightChanges(
+        editor,
+        current ? current[i] : undefined,
+        original ? original[i] : undefined,
+        [...path, i]
+      )
+    }
+  } else if (
+    typeof current === 'object' &&
+    current !== null &&
+    typeof original === 'object' &&
+    original !== null
+  ) {
+    // objects: merge keys from both sides
     const keys = new Set([
       ...Object.keys(current || {}),
       ...Object.keys(original || {})
@@ -262,9 +293,5 @@ function highlightChanges(editor, current, original, path = []) {
     for (const key of keys) {
       highlightChanges(editor, current?.[key], original?.[key], [...path, key])
     }
-  } else if (Array.isArray(current)) {
-    current?.forEach((v, i) => {
-      highlightChanges(editor, v, original?.[i], [...path, i])
-    })
   }
 }
