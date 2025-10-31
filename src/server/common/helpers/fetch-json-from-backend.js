@@ -1,45 +1,36 @@
+import Wreck from '@hapi/wreck'
 import { config } from '#config/config.js'
-import { statusCodes } from '#server/common/constants/status-codes.js'
-import { createLogger } from './logging/logger.js'
 import { getUserSession } from './auth/get-user-session.js'
+import { handleApiResponse } from './handle-api-response.js'
 
+/**
+ * Fetch JSON from a given path in th
+ * @param {import('@hapi/hapi').Request} request
+ * @param {string} url
+ * @param {Wreck.options} options
+ * @returns {Promise<{res: *, error}|{res: *, payload: *}>}
+ */
 export const fetchJsonFromBackend = async (request, path, options) => {
-  const logger = createLogger()
   const eprBackendUrl = config.get('eprBackendUrl')
   const userSession = await getUserSession(request)
 
+  const { method = 'GET', ...restOptions } = options || {}
+
   const completeOptions = {
-    ...options,
+    ...restOptions,
+    json: true,
     headers: {
-      ...options?.headers,
-      Authorization: `Bearer ${userSession?.token}`
+      ...restOptions?.headers,
+      Authorization: `Bearer ${userSession?.token}`,
+      'Content-Type': 'application/json'
     }
   }
 
-  let apiResponse
-  try {
-    apiResponse = await fetch(`${eprBackendUrl}${path}`, completeOptions)
-  } catch (error) {
-    logger.error(
-      `Failed to fetch from backend at path: ${path}: ${error.message}`
-    )
+  const { res, payload } = await Wreck.request(
+    method,
+    `${eprBackendUrl}${path}`,
+    completeOptions
+  )
 
-    return { errorView: '500' }
-  }
-
-  if (!apiResponse.ok) {
-    if (apiResponse.status === statusCodes.unauthorised) {
-      return { errorView: 'unauthorised' }
-    }
-
-    logger.error(
-      `Failed to fetch from backend at path: ${path}: ${apiResponse.status} ${apiResponse.statusText}`
-    )
-
-    return { errorView: '500' }
-  }
-
-  const data = await apiResponse.json()
-
-  return { data }
+  return handleApiResponse({ res, payload })
 }

@@ -12,6 +12,11 @@ import { fetchJsonFromBackend } from './fetch-json-from-backend.js'
 import { config } from '#config/config.js'
 import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
+import {
+  http,
+  HttpResponse,
+  server as mswServer
+} from '../../../../.vite/setup-msw.js'
 
 const mockLoggerError = vi.fn()
 
@@ -42,10 +47,17 @@ describe('#fetchJsonFromBackend', () => {
     vi.clearAllMocks()
   })
 
-  test('returns data when backend responds with ok=true', async () => {
-    const mockData = { hello: 'world' }
-    const json = vi.fn().mockResolvedValue(mockData)
-    const response = { ok: true, json }
+  test.only('returns data when backend responds with ok=true', async () => {
+    const mockOrganisations = [
+      {
+        orgId: 'org-2',
+        statusHistory: [],
+        companyDetails: {
+          name: 'Beta Corp',
+          registrationNumber: '87654321'
+        }
+      }
+    ]
 
     const options = {
       method: 'GET',
@@ -54,12 +66,20 @@ describe('#fetchJsonFromBackend', () => {
       }
     }
 
-    globalThis.fetch = vi.fn().mockResolvedValue(response)
+    const url = 'http://localhost:3001/v1/organisations'
 
-    const result = await fetchJsonFromBackend({}, '/test', options)
+    const getOrganisationsHandler = http.get(url, () => {
+      return HttpResponse.json(mockOrganisations)
+    })
 
-    expect(globalThis.fetch).toHaveBeenCalledTimes(1)
-    expect(globalThis.fetch).toHaveBeenCalledWith(
+    mswServer.use(getOrganisationsHandler)
+    const requestSpy = vi.fn()
+    mswServer.events.on('request:start', requestSpy)
+
+    const result = await fetchJsonFromBackend({}, '/v1/organisations', options)
+
+    expect(requestSpy).toHaveBeenCalledTimes(1)
+    expect(requestSpy()).toHaveBeenCalledWith(
       `${backendUrl}/test`,
       expect.objectContaining({
         method: 'GET',
@@ -67,8 +87,7 @@ describe('#fetchJsonFromBackend', () => {
       })
     )
 
-    expect(result).toEqual({ data: mockData })
-    expect(json).toHaveBeenCalled()
+    expect(result).toEqual({ data: mockOrganisations })
     expect(mockLoggerError).not.toHaveBeenCalled()
   })
 
