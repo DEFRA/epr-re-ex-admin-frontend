@@ -1,18 +1,26 @@
 import Boom from '@hapi/boom'
-import { statusCodes } from '#server/common/constants/status-codes.js'
 
-const HIGHEST_SUCCESS_STATUS_CODE = 299
+/**
+ * Fetch JSON from a given path in the backend service.
+ * @param {Response} response
+ * @returns {Promise<{res: *, error}|{res: *, data: *}>}
+ */
+async function handleApiResponse(response) {
+  if (!response.ok) {
+    // Create a Boom error from the fetch response
+    const error = Boom.boomify(new Error(response.statusText), {
+      statusCode: response.status
+    })
 
-function handleApiResponse({ res, data }) {
-  if (
-    !res.statusCode ||
-    res.statusCode < statusCodes.ok ||
-    res.statusCode > HIGHEST_SUCCESS_STATUS_CODE
-  ) {
-    return { res, error: data || Boom.boomify(new Error('Unknown error')) }
+    // Add response body to the error payload if needed
+    if (response.headers.get('content-type')?.includes('application/json')) {
+      error.output.payload = await response.json()
+    }
+
+    throw error
   }
 
-  return { res, data }
+  return await response.json()
 }
 
 export { handleApiResponse }
