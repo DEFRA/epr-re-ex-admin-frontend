@@ -8,7 +8,7 @@ import { handleApiResponse } from './handle-api-response.js'
  * @param {import('@hapi/hapi').Request} request
  * @param {string} url
  * @param {Wreck.options} options
- * @returns {Promise<{res: *, error}|{res: *, payload: *}>}
+ * @returns {Promise<{res: *, error}|{res: *, data: *}>}
  */
 export const fetchJsonFromBackend = async (request, path, options) => {
   const eprBackendUrl = config.get('eprBackendUrl')
@@ -26,10 +26,10 @@ export const fetchJsonFromBackend = async (request, path, options) => {
     }
   }
 
-  const { res, payload } = await Wreck[method](
+  const { res, payload: data } = await Wreck[method](
     `${eprBackendUrl}${path}`,
     completeOptions
   )
 
-  return handleApiResponse({ res, payload })
+  return handleApiResponse({ res, data })
 }
