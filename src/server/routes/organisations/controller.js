@@ -15,8 +15,11 @@ const getLatestStatus = (statusHistory) => {
 }
 
 export const organisationsController = {
-  async handler(_request, h) {
-    const { data, errorView } = await fetchJsonFromBackend(`/v1/organisations`)
+  async handler(request, h) {
+    const { data, errorView } = await fetchJsonFromBackend(
+      request,
+      `/v1/organisations`
+    )
 
     if (errorView) {
       return h.view(errorView)

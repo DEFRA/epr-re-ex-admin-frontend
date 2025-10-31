@@ -10,6 +10,8 @@ import {
 
 import { fetchJsonFromBackend } from './fetch-json-from-backend.js'
 import { config } from '#config/config.js'
+import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
+import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 
 const mockLoggerError = vi.fn()
 
@@ -17,10 +19,15 @@ vi.mock('./logging/logger.js', () => ({
   createLogger: () => ({ error: (...args) => mockLoggerError(...args) })
 }))
 
+vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
+  getUserSession: vi.fn().mockReturnValue(null)
+}))
+
 describe('#fetchJsonFromBackend', () => {
   const originalFetch = globalThis.fetch
   const originalBackendUrl = config.get('eprBackendUrl')
   const backendUrl = 'http://mock-backend'
+  getUserSession.mockReturnValue(mockUserSession)
 
   beforeAll(() => {
     config.set('eprBackendUrl', backendUrl)
@@ -40,18 +47,48 @@ describe('#fetchJsonFromBackend', () => {
     const json = vi.fn().mockResolvedValue(mockData)
     const response = { ok: true, json }
 
-    const options = { method: 'GET', headers: { 'x-test': '1' } }
+    const options = {
+      method: 'GET',
+      headers: {
+        'x-test': '1'
+      }
+    }
 
     globalThis.fetch = vi.fn().mockResolvedValue(response)
 
-    const result = await fetchJsonFromBackend('/test', options)
+    const result = await fetchJsonFromBackend({}, '/test', options)
 
     expect(globalThis.fetch).toHaveBeenCalledTimes(1)
-    expect(globalThis.fetch).toHaveBeenCalledWith(`${backendUrl}/test`, options)
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      `${backendUrl}/test`,
+      expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({ 'x-test': '1' })
+      })
+    )
 
     expect(result).toEqual({ data: mockData })
     expect(json).toHaveBeenCalled()
     expect(mockLoggerError).not.toHaveBeenCalled()
+  })
+
+  test('adds the authorisation header with the user token', async () => {
+    const mockData = { success: true }
+    const json = vi.fn().mockResolvedValue(mockData)
+    const response = { ok: true, json }
+
+    globalThis.fetch = vi.fn().mockResolvedValue(response)
+
+    await fetchJsonFromBackend({}, '/test', { method: 'GET' })
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      `${backendUrl}/test`,
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: `Bearer ${mockUserSession.token}`
+        })
+      })
+    )
   })
 
   test('returns unauthorised errorView when status is 401', async () => {
@@ -65,7 +102,7 @@ describe('#fetchJsonFromBackend', () => {
 
     globalThis.fetch = vi.fn().mockResolvedValue(response)
 
-    const result = await fetchJsonFromBackend('/secure', { method: 'GET' })
+    const result = await fetchJsonFromBackend({}, '/secure', { method: 'GET' })
 
     expect(result).toEqual({ errorView: 'unauthorised' })
     expect(mockLoggerError).not.toHaveBeenCalled()
@@ -84,7 +121,7 @@ describe('#fetchJsonFromBackend', () => {
     globalThis.fetch = vi.fn().mockResolvedValue(response)
 
     const path = '/boom'
-    const result = await fetchJsonFromBackend(path, { method: 'GET' })
+    const result = await fetchJsonFromBackend({}, path, { method: 'GET' })
 
     expect(result).toEqual({ errorView: '500' })
     expect(mockLoggerError).toHaveBeenCalledTimes(1)
@@ -100,7 +137,7 @@ describe('#fetchJsonFromBackend', () => {
 
     globalThis.fetch = vi.fn().mockRejectedValue(err)
 
-    const result = await fetchJsonFromBackend(path, { method: 'GET' })
+    const result = await fetchJsonFromBackend({}, path, { method: 'GET' })
 
     expect(result).toEqual({ errorView: '500' })
     expect(mockLoggerError).toHaveBeenCalledTimes(1)
