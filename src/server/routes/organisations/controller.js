@@ -18,11 +18,6 @@ export const organisationsController = {
   async handler(request, h) {
     const { data } = await fetchJsonFromBackend(request, `/v1/organisations`)
 
-    console.log(
-      '\n\n\n\n\n\n\n\n\n\n\n\n--------------------------------------------------- '
-    )
-    console.log('data', data)
-
     const organisations = (Array.isArray(data) ? data : []).map(
       ({
         orgId,
