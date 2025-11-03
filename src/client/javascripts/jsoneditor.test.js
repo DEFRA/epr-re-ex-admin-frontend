@@ -57,12 +57,12 @@ const mockHelpers = {
   deepEqual: vi.fn(),
   findSchemaNode: vi.fn(),
   getValueAtPath: vi.fn(),
-  isReadOnlySchema: vi.fn(() => false),
+  isNodeEditable: vi.fn(() => true),
   checkReadOnlyChanges: vi.fn(),
   highlightChanges: vi.fn(),
   LocalStorageManager: vi.fn(),
   getAutocompleteOptions: vi.fn(() => []),
-  filterContextMenu: vi.fn((items) => items)
+  validateJSON: vi.fn(() => [])
 }
 
 // Mock LocalStorageManager instance
@@ -89,12 +89,6 @@ const setupGlobalMocks = () => {
     'organisation-success-message': null,
     'jsoneditor-reset-button': {
       addEventListener: vi.fn()
-    },
-    'jsoneditor-save-button': {
-      addEventListener: vi.fn()
-    },
-    'jsoneditor-form': {
-      submit: vi.fn()
     },
     'jsoneditor-organisation-object': {
       value: ''
@@ -271,6 +265,9 @@ describe('JSONEditor Main Module', () => {
         options.onEvent({ type: 'blur' }, { type: 'blur' })
 
         expect(mockStorageInstance.save).toHaveBeenCalledWith(testData)
+        expect(mockElements['jsoneditor-organisation-object'].value).toBe(
+          JSON.stringify(testData)
+        )
         expect(mockHelpers.highlightChanges).toHaveBeenCalled()
       })
 
@@ -284,6 +281,9 @@ describe('JSONEditor Main Module', () => {
         options.onEvent({ type: 'change' }, { type: 'change' })
 
         expect(mockStorageInstance.save).toHaveBeenCalledWith(testData)
+        expect(mockElements['jsoneditor-organisation-object'].value).toBe(
+          JSON.stringify(testData)
+        )
         expect(mockHelpers.highlightChanges).toHaveBeenCalled()
       })
 
@@ -315,153 +315,96 @@ describe('JSONEditor Main Module', () => {
         options.onChangeJSON(testData)
 
         expect(mockStorageInstance.save).toHaveBeenCalledWith(testData)
+        expect(mockElements['jsoneditor-organisation-object'].value).toBe(
+          JSON.stringify(testData)
+        )
         expect(mockHelpers.highlightChanges).toHaveBeenCalled()
       })
     })
 
     describe('onEditable handler', () => {
       beforeEach(() => {
-        mockHelpers.findSchemaNode.mockReturnValue({ type: 'string' })
-        mockHelpers.isReadOnlySchema.mockReturnValue(false)
+        mockHelpers.isNodeEditable.mockReturnValue(true)
       })
 
-      it('should return true for root nodes with no path', () => {
-        expect(options.onEditable(null)).toBe(true)
-        expect(options.onEditable({})).toBe(true)
-        expect(options.onEditable({ path: 'not-array' })).toBe(true)
+      it('should call isNodeEditable with node and schema', () => {
+        const node = { path: ['name'], type: 'string' }
+
+        options.onEditable(node)
+
+        expect(mockHelpers.isNodeEditable).toHaveBeenCalledWith(
+          node,
+          expect.objectContaining({
+            type: 'object',
+            properties: expect.any(Object)
+          })
+        )
       })
 
-      it('should return false when schema node is null', () => {
-        mockHelpers.findSchemaNode.mockReturnValue(null)
+      it('should return true for editable nodes', () => {
+        mockHelpers.isNodeEditable.mockReturnValue(true)
 
         const result = options.onEditable({ path: ['name'] })
-        expect(result).toBe(false)
-      })
-
-      it('should return false for read-only schema', () => {
-        mockHelpers.isReadOnlySchema.mockReturnValue(true)
-
-        const result = options.onEditable({ path: ['name'] })
-        expect(result).toBe(false)
-      })
-
-      it('should return field:false, value:true for object types', () => {
-        const result = options.onEditable({ path: ['name'], type: 'object' })
-        expect(result).toEqual({ field: false, value: true })
-      })
-
-      it('should return field:false, value:true when node has field property', () => {
-        const result = options.onEditable({ path: ['name'], field: 'name' })
-        expect(result).toEqual({ field: false, value: true })
-      })
-
-      it('should return true for other cases', () => {
-        const result = options.onEditable({ path: ['name'], type: 'string' })
         expect(result).toBe(true)
+      })
+
+      it('should return false for non-editable nodes', () => {
+        mockHelpers.isNodeEditable.mockReturnValue(false)
+
+        const result = options.onEditable({ path: ['id'] })
+        expect(result).toBe(false)
+      })
+
+      it('should return { field: false, value: true } for object nodes', () => {
+        mockHelpers.isNodeEditable.mockReturnValue({
+          field: false,
+          value: true
+        })
+
+        const result = options.onEditable({ path: ['address'], type: 'object' })
+        expect(result).toEqual({ field: false, value: true })
       })
     })
 
     describe('onValidate handler', () => {
       beforeEach(() => {
-        mockHelpers.getValueAtPath.mockImplementation((obj, path) => {
-          if (path.length === 0) return obj
-          return obj?.[path[0]]
-        })
-        mockHelpers.deepEqual.mockImplementation(
-          (a, b) => JSON.stringify(a) === JSON.stringify(b)
+        mockHelpers.validateJSON.mockReturnValue([])
+      })
+
+      it('should call validateJSON with correct parameters', () => {
+        const json = { name: 'John' }
+
+        options.onValidate(json)
+
+        expect(mockHelpers.validateJSON).toHaveBeenCalledWith(
+          json,
+          { name: 'test', age: 25 }, // originalData
+          expect.objectContaining({
+            type: 'object',
+            properties: expect.any(Object)
+          }), // schema
+          mockValidate // validate function
         )
       })
 
       it('should return empty errors for valid JSON', () => {
-        mockValidate.mockReturnValue(true)
-        mockValidate.errors = []
+        mockHelpers.validateJSON.mockReturnValue([])
 
         const result = options.onValidate({ name: 'John' })
+
         expect(result).toEqual([])
       })
 
-      it('should return AJV validation errors', () => {
-        mockValidate.mockReturnValue(false)
-        mockValidate.errors = [
-          {
-            instancePath: '/name',
-            message: 'Invalid value'
-          }
+      it('should return validation errors from validateJSON', () => {
+        const errors = [
+          { path: ['name'], message: 'Invalid value' },
+          { path: ['age'], message: 'Must be a number' }
         ]
+        mockHelpers.validateJSON.mockReturnValue(errors)
 
         const result = options.onValidate({ name: 'InvalidName' })
 
-        expect(result).toHaveLength(1)
-        expect(result[0]).toEqual({
-          path: ['name'],
-          message: 'Invalid value'
-        })
-      })
-
-      it('should customize enum error messages', () => {
-        mockValidate.mockReturnValue(false)
-        mockValidate.errors = [
-          {
-            instancePath: '/name',
-            keyword: 'enum',
-            params: { allowedValues: ['John', 'Jane'] }
-          }
-        ]
-
-        const result = options.onValidate({ name: 'InvalidName' })
-
-        expect(result[0].message).toBe('must be one of: "John", "Jane"')
-      })
-
-      it('should handle errors without instancePath', () => {
-        mockValidate.mockReturnValue(false)
-        mockValidate.errors = [
-          {
-            message: 'Root error'
-          }
-        ]
-
-        const result = options.onValidate({ name: 'test' })
-
-        expect(result[0].path).toEqual([])
-      })
-
-      it('should filter errors to only show changed fields', () => {
-        mockValidate.mockReturnValue(false)
-        mockValidate.errors = [
-          { instancePath: '/name', message: 'Error 1' },
-          { instancePath: '/age', message: 'Error 2' }
-        ]
-
-        // Mock deepEqual to show name changed but age didn't
-        mockHelpers.deepEqual.mockImplementation((a, b) => {
-          if (a === 'Jane' && b === 'John') return false // name changed
-          if (a === 25 && b === 25) return true // age same
-          return false
-        })
-
-        const result = options.onValidate({ name: 'Jane', age: 25 })
-
-        expect(result).toHaveLength(1)
-        expect(result[0].message).toBe('Error 1')
-      })
-    })
-
-    describe('onCreateMenu handler', () => {
-      it('should filter context menu items', () => {
-        const mockItems = [
-          { text: 'Copy' },
-          { text: 'Duplicate' },
-          { text: 'Remove' }
-        ]
-
-        const result = options.onCreateMenu(mockItems)
-
-        expect(mockHelpers.filterContextMenu).toHaveBeenCalledWith(mockItems, [
-          'Duplicate',
-          'duplicate'
-        ])
-        expect(result).toBe(mockItems)
+        expect(result).toEqual(errors)
       })
     })
 
@@ -474,6 +417,61 @@ describe('JSONEditor Main Module', () => {
 
         expect(mockHelpers.getAutocompleteOptions).toHaveBeenCalled()
         expect(result).toEqual(['John', 'Jane'])
+      })
+    })
+
+    describe('onCreateMenu handler', () => {
+      it('should filter out Duplicate menu item with text "Duplicate"', () => {
+        const items = [
+          { text: 'Append', action: 'append' },
+          { text: 'Duplicate', action: 'duplicate' },
+          { text: 'Remove', action: 'remove' }
+        ]
+
+        const result = options.onCreateMenu(items)
+
+        expect(result).toHaveLength(2)
+        expect(result).toEqual([
+          { text: 'Append', action: 'append' },
+          { text: 'Remove', action: 'remove' }
+        ])
+      })
+
+      it('should filter out duplicate menu item with action "duplicate"', () => {
+        const items = [
+          { text: 'Append', action: 'append' },
+          { text: 'Copy', action: 'duplicate' },
+          { text: 'Remove', action: 'remove' }
+        ]
+
+        const result = options.onCreateMenu(items)
+
+        expect(result).toHaveLength(2)
+        expect(result).toEqual([
+          { text: 'Append', action: 'append' },
+          { text: 'Remove', action: 'remove' }
+        ])
+      })
+
+      it('should keep all items when no Duplicate item exists', () => {
+        const items = [
+          { text: 'Append', action: 'append' },
+          { text: 'Insert', action: 'insert' },
+          { text: 'Remove', action: 'remove' }
+        ]
+
+        const result = options.onCreateMenu(items)
+
+        expect(result).toHaveLength(3)
+        expect(result).toEqual(items)
+      })
+
+      it('should handle empty items array', () => {
+        const items = []
+
+        const result = options.onCreateMenu(items)
+
+        expect(result).toEqual([])
       })
     })
   })
@@ -503,6 +501,9 @@ describe('JSONEditor Main Module', () => {
           'Are you sure you want to reset all changes?'
         )
         expect(mockStorageInstance.clear).toHaveBeenCalled()
+        expect(mockElements['jsoneditor-organisation-object'].value).toBe(
+          JSON.stringify({ name: 'test', age: 25 })
+        )
         expect(mockHelpers.highlightChanges).toHaveBeenCalled()
       })
 
@@ -519,63 +520,42 @@ describe('JSONEditor Main Module', () => {
       })
     })
 
-    describe('Save button', () => {
-      it('should setup save button event listener', () => {
-        expect(
-          mockElements['jsoneditor-save-button'].addEventListener
-        ).toHaveBeenCalledWith('click', expect.any(Function))
-      })
-
-      it('should submit form with JSON data', () => {
-        const saveHandler =
-          mockElements['jsoneditor-save-button'].addEventListener.mock
-            .calls[0][1]
-        const testData = { name: 'Jane', age: 30 }
-        editorInstances[0].get = () => testData
-
-        saveHandler()
-
+    describe('Hidden input synchronization', () => {
+      it('should sync hidden input with initial data', () => {
+        // Check that hidden input was set with initial data
         expect(mockElements['jsoneditor-organisation-object'].value).toBe(
-          JSON.stringify(testData)
-        )
-        expect(mockElements['jsoneditor-form'].submit).toHaveBeenCalled()
-      })
-
-      it('should show alert when form is not found', () => {
-        document.getElementById.mockImplementation((id) => {
-          if (id === 'jsoneditor-form') return null
-          return mockElements[id] || null
-        })
-
-        const saveHandler =
-          mockElements['jsoneditor-save-button'].addEventListener.mock
-            .calls[0][1]
-
-        saveHandler()
-
-        expect(window.alert).toHaveBeenCalledWith(
-          'Form element not found for submission.'
+          JSON.stringify({ name: 'test', age: 25 })
         )
       })
+    })
+  })
 
-      it('should handle errors and show alert', () => {
-        const saveHandler =
-          mockElements['jsoneditor-save-button'].addEventListener.mock
-            .calls[0][1]
-        editorInstances[0].get = () => {
-          throw new Error('Test error')
-        }
+  describe('Hidden input with saved draft', () => {
+    let mockElements
 
-        saveHandler()
+    beforeEach(() => {
+      mockElements = setupGlobalMocks()
+      vi.clearAllMocks()
+      editorInstances.length = 0
+      editorConstructorCalls.length = 0
+      mockValidate.mockReturnValue(true)
+      mockValidate.errors = []
 
-        expect(console.error).toHaveBeenCalledWith(
-          'Failed to save data:',
-          expect.any(Error)
-        )
-        expect(window.alert).toHaveBeenCalledWith(
-          'Failed to save data. See console for details.'
-        )
-      })
+      // Set up saved data BEFORE import
+      const savedData = { name: 'Jane', age: 30 }
+      mockStorageInstance.load.mockReturnValue(savedData)
+
+      mockHelpers.deepEqual.mockReturnValue(false)
+      mockHelpers.getValueAtPath.mockReturnValue(undefined)
+      mockHelpers.findSchemaNode.mockReturnValue({})
+    })
+
+    it('should sync hidden input when draft is loaded', async () => {
+      await import('./jsoneditor.js?t=9')
+
+      expect(mockElements['jsoneditor-organisation-object'].value).toBe(
+        JSON.stringify({ name: 'Jane', age: 30 })
+      )
     })
   })
 
@@ -589,7 +569,7 @@ describe('JSONEditor Main Module', () => {
         }
       }))
 
-      await import('./jsoneditor.js?t=8')
+      await import('./jsoneditor.js?t=10')
 
       expect(console.error).toHaveBeenCalledWith(
         'Failed to initialise JSONEditor:',

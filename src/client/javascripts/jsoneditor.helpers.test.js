@@ -2,12 +2,12 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import {
   findSchemaNode,
   getValueAtPath,
-  isReadOnlySchema,
+  isNodeEditable,
   checkReadOnlyChanges,
   highlightChanges,
   LocalStorageManager,
   getAutocompleteOptions,
-  filterContextMenu
+  validateJSON
 } from './jsoneditor.helpers.js'
 
 // Mock localStorage for Node.js environment
@@ -187,35 +187,111 @@ describe('JSONEditor Helpers', () => {
     })
   })
 
-  describe('isReadOnlySchema', () => {
-    it('should return true for explicit readOnly flag', () => {
-      expect(isReadOnlySchema({ type: 'string', readOnly: true })).toBe(true)
+  describe('isNodeEditable', () => {
+    const schema = {
+      type: 'object',
+      properties: {
+        id: { type: 'string', readOnly: true },
+        locked: { type: 'string', not: {} },
+        constLocked: { type: 'string', not: { const: 'value' } },
+        typeLocked: { type: 'string', not: { type: 'number' } },
+        name: { type: 'string' },
+        age: { type: 'number' },
+        address: {
+          type: 'object',
+          properties: {
+            street: { type: 'string' },
+            city: { type: 'string' }
+          }
+        }
+      }
+    }
+
+    it('should return true for nodes without path', () => {
+      expect(isNodeEditable(null, schema)).toBe(true)
+      expect(isNodeEditable({}, schema)).toBe(true)
+      expect(isNodeEditable({ path: 'not-array' }, schema)).toBe(true)
     })
 
-    it('should return true for empty not constraint', () => {
-      expect(isReadOnlySchema({ type: 'string', not: {} })).toBe(true)
+    it('should return false when schema node is not found', () => {
+      const node = { path: ['nonexistent'] }
+      expect(isNodeEditable(node, schema)).toBe(false)
     })
 
-    it('should return true for not.const constraint', () => {
-      expect(
-        isReadOnlySchema({ type: 'string', not: { const: 'value' } })
-      ).toBe(true)
+    it('should return false for fields with explicit readOnly flag', () => {
+      const node = { path: ['id'], type: 'string' }
+      expect(isNodeEditable(node, schema)).toBe(false)
     })
 
-    it('should return true for not.type constraint', () => {
-      expect(
-        isReadOnlySchema({ type: 'string', not: { type: 'number' } })
-      ).toBe(true)
+    it('should return false for fields with empty not constraint', () => {
+      const node = { path: ['locked'], type: 'string' }
+      expect(isNodeEditable(node, schema)).toBe(false)
     })
 
-    it('should return false for regular schema', () => {
-      expect(isReadOnlySchema({ type: 'string' })).toBe(false)
+    it('should return false for fields with not.const constraint', () => {
+      const node = { path: ['constLocked'], type: 'string' }
+      expect(isNodeEditable(node, schema)).toBe(false)
     })
 
-    it('should handle invalid inputs', () => {
-      expect(isReadOnlySchema(null)).toBe(false)
-      expect(isReadOnlySchema(undefined)).toBe(false)
-      expect(isReadOnlySchema('string')).toBe(false)
+    it('should return false for fields with not.type constraint', () => {
+      const node = { path: ['typeLocked'], type: 'string' }
+      expect(isNodeEditable(node, schema)).toBe(false)
+    })
+
+    it('should return { field: false, value: true } for object types', () => {
+      const node = { path: ['address'], type: 'object' }
+      expect(isNodeEditable(node, schema)).toEqual({
+        field: false,
+        value: true
+      })
+    })
+
+    it('should return { field: false, value: true } when node has field property', () => {
+      const node = { path: ['name'], field: 'name', type: 'string' }
+      expect(isNodeEditable(node, schema)).toEqual({
+        field: false,
+        value: true
+      })
+    })
+
+    it('should return true for editable fields', () => {
+      const node = { path: ['name'], type: 'string' }
+      expect(isNodeEditable(node, schema)).toBe(true)
+    })
+
+    it('should return true for editable number fields', () => {
+      const node = { path: ['age'], type: 'number' }
+      expect(isNodeEditable(node, schema)).toBe(true)
+    })
+
+    it('should handle nested paths correctly', () => {
+      const node = { path: ['address', 'street'], type: 'string' }
+      expect(isNodeEditable(node, schema)).toBe(true)
+    })
+
+    it('should handle read-only nested fields', () => {
+      const nestedSchema = {
+        type: 'object',
+        properties: {
+          config: {
+            type: 'object',
+            properties: {
+              version: { type: 'string', readOnly: true }
+            }
+          }
+        }
+      }
+      const node = { path: ['config', 'version'], type: 'string' }
+      expect(isNodeEditable(node, nestedSchema)).toBe(false)
+    })
+
+    it('should handle object nodes with field property correctly', () => {
+      // When node.field is truthy (e.g., a key name), it should lock the field
+      const node = { path: ['address'], type: 'object', field: 'address' }
+      expect(isNodeEditable(node, schema)).toEqual({
+        field: false,
+        value: true
+      })
     })
   })
 
@@ -463,42 +539,183 @@ describe('JSONEditor Helpers', () => {
     })
   })
 
-  describe('filterContextMenu', () => {
-    const menuItems = [
-      { text: 'Cut', action: 'cut' },
-      { text: 'Copy', action: 'copy' },
-      { text: 'Paste', action: 'paste' },
-      { text: 'Duplicate', action: 'duplicate' },
-      { text: 'Remove', action: 'remove' }
-    ]
+  describe('validateJSON', () => {
+    const schema = {
+      type: 'object',
+      properties: {
+        id: { type: 'string', readOnly: true },
+        name: { type: 'string', enum: ['John', 'Jane'] },
+        age: { type: 'number' }
+      }
+    }
 
-    it('should filter out default excluded items', () => {
-      const filtered = filterContextMenu(menuItems)
-      expect(filtered).toHaveLength(4)
-      expect(filtered.find((item) => item.text === 'Duplicate')).toBeUndefined()
+    const mockValidate = vi.fn()
+
+    beforeEach(() => {
+      mockValidate.mockReset()
+      mockValidate.errors = []
     })
 
-    it('should filter out custom excluded items', () => {
-      const filtered = filterContextMenu(menuItems, ['Copy', 'Paste'])
-      expect(filtered).toHaveLength(3)
-      expect(filtered.map((item) => item.text)).toEqual([
-        'Cut',
-        'Duplicate',
-        'Remove'
-      ])
+    it('should return empty array for valid JSON', () => {
+      mockValidate.mockReturnValue(true)
+      mockValidate.errors = []
+
+      const json = { id: '123', name: 'John', age: 30 }
+      const original = { id: '123', name: 'John', age: 30 }
+
+      const errors = validateJSON(json, original, schema, mockValidate)
+
+      expect(errors).toEqual([])
+      expect(mockValidate).toHaveBeenCalledWith(json)
     })
 
-    it('should filter by action as well as text', () => {
-      const filtered = filterContextMenu(menuItems, ['duplicate'])
-      expect(filtered).toHaveLength(4)
-      expect(
-        filtered.find((item) => item.action === 'duplicate')
-      ).toBeUndefined()
+    it('should return AJV validation errors', () => {
+      mockValidate.mockReturnValue(false)
+      mockValidate.errors = [
+        {
+          instancePath: '/age',
+          message: 'must be number'
+        }
+      ]
+
+      const json = { id: '123', name: 'John', age: 'invalid' }
+      const original = { id: '123', name: 'John', age: 30 }
+
+      const errors = validateJSON(json, original, schema, mockValidate)
+
+      expect(errors).toHaveLength(1)
+      expect(errors[0]).toEqual({
+        path: ['age'],
+        message: 'must be number'
+      })
     })
 
-    it('should return all items when no exclusions match', () => {
-      const filtered = filterContextMenu(menuItems, ['NonExistent'])
-      expect(filtered).toHaveLength(5)
+    it('should customize enum error messages', () => {
+      mockValidate.mockReturnValue(false)
+      mockValidate.errors = [
+        {
+          instancePath: '/name',
+          keyword: 'enum',
+          params: { allowedValues: ['John', 'Jane'] },
+          message: 'must be equal to one of the allowed values'
+        }
+      ]
+
+      const json = { id: '123', name: 'Bob', age: 30 }
+      const original = { id: '123', name: 'John', age: 30 }
+
+      const errors = validateJSON(json, original, schema, mockValidate)
+
+      expect(errors).toHaveLength(1)
+      expect(errors[0].message).toBe('must be one of: "John", "Jane"')
+    })
+
+    it('should handle errors without instancePath', () => {
+      mockValidate.mockReturnValue(false)
+      mockValidate.errors = [
+        {
+          message: 'Root level error'
+        }
+      ]
+
+      const json = { id: '123', name: 'John', age: 30 }
+      const original = { id: '123', name: 'Jane', age: 25 }
+
+      const errors = validateJSON(json, original, schema, mockValidate)
+
+      expect(errors[0].path).toEqual([])
+    })
+
+    it('should handle errors without message', () => {
+      mockValidate.mockReturnValue(false)
+      mockValidate.errors = [
+        {
+          instancePath: '/age'
+        }
+      ]
+
+      const json = { id: '123', name: 'John', age: 'invalid' }
+      const original = { id: '123', name: 'John', age: 30 }
+
+      const errors = validateJSON(json, original, schema, mockValidate)
+
+      expect(errors[0].message).toBe('Validation error')
+    })
+
+    it('should add readOnly change errors', () => {
+      mockValidate.mockReturnValue(true)
+      mockValidate.errors = []
+
+      const json = { id: '456', name: 'John', age: 30 }
+      const original = { id: '123', name: 'John', age: 30 }
+
+      const errors = validateJSON(json, original, schema, mockValidate)
+
+      expect(errors).toHaveLength(1)
+      expect(errors[0].path).toEqual(['id'])
+      expect(errors[0].message).toBe('This read-only field cannot be changed.')
+    })
+
+    it('should filter errors to only show changed fields', () => {
+      mockValidate.mockReturnValue(false)
+      mockValidate.errors = [
+        {
+          instancePath: '/name',
+          message: 'Invalid name'
+        },
+        {
+          instancePath: '/age',
+          message: 'Invalid age'
+        }
+      ]
+
+      // Only name changed, age is the same
+      const json = { id: '123', name: 'Bob', age: 30 }
+      const original = { id: '123', name: 'John', age: 30 }
+
+      const errors = validateJSON(json, original, schema, mockValidate)
+
+      // Should only show error for the changed field (name)
+      expect(errors).toHaveLength(1)
+      expect(errors[0].path).toEqual(['name'])
+    })
+
+    it('should handle URL-encoded paths correctly', () => {
+      mockValidate.mockReturnValue(false)
+      mockValidate.errors = [
+        {
+          instancePath: '/field%20with%20space',
+          message: 'Error in encoded field'
+        }
+      ]
+
+      const json = { 'field with space': 'invalid' }
+      const original = { 'field with space': 'valid' }
+
+      const errors = validateJSON(json, original, schema, mockValidate)
+
+      expect(errors[0].path).toEqual(['field with space'])
+    })
+
+    it('should combine AJV errors and readOnly errors', () => {
+      mockValidate.mockReturnValue(false)
+      mockValidate.errors = [
+        {
+          instancePath: '/name',
+          message: 'Invalid name'
+        }
+      ]
+
+      const json = { id: '456', name: 'Bob', age: 30 }
+      const original = { id: '123', name: 'John', age: 30 }
+
+      const errors = validateJSON(json, original, schema, mockValidate)
+
+      // Should have both errors (changed name and changed readonly id)
+      expect(errors).toHaveLength(2)
+      expect(errors.map((e) => e.path)).toEqual(
+        expect.arrayContaining([['name'], ['id']])
+      )
     })
   })
 

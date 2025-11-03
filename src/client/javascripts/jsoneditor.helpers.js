@@ -37,18 +37,37 @@ export function getValueAtPath(obj, path) {
 }
 
 /**
- * Determines if a schema node represents a read-only field
- * @param {Object} schema - The schema node to check
- * @returns {boolean} True if the field is read-only
+ * Determines if a node in the JSONEditor is editable based on the schema
+ * @param {Object} node - The JSONEditor node to check
+ * @param {Object} rootSchema - The root JSON schema
+ * @returns {boolean|Object} True if editable, false if not, or { field, value } for partial editability
  */
-export function isReadOnlySchema(schema) {
-  if (!schema || typeof schema !== 'object') return false
-  // explicit readOnly flag
-  if (schema.readOnly) return true
-  // common "not" pattern meaning "this field must not be changed"
-  if (schema.not && Object.keys(schema.not).length === 0) return true
-  if (schema.not && schema.not.const !== undefined) return true
-  return !!(schema.not && schema.not.type)
+export function isNodeEditable(node, rootSchema) {
+  // skip root/meta nodes
+  if (!node || !Array.isArray(node.path)) return true
+
+  const subschema = findSchemaNode(rootSchema, node.path)
+
+  if (subschema === null) return false
+
+  // 1️⃣ Read-only fields: completely locked
+  // Check if schema indicates read-only through various patterns
+  if (subschema && typeof subschema === 'object') {
+    // explicit readOnly flag
+    if (subschema.readOnly) return false
+    // common "not" pattern meaning "this field must not be changed"
+    if (subschema.not && Object.keys(subschema.not).length === 0) return false
+    if (subschema.not && subschema.not.const !== undefined) return false
+    if (subschema.not && subschema.not.type) return false
+  }
+
+  // 2️⃣ Object keys: lock key names but allow editing of values
+  if (node.type === 'object' || node.field) {
+    return { field: false, value: true }
+  }
+
+  // 3️⃣ Everything else: editable normally
+  return true
 }
 
 /**
@@ -223,14 +242,53 @@ export function getAutocompleteOptions(schema, path) {
 }
 
 /**
- * Filters context menu items to remove unwanted options
- * @param {Array} items - Original menu items
- * @param {Array} excludedItems - Items to exclude (by text or action)
- * @returns {Array} Filtered menu items
+ * Validates JSON data against a schema using AJV and checks for read-only field changes
+ * @param {*} json - The JSON data to validate
+ * @param {*} originalData - The original data to compare against for read-only checks
+ * @param {Object} schema - The JSON schema to validate against
+ * @param {Function} validate - The AJV validation function
+ * @returns {Array} Array of validation errors
  */
-export function filterContextMenu(items, excludedItems = ['Duplicate']) {
-  return items.filter(
-    (item) =>
-      !excludedItems.includes(item.text) && !excludedItems.includes(item.action)
-  )
+export function validateJSON(json, originalData, schema, validate) {
+  let errors = []
+
+  // 1️⃣ Run normal AJV validation
+  const valid = validate(json)
+  if (!valid && validate.errors) {
+    errors.push(
+      ...validate.errors.map((err) => {
+        let message = err.message || 'Validation error'
+
+        // 🧩 Customise enum messages
+        if (err.keyword === 'enum' && err.params?.allowedValues) {
+          const allowed = err.params.allowedValues
+            .map((v) => JSON.stringify(v))
+            .join(', ')
+          message = `must be one of: ${allowed}`
+        }
+
+        return {
+          path: err.instancePath
+            ? err.instancePath
+                .replace(/^\//, '')
+                .split('/')
+                .map(decodeURIComponent)
+            : [],
+          message
+        }
+      })
+    )
+  }
+
+  // 2️⃣ Add readOnly checks *only if changed*
+  checkReadOnlyChanges(json, originalData, schema, [], errors)
+
+  // 3️⃣ 🔍 Filter: only show errors for changed fields
+  errors = errors.filter((err) => {
+    const newValue = getValueAtPath(json, err.path)
+    const oldValue = getValueAtPath(originalData, err.path)
+    return !isEqual(newValue, oldValue)
+  })
+
+  return errors
 }
