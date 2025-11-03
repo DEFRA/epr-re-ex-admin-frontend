@@ -18,12 +18,6 @@ import {
   server as mswServer
 } from '../../../../.vite/setup-msw.js'
 
-const mockLoggerError = vi.fn()
-
-vi.mock('./logging/logger.js', () => ({
-  createLogger: () => ({ error: (...args) => mockLoggerError(...args) })
-}))
-
 vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
   getUserSession: vi.fn().mockReturnValue(null)
 }))
@@ -45,14 +39,9 @@ describe('#fetchJsonFromBackend', () => {
     vi.clearAllMocks()
   })
 
-  describe('on a successful response', async () => {
-    let requestSpy
-    let mockOrganisations
-    let result
-
-    beforeAll(async () => {
-      requestSpy = vi.fn()
-      mockOrganisations = [
+  describe('on a successful response', () => {
+    test('returns data when backend responds with ok=true', async () => {
+      const mockOrganisations = [
         {
           orgId: 'org-2',
           statusHistory: [],
@@ -62,12 +51,13 @@ describe('#fetchJsonFromBackend', () => {
           }
         }
       ]
+
       const url = `${backendUrl}/v1/organisations`
       const getOrganisationsHandler = http.get(url, () => {
         return HttpResponse.json(mockOrganisations)
       })
       mswServer.use(getOrganisationsHandler)
-      mswServer.events.on('request:start', requestSpy)
+
       const options = {
         method: 'GET',
         headers: {
@@ -75,89 +65,101 @@ describe('#fetchJsonFromBackend', () => {
         }
       }
 
-      result = await fetchJsonFromBackend({}, '/v1/organisations', options)
-    })
+      const result = await fetchJsonFromBackend(
+        {},
+        '/v1/organisations',
+        options
+      )
 
-    test('returns data when backend responds with ok=true', async () => {
-      await vi.waitFor(() => {
-        expect(requestSpy).toHaveBeenCalledTimes(1)
-      })
-      // expect(requestSpy).toHaveBeenCalledWith(
-      //   `${backendUrl}/v1/organisations`,
-      //   expect.objectContaining({
-      //     method: 'GET',
-      //     headers: expect.objectContaining({ 'x-test': '1' })
-      //   })
-      // )
-      //
-      // expect(result).toEqual({ data: mockOrganisations })
-      // expect(mockLoggerError).not.toHaveBeenCalled()
+      expect(result).toEqual(mockOrganisations)
     })
 
     test('adds the authorisation header with the user token', async () => {
-      expect(requestSpy).toHaveBeenCalledWith(
-        `${backendUrl}/v1/organisations`,
+      let capturedHeaders = null
+
+      const url = `${backendUrl}/v1/organisations`
+      const getOrganisationsHandler = http.get(url, ({ request }) => {
+        capturedHeaders = Object.fromEntries(request.headers.entries())
+        return HttpResponse.json([])
+      })
+      mswServer.use(getOrganisationsHandler)
+
+      await fetchJsonFromBackend({}, '/v1/organisations', { method: 'GET' })
+
+      expect(capturedHeaders).toEqual(
         expect.objectContaining({
-          headers: expect.objectContaining({
-            Authorization: `Bearer ${mockUserSession.token}`
-          })
+          authorization: `Bearer ${mockUserSession.token}`,
+          'content-type': 'application/json'
         })
       )
     })
   })
 
-  test('returns unauthorised errorView when status is 401', async () => {
-    const json = vi.fn()
-    const response = {
-      ok: false,
-      status: 401,
-      statusText: 'Unauthorized',
-      json
-    }
+  test('throws Boom unauthorised error when status is 401', async () => {
+    const url = `${backendUrl}/secure`
+    const unauthorizedHandler = http.get(url, () => {
+      return new HttpResponse(null, {
+        status: 401,
+        statusText: 'Unauthorized'
+      })
+    })
+    mswServer.use(unauthorizedHandler)
 
-    globalThis.fetch = vi.fn().mockResolvedValue(response)
-
-    const result = await fetchJsonFromBackend({}, '/secure', { method: 'GET' })
-
-    expect(result).toEqual({ errorView: 'unauthorised' })
-    expect(mockLoggerError).not.toHaveBeenCalled()
-    expect(json).not.toHaveBeenCalled()
+    await expect(
+      fetchJsonFromBackend({}, '/secure', { method: 'GET' })
+    ).rejects.toMatchObject({
+      isBoom: true,
+      output: {
+        statusCode: 401
+      },
+      message: expect.stringContaining(
+        'Failed to fetch from backend at path: /secure: 401 Unauthorized'
+      )
+    })
   })
 
-  test('logs error and returns 500 errorView when response not ok (non-401)', async () => {
-    const json = vi.fn()
-    const response = {
-      ok: false,
-      status: 500,
-      statusText: 'Internal Server Error',
-      json
-    }
-
-    globalThis.fetch = vi.fn().mockResolvedValue(response)
-
+  test('throws Boom internal server error when response not ok (non-401)', async () => {
     const path = '/boom'
-    const result = await fetchJsonFromBackend({}, path, { method: 'GET' })
+    const url = `${backendUrl}${path}`
+    const errorHandler = http.get(url, () => {
+      return new HttpResponse(null, {
+        status: 500,
+        statusText: 'Internal Server Error'
+      })
+    })
+    mswServer.use(errorHandler)
 
-    expect(result).toEqual({ errorView: '500' })
-    expect(mockLoggerError).toHaveBeenCalledTimes(1)
-    expect(mockLoggerError.mock.calls[0][0]).toContain(
-      `Failed to fetch from backend at path: ${path}: 500 Internal Server Error`
-    )
-    expect(json).not.toHaveBeenCalled()
+    await expect(
+      fetchJsonFromBackend({}, path, { method: 'GET' })
+    ).rejects.toMatchObject({
+      isBoom: true,
+      output: {
+        statusCode: 500
+      },
+      message: expect.stringContaining(
+        'Failed to fetch from backend at path: /boom: 500 Internal Server Error'
+      )
+    })
   })
 
-  test('logs error and returns 500 errorView when fetch throws', async () => {
+  test('throws Boom internal server error when fetch throws', async () => {
     const path = '/network'
-    const err = new Error('network down')
+    const url = `${backendUrl}${path}`
+    const networkErrorHandler = http.get(url, () => {
+      return HttpResponse.error()
+    })
+    mswServer.use(networkErrorHandler)
 
-    globalThis.fetch = vi.fn().mockRejectedValue(err)
-
-    const result = await fetchJsonFromBackend({}, path, { method: 'GET' })
-
-    expect(result).toEqual({ errorView: '500' })
-    expect(mockLoggerError).toHaveBeenCalledTimes(1)
-    expect(mockLoggerError.mock.calls[0][0]).toContain(
-      `Failed to fetch from backend at path: ${path}: ${err.message}`
-    )
+    await expect(
+      fetchJsonFromBackend({}, path, { method: 'GET' })
+    ).rejects.toMatchObject({
+      isBoom: true,
+      output: {
+        statusCode: 500
+      },
+      message: expect.stringContaining(
+        'Failed to fetch from backend at path: /network:'
+      )
+    })
   })
 })
