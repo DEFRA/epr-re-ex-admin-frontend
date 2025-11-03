@@ -36,11 +36,7 @@ export const fetchJsonFromBackend = async (request, path, options) => {
 
       // Add response body to the error payload if needed
       if (response.headers.get('content-type')?.includes('application/json')) {
-        try {
-          error.output.payload = await response.json()
-        } catch {
-          // If JSON parsing fails, continue without payload
-        }
+        error.output.payload = await response.json()
       }
 
       throw error

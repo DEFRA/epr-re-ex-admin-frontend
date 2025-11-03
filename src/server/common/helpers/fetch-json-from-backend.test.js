@@ -221,7 +221,7 @@ describe('#fetchJsonFromBackend', () => {
         statusCode: 500
       },
       message: expect.stringContaining(
-        'Failed to fetch from backend at path: /malformed: 500 Internal Server Error'
+        'Failed to fetch from backend at path: /malformed:'
       )
     })
   })
