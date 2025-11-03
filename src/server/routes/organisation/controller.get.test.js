@@ -14,7 +14,7 @@ vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
   getUserSession: vi.fn().mockReturnValue(null)
 }))
 
-describe('#organisationsController', () => {
+describe('#organisationsGETController', () => {
   let server
 
   beforeAll(async () => {

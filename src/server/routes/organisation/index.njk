@@ -3,25 +3,43 @@
 {% from "govuk/components/tag/macro.njk" import govukTag %}
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
 
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
 
-      <!-- JSONEditor mount point -->
-      <div id="jsoneditor" data-testid="organisation-jsoneditor"></div>
-      <script id="organisation-json" type="application/json">{{ organisationJson | safe }}</script>
+      <form id="jsoneditor-form" method="POST">
+        {% if message === "success" %}
+          {% set html %}
+            <p id="organisation-success-message" class="govuk-body">Organisation record updated</p>
+          {% endset %}
 
-      {{ govukButton({
-        text: "Reset",
-        classes: "govuk-!-margin-right-2",
-        id: "jsoneditor-reset-button"
-      }) }}
+          {{ govukNotificationBanner({
+            html: html,
+            type: "success"
+          }) }}
+        {% endif %}
 
-      {{ govukButton({
-        text: "Save",
-        id: "jsoneditor-save-button"
-      }) }}
+        <div id="jsoneditor" data-testid="organisation-jsoneditor"></div>
+        <script id="organisation-json" type="application/json">{{ organisationJson | safe }}</script>
+
+        <input  id="jsoneditor-organisation-object" type="hidden" name="organisation" />
+
+        {{ govukButton({
+          text: "Reset",
+          type: "button",
+          classes: "govuk-!-margin-right-2 govuk-button--secondary",
+          id: "jsoneditor-reset-button"
+        }) }}
+
+        {{ govukButton({
+          text: "Save",
+          id: "jsoneditor-save-button"
+        }) }}
+      </form>
     </div>
+
+
   </div>
 {% endblock %}

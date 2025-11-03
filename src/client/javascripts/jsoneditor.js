@@ -13,6 +13,17 @@ if (container) {
       ? JSON.parse(payloadEl.textContent || '{}')
       : {}
 
+    // Clear local storage if success message present
+    const messageEl = document.getElementById('organisation-success-message')
+    if (messageEl) {
+      try {
+        window.localStorage.removeItem(STORAGE_KEY)
+        console.info('[JSONEditor] Cleared draft from localStorage after save')
+      } catch (err) {
+        console.warn('Failed to clear localStorage draft:', err)
+      }
+    }
+
     // 🆕 Load from localStorage if exists
     let savedData = null
     try {
@@ -39,6 +50,14 @@ if (container) {
           }
           return []
         }
+      },
+
+      // 🧩 Remove "Duplicate" from context menu
+      onCreateMenu: (items) => {
+        // Filter out the duplicate option by text or action
+        return items.filter(
+          (item) => item.text !== 'Duplicate' && item.action !== 'duplicate'
+        )
       },
 
       // ... all your other options like onEditable, onValidate, autocomplete, etc.
@@ -152,6 +171,31 @@ if (container) {
         window.localStorage.removeItem(STORAGE_KEY)
         editor.set(originalData)
         highlightChanges(editor, originalData, originalData)
+      }
+    })
+
+    const saveButton = document.getElementById('jsoneditor-save-button')
+    saveButton.addEventListener('click', () => {
+      try {
+        const currentData = editor.get()
+
+        // 🧩 Find or create a hidden form for submission
+        const form = document.getElementById('jsoneditor-form')
+        if (!form) {
+          window.alert('Form element not found for submission.')
+        }
+
+        // 🧩 Add JSON payload as hidden input
+        const hiddenInput = document.getElementById(
+          'jsoneditor-organisation-object'
+        )
+        hiddenInput.value = JSON.stringify(currentData)
+
+        // 🧩 Submit form normally
+        form.submit()
+      } catch (err) {
+        console.error('Failed to save data:', err)
+        window.alert('Failed to save data. See console for details.')
       }
     })
   } catch (err) {

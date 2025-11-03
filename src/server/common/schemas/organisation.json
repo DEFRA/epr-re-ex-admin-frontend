@@ -1,1 +1,1178 @@
-{"type":"object","properties":{"id":{"not":{}},"orgId":{"type":"number"},"statusHistory":{"not":{}},"status":{"type":"string","enum":["created","approved","rejected","suspended","archived"]},"schemaVersion":{"not":{}},"version":{"not":{}},"wasteProcessingTypes":{"type":"array","minItems":1,"items":{"type":"string","enum":["reprocessor","exporter"]}},"reprocessingNations":{"type":"array","minItems":1,"items":{"type":"string","enum":["england","wales","scotland","northern_ireland"]}},"businessType":{"type":"string","enum":["individual","unincorporated","partnership"]},"companyDetails":{"type":"object","properties":{"name":{"type":"string"},"tradingName":{"type":"string"},"registrationNumber":{"type":"string","pattern":"^[A-Z0-9]{8}$"},"registeredAddress":{"type":"object","properties":{"line1":{"type":"string"},"line2":{"type":"string"},"town":{"type":"string"},"county":{"type":"string"},"country":{"type":"string"},"postcode":{"type":"string"},"region":{"type":"string"},"fullAddress":{"type":"string"},"line2ToCounty":{"type":"string"}},"additionalProperties":false}},"required":["name"],"additionalProperties":false},"partnership":{"type":"object","properties":{"type":{"type":"string","enum":["ltd","ltd_liability"]},"partners":{"type":"array","items":{"type":"object","properties":{"name":{"type":"string"},"type":{"type":"string","enum":["company","individual"]}},"required":["name","type"],"additionalProperties":false}}},"required":["type"],"additionalProperties":false},"submitterContactDetails":{"type":"object","properties":{"fullName":{"type":"string"},"email":{"type":"string","format":"email"},"phone":{"type":"string"},"role":{"type":"string"},"title":{"type":"string"}},"required":["fullName","email","phone"],"additionalProperties":false,"anyOf":[{"required":["role"]},{"required":["title"]}]},"managementContactDetails":{"type":"object","properties":{"fullName":{"type":"string"},"email":{"type":"string","format":"email"},"phone":{"type":"string"},"role":{"type":"string"},"title":{"type":"string"}},"required":["fullName","email","phone"],"additionalProperties":false,"anyOf":[{"required":["role"]},{"required":["title"]}]},"formSubmissionTime":{"type":"string","format":"date-time"},"submittedToRegulator":{"type":"string","enum":["ea","nrw","sepa","niea"]},"registrations":{"type":"array","items":{"type":"object","properties":{"id":{"type":"string","readOnly":true},"statusHistory":{"type":"array","items":{"not":{}}},"status":{"type":"string","enum":["created","approved","rejected","suspended","archived"]},"formSubmissionTime":{"type":"string","format":"date-time"},"submittedToRegulator":{"type":"string","enum":["ea","nrw","sepa","niea"]},"orgName":{"type":"string"},"site":{"type":"object","properties":{"address":{"type":"object","properties":{"line1":{"type":"string"},"line2":{"type":"string"},"town":{"type":"string"},"county":{"type":"string"},"country":{"type":"string"},"postcode":{"type":"string"},"region":{"type":"string"},"fullAddress":{"type":"string"},"line2ToCounty":{"type":"string"}},"additionalProperties":false},"gridReference":{"type":"string"},"siteCapacity":{"type":"array","items":{"type":"object","properties":{"material":{"type":"string","enum":["aluminium","fibre","glass","paper","plastic","steel","wood"]},"siteCapacityWeight":{"type":"string"},"siteCapacityTimescale":{"type":"string","enum":["weekly","monthly","yearly"]}},"required":["material"],"additionalProperties":false}}},"required":["address"],"additionalProperties":false},"material":{"type":"string","enum":["aluminium","fibre","glass","paper","plastic","steel","wood"]},"wasteProcessingType":{"type":"string","enum":["reprocessor","exporter"]},"accreditationId":{"type":"string","readOnly":true},"recyclingProcess":{"type":"array","items":{"type":"string","enum":["glass_re_melt","glass_other"]}},"noticeAddress":{"type":"object","properties":{"line1":{"type":"string"},"line2":{"type":"string"},"town":{"type":"string"},"county":{"type":"string"},"country":{"type":"string"},"postcode":{"type":"string"},"region":{"type":"string"},"fullAddress":{"type":"string"},"line2ToCounty":{"type":"string"}},"additionalProperties":false},"wasteRegistrationNumber":{"type":"string"},"wasteManagementPermits":{"type":"array","items":{"type":"object","properties":{"type":{"type":"string","enum":["wml","ppc","waste_exemption"]},"permitNumber":{"type":"string"},"exemptions":{"type":"array","items":{"type":"object","properties":{"reference":{"type":"string"},"exemptionCode":{"type":"string"}},"required":["reference","exemptionCode"],"additionalProperties":false}},"authorisedMaterials":{"type":"array","items":{"type":"object","properties":{"material":{"type":"string","enum":["aluminium","fibre","glass","paper","plastic","steel","wood"]},"authorisedWeight":{"type":"string"},"timeScale":{"type":"string","enum":["weekly","monthly","yearly"]}},"required":["material"],"additionalProperties":false}}},"required":["type"],"additionalProperties":false}},"approvedPersons":{"type":"array","items":{"type":"object","properties":{"fullName":{"type":"string"},"email":{"type":"string","format":"email"},"phone":{"type":"string"},"role":{"type":"string"},"title":{"type":"string"}},"required":["fullName","email","phone"],"additionalProperties":false,"anyOf":[{"required":["role"]},{"required":["title"]}]}},"suppliers":{"type":"string"},"exportPorts":{"type":"array","items":{"type":"string"}},"yearlyMetrics":{"type":"array","items":{"type":"object","properties":{"year":{"type":"string"},"input":{"type":"object","properties":{"type":{"type":"string","enum":["actual","estimated"]},"ukPackagingWaste":{"type":"string"},"nonUkPackagingWaste":{"type":"string"},"nonPackagingWaste":{"type":"string"}},"additionalProperties":false},"rawMaterialInputs":{"type":"object","properties":{"material":{"type":"string"},"tonnage":{"type":"string"}},"additionalProperties":false},"output":{"type":"object","properties":{"type":{"type":"string","enum":["actual","estimated"]},"sentToAnotherSite":{"type":"string"},"contaminants":{"type":"string"},"processLoss":{"type":"string"}},"additionalProperties":false},"productsMadeFromRecycling":{"type":"array","items":{"type":"object","properties":{"name":{"type":"string"},"weight":{"type":"string"}},"additionalProperties":false}}},"required":["year"],"additionalProperties":false}},"plantEquipmentDetails":{"type":"string"},"submitterContactDetails":{"type":"object","properties":{"fullName":{"type":"string"},"email":{"type":"string","format":"email"},"phone":{"type":"string"},"role":{"type":"string"},"title":{"type":"string"}},"required":["fullName","email","phone"],"additionalProperties":false,"anyOf":[{"required":["role"]},{"required":["title"]}]},"samplingInspectionPlanFileUploads":{"type":"array","items":{"type":"object","properties":{"defraFormUploadedFileId":{"type":"string"},"defraFormUserDownloadLink":{"type":"string","format":"uri"},"s3Uri":{"type":"string"}},"required":["defraFormUploadedFileId","defraFormUserDownloadLink"],"additionalProperties":false}},"orsFileUploads":{"type":"array","items":{"type":"object","properties":{"defraFormUploadedFileId":{"type":"string"},"defraFormUserDownloadLink":{"type":"string","format":"uri"},"s3Uri":{"type":"string"}},"required":["defraFormUploadedFileId","defraFormUserDownloadLink"],"additionalProperties":false}}},"required":["id","formSubmissionTime","submittedToRegulator","material","wasteProcessingType"],"additionalProperties":false}},"accreditations":{"type":"array","items":{"type":"object","properties":{"id":{"type":"string","readOnly":true},"accreditationNumber":{"type":"number"},"statusHistory":{"type":"array","items":{"not":{}}},"status":{"type":"string","enum":["created","approved","rejected","suspended","archived"]},"formSubmissionTime":{"type":"string","format":"date-time"},"submittedToRegulator":{"type":"string","enum":["ea","nrw","sepa","niea"]},"orgName":{"type":"string"},"site":{"type":"object","properties":{"address":{"type":"object","properties":{"line1":{"type":"string"},"line2":{"type":"string"},"town":{"type":"string"},"county":{"type":"string"},"country":{"type":"string"},"postcode":{"type":"string"},"region":{"type":"string"},"fullAddress":{"type":"string"},"line2ToCounty":{"type":"string"}},"additionalProperties":false},"gridReference":{"type":"string"},"siteCapacity":{"type":"array","items":{"type":"object","properties":{"material":{"type":"string","enum":["aluminium","fibre","glass","paper","plastic","steel","wood"]},"siteCapacityWeight":{"type":"string"},"siteCapacityTimescale":{"type":"string","enum":["weekly","monthly","yearly"]}},"required":["material"],"additionalProperties":false}}},"required":["address"],"additionalProperties":false},"material":{"type":"string","enum":["aluminium","fibre","glass","paper","plastic","steel","wood"]},"wasteProcessingType":{"type":"string","enum":["reprocessor","exporter"]},"prnIssuance":{"type":"object","properties":{"tonnageBand":{"type":"string","enum":["up_to_500","up_to_5000","up_to_10000","over_10000"]},"signatories":{"type":"array","items":{"type":"object","properties":{"fullName":{"type":"string"},"email":{"type":"string","format":"email"},"phone":{"type":"string"},"role":{"type":"string"},"title":{"type":"string"}},"required":["fullName","email","phone"],"additionalProperties":false,"anyOf":[{"required":["role"]},{"required":["title"]}]}},"prnIncomeBusinessPlan":{"type":"array","items":{"type":"object","properties":{"percentIncomeSpent":{"type":"number"},"usageDescription":{"type":"string"},"detailedExplanation":{"type":"string"}},"additionalProperties":false}}},"additionalProperties":false},"pernIssuance":{"type":"object","properties":{"tonnageBand":{"type":"string","enum":["up_to_500","up_to_5000","up_to_10000","over_10000"]},"signatories":{"type":"array","items":{"type":"object","properties":{"fullName":{"type":"string"},"email":{"type":"string","format":"email"},"phone":{"type":"string"},"role":{"type":"string"},"title":{"type":"string"}},"required":["fullName","email","phone"],"additionalProperties":false,"anyOf":[{"required":["role"]},{"required":["title"]}]}},"pernIncomeBusinessPlan":{"type":"array","items":{"type":"object","properties":{"percentIncomeSpent":{"type":"number"},"usageDescription":{"type":"string"},"detailedExplanation":{"type":"string"}},"additionalProperties":false}}},"additionalProperties":false},"businessPlan":{"type":"array","items":{"type":"object","properties":{},"additionalProperties":false}},"noticeAddress":{"type":"object","properties":{"line1":{"type":"string"},"line2":{"type":"string"},"town":{"type":"string"},"county":{"type":"string"},"country":{"type":"string"},"postcode":{"type":"string"},"region":{"type":"string"},"fullAddress":{"type":"string"},"line2ToCounty":{"type":"string"}},"additionalProperties":false},"submitterContactDetails":{"type":"object","properties":{"fullName":{"type":"string"},"email":{"type":"string","format":"email"},"phone":{"type":"string"},"role":{"type":"string"},"title":{"type":"string"}},"required":["fullName","email","phone"],"additionalProperties":false,"anyOf":[{"required":["role"]},{"required":["title"]}]},"samplingInspectionPlanFileUploads":{"type":"array","items":{"type":"object","properties":{"defraFormUploadedFileId":{"type":"string"},"defraFormUserDownloadLink":{"type":"string","format":"uri"},"s3Uri":{"type":"string"}},"required":["defraFormUploadedFileId","defraFormUserDownloadLink"],"additionalProperties":false}},"orsFileUploads":{"type":"array","items":{"type":"object","properties":{"defraFormUploadedFileId":{"type":"string"},"defraFormUserDownloadLink":{"type":"string","format":"uri"},"s3Uri":{"type":"string"}},"required":["defraFormUploadedFileId","defraFormUserDownloadLink"],"additionalProperties":false}}},"required":["id","formSubmissionTime","submittedToRegulator","material","wasteProcessingType"],"additionalProperties":false}}},"additionalProperties":false}
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "not": {}
+    },
+    "orgId": {
+      "type": "number"
+    },
+    "statusHistory": {
+      "not": {}
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "created",
+        "approved",
+        "rejected",
+        "suspended",
+        "archived"
+      ]
+    },
+    "schemaVersion": {
+      "not": {}
+    },
+    "version": {
+      "not": {}
+    },
+    "wasteProcessingTypes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "enum": [
+          "reprocessor",
+          "exporter"
+        ]
+      }
+    },
+    "reprocessingNations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "enum": [
+          "england",
+          "wales",
+          "scotland",
+          "northern_ireland"
+        ]
+      }
+    },
+    "businessType": {
+      "type": "string",
+      "enum": [
+        "individual",
+        "unincorporated",
+        "partnership"
+      ]
+    },
+    "companyDetails": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "tradingName": {
+          "type": "string"
+        },
+        "registrationNumber": {
+          "type": "string",
+          "pattern": "^[A-Z0-9]{8}$"
+        },
+        "registeredAddress": {
+          "type": "object",
+          "properties": {
+            "line1": {
+              "type": "string"
+            },
+            "line2": {
+              "type": "string"
+            },
+            "town": {
+              "type": "string"
+            },
+            "county": {
+              "type": "string"
+            },
+            "country": {
+              "type": "string"
+            },
+            "postcode": {
+              "type": "string"
+            },
+            "region": {
+              "type": "string"
+            },
+            "fullAddress": {
+              "type": "string"
+            },
+            "line2ToCounty": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "partnership": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "ltd",
+            "ltd_liability"
+          ]
+        },
+        "partners": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "company",
+                  "individual"
+                ]
+              }
+            },
+            "required": [
+              "name",
+              "type"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "submitterContactDetails": {
+      "type": "object",
+      "properties": {
+        "fullName": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "fullName",
+        "email",
+        "phone"
+      ],
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "required": [
+            "role"
+          ]
+        },
+        {
+          "required": [
+            "title"
+          ]
+        }
+      ]
+    },
+    "managementContactDetails": {
+      "type": "object",
+      "properties": {
+        "fullName": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "fullName",
+        "email",
+        "phone"
+      ],
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "required": [
+            "role"
+          ]
+        },
+        {
+          "required": [
+            "title"
+          ]
+        }
+      ]
+    },
+    "formSubmissionTime": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "submittedToRegulator": {
+      "type": "string",
+      "enum": [
+        "ea",
+        "nrw",
+        "sepa",
+        "niea"
+      ]
+    },
+    "registrations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "readOnly": true
+          },
+          "statusHistory": {
+            "type": "array",
+            "items": {
+              "not": {}
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "created",
+              "approved",
+              "rejected",
+              "suspended",
+              "archived"
+            ]
+          },
+          "formSubmissionTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "submittedToRegulator": {
+            "type": "string",
+            "enum": [
+              "ea",
+              "nrw",
+              "sepa",
+              "niea"
+            ]
+          },
+          "orgName": {
+            "type": "string"
+          },
+          "site": {
+            "type": "object",
+            "properties": {
+              "address": {
+                "type": "object",
+                "properties": {
+                  "line1": {
+                    "type": "string"
+                  },
+                  "line2": {
+                    "type": "string"
+                  },
+                  "town": {
+                    "type": "string"
+                  },
+                  "county": {
+                    "type": "string"
+                  },
+                  "country": {
+                    "type": "string"
+                  },
+                  "postcode": {
+                    "type": "string"
+                  },
+                  "region": {
+                    "type": "string"
+                  },
+                  "fullAddress": {
+                    "type": "string"
+                  },
+                  "line2ToCounty": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "gridReference": {
+                "type": "string"
+              },
+              "siteCapacity": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "material": {
+                      "type": "string",
+                      "enum": [
+                        "aluminium",
+                        "fibre",
+                        "glass",
+                        "paper",
+                        "plastic",
+                        "steel",
+                        "wood"
+                      ]
+                    },
+                    "siteCapacityWeight": {
+                      "type": "string"
+                    },
+                    "siteCapacityTimescale": {
+                      "type": "string",
+                      "enum": [
+                        "weekly",
+                        "monthly",
+                        "yearly"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "material"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "address"
+            ],
+            "additionalProperties": false
+          },
+          "material": {
+            "type": "string",
+            "enum": [
+              "aluminium",
+              "fibre",
+              "glass",
+              "paper",
+              "plastic",
+              "steel",
+              "wood"
+            ]
+          },
+          "wasteProcessingType": {
+            "type": "string",
+            "enum": [
+              "reprocessor",
+              "exporter"
+            ]
+          },
+          "accreditationId": {
+            "type": "string",
+            "readOnly": true
+          },
+          "recyclingProcess": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "glass_re_melt",
+                "glass_other"
+              ]
+            }
+          },
+          "noticeAddress": {
+            "type": "object",
+            "properties": {
+              "line1": {
+                "type": "string"
+              },
+              "line2": {
+                "type": "string"
+              },
+              "town": {
+                "type": "string"
+              },
+              "county": {
+                "type": "string"
+              },
+              "country": {
+                "type": "string"
+              },
+              "postcode": {
+                "type": "string"
+              },
+              "region": {
+                "type": "string"
+              },
+              "fullAddress": {
+                "type": "string"
+              },
+              "line2ToCounty": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "wasteRegistrationNumber": {
+            "type": "string"
+          },
+          "wasteManagementPermits": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "wml",
+                    "ppc",
+                    "waste_exemption"
+                  ]
+                },
+                "permitNumber": {
+                  "type": "string"
+                },
+                "exemptions": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "reference": {
+                        "type": "string"
+                      },
+                      "exemptionCode": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "reference",
+                      "exemptionCode"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "authorisedMaterials": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "material": {
+                        "type": "string",
+                        "enum": [
+                          "aluminium",
+                          "fibre",
+                          "glass",
+                          "paper",
+                          "plastic",
+                          "steel",
+                          "wood"
+                        ]
+                      },
+                      "authorisedWeight": {
+                        "type": "string"
+                      },
+                      "timeScale": {
+                        "type": "string",
+                        "enum": [
+                          "weekly",
+                          "monthly",
+                          "yearly"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "material"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "approvedPersons": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "fullName": {
+                  "type": "string"
+                },
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "phone": {
+                  "type": "string"
+                },
+                "role": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "fullName",
+                "email",
+                "phone"
+              ],
+              "additionalProperties": false,
+              "anyOf": [
+                {
+                  "required": [
+                    "role"
+                  ]
+                },
+                {
+                  "required": [
+                    "title"
+                  ]
+                }
+              ]
+            }
+          },
+          "suppliers": {
+            "type": "string"
+          },
+          "exportPorts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "yearlyMetrics": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "year": {
+                  "type": "string"
+                },
+                "input": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "actual",
+                        "estimated"
+                      ]
+                    },
+                    "ukPackagingWaste": {
+                      "type": "string"
+                    },
+                    "nonUkPackagingWaste": {
+                      "type": "string"
+                    },
+                    "nonPackagingWaste": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "rawMaterialInputs": {
+                  "type": "object",
+                  "properties": {
+                    "material": {
+                      "type": "string"
+                    },
+                    "tonnage": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "output": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "actual",
+                        "estimated"
+                      ]
+                    },
+                    "sentToAnotherSite": {
+                      "type": "string"
+                    },
+                    "contaminants": {
+                      "type": "string"
+                    },
+                    "processLoss": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "productsMadeFromRecycling": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "weight": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "year"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "plantEquipmentDetails": {
+            "type": "string"
+          },
+          "submitterContactDetails": {
+            "type": "object",
+            "properties": {
+              "fullName": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "phone": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "fullName",
+              "email",
+              "phone"
+            ],
+            "additionalProperties": false,
+            "anyOf": [
+              {
+                "required": [
+                  "role"
+                ]
+              },
+              {
+                "required": [
+                  "title"
+                ]
+              }
+            ]
+          },
+          "samplingInspectionPlanFileUploads": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "defraFormUploadedFileId": {
+                  "type": "string"
+                },
+                "defraFormUserDownloadLink": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "s3Uri": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "defraFormUploadedFileId",
+                "defraFormUserDownloadLink"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "orsFileUploads": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "defraFormUploadedFileId": {
+                  "type": "string"
+                },
+                "defraFormUserDownloadLink": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "s3Uri": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "defraFormUploadedFileId",
+                "defraFormUserDownloadLink"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "id",
+          "formSubmissionTime",
+          "submittedToRegulator",
+          "material",
+          "wasteProcessingType"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "accreditations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "readOnly": true
+          },
+          "accreditationNumber": {
+            "type": "number"
+          },
+          "statusHistory": {
+            "type": "array",
+            "items": {
+              "not": {}
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "created",
+              "approved",
+              "rejected",
+              "suspended",
+              "archived"
+            ]
+          },
+          "formSubmissionTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "submittedToRegulator": {
+            "type": "string",
+            "enum": [
+              "ea",
+              "nrw",
+              "sepa",
+              "niea"
+            ]
+          },
+          "orgName": {
+            "type": "string"
+          },
+          "site": {
+            "type": "object",
+            "properties": {
+              "address": {
+                "type": "object",
+                "properties": {
+                  "line1": {
+                    "type": "string"
+                  },
+                  "line2": {
+                    "type": "string"
+                  },
+                  "town": {
+                    "type": "string"
+                  },
+                  "county": {
+                    "type": "string"
+                  },
+                  "country": {
+                    "type": "string"
+                  },
+                  "postcode": {
+                    "type": "string"
+                  },
+                  "region": {
+                    "type": "string"
+                  },
+                  "fullAddress": {
+                    "type": "string"
+                  },
+                  "line2ToCounty": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "gridReference": {
+                "type": "string"
+              },
+              "siteCapacity": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "material": {
+                      "type": "string",
+                      "enum": [
+                        "aluminium",
+                        "fibre",
+                        "glass",
+                        "paper",
+                        "plastic",
+                        "steel",
+                        "wood"
+                      ]
+                    },
+                    "siteCapacityWeight": {
+                      "type": "string"
+                    },
+                    "siteCapacityTimescale": {
+                      "type": "string",
+                      "enum": [
+                        "weekly",
+                        "monthly",
+                        "yearly"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "material"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "address"
+            ],
+            "additionalProperties": false
+          },
+          "material": {
+            "type": "string",
+            "enum": [
+              "aluminium",
+              "fibre",
+              "glass",
+              "paper",
+              "plastic",
+              "steel",
+              "wood"
+            ]
+          },
+          "wasteProcessingType": {
+            "type": "string",
+            "enum": [
+              "reprocessor",
+              "exporter"
+            ]
+          },
+          "prnIssuance": {
+            "type": "object",
+            "properties": {
+              "tonnageBand": {
+                "type": "string",
+                "enum": [
+                  "up_to_500",
+                  "up_to_5000",
+                  "up_to_10000",
+                  "over_10000"
+                ]
+              },
+              "signatories": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "fullName": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    },
+                    "phone": {
+                      "type": "string"
+                    },
+                    "role": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "fullName",
+                    "email",
+                    "phone"
+                  ],
+                  "additionalProperties": false,
+                  "anyOf": [
+                    {
+                      "required": [
+                        "role"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "title"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "prnIncomeBusinessPlan": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "percentIncomeSpent": {
+                      "type": "number"
+                    },
+                    "usageDescription": {
+                      "type": "string"
+                    },
+                    "detailedExplanation": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          "pernIssuance": {
+            "type": "object",
+            "properties": {
+              "tonnageBand": {
+                "type": "string",
+                "enum": [
+                  "up_to_500",
+                  "up_to_5000",
+                  "up_to_10000",
+                  "over_10000"
+                ]
+              },
+              "signatories": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "fullName": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    },
+                    "phone": {
+                      "type": "string"
+                    },
+                    "role": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "fullName",
+                    "email",
+                    "phone"
+                  ],
+                  "additionalProperties": false,
+                  "anyOf": [
+                    {
+                      "required": [
+                        "role"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "title"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "pernIncomeBusinessPlan": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "percentIncomeSpent": {
+                      "type": "number"
+                    },
+                    "usageDescription": {
+                      "type": "string"
+                    },
+                    "detailedExplanation": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          "businessPlan": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          },
+          "noticeAddress": {
+            "type": "object",
+            "properties": {
+              "line1": {
+                "type": "string"
+              },
+              "line2": {
+                "type": "string"
+              },
+              "town": {
+                "type": "string"
+              },
+              "county": {
+                "type": "string"
+              },
+              "country": {
+                "type": "string"
+              },
+              "postcode": {
+                "type": "string"
+              },
+              "region": {
+                "type": "string"
+              },
+              "fullAddress": {
+                "type": "string"
+              },
+              "line2ToCounty": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "submitterContactDetails": {
+            "type": "object",
+            "properties": {
+              "fullName": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "phone": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "fullName",
+              "email",
+              "phone"
+            ],
+            "additionalProperties": false,
+            "anyOf": [
+              {
+                "required": [
+                  "role"
+                ]
+              },
+              {
+                "required": [
+                  "title"
+                ]
+              }
+            ]
+          },
+          "samplingInspectionPlanFileUploads": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "defraFormUploadedFileId": {
+                  "type": "string"
+                },
+                "defraFormUserDownloadLink": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "s3Uri": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "defraFormUploadedFileId",
+                "defraFormUserDownloadLink"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "orsFileUploads": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "defraFormUploadedFileId": {
+                  "type": "string"
+                },
+                "defraFormUserDownloadLink": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "s3Uri": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "defraFormUploadedFileId",
+                "defraFormUserDownloadLink"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "id",
+          "formSubmissionTime",
+          "submittedToRegulator",
+          "material",
+          "wasteProcessingType"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

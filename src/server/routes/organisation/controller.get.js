@@ -1,9 +1,9 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { organisationsBreadcrumb } from '#server/routes/organisations/controller.js'
 
-export const organisationsController = {
-  async handler(_request, h) {
-    const id = _request.params.id
+export const organisationsGETController = {
+  async handler(request, h) {
+    const id = request.params.id
 
     const { data, errorView } = await fetchJsonFromBackend(
       `/v1/organisations/${id}`
