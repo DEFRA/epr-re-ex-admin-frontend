@@ -4,10 +4,10 @@ import { getUserSession } from './auth/get-user-session.js'
 
 /**
  * Fetch JSON from a given path in the backend service.
- * @param {import('@hapi/hapi').Request} request
- * @param {string} url
- * @param {Wreck.options} options
- * @returns {Promise<*>}
+ * @param {import('@hapi/hapi').Request} request - The Hapi request object
+ * @param {string} path - The API path to append to the backend URL
+ * @param {RequestInit} options - Fetch API options (method, headers, body, etc.)
+ * @returns {Promise<*>} The parsed JSON response or throws a Boom error
  */
 export const fetchJsonFromBackend = async (request, path, options) => {
   const eprBackendUrl = config.get('eprBackendUrl')
