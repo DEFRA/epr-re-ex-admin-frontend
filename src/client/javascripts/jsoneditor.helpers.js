@@ -36,7 +36,6 @@ export function findSchemaNode(schema, path) {
 
   let node = schema
   for (const segment of path) {
-    if (!node) return null
     if (node.type === 'object' && node.properties && node.properties[segment]) {
       node = node.properties[segment]
     } else if (node.type === 'array' && node.items) {
@@ -171,10 +170,9 @@ export function highlightChanges(editor, current, original, path = []) {
     original !== null
   ) {
     // objects: merge keys from both sides
-    const keys = new Set([
-      ...Object.keys(current || {}),
-      ...Object.keys(original || {})
-    ])
+    // Since we've already checked current and original are not null,
+    // no need for || {} fallbacks
+    const keys = new Set([...Object.keys(current), ...Object.keys(original)])
     for (const key of keys) {
       highlightChanges(editor, current?.[key], original?.[key], [...path, key])
     }

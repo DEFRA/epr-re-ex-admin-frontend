@@ -129,7 +129,9 @@ describe('organisation GET controller', () => {
       expect(result).toEqual(expect.stringContaining('\\u2028'))
       expect(result).toEqual(expect.stringContaining('\\u2029'))
       // Verify original dangerous characters are not present
-      expect(result).not.toEqual(expect.stringContaining('</script><script>alert'))
+      expect(result).not.toEqual(
+        expect.stringContaining('</script><script>alert')
+      )
     })
 
     test('Should show 500 error page when backend returns unauthorised', async () => {

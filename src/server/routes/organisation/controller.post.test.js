@@ -155,7 +155,9 @@ describe('organisation POST controller', () => {
       expect(result).toEqual(expect.stringContaining('\\u2028'))
       expect(result).toEqual(expect.stringContaining('\\u2029'))
       // Verify original dangerous characters are not present
-      expect(result).not.toEqual(expect.stringContaining('</script><script>alert'))
+      expect(result).not.toEqual(
+        expect.stringContaining('</script><script>alert')
+      )
     })
 
     test('Should handle HTML comment sequences safely', async () => {
@@ -262,7 +264,9 @@ describe('organisation POST controller', () => {
     test('Should log errors to console when fetch fails', async () => {
       getUserSession.mockReturnValue(mockUserSession)
 
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {})
       const fetchMock = vi.fn().mockRejectedValue(new Error('Network failure'))
 
       vi.stubGlobal('fetch', fetchMock)
@@ -293,7 +297,9 @@ describe('organisation POST controller', () => {
     test('Should log errors to console when response is not OK', async () => {
       getUserSession.mockReturnValue(mockUserSession)
 
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {})
       const fetchMock = vi.fn().mockResolvedValue({
         ok: false,
         status: 400,
