@@ -67,7 +67,6 @@
     "ioredis": "5.8.2",
     "jose": "6.1.0",
     "lodash": "4.17.21",
-    "node-fetch": "3.3.2",
     "nunjucks": "3.2.4",
     "openid-client": "6.8.1",
     "pino": "10.1.0",
