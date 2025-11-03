@@ -1,35 +1,57 @@
+import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
-import { statusCodes } from '#server/common/constants/status-codes.js'
-import { createLogger } from './logging/logger.js'
+import { getUserSession } from './auth/get-user-session.js'
 
-export const fetchJsonFromBackend = async (path, options) => {
-  const logger = createLogger()
+/**
+ * Fetch JSON from a given path in the backend service.
+ * @param {import('@hapi/hapi').Request} request - The Hapi request object
+ * @param {string} path - The API path to append to the backend URL
+ * @param {RequestInit} options - Fetch API options (method, headers, body, etc.)
+ * @returns {Promise<*>} The parsed JSON response or throws a Boom error
+ */
+export const fetchJsonFromBackend = async (request, path, options) => {
   const eprBackendUrl = config.get('eprBackendUrl')
+  const userSession = await getUserSession(request)
 
-  let response
-  try {
-    response = await fetch(`${eprBackendUrl}${path}`, options)
-  } catch (error) {
-    logger.error(
-      `Failed to fetch from backend at path: ${path}: ${error.message}`
-    )
-
-    return { errorView: '500' }
+  const completeOptions = {
+    ...options,
+    headers: {
+      ...options?.headers,
+      Authorization: `Bearer ${userSession?.token}`,
+      'Content-Type': 'application/json'
+    }
   }
 
-  if (!response.ok) {
-    if (response.status === statusCodes.unauthorised) {
-      return { errorView: 'unauthorised' }
+  try {
+    const response = await fetch(`${eprBackendUrl}${path}`, completeOptions)
+
+    if (!response.ok) {
+      // Create a Boom error that matches the backend response
+      const error = Boom.boomify(
+        new Error(
+          `Failed to fetch from backend at path: ${path}: ${response.status} ${response.statusText}`
+        ),
+        { statusCode: response.status }
+      )
+
+      // Add response body to the error payload if needed
+      if (response.headers.get('content-type')?.includes('application/json')) {
+        error.output.payload = await response.json()
+      }
+
+      throw error
     }
 
-    logger.error(
-      `Failed to fetch from backend at path: ${path}: ${response.status} ${response.statusText}`
+    return await response.json()
+  } catch (error) {
+    // If it's already a Boom error, re-throw it
+    if (error.isBoom) {
+      throw error
+    }
+
+    // For network errors or other non-HTTP errors, create a 500 Boom error
+    throw Boom.internal(
+      `Failed to fetch from backend at path: ${path}: ${error.message}`
     )
-
-    return { errorView: '500' }
   }
-
-  const data = await response.json()
-
-  return { data }
 }
