@@ -5,13 +5,11 @@ export const organisationsGETController = {
   async handler(request, h) {
     const id = request.params.id
 
-    const { data, errorView } = await fetchJsonFromBackend(
-      `/v1/organisations/${id}`
+    const data = await fetchJsonFromBackend(
+      request,
+      `/v1/organisations/${id}`,
+      {}
     )
-
-    if (errorView) {
-      return h.view(errorView)
-    }
 
     // Safely serialise JSON for embedding in a script tag
     const safeJson = JSON.stringify(data)

@@ -293,6 +293,20 @@ describe('JSONEditor Helpers', () => {
         value: true
       })
     })
+
+    it('should handle when subschema is a non-object primitive value', () => {
+      // Edge case: if schema node is somehow a primitive (shouldn't happen in valid schemas)
+      // but we test defensive code
+      const weirdSchema = {
+        type: 'object',
+        properties: {
+          primitive: 'string' // Invalid schema, but tests the defensive check
+        }
+      }
+      const node = { path: ['primitive'], type: 'string' }
+      // Should skip the object type check and continue to field/value check
+      expect(isNodeEditable(node, weirdSchema)).toBe(true)
+    })
   })
 
   describe('checkReadOnlyChanges', () => {
