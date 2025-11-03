@@ -162,4 +162,67 @@ describe('#fetchJsonFromBackend', () => {
       )
     })
   })
+
+  test('includes JSON payload in Boom error when backend returns error with JSON body', async () => {
+    const path = '/validation-error'
+    const url = `${backendUrl}${path}`
+    const errorPayload = {
+      statusCode: 400,
+      error: 'Bad Request',
+      message: 'Validation failed',
+      validation: {
+        source: 'payload',
+        keys: ['email', 'password']
+      }
+    }
+
+    const errorHandler = http.get(url, () => {
+      return HttpResponse.json(errorPayload, {
+        status: 400,
+        statusText: 'Bad Request'
+      })
+    })
+    mswServer.use(errorHandler)
+
+    await expect(
+      fetchJsonFromBackend({}, path, { method: 'GET' })
+    ).rejects.toMatchObject({
+      isBoom: true,
+      output: {
+        statusCode: 400,
+        payload: errorPayload
+      },
+      message: expect.stringContaining(
+        'Failed to fetch from backend at path: /validation-error: 400 Bad Request'
+      )
+    })
+  })
+
+  test('handles malformed JSON in error response gracefully', async () => {
+    const path = '/malformed'
+    const url = `${backendUrl}${path}`
+
+    const errorHandler = http.get(url, () => {
+      return new HttpResponse('this is not valid JSON', {
+        status: 500,
+        statusText: 'Internal Server Error',
+        headers: {
+          'content-type': 'application/json'
+        }
+      })
+    })
+    mswServer.use(errorHandler)
+
+    await expect(
+      fetchJsonFromBackend({}, path, { method: 'GET' })
+    ).rejects.toMatchObject({
+      isBoom: true,
+      output: {
+        statusCode: 500
+      },
+      message: expect.stringContaining(
+        'Failed to fetch from backend at path: /malformed: 500 Internal Server Error'
+      )
+    })
+  })
 })
