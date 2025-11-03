@@ -13,9 +13,9 @@ export default {
       return h.view('unauthorised')
     }
 
-    const { profile, token } = request.auth.credentials
+    const { profile, token, refreshToken } = request.auth.credentials
 
-    verifyToken(token)
+    await verifyToken(token)
 
     const { displayName = '' } = profile
 
@@ -25,7 +25,8 @@ export default {
       sessionId,
       displayName,
       isAuthenticated: true,
-      token
+      token,
+      refreshToken
     }
 
     await createUserSession(request, userSession)

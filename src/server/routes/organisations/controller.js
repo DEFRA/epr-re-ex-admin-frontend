@@ -6,12 +6,8 @@ export const organisationsBreadcrumb = {
 }
 
 export const organisationsController = {
-  async handler(_request, h) {
-    const { data, errorView } = await fetchJsonFromBackend(`/v1/organisations`)
-
-    if (errorView) {
-      return h.view(errorView)
-    }
+  async handler(request, h) {
+    const data = await fetchJsonFromBackend(request, `/v1/organisations`)
 
     const organisations = (Array.isArray(data) ? data : []).map(
       ({

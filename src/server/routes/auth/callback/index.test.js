@@ -3,8 +3,10 @@ import { vi, beforeEach, afterEach, describe, test, expect } from 'vitest'
 import callbackRoute from './index.js'
 import { createUserSession } from '#server/common/helpers/auth/create-user-session.js'
 import { randomUUID } from 'node:crypto'
+import { verifyToken } from '#server/common/helpers/auth/verify-token.js'
 
 vi.mock('#server/common/helpers/auth/create-user-session.js')
+vi.mock('#server/common/helpers/auth/verify-token.js')
 vi.mock('node:crypto')
 
 describe('#callback route', () => {
@@ -20,6 +22,7 @@ describe('#callback route', () => {
   }
 
   const mockToken = 'mock-jwt-token'
+  const mockRefreshToken = 'mock-refresh-token'
   const mockSessionId = 'generated-session-id-456'
 
   beforeEach(() => {
@@ -28,6 +31,7 @@ describe('#callback route', () => {
     mockToolkit.view.mockReturnValue('unauthorised-view-result')
     mockToolkit.redirect.mockReturnValue('redirect-result')
     createUserSession.mockResolvedValue()
+    verifyToken.mockResolvedValue()
     randomUUID.mockReturnValue(mockSessionId)
   })
 
@@ -74,7 +78,8 @@ describe('#callback route', () => {
         isAuthenticated: true,
         credentials: {
           profile: mockProfile,
-          token: mockToken
+          token: mockToken,
+          refreshToken: mockRefreshToken
         }
       }
     }
@@ -86,7 +91,8 @@ describe('#callback route', () => {
       sessionId: mockSessionId,
       displayName: mockProfile.displayName,
       isAuthenticated: true,
-      token: mockToken
+      token: mockToken,
+      refreshToken: mockRefreshToken
     })
     expect(mockToolkit.redirect).toHaveBeenCalledWith('/')
     expect(result).toBe('redirect-result')
@@ -103,7 +109,8 @@ describe('#callback route', () => {
         isAuthenticated: true,
         credentials: {
           profile: profileWithoutDisplayName,
-          token: mockToken
+          token: mockToken,
+          refreshToken: mockRefreshToken
         }
       }
     }
@@ -114,7 +121,8 @@ describe('#callback route', () => {
       sessionId: mockSessionId,
       displayName: '',
       isAuthenticated: true,
-      token: mockToken
+      token: mockToken,
+      refreshToken: mockRefreshToken
     })
   })
 
@@ -124,7 +132,8 @@ describe('#callback route', () => {
         isAuthenticated: true,
         credentials: {
           profile: {},
-          token: mockToken
+          token: mockToken,
+          refreshToken: mockRefreshToken
         }
       }
     }
@@ -135,7 +144,8 @@ describe('#callback route', () => {
       sessionId: mockSessionId,
       displayName: '',
       isAuthenticated: true,
-      token: mockToken
+      token: mockToken,
+      refreshToken: mockRefreshToken
     })
   })
 
@@ -151,7 +161,8 @@ describe('#callback route', () => {
         isAuthenticated: true,
         credentials: {
           profile: mockProfile,
-          token: mockToken
+          token: mockToken,
+          refreshToken: mockRefreshToken
         }
       }
     }
@@ -180,7 +191,8 @@ describe('#callback route', () => {
         isAuthenticated: true,
         credentials: {
           profile: mockProfile,
-          token: mockToken
+          token: mockToken,
+          refreshToken: mockRefreshToken
         }
       }
     }
@@ -204,7 +216,8 @@ describe('#callback route', () => {
         isAuthenticated: true,
         credentials: {
           profile: mockProfile,
-          token: mockToken
+          token: mockToken,
+          refreshToken: mockRefreshToken
         }
       }
     }
@@ -223,7 +236,8 @@ describe('#callback route', () => {
         isAuthenticated: true,
         credentials: {
           profile: mockProfile,
-          token: mockToken
+          token: mockToken,
+          refreshToken: mockRefreshToken
         }
       }
     }
@@ -234,7 +248,8 @@ describe('#callback route', () => {
       sessionId: mockSessionId,
       displayName: mockProfile.displayName,
       isAuthenticated: true,
-      token: mockToken
+      token: mockToken,
+      refreshToken: mockRefreshToken
     }
 
     expect(createUserSession).toHaveBeenCalledWith(

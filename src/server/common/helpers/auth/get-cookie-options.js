@@ -1,5 +1,6 @@
 import { config } from '#config/config.js'
 import { getUserSession } from './get-user-session.js'
+import { validateAndRefreshSession } from './validate-and-refresh-session.js'
 
 export function getCookieOptions() {
   return {
@@ -7,8 +8,11 @@ export function getCookieOptions() {
       password: config.get('session.cookie.password'),
       path: '/',
       isSecure: config.get('isProduction'),
-      isSameSite: 'Lax'
+      ttl: config.get('session.cookie.ttl'),
+      isSameSite: 'Lax',
+      clearInvalid: true
     },
+    keepAlive: true,
     redirectTo: false,
     validate: async function (request) {
       const userSession = await getUserSession(request)
@@ -18,7 +22,13 @@ export function getCookieOptions() {
         return { isValid: false }
       }
 
-      return { isValid: true, credentials: userSession }
+      const validatedSession = await validateAndRefreshSession(
+        request,
+        userSession
+      )
+      return { isValid: true, credentials: validatedSession }
     }
   }
 }
+
+export { validateAndRefreshSession }

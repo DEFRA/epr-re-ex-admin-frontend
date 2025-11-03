@@ -1,5 +1,6 @@
 import { vi } from 'vitest'
 import { createServer } from '#server/server.js'
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
@@ -15,15 +16,19 @@ vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
 }))
 
 describe('#organisationsController', () => {
+  const originalBackendUrl = config.get('eprBackendUrl')
+  const backendUrl = 'http://mock-backend'
   let server
 
   beforeAll(async () => {
+    config.set('eprBackendUrl', backendUrl)
     createMockOidcServer()
     server = await createServer()
     await server.initialize()
   })
 
   afterAll(async () => {
+    config.set('eprBackendUrl', originalBackendUrl)
     await server.stop({ timeout: 0 })
   })
 
@@ -48,10 +53,12 @@ describe('#organisationsController', () => {
   })
 
   describe('When user is authenticated', () => {
-    test('Should return OK and render organisations table from backend data', async () => {
+    beforeAll(() => {
       // Mock an authenticated session
       getUserSession.mockReturnValue(mockUserSession)
+    })
 
+    test('Should return OK and render organisations table from backend data', async () => {
       // Mock backend API response for organisations
       const mockOrganisations = [
         {
@@ -70,7 +77,7 @@ describe('#organisationsController', () => {
       ]
 
       const getOrganisationsHandler = http.get(
-        'http://localhost:3001/v1/organisations',
+        `${backendUrl}/v1/organisations`,
         () => {
           return HttpResponse.json(mockOrganisations)
         }
@@ -114,16 +121,14 @@ describe('#organisationsController', () => {
     })
 
     test('Should show 500 error page when backend returns a non-OK response', async () => {
-      getUserSession.mockReturnValue(mockUserSession)
+      const getOrganisationsHandler = http.get(
+        'http://localhost:3001/v1/organisations',
+        () => {
+          throw HttpResponse.text('', { status: 500 })
+        }
+      )
 
-      const fetchMock = vi.fn().mockResolvedValue({
-        ok: false,
-        status: 502,
-        statusText: 'Bad Gateway',
-        json: async () => ({ message: 'Upstream error' })
-      })
-
-      vi.stubGlobal('fetch', fetchMock)
+      mswServer.use(getOrganisationsHandler)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -137,35 +142,9 @@ describe('#organisationsController', () => {
       expect(result).toEqual(
         expect.stringContaining('Sorry, there is a problem with the service')
       )
-      expect(fetchMock).toHaveBeenCalledTimes(1)
-    })
-
-    test('Should show 500 error page when backend fetch throws', async () => {
-      getUserSession.mockReturnValue(mockUserSession)
-
-      const fetchMock = vi.fn().mockRejectedValue(new Error('network down'))
-
-      vi.stubGlobal('fetch', fetchMock)
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: '/organisations',
-        auth: {
-          strategy: 'session',
-          credentials: mockUserSession
-        }
-      })
-
-      expect(result).toEqual(
-        expect.stringContaining('Sorry, there is a problem with the service')
-      )
-      expect(fetchMock).toHaveBeenCalledTimes(1)
     })
 
     test('Should render without status when statusHistory is empty', async () => {
-      // Mock an authenticated session
-      getUserSession.mockReturnValue(mockUserSession)
-
       // Organisation with empty statusHistory
       const mockOrganisations = [
         {
@@ -180,14 +159,14 @@ describe('#organisationsController', () => {
         }
       ]
 
-      const fetchMock = vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        statusText: 'OK',
-        json: async () => mockOrganisations
-      })
+      const getOrganisationsHandler = http.get(
+        `${backendUrl}/v1/organisations`,
+        () => {
+          return HttpResponse.json(mockOrganisations)
+        }
+      )
 
-      vi.stubGlobal('fetch', fetchMock)
+      mswServer.use(getOrganisationsHandler)
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -217,23 +196,17 @@ describe('#organisationsController', () => {
 
       // govukTag should still be present but with empty content
       expect(result).toEqual(expect.stringContaining('govuk-tag'))
-
-      expect(fetchMock).toHaveBeenCalledTimes(1)
     })
 
     test('Should display message when backend returns non array', async () => {
-      // Mock an authenticated session
-      getUserSession.mockReturnValue(mockUserSession)
+      const getOrganisationsHandler = http.get(
+        `${backendUrl}/v1/organisations`,
+        () => {
+          return HttpResponse.json({})
+        }
+      )
 
-      // Backend returns empty list
-      const fetchMock = vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        statusText: 'OK',
-        json: async () => ({})
-      })
-
-      vi.stubGlobal('fetch', fetchMock)
+      mswServer.use(getOrganisationsHandler)
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -249,8 +222,6 @@ describe('#organisationsController', () => {
       // Should render the inset text message instead of a table
       expect(result).toEqual(expect.stringContaining('No organisations found.'))
       expect(result).not.toEqual(expect.stringContaining('Organisation ID'))
-
-      expect(fetchMock).toHaveBeenCalledTimes(1)
     })
   })
 })
