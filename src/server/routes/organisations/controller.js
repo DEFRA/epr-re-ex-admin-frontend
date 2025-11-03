@@ -1,18 +1,5 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
-const getLatestStatus = (statusHistory) => {
-  // Handle missing or empty status history gracefully
-  if (!Array.isArray(statusHistory) || statusHistory.length === 0) {
-    return {}
-  }
-
-  const orderedStatus = statusHistory.toSorted(
-    (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
-  )
-
-  return orderedStatus[0]
-}
-
 export const organisationsBreadcrumb = {
   text: 'Organisations',
   href: '/organisations'
@@ -30,14 +17,14 @@ export const organisationsController = {
       ({
         id,
         orgId,
-        statusHistory,
-        companyDetails: { name, registrationNumber }
+        companyDetails: { name, registrationNumber },
+        status
       }) => ({
         id,
         orgId,
         name,
         registrationNumber,
-        status: getLatestStatus(statusHistory)?.status
+        status
       })
     )
 

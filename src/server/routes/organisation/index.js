@@ -13,17 +13,11 @@ export const organisation = {
         {
           method: 'GET',
           path: '/organisations/{id}',
-          options: {
-            auth: false
-          },
           ...organisationsGETController
         },
         {
           method: 'POST',
           path: '/organisations/{id}',
-          options: {
-            auth: false
-          },
           ...organisationsPOSTController
         }
       ])

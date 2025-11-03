@@ -18,7 +18,8 @@ export default defineConfig({
         '.public',
         'coverage',
         'postcss.config.js',
-        'stylelint.config.js'
+        'stylelint.config.js',
+        'src/server/common/schemas/**'
       ],
       thresholds: {
         lines: 100,
