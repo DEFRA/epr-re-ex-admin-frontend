@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import {
-  deepEqual,
   findSchemaNode,
   getValueAtPath,
   isReadOnlySchema,
@@ -28,74 +27,6 @@ Object.defineProperty(globalThis, 'window', {
 })
 
 describe('JSONEditor Helpers', () => {
-  describe('deepEqual', () => {
-    it('should return true for identical primitive values', () => {
-      expect(deepEqual(1, 1)).toBe(true)
-      expect(deepEqual('test', 'test')).toBe(true)
-      expect(deepEqual(true, true)).toBe(true)
-      expect(deepEqual(null, null)).toBe(true)
-      expect(deepEqual(undefined, undefined)).toBe(true)
-    })
-
-    it('should return false for different primitive values', () => {
-      expect(deepEqual(1, 2)).toBe(false)
-      expect(deepEqual('test', 'other')).toBe(false)
-      expect(deepEqual(true, false)).toBe(false)
-      expect(deepEqual(null, undefined)).toBe(false)
-    })
-
-    it('should return true for deeply equal objects', () => {
-      const obj1 = { a: 1, b: { c: 2, d: [3, 4] } }
-      const obj2 = { a: 1, b: { c: 2, d: [3, 4] } }
-      expect(deepEqual(obj1, obj2)).toBe(true)
-    })
-
-    it('should return false for objects with different values', () => {
-      const obj1 = { a: 1, b: { c: 2 } }
-      const obj2 = { a: 1, b: { c: 3 } }
-      expect(deepEqual(obj1, obj2)).toBe(false)
-    })
-
-    it('should return false for objects with different keys', () => {
-      const obj1 = { a: 1, b: 2 }
-      const obj2 = { a: 1, c: 2 }
-      expect(deepEqual(obj1, obj2)).toBe(false)
-    })
-
-    it('should handle arrays correctly', () => {
-      expect(deepEqual([1, 2, 3], [1, 2, 3])).toBe(true)
-      expect(deepEqual([1, 2, 3], [1, 2, 4])).toBe(false)
-      expect(deepEqual([1, 2], [1, 2, 3])).toBe(false)
-    })
-
-    it('should return false when comparing array to object', () => {
-      expect(deepEqual([1, 2], { 0: 1, 1: 2 })).toBe(false)
-    })
-
-    it('should handle nested structures', () => {
-      const complex1 = {
-        users: [
-          { id: 1, name: 'John', meta: { active: true } },
-          { id: 2, name: 'Jane', meta: { active: false } }
-        ]
-      }
-      const complex2 = {
-        users: [
-          { id: 1, name: 'John', meta: { active: true } },
-          { id: 2, name: 'Jane', meta: { active: false } }
-        ]
-      }
-      expect(deepEqual(complex1, complex2)).toBe(true)
-    })
-
-    it('should return false for different types', () => {
-      expect(deepEqual('string', 123)).toBe(false)
-      expect(deepEqual({ a: 1 }, 'string')).toBe(false)
-      expect(deepEqual([1, 2], 'array')).toBe(false)
-      expect(deepEqual(null, { a: 1 })).toBe(false)
-    })
-  })
-
   describe('findSchemaNode', () => {
     const schema = {
       type: 'object',

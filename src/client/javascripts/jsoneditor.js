@@ -2,8 +2,8 @@ import JSONEditor from 'jsoneditor'
 import 'jsoneditor/dist/jsoneditor.css'
 import validate from '#server/common/schemas/organisation.ajv.js'
 import schema from '#server/common/schemas/organisation.json'
+import isEqual from 'lodash/isEqual.js'
 import {
-  deepEqual,
   findSchemaNode,
   getValueAtPath,
   isReadOnlySchema,
@@ -135,7 +135,7 @@ if (container) {
         errors = errors.filter((err) => {
           const newValue = getValueAtPath(json, err.path)
           const oldValue = getValueAtPath(originalData, err.path)
-          return !deepEqual(newValue, oldValue)
+          return !isEqual(newValue, oldValue)
         })
 
         return errors

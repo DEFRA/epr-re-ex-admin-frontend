@@ -1,29 +1,4 @@
-/**
- * Helper functions for JSONEditor functionality
- * Provides utilities for schema validation, data comparison, and UI highlighting
- */
-
-/**
- * Performs deep equality comparison between two values
- * @param {*} a - First value to compare
- * @param {*} b - Second value to compare
- * @returns {boolean} True if values are deeply equal
- */
-export function deepEqual(a, b) {
-  if (a === b) return true
-  if (typeof a !== typeof b) return false
-  if (a && b && typeof a === 'object') {
-    if (Array.isArray(a) !== Array.isArray(b)) return false
-    if (Array.isArray(a)) {
-      return a.length === b.length && a.every((v, i) => deepEqual(v, b[i]))
-    }
-    const keysA = Object.keys(a)
-    const keysB = Object.keys(b)
-    if (keysA.length !== keysB.length) return false
-    return keysA.every((k) => deepEqual(a[k], b[k]))
-  }
-  return false
-}
+import isEqual from 'lodash/isEqual.js'
 
 /**
  * Finds a schema node by following a JSONEditor path
@@ -95,7 +70,7 @@ export function checkReadOnlyChanges(
   if (!schema || typeof schema !== 'object') return errors
 
   if (schema.readOnly) {
-    const changed = !deepEqual(data, original)
+    const changed = !isEqual(data, original)
     if (changed) {
       errors.push({
         path,
@@ -128,7 +103,7 @@ export function checkReadOnlyChanges(
  * @param {Array} path - Current path in the data structure
  */
 export function highlightChanges(editor, current, original, path = []) {
-  const changed = !deepEqual(current, original)
+  const changed = !isEqual(current, original)
 
   // Try to find the node in the editor's tree
   const node = editor.node?.findNodeByPath?.(path)
