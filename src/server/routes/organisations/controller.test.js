@@ -1,5 +1,6 @@
 import { vi } from 'vitest'
 import { createServer } from '#server/server.js'
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
@@ -15,15 +16,19 @@ vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
 }))
 
 describe('#organisationsController', () => {
+  const originalBackendUrl = config.get('eprBackendUrl')
+  const backendUrl = 'http://mock-backend'
   let server
 
   beforeAll(async () => {
+    config.set('eprBackendUrl', backendUrl)
     createMockOidcServer()
     server = await createServer()
     await server.initialize()
   })
 
   afterAll(async () => {
+    config.set('eprBackendUrl', originalBackendUrl)
     await server.stop({ timeout: 0 })
   })
 
@@ -70,7 +75,7 @@ describe('#organisationsController', () => {
       ]
 
       const getOrganisationsHandler = http.get(
-        'http://localhost:3001/v1/organisations',
+        `${backendUrl}/v1/organisations`,
         () => {
           return HttpResponse.json(mockOrganisations)
         }
@@ -151,7 +156,7 @@ describe('#organisationsController', () => {
       ]
 
       const getOrganisationsHandler = http.get(
-        'http://localhost:3001/v1/organisations',
+        `${backendUrl}/v1/organisations`,
         () => {
           return HttpResponse.json(mockOrganisations)
         }
@@ -191,7 +196,7 @@ describe('#organisationsController', () => {
 
     test('Should display message when backend returns non array', async () => {
       const getOrganisationsHandler = http.get(
-        'http://localhost:3001/v1/organisations',
+        `${backendUrl}/v1/organisations`,
         () => {
           return HttpResponse.json({})
         }
