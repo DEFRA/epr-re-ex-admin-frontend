@@ -23,6 +23,9 @@ export default {
   entry: {
     application: {
       import: ['./javascripts/application.js', './stylesheets/application.scss']
+    },
+    jsoneditor: {
+      import: ['./javascripts/jsoneditor.js', './stylesheets/jsoneditor.scss']
     }
   },
   experiments: {
