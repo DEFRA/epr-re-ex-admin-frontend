@@ -1,4 +1,5 @@
 import { organisationsGETController } from './controller.get.js'
+import { organisationsPOSTController } from './controller.post.js'
 
 export const organisation = {
   plugin: {
@@ -9,6 +10,11 @@ export const organisation = {
           method: 'GET',
           path: '/organisations/{id}',
           ...organisationsGETController
+        },
+        {
+          method: 'POST',
+          path: '/organisations/{id}',
+          ...organisationsPOSTController
         }
       ])
     }
