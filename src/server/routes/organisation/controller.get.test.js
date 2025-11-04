@@ -68,7 +68,8 @@ describe('organisation GET controller', () => {
           registrationNumber: '12345678'
         },
         // Include characters that need escaping
-        notes: 'Line separator: \u2028 Paragraph separator: \u2029 HTML comment: -->'
+        notes:
+          'Line separator: \u2028 Paragraph separator: \u2029 HTML comment: -->'
       }
 
       const getOrganisationHandler = http.get(
@@ -91,14 +92,14 @@ describe('organisation GET controller', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('Organisation')
-      
+
       // Verify JSON is safely serialised with escaped characters
       // The escaping converts < to \u003c in the JSON string
       expect(result).toContain('\\u003c') // < should be escaped
       expect(result).toContain('--\\u003e') // --> should be escaped
       expect(result).toContain('\\u2028') // Line separator should be escaped
       expect(result).toContain('\\u2029') // Paragraph separator should be escaped
-      
+
       // Verify breadcrumb is included
       expect(result).toContain('Organisations')
     })

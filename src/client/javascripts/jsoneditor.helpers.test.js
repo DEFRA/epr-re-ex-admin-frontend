@@ -880,7 +880,7 @@ describe('JSONEditor Helpers', () => {
 
       mockEditor.node.findNodeByPath.mockClear()
 
-      // Non-array vs array  
+      // Non-array vs array
       highlightChanges(mockEditor, 'not-array', ['a', 'b'], [])
       expect(mockEditor.node.findNodeByPath).toHaveBeenCalled()
     })
