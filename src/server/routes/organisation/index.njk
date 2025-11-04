@@ -1,0 +1,51 @@
+{% extends 'layout.njk' %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-l">{{ heading }}</h1>
+      
+      <h2 class="govuk-heading-m">Basic Information</h2>
+      {{ govukSummaryList({
+        rows: [
+          {
+            key: {
+              text: "Organisation ID"
+            },
+            value: {
+              text: organisationData.orgId
+            }
+          },
+          {
+            key: {
+              text: "Company Name"
+            },
+            value: {
+              text: organisationData.companyDetails.name
+            }
+          },
+          {
+            key: {
+              text: "Registration Number"
+            },
+            value: {
+              text: organisationData.companyDetails.registrationNumber
+            }
+          },
+          {
+            key: {
+              text: "Status"
+            },
+            value: {
+              text: organisationData.status
+            }
+          }
+        ]
+      }) }}
+
+      <h2 class="govuk-heading-m">Full Data (Read-Only)</h2>
+      <pre class="govuk-body" style="background: #f3f2f1; padding: 20px; overflow-x: auto;"><code>{{ organisationData | dump(2) }}</code></pre>
+    </div>
+  </div>
+{% endblock %}
