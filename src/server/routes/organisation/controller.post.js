@@ -7,22 +7,16 @@ export const organisationsPOSTController = {
     const postedData = JSON.parse(request.payload.organisation)
     const eprBackendUrl = config.get('eprBackendUrl')
 
-    let response
-    try {
-      response = await fetch(`${eprBackendUrl}/v1/organisations/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          version: postedData.version,
-          updateFragment: postedData
-        })
+    const response = await fetch(`${eprBackendUrl}/v1/organisations/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        version: postedData.version,
+        updateFragment: postedData
       })
-    } catch (error) {
-      console.error('Failed to update organisation:', error)
-      return h.view('500')
-    }
+    })
 
     if (!response.ok) {
       console.error('Failed to update organisation:', response.statusText)

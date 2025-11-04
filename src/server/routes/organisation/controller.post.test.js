@@ -171,39 +171,6 @@ describe('organisation POST controller', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1)
     })
 
-    test('Should log errors to console when fetch fails', async () => {
-      getUserSession.mockReturnValue(mockUserSession)
-
-      const consoleErrorSpy = vi
-        .spyOn(console, 'error')
-        .mockImplementation(() => {})
-      const fetchMock = vi.fn().mockRejectedValue(new Error('Network failure'))
-
-      vi.stubGlobal('fetch', fetchMock)
-
-      await server.inject({
-        method: 'POST',
-        url: '/organisations/org-1',
-        payload: {
-          organisation: JSON.stringify({
-            version: 1,
-            companyDetails: { name: 'Test' }
-          })
-        },
-        auth: {
-          strategy: 'session',
-          credentials: mockUserSession
-        }
-      })
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Failed to update organisation:',
-        expect.any(Error)
-      )
-
-      consoleErrorSpy.mockRestore()
-    })
-
     test('Should log errors to console when response is not OK', async () => {
       getUserSession.mockReturnValue(mockUserSession)
 
