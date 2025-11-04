@@ -25,6 +25,8 @@ export default defineConfig({
         '.server',
         '.gitkeep',
         'src/server/common/test-helpers',
+        'src/server/common/schemas/**/*.ajv.js', // Compiled AJV schemas
+        'src/server/common/schemas/**/*.json', // JSON schemas
         'src/server/components/icons',
         'src/**/*.scss',
         'src/**/*.njk', // Vitest can't parse them anyway

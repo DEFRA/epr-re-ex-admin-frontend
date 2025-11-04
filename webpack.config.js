@@ -5,6 +5,7 @@ import CopyPlugin from 'copy-webpack-plugin'
 import { CleanWebpackPlugin } from 'clean-webpack-plugin'
 import TerserPlugin from 'terser-webpack-plugin'
 import { WebpackAssetsManifest } from 'webpack-assets-manifest'
+import MiniCssExtractPlugin from 'mini-css-extract-plugin'
 
 const { NODE_ENV = 'development' } = process.env
 
@@ -57,6 +58,10 @@ export default {
   module: {
     rules: [
       {
+        test: /\.ajv\.js$/,
+        type: 'javascript/auto' // 👈 Treat as CommonJS
+      },
+      {
         test: /\.(js|mjs|scss)$/,
         loader: 'source-map-loader',
         enforce: 'pre'
@@ -76,16 +81,20 @@ export default {
         sideEffects: false
       },
       {
-        test: /\.scss$/,
-        type: ruleTypeAssetResource,
-        generator: {
-          binary: false,
-          filename:
-            NODE_ENV === 'production'
-              ? 'stylesheets/[name].[contenthash:7].min.css'
-              : 'stylesheets/[name].css'
-        },
+        test: /\.s?css$/,
         use: [
+          {
+            loader: MiniCssExtractPlugin.loader,
+            options: {
+              publicPath: '/public/'
+            }
+          },
+          {
+            loader: 'css-loader',
+            options: {
+              sourceMap: NODE_ENV !== 'production'
+            }
+          },
           'postcss-loader',
           {
             loader: 'sass-loader',
@@ -159,6 +168,12 @@ export default {
   plugins: [
     new CleanWebpackPlugin(),
     new WebpackAssetsManifest(),
+    new MiniCssExtractPlugin({
+      filename:
+        NODE_ENV === 'production'
+          ? 'stylesheets/[name].[contenthash:7].min.css'
+          : 'stylesheets/[name].css'
+    }),
     new CopyPlugin({
       patterns: [
         {

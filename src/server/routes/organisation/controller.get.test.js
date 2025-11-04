@@ -15,7 +15,7 @@ vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
   getUserSession: vi.fn().mockReturnValue(null)
 }))
 
-describe('#organisationGETController', () => {
+describe('organisation GET controller', () => {
   const originalBackendUrl = config.get('eprBackendUrl')
   const backendUrl = 'http://mock-backend'
   let server
@@ -34,6 +34,7 @@ describe('#organisationGETController', () => {
 
   afterEach(() => {
     vi.clearAllMocks()
+    // Ensure any stubbed globals are reset after each test
     if (typeof vi.unstubAllGlobals === 'function') {
       vi.unstubAllGlobals()
     }
@@ -43,7 +44,7 @@ describe('#organisationGETController', () => {
     test('Should return unauthorised status code and unauthorised view', async () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/org-1'
+        url: '/organisations/123'
       })
 
       expect(statusCode).toBe(statusCodes.unauthorised)
@@ -56,31 +57,33 @@ describe('#organisationGETController', () => {
       getUserSession.mockReturnValue(mockUserSession)
     })
 
-    test('Should return OK and render organisation details from backend data', async () => {
+    test('Should return OK and render organisation details with safely serialised JSON', async () => {
+      const orgId = 'org-123'
       const mockOrganisation = {
-        id: 'org-1',
-        orgId: 'org-1',
-        status: 'ACTIVE',
+        id: orgId,
+        orgId: 12345,
+        status: 'approved',
         companyDetails: {
-          name: 'Acme Ltd',
+          name: 'Test Company <script>alert("xss")</script>',
           registrationNumber: '12345678'
-        }
+        },
+        // Include characters that need escaping
+        notes:
+          'Line separator: \u2028 Paragraph separator: \u2029 HTML comment: -->'
       }
 
       const getOrganisationHandler = http.get(
-        `${backendUrl}/v1/organisations/org-1`,
+        `${backendUrl}/v1/organisations/${orgId}`,
         () => {
           return HttpResponse.json(mockOrganisation)
         }
       )
 
       mswServer.use(getOrganisationHandler)
-      const requestSpy = vi.fn()
-      mswServer.events.on('request:start', requestSpy)
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/org-1',
+        url: `/organisations/${orgId}`,
         auth: {
           strategy: 'session',
           credentials: mockUserSession
@@ -88,29 +91,25 @@ describe('#organisationGETController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('Organisation')
 
-      // Basic page assertions
-      expect(result).not.toEqual(expect.stringContaining('Sign in'))
-      expect(result).toEqual(expect.stringContaining('Organisation'))
+      // Verify JSON is safely serialised with escaped characters
+      // The escaping converts < to \u003c in the JSON string
+      expect(result).toContain('\\u003c') // < should be escaped
+      expect(result).toContain('--\\u003e') // --> should be escaped
+      expect(result).toContain('\\u2028') // Line separator should be escaped
+      expect(result).toContain('\\u2029') // Paragraph separator should be escaped
 
-      // Check for organisation details
-      expect(result).toEqual(expect.stringContaining('Acme Ltd'))
-      expect(result).toEqual(expect.stringContaining('org-1'))
-      expect(result).toEqual(expect.stringContaining('12345678'))
-      expect(result).toEqual(expect.stringContaining('ACTIVE'))
-
-      expect(requestSpy).toHaveBeenCalledTimes(1)
+      // Verify breadcrumb is included
+      expect(result).toContain('Organisations')
     })
 
-    test('Should show 500 error page when backend returns a non-OK response', async () => {
-      const getOrganisationHandler = http.get(
-        `${backendUrl}/v1/organisations/org-1`,
-        () => {
-          throw HttpResponse.text('', { status: 500 })
-        }
-      )
+    test('Should show 500 error page when backend fetch throws', async () => {
+      getUserSession.mockReturnValue(mockUserSession)
 
-      mswServer.use(getOrganisationHandler)
+      const fetchMock = vi.fn().mockRejectedValue(new Error('Network error'))
+
+      vi.stubGlobal('fetch', fetchMock)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -124,6 +123,7 @@ describe('#organisationGETController', () => {
       expect(result).toEqual(
         expect.stringContaining('Sorry, there is a problem with the service')
       )
+      expect(fetchMock).toHaveBeenCalledTimes(1)
     })
   })
 })

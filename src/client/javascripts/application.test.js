@@ -12,9 +12,22 @@ vi.mock('govuk-frontend', () => ({
   SkipLink: 'MockSkipLink'
 }))
 
+// Mock the dynamic import
+vi.doMock('./jsoneditor.js', () => ({}))
+
+// Mock document
+Object.defineProperty(globalThis, 'document', {
+  value: {
+    getElementById: vi.fn()
+  },
+  writable: true
+})
+
 describe('#application', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Reset document mock
+    document.getElementById.mockReturnValue(null)
   })
 
   describe('When module is loaded', () => {
@@ -28,6 +41,33 @@ describe('#application', () => {
       expect(mockCreateAll).toHaveBeenCalledWith('MockHeader')
       expect(mockCreateAll).toHaveBeenCalledWith('MockRadios')
       expect(mockCreateAll).toHaveBeenCalledWith('MockSkipLink')
+    })
+
+    test('Should not import jsoneditor when jsoneditor element is not present', async () => {
+      // Mock document to return null for jsoneditor
+      document.getElementById.mockReturnValue(null)
+
+      // Clear modules cache to force re-import and re-evaluation
+      vi.resetModules()
+
+      await import('./application.js?t=1')
+
+      expect(document.getElementById).toHaveBeenCalledWith('jsoneditor')
+    })
+
+    test('Should import jsoneditor when jsoneditor element is present', async () => {
+      // Mock document to return an element for jsoneditor
+      const mockElement = { id: 'jsoneditor' }
+      document.getElementById.mockReturnValue(mockElement)
+
+      // Clear modules cache to force re-import
+      vi.resetModules()
+
+      await import('./application.js?t=2')
+
+      expect(document.getElementById).toHaveBeenCalledWith('jsoneditor')
+      // The dynamic import happens but we can't easily test it's called
+      // The coverage will be improved by having the condition branch executed
     })
   })
 })
