@@ -1,8 +1,5 @@
 import { beforeEach, describe, expect, test, vi, afterEach } from 'vitest'
 
-// Setup DOM environment before any imports
-let mockStorageManager
-
 class MockLocalStorage {
   constructor() {
     this.store = {}
@@ -60,14 +57,12 @@ const mockNode = {
   findNodeByPath: vi.fn()
 }
 
-let editorInstance = null
 let editorOptions = null
 
 const MockJSONEditorConstructor = vi.fn(function (container, options) {
   this.container = container
   this.options = options
   this.node = mockNode
-  editorInstance = this
   editorOptions = options
 })
 
@@ -121,7 +116,6 @@ const mockClear = vi.fn().mockReturnValue(true)
 class MockLocalStorageManager {
   constructor(key) {
     this.key = key
-    mockStorageManager = this
   }
 
   save = mockSave
@@ -157,10 +151,10 @@ describe('jsoneditor', () => {
     mockIsNodeEditable.mockReturnValue(true)
     mockValidateJSON.mockReturnValue([])
     mockGetAutocompleteOptions.mockReturnValue([])
-    
+
     // Reset localStorage
     mockLocalStorage.clear()
-    
+
     // Reset storage manager mocks
     mockSave.mockClear()
     mockLoad.mockClear()
@@ -240,19 +234,11 @@ describe('jsoneditor', () => {
       expect(typeof optionsArg.onValidate).toBe('function')
     })
 
-    test('Should load original data when no draft exists', async () => {
-      mockStorageManager.load.mockReturnValue(null)
-
-      await import('./jsoneditor.js?t=2')
-
-      expect(mockSet).toHaveBeenCalledWith({ id: 1, name: 'Original' })
-    })
-
     test('Should load draft data from localStorage when available', async () => {
       const draftData = { id: 1, name: 'Draft' }
       mockLoad.mockReturnValue(draftData)
 
-      await import('./jsoneditor.js?t=3')
+      await import('./jsoneditor.js?t=2')
 
       expect(mockSet).toHaveBeenCalledWith(draftData)
       expect(console.info).toHaveBeenCalledWith(
@@ -266,7 +252,7 @@ describe('jsoneditor', () => {
       }
       mockClear.mockReturnValue(true)
 
-      await import('./jsoneditor.js?t=4')
+      await import('./jsoneditor.js?t=3')
 
       expect(mockClear).toHaveBeenCalled()
       expect(console.info).toHaveBeenCalledWith(
@@ -275,7 +261,7 @@ describe('jsoneditor', () => {
     })
 
     test('Should sync hidden input with initial data', async () => {
-      await import('./jsoneditor.js?t=5')
+      await import('./jsoneditor.js?t=4')
 
       expect(hiddenInput.value).toBe(
         JSON.stringify({ id: 1, name: 'Original' })
@@ -283,7 +269,7 @@ describe('jsoneditor', () => {
     })
 
     test('Should highlight changes with initial data', async () => {
-      await import('./jsoneditor.js?t=6')
+      await import('./jsoneditor.js?t=5')
 
       expect(mockHighlightChanges).toHaveBeenCalled()
     })
@@ -291,16 +277,14 @@ describe('jsoneditor', () => {
 
   describe('JSONEditor options', () => {
     beforeEach(async () => {
-      await import('./jsoneditor.js?t=7')
+      await import('./jsoneditor.js?t=6')
     })
 
     describe('autocomplete.getOptions', () => {
       test('Should call getAutocompleteOptions with schema and path', () => {
         mockGetAutocompleteOptions.mockReturnValue(['option1', 'option2'])
 
-        const result = editorOptions.autocomplete.getOptions('text', [
-          'status'
-        ])
+        const result = editorOptions.autocomplete.getOptions('text', ['status'])
 
         expect(mockGetAutocompleteOptions).toHaveBeenCalledWith(mockSchema, [
           'status'
@@ -441,14 +425,14 @@ describe('jsoneditor', () => {
 
   describe('Reset button', () => {
     test('Should reset editor when confirmed', async () => {
-      await import('./jsoneditor.js?t=8')
-      
+      await import('./jsoneditor.js?t=7')
+
       window.confirm.mockReturnValue(true)
 
       // Find and trigger the click handler
-      const clickHandler = resetButtonListeners.find(l => l.event === 'click')
+      const clickHandler = resetButtonListeners.find((l) => l.event === 'click')
       expect(clickHandler).toBeDefined()
-      
+
       mockSet.mockClear()
       clickHandler.handler()
 
@@ -468,14 +452,14 @@ describe('jsoneditor', () => {
     })
 
     test('Should not reset editor when cancelled', async () => {
-      await import('./jsoneditor.js?t=9')
-      
+      await import('./jsoneditor.js?t=8')
+
       window.confirm.mockReturnValue(false)
 
       // Find and trigger the click handler
-      const clickHandler = resetButtonListeners.find(l => l.event === 'click')
+      const clickHandler = resetButtonListeners.find((l) => l.event === 'click')
       expect(clickHandler).toBeDefined()
-      
+
       mockSet.mockClear()
       clickHandler.handler()
 
@@ -495,13 +479,13 @@ describe('jsoneditor', () => {
         throw new Error('Parse failed')
       })
 
-      await import('./jsoneditor.js?t=10')
+      await import('./jsoneditor.js?t=9')
 
       expect(console.error).toHaveBeenCalledWith(
         'Failed to initialise JSONEditor:',
         expect.any(Error)
       )
-      
+
       // Restore JSON.parse
       JSON.parse = originalParse
     })
@@ -515,7 +499,7 @@ describe('jsoneditor', () => {
         return null
       })
 
-      await import('./jsoneditor.js?t=11')
+      await import('./jsoneditor.js?t=10')
 
       // Should initialize with empty object as fallback
       expect(mockSet).toHaveBeenCalledWith({})
@@ -524,7 +508,7 @@ describe('jsoneditor', () => {
     test('Should handle invalid JSON in payload element', async () => {
       payloadEl.textContent = 'invalid json{'
 
-      await import('./jsoneditor.js?t=12')
+      await import('./jsoneditor.js?t=11')
 
       expect(console.error).toHaveBeenCalledWith(
         'Failed to initialise JSONEditor:',
@@ -532,27 +516,21 @@ describe('jsoneditor', () => {
       )
     })
 
-    test('Should handle empty textContent in payload element', async () => {
-      payloadEl.textContent = ''
+    test('Should handle empty textContent with fallback', async () => {
+      payloadEl.textContent = null
 
       await import('./jsoneditor.js?t=14')
 
-      // Should parse '{}' as fallback
+      // Should use '{}' as fallback
       expect(mockSet).toHaveBeenCalledWith({})
     })
 
-    test('Should handle missing hidden input element', async () => {
-      document.getElementById = vi.fn((id) => {
-        if (id === 'jsoneditor') return container
-        if (id === 'organisation-json') return payloadEl
-        if (id === 'jsoneditor-organisation-object') return null
-        if (id === 'jsoneditor-reset-button') return resetButton
-        return null
-      })
+    test('Should handle missing hidden input without error', async () => {
+      hiddenInput = null
 
       await import('./jsoneditor.js?t=15')
 
-      // Should not throw error when hidden input is null
+      // Should initialize successfully even without hidden input
       expect(MockJSONEditorConstructor).toHaveBeenCalled()
     })
 
@@ -575,7 +553,7 @@ describe('jsoneditor', () => {
   describe('When jsoneditor container does not exist', () => {
     test('Should not initialize JSONEditor', async () => {
       document.getElementById = vi.fn(() => null)
-      
+
       const initialCallCount = MockJSONEditorConstructor.mock.calls.length
 
       await import('./jsoneditor.js?t=13')

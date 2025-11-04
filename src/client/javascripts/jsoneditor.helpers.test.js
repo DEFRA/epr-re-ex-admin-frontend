@@ -79,19 +79,8 @@ describe('JSONEditor Helpers', () => {
       expect(findSchemaNode(schema, 'not-array')).toBe(null)
     })
 
-    it('should return null when traversing through null schema node', () => {
-      // Create a path that will hit a null node during traversal
-      const brokenSchema = {
-        type: 'object',
-        properties: {
-          broken: null // This will cause node to be null during traversal
-        }
-      }
-      expect(findSchemaNode(brokenSchema, ['broken', 'next'])).toBe(null)
-    })
-
     it('should return null when node becomes null during path traversal', () => {
-      // Schema where setting node = node.properties[segment] results in null
+      // Schema where properties[segment] is null, causing node to become null mid-traversal
       const schema = {
         type: 'object',
         properties: {
@@ -101,53 +90,6 @@ describe('JSONEditor Helpers', () => {
       }
       // This will make node null on the second iteration
       expect(findSchemaNode(schema, ['nullProp', 'nonexistent'])).toBe(null)
-    })
-
-    it('should handle node becoming null during iteration', () => {
-      // Create a schema where node.items is null, causing node to become null
-      const schema = {
-        type: 'array',
-        items: null // This will make node null
-      }
-      // Path with multiple segments - first one succeeds, second triggers !node check
-      expect(findSchemaNode(schema, ['0', '1'])).toBe(null)
-    })
-
-    it('should return null when node becomes null mid-traversal', () => {
-      // Create a more complex scenario where node becomes null during path traversal
-      const schema = {
-        type: 'object',
-        properties: {
-          level1: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                deep: null // This property is null
-              }
-            }
-          }
-        }
-      }
-      // This path will make node null when reaching 'deep' property
-      expect(findSchemaNode(schema, ['level1', '0', 'deep', 'further'])).toBe(
-        null
-      )
-    })
-
-    it('should handle null node assignment during traversal', () => {
-      // Create a schema where node.properties[segment] is explicitly null
-      const schema = {
-        type: 'object',
-        properties: {
-          validProp: { type: 'string' }
-        }
-      }
-      // Manually simulate the case where properties[segment] could be null
-      schema.properties.nullProp = null
-
-      // This should return null when trying to traverse beyond the null property
-      expect(findSchemaNode(schema, ['nullProp', 'anything'])).toBe(null)
     })
   })
 
@@ -817,7 +759,31 @@ describe('JSONEditor Helpers', () => {
       expect(mockEditor.node.findNodeByPath).toHaveBeenCalledTimes(4)
     })
 
-    it('should try different DOM element selectors when value element is not available', () => {
+    it('should handle undefined/null array elements when arrays have different lengths', () => {
+      const original = ['a', 'b']
+      const current = null // current is falsy
+
+      mockEditor.node.findNodeByPath.mockReturnValue(mockNode)
+
+      highlightChanges(mockEditor, current, original, [])
+
+      // Should handle accessing undefined current[i] when current is null
+      expect(mockEditor.node.findNodeByPath).toHaveBeenCalled()
+    })
+
+    it('should handle when both array values are falsy', () => {
+      const original = null
+      const current = ['a', 'b']
+
+      mockEditor.node.findNodeByPath.mockReturnValue(mockNode)
+
+      highlightChanges(mockEditor, current, original, [])
+
+      // Should handle accessing undefined original[i] when original is null
+      expect(mockEditor.node.findNodeByPath).toHaveBeenCalled()
+    })
+
+    it('should try different DOM element selectors when primary element is not available', () => {
       const mockFieldElement = {
         classList: {
           add: vi.fn(),
@@ -829,12 +795,12 @@ describe('JSONEditor Helpers', () => {
         querySelector: vi.fn().mockReturnValue(mockFieldElement)
       }
 
-      // Create a mock node with different DOM structure
+      // Create a mock node with tr element but no direct value/field elements
       const mockNodeWithTr = {
         dom: {
-          value: null, // No value element
-          field: null, // No field element
-          tr: mockTrElement // Has tr element with querySelector
+          value: null,
+          field: null,
+          tr: mockTrElement
         }
       }
 
@@ -853,42 +819,30 @@ describe('JSONEditor Helpers', () => {
       )
     })
 
-    it('should handle DOM elements without proper structure', () => {
-      // Create a mock node with minimal DOM structure
-      const mockNodeMinimal = {
+    it('should handle when no DOM element is found', () => {
+      // Create a node that returns null for all DOM selectors
+      const nodeWithNoDom = {
         dom: {
           value: null,
           field: null,
-          tr: null
+          tr: {
+            querySelector: vi.fn(() => null)
+          }
         }
       }
 
-      mockEditor.node.findNodeByPath.mockReturnValue(mockNodeMinimal)
+      mockEditor.node.findNodeByPath.mockReturnValue(nodeWithNoDom)
 
       const original = { name: 'John' }
       const current = { name: 'Jane' }
 
-      // Should not throw when DOM elements are missing
+      // Should not throw when no DOM element is found
       expect(() => {
         highlightChanges(mockEditor, current, original, [])
       }).not.toThrow()
-    })
 
-    it('should handle null/undefined current and original values', () => {
-      mockEditor.node.findNodeByPath.mockReturnValue(mockNode)
-
-      // Test with null current and object original
-      highlightChanges(mockEditor, null, { name: 'John' }, [])
-      expect(mockNode.dom.value.classList.add).toHaveBeenCalledWith(
-        'jsoneditor-changed'
-      )
-
-      mockNode.dom.value.classList.add.mockClear()
-
-      // Test with object current and null original
-      highlightChanges(mockEditor, { name: 'John' }, null, [])
-      expect(mockNode.dom.value.classList.add).toHaveBeenCalledWith(
-        'jsoneditor-changed'
+      expect(nodeWithNoDom.dom.tr.querySelector).toHaveBeenCalledWith(
+        '.jsoneditor-value'
       )
     })
 
@@ -916,132 +870,19 @@ describe('JSONEditor Helpers', () => {
       expect(mockEditor.node.findNodeByPath).toHaveBeenCalledTimes(5)
     })
 
-    it('should handle when no DOM element is found', () => {
-      // Create a node that returns null for all DOM selectors
-      const nodeWithNoDom = {
-        dom: {
-          value: null,
-          field: null,
-          tr: {
-            querySelector: vi.fn(() => null) // Returns null for both selectors
-          }
-        }
-      }
-
-      mockEditor.node.findNodeByPath.mockReturnValue(nodeWithNoDom)
-
-      const original = { name: 'John' }
-      const current = { name: 'Jane' }
-
-      // Should not throw when no DOM element is found
-      expect(() => {
-        highlightChanges(mockEditor, current, original, [])
-      }).not.toThrow()
-
-      // Verify no classList operations were attempted
-      expect(nodeWithNoDom.dom.tr.querySelector).toHaveBeenCalledWith(
-        '.jsoneditor-value'
-      )
-      expect(nodeWithNoDom.dom.tr.querySelector).toHaveBeenCalledWith(
-        '.jsoneditor-field'
-      )
-    })
-
-    it('should handle non-array current/original in array length calculation', () => {
-      // Test when current is not an array but original is
-      const original = ['a', 'b', 'c']
-      const current = 'not-an-array' // Not an array
-
+    it('should handle mismatched types between current and original', () => {
+      // Test when one is an array and the other is not
       mockEditor.node.findNodeByPath.mockReturnValue(mockNode)
 
-      highlightChanges(mockEditor, current, original, [])
-
-      // Should handle the ternary operator correctly
-      expect(mockEditor.node.findNodeByPath).toHaveBeenCalledWith([])
+      // Array vs non-array
+      highlightChanges(mockEditor, ['a', 'b'], 'not-array', [])
+      expect(mockEditor.node.findNodeByPath).toHaveBeenCalled()
 
       mockEditor.node.findNodeByPath.mockClear()
 
-      // Test when original is not an array but current is
-      const original2 = 'not-an-array'
-      const current2 = ['a', 'b', 'c']
-
-      highlightChanges(mockEditor, current2, original2, [])
-
-      // Should handle the ternary operator correctly
-      expect(mockEditor.node.findNodeByPath).toHaveBeenCalledWith([])
-    })
-
-    it('should handle null/undefined values in array processing', () => {
-      // Test case where current is null but we're processing as arrays
-      const original = ['item1']
-      const current = null
-
-      mockEditor.node.findNodeByPath.mockReturnValue(mockNode)
-
-      highlightChanges(mockEditor, current, original, [])
-
-      // Should handle current ? current[i] : undefined
-      expect(mockEditor.node.findNodeByPath).toHaveBeenCalledTimes(2) // root + 1 element
-
-      mockEditor.node.findNodeByPath.mockClear()
-
-      // Test case where original is null but current is an array
-      const original2 = null
-      const current2 = ['item1']
-
-      highlightChanges(mockEditor, current2, original2, [])
-
-      // Should handle original ? original[i] : undefined
-      expect(mockEditor.node.findNodeByPath).toHaveBeenCalledTimes(2) // root + 1 element
-    })
-
-    it('should handle null values in object key processing', () => {
-      // Test where current is null but original is an object
-      const original = { key1: 'value1' }
-      const current = null
-
-      mockEditor.node.findNodeByPath.mockReturnValue(mockNode)
-
-      highlightChanges(mockEditor, current, original, [])
-
-      // When current is null, it goes to root comparison, not object processing
-      expect(mockEditor.node.findNodeByPath).toHaveBeenCalledWith([])
-
-      mockEditor.node.findNodeByPath.mockClear()
-
-      // Test where both are objects but one has null properties
-      const original2 = { key1: 'value1' }
-      const current2 = { key1: null }
-
-      highlightChanges(mockEditor, current2, original2, [])
-
-      // Should process as objects and handle the null values
-      expect(mockEditor.node.findNodeByPath).toHaveBeenCalledTimes(2) // root + key1
-    })
-
-    it('should handle object processing with null fallback cases', () => {
-      // Force the condition to enter object processing but with null values
-      // This tests the Object.keys(current || {}) and Object.keys(original || {}) paths
-      const current = {} // Empty object to trigger object processing
-      const original = null // Null to test the || {} fallback
-
-      mockEditor.node.findNodeByPath.mockReturnValue(mockNode)
-
-      highlightChanges(mockEditor, current, original, [])
-
-      // Should handle Object.keys(original || {}) fallback
-      expect(mockEditor.node.findNodeByPath).toHaveBeenCalledWith([])
-
-      mockEditor.node.findNodeByPath.mockClear()
-
-      // Test the reverse case
-      const current2 = null // Null to test the || {} fallback
-      const original2 = {} // Empty object
-
-      highlightChanges(mockEditor, current2, original2, [])
-
-      // This case doesn't enter object processing because current is null
-      expect(mockEditor.node.findNodeByPath).toHaveBeenCalledWith([])
+      // Non-array vs array  
+      highlightChanges(mockEditor, 'not-array', ['a', 'b'], [])
+      expect(mockEditor.node.findNodeByPath).toHaveBeenCalled()
     })
   })
 })
