@@ -62,7 +62,9 @@ describe('#organisationsController', () => {
       // Mock backend API response for organisations
       const mockOrganisations = [
         {
+          id: 'org-1',
           orgId: 'org-1',
+          status: 'ACTIVE',
           statusHistory: [
             { status: 'PENDING', updatedAt: '2025-09-01T00:00:00Z' },
             { status: 'ACTIVE', updatedAt: '2025-10-01T00:00:00Z' }
@@ -146,7 +148,9 @@ describe('#organisationsController', () => {
       // Organisation with empty statusHistory
       const mockOrganisations = [
         {
+          id: 'org-2',
           orgId: 'org-2',
+          status: null,
           statusHistory: [],
           companyDetails: {
             name: 'Beta Corp',
