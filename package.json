@@ -89,7 +89,7 @@
     "clean-webpack-plugin": "4.0.0",
     "copy-webpack-plugin": "13.0.1",
     "css-loader": "7.1.2",
-    "eslint": "9.39.0",
+    "eslint": "9.39.1",
     "husky": "9.1.7",
     "mini-css-extract-plugin": "2.9.4",
     "msw": "2.11.6",

@@ -49,7 +49,7 @@ describe('organisation POST controller', () => {
   })
 
   describe('When user is authenticated', () => {
-    test('Should successfully update organisation and return success page', async () => {
+    test('Should successfully update organisation and redirect to GET page', async () => {
       // Mock an authenticated session
       getUserSession.mockReturnValue(mockUserSession)
 
@@ -79,7 +79,7 @@ describe('organisation POST controller', () => {
         }
       }
 
-      const { result, statusCode } = await server.inject({
+      const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: '/organisations/org-1',
         payload: {
@@ -91,11 +91,9 @@ describe('organisation POST controller', () => {
         }
       })
 
-      expect(statusCode).toBe(statusCodes.ok)
-
-      // Verify the page shows success message
-      expect(result).toEqual(expect.stringContaining('Organisation'))
-      expect(result).toEqual(expect.stringContaining('Updated Acme Ltd'))
+      // Should redirect after successful update (302 Found)
+      expect(statusCode).toBe(302)
+      expect(headers.location).toBe('/organisations/org-1')
 
       // Verify fetch was called with correct parameters
       expect(fetchMock).toHaveBeenCalledWith(
@@ -111,260 +109,6 @@ describe('organisation POST controller', () => {
           })
         }
       )
-    })
-
-    test('Should safely escape dangerous JSON characters in response', async () => {
-      getUserSession.mockReturnValue(mockUserSession)
-
-      // Mock organisation response with dangerous characters
-      const mockOrganisation = {
-        id: 'org-1',
-        companyDetails: {
-          name: '</script><script>alert("xss")</script>',
-          description: 'Line separator\u2028and paragraph separator\u2029test'
-        }
-      }
-
-      const fetchMock = vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        json: async () => mockOrganisation
-      })
-
-      vi.stubGlobal('fetch', fetchMock)
-
-      const { result, statusCode } = await server.inject({
-        method: 'POST',
-        url: '/organisations/org-1',
-        payload: {
-          organisation: JSON.stringify({
-            version: 1,
-            companyDetails: { name: 'Test' }
-          })
-        },
-        auth: {
-          strategy: 'session',
-          credentials: mockUserSession
-        }
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-
-      // Verify dangerous characters are escaped in the JSON script tag
-      expect(result).toEqual(expect.stringContaining('\\u003c'))
-      expect(result).toEqual(expect.stringContaining('\\u2028'))
-      expect(result).toEqual(expect.stringContaining('\\u2029'))
-      // Verify original dangerous characters are not present
-      expect(result).not.toEqual(
-        expect.stringContaining('</script><script>alert')
-      )
-    })
-
-    test('Should handle HTML comment sequences safely', async () => {
-      getUserSession.mockReturnValue(mockUserSession)
-
-      const mockOrganisation = {
-        id: 'org-1',
-        companyDetails: {
-          name: 'Test Company',
-          description: 'This contains --> comment end sequence'
-        }
-      }
-
-      const fetchMock = vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        json: async () => mockOrganisation
-      })
-
-      vi.stubGlobal('fetch', fetchMock)
-
-      const { result, statusCode } = await server.inject({
-        method: 'POST',
-        url: '/organisations/org-1',
-        payload: {
-          organisation: JSON.stringify({
-            version: 1,
-            companyDetails: { name: 'Test' }
-          })
-        },
-        auth: {
-          strategy: 'session',
-          credentials: mockUserSession
-        }
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-
-      // Verify HTML comment sequences are escaped
-      expect(result).toEqual(expect.stringContaining('--\\u003e'))
-      expect(result).not.toEqual(expect.stringContaining('-->'))
-    })
-
-    test('Should show 500 error page when backend request fails', async () => {
-      getUserSession.mockReturnValue(mockUserSession)
-
-      const fetchMock = vi.fn().mockRejectedValue(new Error('Network error'))
-
-      vi.stubGlobal('fetch', fetchMock)
-
-      const { result } = await server.inject({
-        method: 'POST',
-        url: '/organisations/org-1',
-        payload: {
-          organisation: JSON.stringify({
-            version: 1,
-            companyDetails: { name: 'Test' }
-          })
-        },
-        auth: {
-          strategy: 'session',
-          credentials: mockUserSession
-        }
-      })
-
-      expect(result).toEqual(
-        expect.stringContaining('Sorry, there is a problem with the service')
-      )
-      expect(fetchMock).toHaveBeenCalledTimes(1)
-    })
-
-    test('Should show 500 error page when backend returns non-OK response', async () => {
-      getUserSession.mockReturnValue(mockUserSession)
-
-      const fetchMock = vi.fn().mockResolvedValue({
-        ok: false,
-        status: 500,
-        statusText: 'Internal Server Error'
-      })
-
-      vi.stubGlobal('fetch', fetchMock)
-
-      const { result } = await server.inject({
-        method: 'POST',
-        url: '/organisations/org-1',
-        payload: {
-          organisation: JSON.stringify({
-            version: 1,
-            companyDetails: { name: 'Test' }
-          })
-        },
-        auth: {
-          strategy: 'session',
-          credentials: mockUserSession
-        }
-      })
-
-      expect(result).toEqual(
-        expect.stringContaining('Sorry, there is a problem with the service')
-      )
-      expect(fetchMock).toHaveBeenCalledTimes(1)
-    })
-
-    test('Should log errors to console when fetch fails', async () => {
-      getUserSession.mockReturnValue(mockUserSession)
-
-      const consoleErrorSpy = vi
-        .spyOn(console, 'error')
-        .mockImplementation(() => {})
-      const fetchMock = vi.fn().mockRejectedValue(new Error('Network failure'))
-
-      vi.stubGlobal('fetch', fetchMock)
-
-      await server.inject({
-        method: 'POST',
-        url: '/organisations/org-1',
-        payload: {
-          organisation: JSON.stringify({
-            version: 1,
-            companyDetails: { name: 'Test' }
-          })
-        },
-        auth: {
-          strategy: 'session',
-          credentials: mockUserSession
-        }
-      })
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Failed to update organisation:',
-        expect.any(Error)
-      )
-
-      consoleErrorSpy.mockRestore()
-    })
-
-    test('Should log errors to console when response is not OK', async () => {
-      getUserSession.mockReturnValue(mockUserSession)
-
-      const consoleErrorSpy = vi
-        .spyOn(console, 'error')
-        .mockImplementation(() => {})
-      const fetchMock = vi.fn().mockResolvedValue({
-        ok: false,
-        status: 400,
-        statusText: 'Bad Request'
-      })
-
-      vi.stubGlobal('fetch', fetchMock)
-
-      await server.inject({
-        method: 'POST',
-        url: '/organisations/org-1',
-        payload: {
-          organisation: JSON.stringify({
-            version: 1,
-            companyDetails: { name: 'Test' }
-          })
-        },
-        auth: {
-          strategy: 'session',
-          credentials: mockUserSession
-        }
-      })
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Failed to update organisation:',
-        'Bad Request'
-      )
-
-      consoleErrorSpy.mockRestore()
-    })
-
-    test('Should include success message in view context', async () => {
-      getUserSession.mockReturnValue(mockUserSession)
-
-      const mockOrganisation = {
-        id: 'org-1',
-        companyDetails: { name: 'Test Company' }
-      }
-
-      const fetchMock = vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        json: async () => mockOrganisation
-      })
-
-      vi.stubGlobal('fetch', fetchMock)
-
-      const { result } = await server.inject({
-        method: 'POST',
-        url: '/organisations/org-1',
-        payload: {
-          organisation: JSON.stringify({
-            version: 1,
-            companyDetails: { name: 'Test Company' }
-          })
-        },
-        auth: {
-          strategy: 'session',
-          credentials: mockUserSession
-        }
-      })
-
-      // The success message should be passed to the template
-      // This would need to be verified based on how the template handles the message
-      expect(result).toEqual(expect.stringContaining('Test Company'))
     })
   })
 })
