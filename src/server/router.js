@@ -2,11 +2,11 @@ import inert from '@hapi/inert'
 
 import { home } from './routes/home/index.js'
 import { organisations } from './routes/organisations/index.js'
+import { organisation } from './routes/organisation/index.js'
 import { health } from './routes/health/index.js'
 import { auth } from './routes/auth/index.js'
 
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
-import { organisation } from '#server/routes/organisation/index.js'
 
 export const router = {
   plugin: {

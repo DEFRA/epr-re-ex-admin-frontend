@@ -1,4 +1,5 @@
 import { config } from '#config/config.js'
+import { organisationsBreadcrumb } from '#server/routes/organisations/controller.js'
 
 export const organisationsPOSTController = {
   async handler(request, h) {
@@ -7,7 +8,7 @@ export const organisationsPOSTController = {
     const postedData = JSON.parse(request.payload.organisation)
     const eprBackendUrl = config.get('eprBackendUrl')
 
-    await fetch(`${eprBackendUrl}/v1/organisations/${id}`, {
+    const response = await fetch(`${eprBackendUrl}/v1/organisations/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'
@@ -18,8 +19,14 @@ export const organisationsPOSTController = {
       })
     })
 
-    // Redirect back to the GET page after successful update
-    // When JSONEditor form is added, this can show a success message via query param or flash message
-    return h.redirect(`/organisations/${id}`)
+    const data = await response.json()
+
+    return h.view('routes/organisation/index', {
+      pageTitle: 'Organisation',
+      heading: 'Organisation',
+      message: 'success',
+      organisationJson: JSON.stringify(data),
+      breadcrumbs: [organisationsBreadcrumb]
+    })
   }
 }

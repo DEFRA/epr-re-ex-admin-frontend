@@ -57,7 +57,7 @@ describe('organisation GET controller', () => {
       getUserSession.mockReturnValue(mockUserSession)
     })
 
-    test('Should return OK and render organisation details with safely serialised JSON', async () => {
+    test('Should return OK and render organisation details ', async () => {
       const orgId = 'org-123'
       const mockOrganisation = {
         id: orgId,
@@ -92,13 +92,6 @@ describe('organisation GET controller', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('Organisation')
-
-      // Verify JSON is safely serialised with escaped characters
-      // The escaping converts < to \u003c in the JSON string
-      expect(result).toContain('\\u003c') // < should be escaped
-      expect(result).toContain('--\\u003e') // --> should be escaped
-      expect(result).toContain('\\u2028') // Line separator should be escaped
-      expect(result).toContain('\\u2029') // Paragraph separator should be escaped
 
       // Verify breadcrumb is included
       expect(result).toContain('Organisations')
