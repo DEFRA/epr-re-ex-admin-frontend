@@ -1,4 +1,6 @@
 import isEqual from 'lodash/isEqual.js'
+import JSONEditor from 'jsoneditor'
+import 'jsoneditor/dist/jsoneditor.css'
 
 /**
  * Finds a schema node by following a JSONEditor path
@@ -291,4 +293,134 @@ export function validateJSON(json, originalData, schema, validate) {
   })
 
   return errors
+}
+
+/**
+ * Initialize the JSONEditor for organisation data
+ * @param {Object} options - Configuration options
+ * @param {Object} options.schema - The JSON schema for validation
+ * @param {Function} options.validate - The AJV validation function
+ * @param {string} options.storageKey - The localStorage key for draft storage
+ * @param {string} options.containerId - The ID of the container element
+ * @param {string} options.payloadElementId - The ID of the element containing original JSON data
+ * @param {string} options.hiddenInputId - The ID of the hidden input for form submission
+ * @param {string} options.successMessageId - The ID of the success message element
+ * @param {string} options.resetButtonId - The ID of the reset button
+ */
+export function initJSONEditor({
+  schema,
+  validate,
+  storageKey,
+  containerId = 'jsoneditor',
+  payloadElementId = 'organisation-json',
+  hiddenInputId = 'jsoneditor-organisation-object',
+  successMessageId = 'organisation-success-message',
+  resetButtonId = 'jsoneditor-reset-button'
+}) {
+  const container = document.getElementById(containerId)
+  if (!container) {
+    return
+  }
+
+  try {
+    const storageManager = new LocalStorageManager(storageKey)
+
+    const payloadEl = document.getElementById(payloadElementId)
+    if (!payloadEl) {
+      console.error('Payload element not found')
+      return
+    }
+
+    const originalData = JSON.parse(payloadEl.textContent)
+
+    // Get reference to hidden input for form submission
+    const hiddenInput = document.getElementById(hiddenInputId)
+
+    // Clear local storage if success message present
+    const messageEl = document.getElementById(successMessageId)
+    if (messageEl) {
+      if (storageManager.clear()) {
+        console.info('[JSONEditor] Cleared draft from localStorage after save')
+      }
+    }
+
+    // Load from localStorage if exists
+    const savedData = storageManager.load()
+    if (savedData) {
+      console.info('[JSONEditor] Loaded draft from localStorage')
+    }
+
+    // Helper function to sync hidden input with editor data
+    const syncHiddenInput = (data) => {
+      if (hiddenInput) {
+        hiddenInput.value = JSON.stringify(data)
+      }
+    }
+
+    const editor = new JSONEditor(container, {
+      mode: 'tree',
+      modes: ['text', 'tree', 'preview'],
+
+      // ✅ inline autocomplete based on schema enums
+      autocomplete: {
+        getOptions: (text, path) => getAutocompleteOptions(schema, path)
+      },
+
+      // 🧩 Remove "Duplicate" from context menu
+      onCreateMenu: (items) => {
+        const excludedItems = ['Duplicate', 'duplicate']
+        return items.filter(
+          (item) =>
+            !excludedItems.includes(item.text) &&
+            !excludedItems.includes(item.action)
+        )
+      },
+      onEvent: (node, event) => {
+        if (event.type === 'blur' || event.type === 'change') {
+          const currentData = editor.get()
+          storageManager.save(currentData)
+          syncHiddenInput(currentData)
+          highlightChanges(editor, currentData, originalData)
+        }
+      },
+      onExpand: () => {
+        highlightChanges(editor, editor.get(), originalData)
+      },
+      onChangeJSON: (updatedJSON) => {
+        storageManager.save(updatedJSON)
+        syncHiddenInput(updatedJSON)
+        highlightChanges(editor, updatedJSON, originalData)
+      },
+      onEditable: (node) => {
+        return isNodeEditable(node, schema)
+      },
+      onValidate: (json) => {
+        return validateJSON(json, originalData, schema, validate)
+      }
+    })
+
+    // 🆕 Set editor data: prefer saved draft > original
+    editor.set(savedData || originalData)
+
+    // 🆕 Sync hidden input with initial data
+    syncHiddenInput(savedData || originalData)
+
+    // 🆕 Immediately highlight changes if draft differs
+    highlightChanges(editor, savedData || originalData, originalData)
+
+    const resetButton = document.getElementById(resetButtonId)
+    if (resetButton) {
+      resetButton.addEventListener('click', () => {
+        if (window.confirm('Are you sure you want to reset all changes?')) {
+          // Clear localStorage and reset
+          storageManager.clear()
+          editor.set(originalData)
+          syncHiddenInput(originalData)
+          highlightChanges(editor, originalData, originalData)
+        }
+      })
+    }
+  } catch (err) {
+    console.error('Failed to initialise JSONEditor:', err)
+  }
 }

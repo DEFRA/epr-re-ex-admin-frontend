@@ -7,8 +7,39 @@ import {
   highlightChanges,
   LocalStorageManager,
   getAutocompleteOptions,
-  validateJSON
+  validateJSON,
+  initJSONEditor
 } from './jsoneditor.helpers.js'
+
+// Use vi.hoisted to ensure these are available when mocks are set up
+const { mockSet, mockGet, MockJSONEditorConstructor } = vi.hoisted(() => {
+  const mockSet = vi.fn()
+  const mockGet = vi.fn()
+  const mockNode = {
+    findNodeByPath: vi.fn()
+  }
+
+  const MockJSONEditorConstructor = vi.fn(function (container, options) {
+    this.options = options
+    this.node = mockNode
+  })
+
+  MockJSONEditorConstructor.prototype.set = function (data) {
+    mockSet(data)
+  }
+
+  MockJSONEditorConstructor.prototype.get = function () {
+    return mockGet()
+  }
+
+  return { mockSet, mockGet, mockNode, MockJSONEditorConstructor }
+})
+
+vi.mock('jsoneditor', () => ({
+  default: MockJSONEditorConstructor
+}))
+
+vi.mock('jsoneditor/dist/jsoneditor.css', () => ({}))
 
 // Mock localStorage for Node.js environment
 const localStorageMock = {
@@ -21,9 +52,17 @@ const localStorageMock = {
 // Mock window object for Node.js environment
 Object.defineProperty(globalThis, 'window', {
   value: {
-    localStorage: localStorageMock
+    localStorage: localStorageMock,
+    confirm: vi.fn()
   },
   writable: true
+})
+
+// Mock document for Node.js environment
+Object.defineProperty(globalThis, 'document', {
+  value: {
+    getElementById: vi.fn()
+  }
 })
 
 describe('JSONEditor Helpers', () => {
@@ -883,6 +922,430 @@ describe('JSONEditor Helpers', () => {
       // Non-array vs array
       highlightChanges(mockEditor, 'not-array', ['a', 'b'], [])
       expect(mockEditor.node.findNodeByPath).toHaveBeenCalled()
+    })
+  })
+
+  describe('initJSONEditor', () => {
+    let container
+    let payloadEl
+    let hiddenInput
+    let resetButton
+    let messageEl
+    let resetButtonListeners
+    let mockValidate
+    let testSchema
+    let originalGetElementById
+    let originalConfirm
+    let originalConsoleInfo
+    let originalConsoleError
+
+    beforeEach(() => {
+      vi.clearAllMocks()
+
+      // Reset mocks
+      mockSet.mockClear()
+      mockGet.mockClear()
+      mockGet.mockReturnValue({ name: 'test' })
+      MockJSONEditorConstructor.mockClear()
+      resetButtonListeners = []
+
+      // Setup test schema and validate function
+      mockValidate = vi.fn()
+      testSchema = {
+        type: 'object',
+        properties: {
+          id: { not: {} },
+          status: {
+            type: 'string',
+            enum: ['created', 'approved', 'rejected']
+          },
+          name: { type: 'string' }
+        }
+      }
+
+      // Setup DOM elements
+      container = { id: 'jsoneditor' }
+      payloadEl = {
+        id: 'organisation-json',
+        type: 'application/json',
+        textContent: JSON.stringify({ id: 1, name: 'Original' })
+      }
+      hiddenInput = {
+        id: 'jsoneditor-organisation-object',
+        type: 'hidden',
+        value: null
+      }
+      resetButton = {
+        id: 'jsoneditor-reset-button',
+        addEventListener: vi.fn((event, handler) => {
+          resetButtonListeners.push({ event, handler })
+        })
+      }
+      messageEl = null
+
+      // Mock document.getElementById
+      originalGetElementById = document.getElementById
+      document.getElementById = vi.fn((id) => {
+        if (id === 'jsoneditor') return container
+        if (id === 'organisation-json') return payloadEl
+        if (id === 'jsoneditor-organisation-object') return hiddenInput
+        if (id === 'jsoneditor-reset-button') return resetButton
+        if (id === 'organisation-success-message') return messageEl
+        return null
+      })
+
+      // Mock window.confirm
+      originalConfirm = window.confirm
+      window.confirm = vi.fn()
+
+      // Mock console
+      originalConsoleInfo = console.info
+      originalConsoleError = console.error
+      console.info = vi.fn()
+      console.error = vi.fn()
+
+      // Clear localStorage
+      localStorageMock.getItem.mockReturnValue(null)
+      localStorageMock.setItem.mockClear()
+      localStorageMock.setItem.mockImplementation(() => {}) // Reset to normal behavior
+      localStorageMock.removeItem.mockClear()
+      localStorageMock.removeItem.mockImplementation(() => {}) // Reset to normal behavior
+    })
+
+    afterEach(() => {
+      document.getElementById = originalGetElementById
+      window.confirm = originalConfirm
+      console.info = originalConsoleInfo
+      console.error = originalConsoleError
+    })
+
+    it('should initialize JSONEditor with correct configuration', () => {
+      initJSONEditor({
+        schema: testSchema,
+        validate: mockValidate,
+        storageKey: 'test-storage-key'
+      })
+
+      expect(MockJSONEditorConstructor).toHaveBeenCalled()
+      const [[containerArg, optionsArg]] = MockJSONEditorConstructor.mock.calls
+
+      expect(containerArg).toBe(container)
+      expect(optionsArg.mode).toBe('tree')
+      expect(optionsArg.modes).toEqual(['text', 'tree', 'preview'])
+      expect(typeof optionsArg.autocomplete.getOptions).toBe('function')
+      expect(typeof optionsArg.onCreateMenu).toBe('function')
+      expect(typeof optionsArg.onEvent).toBe('function')
+      expect(typeof optionsArg.onExpand).toBe('function')
+      expect(typeof optionsArg.onChangeJSON).toBe('function')
+      expect(typeof optionsArg.onEditable).toBe('function')
+      expect(typeof optionsArg.onValidate).toBe('function')
+    })
+
+    it('should load draft data from localStorage when available', () => {
+      const draftData = { id: 1, name: 'Draft' }
+      localStorageMock.getItem.mockReturnValue(JSON.stringify(draftData))
+
+      initJSONEditor({
+        schema: testSchema,
+        validate: mockValidate,
+        storageKey: 'test-storage-key'
+      })
+
+      expect(mockSet).toHaveBeenCalledWith(draftData)
+      expect(console.info).toHaveBeenCalledWith(
+        '[JSONEditor] Loaded draft from localStorage'
+      )
+    })
+
+    it('should clear localStorage when success message is present', () => {
+      messageEl = { id: 'organisation-success-message' }
+
+      initJSONEditor({
+        schema: testSchema,
+        validate: mockValidate,
+        storageKey: 'test-storage-key'
+      })
+
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith(
+        'test-storage-key'
+      )
+      expect(console.info).toHaveBeenCalledWith(
+        '[JSONEditor] Cleared draft from localStorage after save'
+      )
+    })
+
+    it('should sync hidden input with initial data', () => {
+      initJSONEditor({
+        schema: testSchema,
+        validate: mockValidate,
+        storageKey: 'test-storage-key'
+      })
+
+      expect(hiddenInput.value).toBe(
+        JSON.stringify({ id: 1, name: 'Original' })
+      )
+    })
+
+    it('should accept custom element IDs', () => {
+      const customContainer = { id: 'custom-container' }
+      const customPayload = {
+        id: 'custom-payload',
+        textContent: JSON.stringify({ name: 'Custom' })
+      }
+      const customInput = { id: 'custom-input', value: null }
+      const customButton = {
+        id: 'custom-button',
+        addEventListener: vi.fn()
+      }
+
+      document.getElementById = vi.fn((id) => {
+        if (id === 'custom-container') return customContainer
+        if (id === 'custom-payload') return customPayload
+        if (id === 'custom-input') return customInput
+        if (id === 'custom-button') return customButton
+        return null
+      })
+
+      initJSONEditor({
+        schema: testSchema,
+        validate: mockValidate,
+        storageKey: 'test-storage-key',
+        containerId: 'custom-container',
+        payloadElementId: 'custom-payload',
+        hiddenInputId: 'custom-input',
+        resetButtonId: 'custom-button'
+      })
+
+      expect(MockJSONEditorConstructor).toHaveBeenCalled()
+      const [[containerArg]] = MockJSONEditorConstructor.mock.calls
+      expect(containerArg).toBe(customContainer)
+      expect(customInput.value).toBe(JSON.stringify({ name: 'Custom' }))
+    })
+
+    it('should not initialize when container does not exist', () => {
+      document.getElementById = vi.fn(() => null)
+
+      const initialCallCount = MockJSONEditorConstructor.mock.calls.length
+
+      initJSONEditor({
+        schema: testSchema,
+        validate: mockValidate,
+        storageKey: 'test-storage-key'
+      })
+
+      expect(MockJSONEditorConstructor.mock.calls.length).toBe(initialCallCount)
+    })
+
+    it('should not initialize when payload element does not exist', () => {
+      document.getElementById = vi.fn((id) => {
+        if (id === 'jsoneditor') return container
+        if (id === 'organisation-json') return null
+        return null
+      })
+
+      const initialCallCount = MockJSONEditorConstructor.mock.calls.length
+
+      initJSONEditor({
+        schema: testSchema,
+        validate: mockValidate,
+        storageKey: 'test-storage-key'
+      })
+
+      expect(MockJSONEditorConstructor.mock.calls.length).toBe(initialCallCount)
+      expect(console.error).toHaveBeenCalledWith('Payload element not found')
+    })
+
+    it('should handle errors gracefully', () => {
+      payloadEl.textContent = 'invalid json{'
+
+      initJSONEditor({
+        schema: testSchema,
+        validate: mockValidate,
+        storageKey: 'test-storage-key'
+      })
+
+      expect(console.error).toHaveBeenCalledWith(
+        'Failed to initialise JSONEditor:',
+        expect.any(Error)
+      )
+    })
+
+    it('should handle missing hidden input', () => {
+      document.getElementById = vi.fn((id) => {
+        if (id === 'jsoneditor') return container
+        if (id === 'organisation-json') return payloadEl
+        if (id === 'jsoneditor-organisation-object') return null
+        if (id === 'jsoneditor-reset-button') return resetButton
+        return null
+      })
+
+      initJSONEditor({
+        schema: testSchema,
+        validate: mockValidate,
+        storageKey: 'test-storage-key'
+      })
+
+      expect(MockJSONEditorConstructor).toHaveBeenCalled()
+    })
+
+    it('should handle clear failing', () => {
+      messageEl = { id: 'organisation-success-message' }
+      localStorageMock.removeItem.mockImplementation(() => {
+        throw new Error('Storage error')
+      })
+      const consoleWarnSpy = vi
+        .spyOn(console, 'warn')
+        .mockImplementation(() => {})
+
+      initJSONEditor({
+        schema: testSchema,
+        validate: mockValidate,
+        storageKey: 'test-storage-key'
+      })
+
+      expect(consoleWarnSpy).toHaveBeenCalled()
+      expect(console.info).not.toHaveBeenCalledWith(
+        '[JSONEditor] Cleared draft from localStorage after save'
+      )
+
+      consoleWarnSpy.mockRestore()
+    })
+
+    it('should reset editor when confirmed', () => {
+      initJSONEditor({
+        schema: testSchema,
+        validate: mockValidate,
+        storageKey: 'test-storage-key'
+      })
+
+      window.confirm.mockReturnValue(true)
+
+      const clickHandler = resetButtonListeners.find((l) => l.event === 'click')
+      expect(clickHandler).toBeDefined()
+
+      mockSet.mockClear()
+      clickHandler.handler()
+
+      expect(window.confirm).toHaveBeenCalledWith(
+        'Are you sure you want to reset all changes?'
+      )
+      expect(localStorageMock.removeItem).toHaveBeenCalled()
+      expect(mockSet).toHaveBeenCalledWith({ id: 1, name: 'Original' })
+    })
+
+    it('should not reset editor when cancelled', () => {
+      initJSONEditor({
+        schema: testSchema,
+        validate: mockValidate,
+        storageKey: 'test-storage-key'
+      })
+
+      window.confirm.mockReturnValue(false)
+
+      const clickHandler = resetButtonListeners.find((l) => l.event === 'click')
+      expect(clickHandler).toBeDefined()
+
+      mockSet.mockClear()
+      localStorageMock.removeItem.mockClear()
+      clickHandler.handler()
+
+      expect(window.confirm).toHaveBeenCalledWith(
+        'Are you sure you want to reset all changes?'
+      )
+      expect(localStorageMock.removeItem).not.toHaveBeenCalled()
+      expect(mockSet).not.toHaveBeenCalled()
+    })
+
+    describe('Editor callbacks', () => {
+      let editorOptions
+
+      beforeEach(() => {
+        initJSONEditor({
+          schema: testSchema,
+          validate: mockValidate,
+          storageKey: 'test-storage-key'
+        })
+        editorOptions = MockJSONEditorConstructor.mock.calls[0][1]
+      })
+
+      it('should call callbacks via autocomplete.getOptions', () => {
+        const result = editorOptions.autocomplete.getOptions('text', ['status'])
+        expect(result).toEqual(['created', 'approved', 'rejected'])
+      })
+
+      it('should filter duplicate items via onCreateMenu', () => {
+        const items = [
+          { text: 'Insert', action: 'insert' },
+          { text: 'Duplicate', action: 'duplicate' },
+          { text: 'Remove', action: 'remove' }
+        ]
+        const result = editorOptions.onCreateMenu(items)
+        expect(result).toHaveLength(2)
+        expect(result.find((i) => i.text === 'Duplicate')).toBeUndefined()
+      })
+
+      it('should handle blur event via onEvent', () => {
+        mockGet.mockReturnValue({ id: 1, name: 'Updated' })
+        localStorageMock.setItem.mockClear()
+
+        editorOptions.onEvent({}, { type: 'blur' })
+
+        expect(localStorageMock.setItem).toHaveBeenCalled()
+        expect(hiddenInput.value).toBe(
+          JSON.stringify({ id: 1, name: 'Updated' })
+        )
+      })
+
+      it('should handle change event via onEvent', () => {
+        mockGet.mockReturnValue({ id: 1, name: 'Changed' })
+        localStorageMock.setItem.mockClear()
+
+        editorOptions.onEvent({}, { type: 'change' })
+
+        expect(localStorageMock.setItem).toHaveBeenCalled()
+      })
+
+      it('should not save on other event types via onEvent', () => {
+        localStorageMock.setItem.mockClear()
+
+        editorOptions.onEvent({}, { type: 'click' })
+
+        expect(localStorageMock.setItem).not.toHaveBeenCalled()
+      })
+
+      it('should highlight changes via onExpand', () => {
+        mockGet.mockReturnValue({ id: 1, name: 'Expanded' })
+        editorOptions.onExpand()
+        // Just ensure it executes without error
+        expect(mockGet).toHaveBeenCalled()
+      })
+
+      it('should save and sync via onChangeJSON', () => {
+        localStorageMock.setItem.mockClear()
+        const updatedData = { id: 1, name: 'NewData' }
+
+        editorOptions.onChangeJSON(updatedData)
+
+        expect(localStorageMock.setItem).toHaveBeenCalled()
+        expect(hiddenInput.value).toBe(JSON.stringify(updatedData))
+      })
+
+      it('should check editability via onEditable', () => {
+        const node = { path: ['name'], type: 'string' }
+        const result = editorOptions.onEditable(node)
+        expect(result).toBe(true)
+      })
+
+      it('should validate via onValidate', () => {
+        mockValidate.mockReturnValue(true)
+        mockValidate.errors = null
+        const json = { id: 1, name: 'Test' }
+
+        const errors = editorOptions.onValidate(json)
+
+        expect(mockValidate).toHaveBeenCalledWith(json)
+        expect(Array.isArray(errors)).toBe(true)
+      })
     })
   })
 })
