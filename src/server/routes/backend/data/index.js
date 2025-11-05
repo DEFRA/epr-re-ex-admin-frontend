@@ -17,34 +17,21 @@ export const data = {
       )
 
       server.auth.strategy(
-        'aad-access-token',
+        'access-token',
         'jwt',
-        aadJwtOptions(entraWellKnownDetails)
-      )
-      server.auth.strategy(
-        'defra-id-access-token',
-        'jwt',
-        defraIdJwtOptions(defraIdWellKnownDetails)
-      )
-
-      server.auth.scheme('delegating', delegatingAuthScheme)
-
-      server.auth.strategy('access-token', 'delegating', {
-        candidateStrategies: [
-          {
-            strategy: 'aad-access-token',
-            test(token) {
-              return token.iss === entraWellKnownDetails.issuer
-            }
+        entraOrDefraJwtOptions({
+          defra: {
+            audience: config.get('oidc.defraId.clientId'),
+            jwksUri: defraIdWellKnownDetails.jwks_uri,
+            issuer: defraIdWellKnownDetails.issuer
           },
-          {
-            strategy: 'defra-id-access-token',
-            test(token) {
-              return token.iss === defraIdWellKnownDetails.issuer
-            }
+          entra: {
+            audience: config.get('oidc.azureAD.clientId'),
+            jwksUri: entraWellKnownDetails.jwks_uri,
+            issuer: entraWellKnownDetails.issuer
           }
-        ]
-      })
+        })
+      )
 
       server.route([
         {
@@ -68,48 +55,19 @@ export const data = {
   }
 }
 
-function aadJwtOptions({ jwks_uri: jwksUri, issuer }) {
+function entraOrDefraJwtOptions({
+  defra: {
+    jwksUri: defraJwksUri,
+    issuer: defraIssuer,
+    audience: defraAudience
+  },
+  entra: { jwksUri: entraJwksUri, issuer: entraIssuer, audience: entraAudience }
+}) {
   return {
-    keys: {
-      uri: jwksUri
-    },
+    keys: [{ uri: defraJwksUri }, { uri: entraJwksUri }],
     verify: {
-      aud: config.get('oidc.azureAD.clientId'),
-      iss: issuer,
-      sub: false,
-      nbf: true,
-      exp: true,
-      maxAgeSec: 5400, // 90 minutes
-      timeSkewSec: 15
-    },
-    validate: async (artifacts) => {
-      const tokenPayload = artifacts.decoded.payload
-
-      const email = tokenPayload.upn ?? tokenPayload.preferred_username
-
-      // Entra ID specific token parsing
-      const credentials = {
-        id: tokenPayload.oid,
-        email,
-        issuer: tokenPayload.iss,
-        scope: isEntraUserInServiceMaintainersAllowList(email)
-          ? ['service_maintainer']
-          : []
-      }
-
-      return { isValid: true, credentials }
-    }
-  }
-}
-
-function defraIdJwtOptions({ jwks_uri: jwksUri, issuer }) {
-  return {
-    keys: {
-      uri: jwksUri
-    },
-    verify: {
-      aud: config.get('oidc.defraId.clientId'),
-      iss: issuer,
+      aud: false,
+      iss: false,
       sub: false,
       nbf: true,
       exp: true,
@@ -117,57 +75,68 @@ function defraIdJwtOptions({ jwks_uri: jwksUri, issuer }) {
       timeSkewSec: 15
     },
     validate: async (artifacts, request) => {
+      console.log('Validate JWT token')
+
       const tokenPayload = artifacts.decoded.payload
 
-      // Defra ID specific token parsing
-      const credentials = {
-        id: tokenPayload.contactId,
-        email: tokenPayload.email,
-        issuer: tokenPayload.iss,
-        scope: lookupDefraUserRoles(tokenPayload, request)
-      }
+      switch (tokenPayload.iss) {
+        case defraIssuer: {
+          console.log('Defra ID token')
 
-      return { isValid: true, credentials }
+          const isAudienceCorrect = tokenPayload.aud === defraAudience
+
+          // Defra ID specific token parsing
+          const credentials = {
+            id: tokenPayload.contactId,
+            email: tokenPayload.email,
+            issuer: tokenPayload.iss,
+            scope: lookupDefraUserRoles(tokenPayload, request)
+          }
+
+          console.log('isAudienceCorrect', isAudienceCorrect, tokenPayload.aud)
+          return {
+            isValid: isAudienceCorrect,
+            credentials
+          }
+        }
+        case entraIssuer: {
+          console.log('Entra ID token')
+
+          const isAudienceCorrect = tokenPayload.aud === entraAudience
+
+          const email = tokenPayload.upn ?? tokenPayload.preferred_username
+
+          // Entra ID specific token parsing
+          const credentials = {
+            id: tokenPayload.oid,
+            email,
+            issuer: tokenPayload.iss,
+            scope: isEntraUserInServiceMaintainersAllowList(email)
+              ? ['service_maintainer']
+              : []
+          }
+
+          console.log('isAudienceCorrect', isAudienceCorrect, tokenPayload.aud)
+          return {
+            isValid: isAudienceCorrect,
+            credentials
+          }
+        }
+        default: {
+          console.log(`Unknown token issuer: ${tokenPayload.iss}`)
+          return { isValid: false }
+        }
+      }
     }
   }
 }
 
 function isEntraUserInServiceMaintainersAllowList(emailAddress) {
-  // TODO look for token.email in configured list of service maintainers
+  // TODO look for emailAddress in configured list of service maintainers
   return true
 }
 
 // illustrative - real lookup would be based on ???
 function lookupDefraUserRoles(token, request) {
   return ['user']
-}
-
-function delegatingAuthScheme(server, { candidateStrategies }) {
-  const extractAndDecodeBearerToken = (request) => {
-    // TODO throw Boom.unauthorized if authorization header missing
-    // TODO throw Boom.unauthorized if scheme not Bearer
-    // TODO throw Boom.unauthorized if token not Bearer
-    const [, token] = request.headers.authorization.split(/\s+/)
-
-    // TODO throw Boom.unauthorized if decode fails
-    return jwt.token.decode(token).decoded.payload
-  }
-
-  return {
-    async authenticate(request, h) {
-      const decodedToken = extractAndDecodeBearerToken(request)
-
-      const delegateTo = candidateStrategies.find((candidate) =>
-        candidate.test(decodedToken)
-      )
-
-      // TODO throw Boom.unauthorized if no strategy found to delgate to
-
-      const { credentials, artifacts } = await server.auth.test(
-        delegateTo.strategy,
-        request
-      )
-      return h.authenticated({ credentials, artifacts })
-    }
-  }
 }
