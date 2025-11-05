@@ -40,14 +40,62 @@ export function getValueAtPath(obj, path) {
 }
 
 /**
+ * Checks if a node is a root or meta node (nodes without valid paths)
+ * @param {Object} node - The JSONEditor node to check
+ * @returns {boolean} True if node is root/meta node
+ */
+function isRootOrMetaNode(node) {
+  return !node || !Array.isArray(node.path)
+}
+
+/**
+ * Checks if a schema indicates read-only status through various patterns
+ * @param {Object} subschema - The schema to check
+ * @returns {boolean} True if schema indicates read-only
+ */
+function isSchemaReadOnly(subschema) {
+  if (typeof subschema !== 'object') {
+    return false
+  }
+
+  // Check explicit readOnly flag
+  if (subschema.readOnly) {
+    return true
+  }
+
+  // Check "not" patterns that indicate read-only
+  if (subschema.not) {
+    // Empty "not" constraint means field must not be changed
+    if (Object.keys(subschema.not).length === 0) {
+      return true
+    }
+    // "not" with const or type also indicates read-only
+    if (subschema.not.const !== undefined || subschema.not.type) {
+      return true
+    }
+  }
+
+  return false
+}
+
+/**
+ * Checks if a node represents an object field (should have locked key names)
+ * @param {Object} node - The JSONEditor node to check
+ * @returns {boolean} True if node is an object field
+ */
+function isObjectField(node) {
+  return node.type === 'object' || node.field
+}
+
+/**
  * Determines if a node in the JSONEditor is editable based on the schema
  * @param {Object} node - The JSONEditor node to check
  * @param {Object} rootSchema - The root JSON schema
  * @returns {boolean|Object} True if editable, false if not, or { field, value } for partial editability
  */
 export function isNodeEditable(node, rootSchema) {
-  // skip root/meta nodes
-  if (!node || !Array.isArray(node.path)) {
+  // Root/meta nodes are always editable
+  if (isRootOrMetaNode(node)) {
     return true
   }
 
@@ -56,26 +104,66 @@ export function isNodeEditable(node, rootSchema) {
     return false
   }
 
-  // 1️⃣ Read-only fields: completely locked
-  // Check if schema indicates read-only through various patterns
-  if (
-    typeof subschema === 'object' &&
-    (subschema.readOnly ||
-      // common "not" pattern meaning "this field must not be changed"
-      (subschema.not && Object.keys(subschema.not).length === 0) ||
-      subschema.not?.const !== undefined ||
-      subschema.not?.type)
-  ) {
+  // Read-only fields are completely locked
+  if (isSchemaReadOnly(subschema)) {
     return false
   }
 
-  // 2️⃣ Object keys: lock key names but allow editing of values
-  if (node.type === 'object' || node.field) {
+  // Object keys: lock key names but allow editing of values
+  if (isObjectField(node)) {
     return { field: false, value: true }
   }
 
-  // 3️⃣ Everything else: editable normally
+  // Everything else is editable normally
   return true
+}
+
+/**
+ * Adds a read-only change error if the field has changed
+ * @param {*} data - Current data
+ * @param {*} original - Original data to compare against
+ * @param {Object} schema - JSON schema for validation
+ * @param {Array} path - Current path in the data structure
+ * @param {Array} errors - Array to accumulate errors
+ */
+function addReadOnlyErrorIfChanged(data, original, schema, path, errors) {
+  if (schema.readOnly && !isEqual(data, original)) {
+    errors.push({
+      path,
+      message: 'This read-only field cannot be changed.'
+    })
+  }
+}
+
+/**
+ * Recursively checks read-only changes in object properties
+ * @param {Object} data - Current object data
+ * @param {Object} original - Original object data
+ * @param {Object} schema - JSON schema with object properties
+ * @param {Array} path - Current path in the data structure
+ * @param {Array} errors - Array to accumulate errors
+ */
+function checkObjectPropertiesReadOnly(data, original, schema, path, errors) {
+  for (const [key, subschema] of Object.entries(schema.properties)) {
+    const newVal = data ? data[key] : undefined
+    const oldVal = original ? original[key] : undefined
+    checkReadOnlyChanges(newVal, oldVal, subschema, [...path, key], errors)
+  }
+}
+
+/**
+ * Recursively checks read-only changes in array items
+ * @param {Array} data - Current array data
+ * @param {*} original - Original data (may or may not be an array)
+ * @param {Object} schema - JSON schema with array items definition
+ * @param {Array} path - Current path in the data structure
+ * @param {Array} errors - Array to accumulate errors
+ */
+function checkArrayItemsReadOnly(data, original, schema, path, errors) {
+  data.forEach((item, i) => {
+    const oldItem = Array.isArray(original) ? original[i] : undefined
+    checkReadOnlyChanges(item, oldItem, schema.items, [...path, i], errors)
+  })
 }
 
 /**
@@ -98,26 +186,15 @@ export function checkReadOnlyChanges(
     return errors
   }
 
-  if (schema.readOnly && !isEqual(data, original)) {
-    errors.push({
-      path,
-      message: 'This read-only field cannot be changed.'
-    })
-  }
+  addReadOnlyErrorIfChanged(data, original, schema, path, errors)
 
   if (schema.type === 'object' && schema.properties) {
-    for (const [key, subschema] of Object.entries(schema.properties)) {
-      const newVal = data ? data[key] : undefined
-      const oldVal = original ? original[key] : undefined
-      checkReadOnlyChanges(newVal, oldVal, subschema, [...path, key], errors)
-    }
+    checkObjectPropertiesReadOnly(data, original, schema, path, errors)
+    return errors
   }
 
   if (schema.type === 'array' && Array.isArray(data) && schema.items) {
-    data.forEach((item, i) => {
-      const oldItem = Array.isArray(original) ? original[i] : undefined
-      checkReadOnlyChanges(item, oldItem, schema.items, [...path, i], errors)
-    })
+    checkArrayItemsReadOnly(data, original, schema, path, errors)
   }
 
   return errors

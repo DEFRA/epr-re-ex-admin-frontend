@@ -288,6 +288,18 @@ describe('JSONEditor Helpers', () => {
       // Should skip the object type check and continue to field/value check
       expect(isNodeEditable(node, weirdSchema)).toBe(true)
     })
+
+    it('should return true for fields with not constraint that has other properties', () => {
+      // Test case where "not" exists but doesn't have const or type
+      const schemaWithOtherNot = {
+        type: 'object',
+        properties: {
+          otherNot: { type: 'string', not: { enum: ['foo', 'bar'] } }
+        }
+      }
+      const node = { path: ['otherNot'], type: 'string' }
+      expect(isNodeEditable(node, schemaWithOtherNot)).toBe(true)
+    })
   })
 
   describe('checkReadOnlyChanges', () => {
