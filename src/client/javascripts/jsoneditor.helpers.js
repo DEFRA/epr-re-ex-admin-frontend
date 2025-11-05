@@ -9,7 +9,9 @@ import 'jsoneditor/dist/jsoneditor.css'
  * @returns {Object|null} The schema node at the path, or null if not found
  */
 export function findSchemaNode(schema, path) {
-  if (!schema || !Array.isArray(path)) return null
+  if (!schema || !Array.isArray(path)) {
+    return null
+  }
 
   let node = schema
   for (const segment of path) {
@@ -31,7 +33,9 @@ export function findSchemaNode(schema, path) {
  * @returns {*} The value at the path, or undefined if not found
  */
 export function getValueAtPath(obj, path) {
-  if (!obj || !Array.isArray(path)) return undefined
+  if (!obj || !Array.isArray(path)) {
+    return undefined
+  }
   return path.reduce((acc, key) => acc?.[key] || undefined, obj)
 }
 
@@ -43,30 +47,27 @@ export function getValueAtPath(obj, path) {
  */
 export function isNodeEditable(node, rootSchema) {
   // skip root/meta nodes
-  if (!node || !Array.isArray(node.path)) return true
+  if (!node || !Array.isArray(node.path)) {
+    return true
+  }
 
   const subschema = findSchemaNode(rootSchema, node.path)
 
-  if (subschema === null) return false
+  if (subschema === null) {
+    return false
+  }
 
   // 1️⃣ Read-only fields: completely locked
   // Check if schema indicates read-only through various patterns
   if (subschema && typeof subschema === 'object') {
     // explicit readOnly flag
-    if (subschema.readOnly) {
-      return false
-    }
-
-    // common "not" pattern meaning "this field must not be changed"
-    if (subschema.not && Object.keys(subschema.not).length === 0) {
-      return false
-    }
-
-    if (subschema.not?.const !== undefined) {
-      return false
-    }
-
-    if (subschema.not?.type) {
+    if (
+      subschema.readOnly ||
+      // common "not" pattern meaning "this field must not be changed"
+      (subschema.not && Object.keys(subschema.not).length === 0) ||
+      subschema.not?.const !== undefined ||
+      subschema.not?.type
+    ) {
       return false
     }
   }
@@ -96,7 +97,9 @@ export function checkReadOnlyChanges(
   path = [],
   errors = []
 ) {
-  if (!schema || typeof schema !== 'object') return errors
+  if (!schema || typeof schema !== 'object') {
+    return errors
+  }
 
   if (schema.readOnly) {
     const changed = !isEqual(data, original)
