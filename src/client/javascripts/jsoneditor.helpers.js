@@ -52,24 +52,21 @@ export function isNodeEditable(node, rootSchema) {
   }
 
   const subschema = findSchemaNode(rootSchema, node.path)
-
-  if (subschema === null) {
+  if (!subschema) {
     return false
   }
 
   // 1️⃣ Read-only fields: completely locked
   // Check if schema indicates read-only through various patterns
-  if (subschema && typeof subschema === 'object') {
-    // explicit readOnly flag
-    if (
-      subschema.readOnly ||
+  if (
+    typeof subschema === 'object' &&
+    (subschema.readOnly ||
       // common "not" pattern meaning "this field must not be changed"
       (subschema.not && Object.keys(subschema.not).length === 0) ||
       subschema.not?.const !== undefined ||
-      subschema.not?.type
-    ) {
-      return false
-    }
+      subschema.not?.type)
+  ) {
+    return false
   }
 
   // 2️⃣ Object keys: lock key names but allow editing of values
@@ -101,14 +98,11 @@ export function checkReadOnlyChanges(
     return errors
   }
 
-  if (schema.readOnly) {
-    const changed = !isEqual(data, original)
-    if (changed) {
-      errors.push({
-        path,
-        message: 'This read-only field cannot be changed.'
-      })
-    }
+  if (schema.readOnly && !isEqual(data, original)) {
+    errors.push({
+      path,
+      message: 'This read-only field cannot be changed.'
+    })
   }
 
   if (schema.type === 'object' && schema.properties) {
@@ -117,7 +111,9 @@ export function checkReadOnlyChanges(
       const oldVal = original ? original[key] : undefined
       checkReadOnlyChanges(newVal, oldVal, subschema, [...path, key], errors)
     }
-  } else if (schema.type === 'array' && Array.isArray(data) && schema.items) {
+  }
+
+  if (schema.type === 'array' && Array.isArray(data) && schema.items) {
     data.forEach((item, i) => {
       const oldItem = Array.isArray(original) ? original[i] : undefined
       checkReadOnlyChanges(item, oldItem, schema.items, [...path, i], errors)
@@ -170,7 +166,10 @@ export function highlightChanges(editor, current, original, path = []) {
         [...path, i]
       )
     }
-  } else if (
+    return
+  }
+
+  if (
     typeof current === 'object' &&
     current !== null &&
     typeof original === 'object' &&
