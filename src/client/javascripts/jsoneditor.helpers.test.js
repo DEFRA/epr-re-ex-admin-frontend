@@ -58,6 +58,17 @@ Object.defineProperty(globalThis, 'window', {
   writable: true
 })
 
+// Also add localStorage and confirm directly to globalThis
+Object.defineProperty(globalThis, 'localStorage', {
+  value: localStorageMock,
+  writable: true
+})
+
+Object.defineProperty(globalThis, 'confirm', {
+  value: vi.fn(),
+  writable: true
+})
+
 // Mock document for Node.js environment
 Object.defineProperty(globalThis, 'document', {
   value: {
@@ -1007,8 +1018,8 @@ describe('JSONEditor Helpers', () => {
       })
 
       // Mock window.confirm
-      originalConfirm = window.confirm
-      window.confirm = vi.fn()
+      originalConfirm = globalThis.confirm
+      globalThis.confirm = vi.fn()
 
       // Mock console
       originalConsoleInfo = console.info
@@ -1026,7 +1037,7 @@ describe('JSONEditor Helpers', () => {
 
     afterEach(() => {
       document.getElementById = originalGetElementById
-      window.confirm = originalConfirm
+      globalThis.confirm = originalConfirm
       console.info = originalConsoleInfo
       console.error = originalConsoleError
     })
@@ -1230,7 +1241,7 @@ describe('JSONEditor Helpers', () => {
         storageKey: 'test-storage-key'
       })
 
-      window.confirm.mockReturnValue(true)
+      globalThis.confirm.mockReturnValue(true)
 
       const clickHandler = resetButtonListeners.find((l) => l.event === 'click')
       expect(clickHandler).toBeDefined()
@@ -1238,7 +1249,7 @@ describe('JSONEditor Helpers', () => {
       mockSet.mockClear()
       clickHandler.handler()
 
-      expect(window.confirm).toHaveBeenCalledWith(
+      expect(globalThis.confirm).toHaveBeenCalledWith(
         'Are you sure you want to reset all changes?'
       )
       expect(localStorageMock.removeItem).toHaveBeenCalled()
@@ -1252,7 +1263,7 @@ describe('JSONEditor Helpers', () => {
         storageKey: 'test-storage-key'
       })
 
-      window.confirm.mockReturnValue(false)
+      globalThis.confirm.mockReturnValue(false)
 
       const clickHandler = resetButtonListeners.find((l) => l.event === 'click')
       expect(clickHandler).toBeDefined()
@@ -1261,7 +1272,7 @@ describe('JSONEditor Helpers', () => {
       localStorageMock.removeItem.mockClear()
       clickHandler.handler()
 
-      expect(window.confirm).toHaveBeenCalledWith(
+      expect(globalThis.confirm).toHaveBeenCalledWith(
         'Are you sure you want to reset all changes?'
       )
       expect(localStorageMock.removeItem).not.toHaveBeenCalled()

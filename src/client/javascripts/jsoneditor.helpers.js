@@ -160,10 +160,10 @@ function checkObjectPropertiesReadOnly(data, original, schema, path, errors) {
  * @param {Array} errors - Array to accumulate errors
  */
 function checkArrayItemsReadOnly(data, original, schema, path, errors) {
-  data.forEach((item, i) => {
+  for (const [i, item] of data.entries()) {
     const oldItem = Array.isArray(original) ? original[i] : undefined
     checkReadOnlyChanges(item, oldItem, schema.items, [...path, i], errors)
-  })
+  }
 }
 
 /**
@@ -316,7 +316,7 @@ export class LocalStorageManager {
    */
   save(data) {
     try {
-      window.localStorage.setItem(this.storageKey, JSON.stringify(data))
+      globalThis.localStorage.setItem(this.storageKey, JSON.stringify(data))
       return true
     } catch (err) {
       console.warn('Failed to save to localStorage:', err)
@@ -330,7 +330,7 @@ export class LocalStorageManager {
    */
   load() {
     try {
-      const saved = window.localStorage.getItem(this.storageKey)
+      const saved = globalThis.localStorage.getItem(this.storageKey)
       if (saved) {
         return JSON.parse(saved)
       }
@@ -346,7 +346,7 @@ export class LocalStorageManager {
    */
   clear() {
     try {
-      window.localStorage.removeItem(this.storageKey)
+      globalThis.localStorage.removeItem(this.storageKey)
       return true
     } catch (err) {
       console.warn('Failed to clear localStorage draft:', err)
@@ -482,11 +482,10 @@ function createEditorConfig(
       getOptions: (_text, path) => getAutocompleteOptions(schema, path)
     },
     onCreateMenu: (items) => {
-      const excludedItems = ['Duplicate', 'duplicate']
+      const excludedItems = new Set(['Duplicate', 'duplicate'])
       return items.filter(
         (item) =>
-          !excludedItems.includes(item.text) &&
-          !excludedItems.includes(item.action)
+          !excludedItems.has(item.text) && !excludedItems.has(item.action)
       )
     },
     onEvent: (_node, event) => {
@@ -521,7 +520,7 @@ function setupResetButton(
 ) {
   const resetButton = document.getElementById(resetButtonId)
   resetButton.addEventListener('click', () => {
-    if (window.confirm('Are you sure you want to reset all changes?')) {
+    if (globalThis.confirm('Are you sure you want to reset all changes?')) {
       storageManager.clear()
       syncData(originalData)
     }
