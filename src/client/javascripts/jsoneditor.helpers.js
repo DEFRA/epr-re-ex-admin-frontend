@@ -190,7 +190,6 @@ export function checkReadOnlyChanges(
 
   if (schema.type === 'object' && schema.properties) {
     checkObjectPropertiesReadOnly(data, original, schema, path, errors)
-    return errors
   }
 
   if (schema.type === 'array' && Array.isArray(data) && schema.items) {
@@ -215,19 +214,6 @@ function findNodeDOMElement(node) {
 }
 
 /**
- * Toggles the 'jsoneditor-changed' class on an element based on changed state
- * @param {HTMLElement} element - The DOM element to update
- * @param {boolean} isChanged - Whether the element should be marked as changed
- */
-function toggleChangedClass(element, isChanged) {
-  if (isChanged) {
-    element.classList.add('jsoneditor-changed')
-  } else {
-    element.classList.remove('jsoneditor-changed')
-  }
-}
-
-/**
  * Highlights a single node in the editor tree
  * @param {JSONEditor} editor - The JSONEditor instance
  * @param {boolean} changed - Whether the data has changed
@@ -241,7 +227,11 @@ function highlightNode(editor, changed, path) {
 
   const element = findNodeDOMElement(node)
   if (element) {
-    toggleChangedClass(element, changed)
+    if (changed) {
+      element.classList.add('jsoneditor-changed')
+    } else {
+      element.classList.remove('jsoneditor-changed')
+    }
   }
 }
 
@@ -432,6 +422,18 @@ export function validateJSON(json, originalData, schema, validate) {
 }
 
 /**
+ * Syncs data to a hidden input element
+ * @param {string} hiddenInputId - The ID of the hidden input element
+ * @param {*} data - The data to sync
+ */
+function syncHiddenInput(hiddenInputId, data) {
+  const hiddenInput = document.getElementById(hiddenInputId)
+  if (hiddenInput) {
+    hiddenInput.value = JSON.stringify(data)
+  }
+}
+
+/**
  * Initialize the JSONEditor for organisation data
  * @param {Object} options - Configuration options
  * @param {Object} options.schema - The JSON schema for validation
@@ -475,32 +477,17 @@ export function initJSONEditor({
       console.info('[JSONEditor] Cleared draft from localStorage after save')
     }
 
-    // Load from localStorage if exists
     const savedData = storageManager.load()
     if (savedData) {
       console.info('[JSONEditor] Loaded draft from localStorage')
     }
 
-    // Get reference to hidden input for form submission
-    const hiddenInput = document.getElementById(hiddenInputId)
-
-    // Helper function to sync hidden input with editor data
-    const syncHiddenInput = (data) => {
-      if (hiddenInput) {
-        hiddenInput.value = JSON.stringify(data)
-      }
-    }
-
     const editor = new JSONEditor(container, {
       mode: 'tree',
       modes: ['text', 'tree', 'preview'],
-
-      // ✅ inline autocomplete based on schema enums
       autocomplete: {
         getOptions: (_text, path) => getAutocompleteOptions(schema, path)
       },
-
-      // 🧩 Remove "Duplicate" from context menu
       onCreateMenu: (items) => {
         const excludedItems = ['Duplicate', 'duplicate']
         return items.filter(
@@ -513,7 +500,7 @@ export function initJSONEditor({
         if (event.type === 'blur' || event.type === 'change') {
           const currentData = editor.get()
           storageManager.save(currentData)
-          syncHiddenInput(currentData)
+          syncHiddenInput(hiddenInputId, currentData)
           highlightChanges(editor, currentData, originalData)
         }
       },
@@ -522,20 +509,16 @@ export function initJSONEditor({
       },
       onChangeJSON: (updatedJSON) => {
         storageManager.save(updatedJSON)
-        syncHiddenInput(updatedJSON)
+        syncHiddenInput(hiddenInputId, updatedJSON)
         highlightChanges(editor, updatedJSON, originalData)
       },
       onEditable: (node) => isNodeEditable(node, schema),
       onValidate: (json) => validateJSON(json, originalData, schema, validate)
     })
 
-    // 🆕 Set editor data: prefer saved draft > original
+    // Load data
     editor.set(savedData || originalData)
-
-    // 🆕 Sync hidden input with initial data
-    syncHiddenInput(savedData || originalData)
-
-    // 🆕 Immediately highlight changes if draft differs
+    syncHiddenInput(hiddenInputId, savedData || originalData)
     highlightChanges(editor, savedData || originalData, originalData)
 
     const resetButton = document.getElementById(resetButtonId)
@@ -545,7 +528,7 @@ export function initJSONEditor({
           // Clear localStorage and reset
           storageManager.clear()
           editor.set(originalData)
-          syncHiddenInput(originalData)
+          syncHiddenInput(hiddenInputId, originalData)
           highlightChanges(editor, originalData, originalData)
         }
       })
