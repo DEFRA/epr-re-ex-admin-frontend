@@ -71,7 +71,7 @@ export default {
           // redirectWithRefresh (from CDP example)
           return h
             .response(
-              `<html><head><meta http-equiv="refresh" content="0;URL='${escape('/')}'"></head><body></body></html>`
+              `<html><head><meta http-equiv="refresh" content="0;URL='${escape('/protected')}'"></head><body></body></html>`
             )
             .takeover()
         }
@@ -118,7 +118,7 @@ export default {
           // redirectWithRefresh (from CDP example)
           return h
             .response(
-              `<html><head><meta http-equiv="refresh" content="0;URL='${escape('/')}'"></head><body></body></html>`
+              `<html><head><meta http-equiv="refresh" content="0;URL='${escape('/protected')}'"></head><body></body></html>`
             )
             .takeover()
         }
@@ -166,8 +166,8 @@ export default {
 
 async function aadBellOptions() {
   const {
-    authorization_endpoint: aadAuthEndpoint,
-    token_endpoint: aadTokenEndpoint
+    authorization_endpoint: authEndpoint,
+    token_endpoint: tokenEndpoint
   } = await fetchWellknown(config.get('oidc.azureAD.wellKnownUrl'))
 
   return {
@@ -183,8 +183,8 @@ async function aadBellOptions() {
       name: 'azure-oidc',
       protocol: 'oauth2',
       useParamsAuth: true,
-      auth: aadAuthEndpoint,
-      token: aadTokenEndpoint,
+      auth: authEndpoint,
+      token: tokenEndpoint,
       scope: [
         'openid',
         'profile',
@@ -225,8 +225,8 @@ async function aadBellOptions() {
 
 async function defraIdBellOptions() {
   const {
-    authorization_endpoint: aadAuthEndpoint,
-    token_endpoint: aadTokenEndpoint
+    authorization_endpoint: authEndpoint,
+    token_endpoint: tokenEndpoint
   } = await fetchWellknown(config.get('oidc.defraId.wellKnownUrl'))
 
   return {
@@ -234,8 +234,8 @@ async function defraIdBellOptions() {
       name: 'defra-id',
       protocol: 'oauth2',
       useParamsAuth: true,
-      auth: aadAuthEndpoint,
-      token: aadTokenEndpoint,
+      auth: authEndpoint,
+      token: tokenEndpoint,
       scope: ['openid', 'offline_access', config.get('oidc.defraId.clientId')],
       profile: function (credentials, _params, _get) {
         const decodedPayload = jwt.token.decode(credentials.token).decoded
