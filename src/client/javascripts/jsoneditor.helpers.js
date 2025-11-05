@@ -482,6 +482,13 @@ export function initJSONEditor({
       console.info('[JSONEditor] Loaded draft from localStorage')
     }
 
+    const syncData = (json) => {
+      editor.set(json)
+      storageManager.save(json)
+      syncHiddenInput(hiddenInputId, json)
+      highlightChanges(editor, json, originalData)
+    }
+
     const editor = new JSONEditor(container, {
       mode: 'tree',
       modes: ['text', 'tree', 'preview'],
@@ -499,27 +506,21 @@ export function initJSONEditor({
       onEvent: (_node, event) => {
         if (event.type === 'blur' || event.type === 'change') {
           const currentData = editor.get()
-          storageManager.save(currentData)
-          syncHiddenInput(hiddenInputId, currentData)
-          highlightChanges(editor, currentData, originalData)
+          syncData(currentData)
         }
       },
       onExpand: () => {
         highlightChanges(editor, editor.get(), originalData)
       },
       onChangeJSON: (updatedJSON) => {
-        storageManager.save(updatedJSON)
-        syncHiddenInput(hiddenInputId, updatedJSON)
-        highlightChanges(editor, updatedJSON, originalData)
+        syncData(updatedJSON)
       },
       onEditable: (node) => isNodeEditable(node, schema),
       onValidate: (json) => validateJSON(json, originalData, schema, validate)
     })
 
     // Load data
-    editor.set(savedData || originalData)
-    syncHiddenInput(hiddenInputId, savedData || originalData)
-    highlightChanges(editor, savedData || originalData, originalData)
+    syncData(savedData || originalData)
 
     const resetButton = document.getElementById(resetButtonId)
     if (resetButton) {
@@ -527,9 +528,7 @@ export function initJSONEditor({
         if (window.confirm('Are you sure you want to reset all changes?')) {
           // Clear localStorage and reset
           storageManager.clear()
-          editor.set(originalData)
-          syncHiddenInput(hiddenInputId, originalData)
-          highlightChanges(editor, originalData, originalData)
+          syncData(originalData)
         }
       })
     }
