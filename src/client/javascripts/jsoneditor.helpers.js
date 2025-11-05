@@ -434,6 +434,101 @@ function syncHiddenInput(hiddenInputId, data) {
 }
 
 /**
+ * Loads original data from the payload element
+ * @param {string} payloadElementId - The ID of the payload element
+ * @returns {Object|null} Parsed original data or null if not found
+ */
+function loadOriginalData(payloadElementId) {
+  const payloadEl = document.getElementById(payloadElementId)
+  if (!payloadEl) {
+    console.error('Payload element not found')
+    return null
+  }
+  return JSON.parse(payloadEl.textContent)
+}
+
+/**
+ * Clears localStorage if success message is present
+ * @param {string} successMessageId - The ID of the success message element
+ * @param {LocalStorageManager} storageManager - Storage manager instance
+ */
+function clearStorageIfSuccessful(successMessageId, storageManager) {
+  const messageEl = document.getElementById(successMessageId)
+  if (messageEl && storageManager.clear()) {
+    console.info('[JSONEditor] Cleared draft from localStorage after save')
+  }
+}
+
+/**
+ * Creates JSONEditor configuration options
+ * @param {Object} schema - JSON schema
+ * @param {Function} validate - AJV validation function
+ * @param {Object} originalData - Original data for comparison
+ * @param {Function} syncData - Function to sync editor data
+ * @param {Function} getEditor - Function to get the editor instance
+ * @returns {Object} JSONEditor configuration object
+ */
+function createEditorConfig(
+  schema,
+  validate,
+  originalData,
+  syncData,
+  getEditor
+) {
+  return {
+    mode: 'tree',
+    modes: ['text', 'tree', 'preview'],
+    autocomplete: {
+      getOptions: (_text, path) => getAutocompleteOptions(schema, path)
+    },
+    onCreateMenu: (items) => {
+      const excludedItems = ['Duplicate', 'duplicate']
+      return items.filter(
+        (item) =>
+          !excludedItems.includes(item.text) &&
+          !excludedItems.includes(item.action)
+      )
+    },
+    onEvent: (_node, event) => {
+      if (event.type === 'blur' || event.type === 'change') {
+        syncData()
+      }
+    },
+    onExpand: () => {
+      const editor = getEditor()
+      highlightChanges(editor, editor.get(), originalData)
+    },
+    onChangeJSON: (updatedJSON) => {
+      syncData(updatedJSON)
+    },
+    onEditable: (node) => isNodeEditable(node, schema),
+    onValidate: (json) => validateJSON(json, originalData, schema, validate)
+  }
+}
+
+/**
+ * Sets up the reset button functionality
+ * @param {string} resetButtonId - ID of the reset button
+ * @param {LocalStorageManager} storageManager - Storage manager instance
+ * @param {Function} syncData - Function to sync editor data
+ * @param {Object} originalData - Original data to reset to
+ */
+function setupResetButton(
+  resetButtonId,
+  storageManager,
+  syncData,
+  originalData
+) {
+  const resetButton = document.getElementById(resetButtonId)
+  resetButton.addEventListener('click', () => {
+    if (window.confirm('Are you sure you want to reset all changes?')) {
+      storageManager.clear()
+      syncData(originalData)
+    }
+  })
+}
+
+/**
  * Initialize the JSONEditor for organisation data
  * @param {Object} options - Configuration options
  * @param {Object} options.schema - The JSON schema for validation
@@ -462,76 +557,39 @@ export function initJSONEditor({
 
   try {
     const storageManager = new LocalStorageManager(storageKey)
-
-    const payloadEl = document.getElementById(payloadElementId)
-    if (!payloadEl) {
-      console.error('Payload element not found')
+    const originalData = loadOriginalData(payloadElementId)
+    if (!originalData) {
       return
     }
 
-    const originalData = JSON.parse(payloadEl.textContent)
-
-    // Clear local storage if success message present
-    const messageEl = document.getElementById(successMessageId)
-    if (messageEl && storageManager.clear()) {
-      console.info('[JSONEditor] Cleared draft from localStorage after save')
-    }
+    clearStorageIfSuccessful(successMessageId, storageManager)
 
     const savedData = storageManager.load()
     if (savedData) {
       console.info('[JSONEditor] Loaded draft from localStorage')
     }
 
+    const editorRef = { current: null }
+    const getEditor = () => editorRef.current
     const syncData = (json) => {
-      editor.set(json)
-      storageManager.save(json)
-      syncHiddenInput(hiddenInputId, json)
-      highlightChanges(editor, json, originalData)
+      const dataToSync = json || editorRef.current.get()
+      editorRef.current.set(dataToSync)
+      storageManager.save(dataToSync)
+      syncHiddenInput(hiddenInputId, dataToSync)
+      highlightChanges(editorRef.current, dataToSync, originalData)
     }
 
-    const editor = new JSONEditor(container, {
-      mode: 'tree',
-      modes: ['text', 'tree', 'preview'],
-      autocomplete: {
-        getOptions: (_text, path) => getAutocompleteOptions(schema, path)
-      },
-      onCreateMenu: (items) => {
-        const excludedItems = ['Duplicate', 'duplicate']
-        return items.filter(
-          (item) =>
-            !excludedItems.includes(item.text) &&
-            !excludedItems.includes(item.action)
-        )
-      },
-      onEvent: (_node, event) => {
-        if (event.type === 'blur' || event.type === 'change') {
-          const currentData = editor.get()
-          syncData(currentData)
-        }
-      },
-      onExpand: () => {
-        highlightChanges(editor, editor.get(), originalData)
-      },
-      onChangeJSON: (updatedJSON) => {
-        syncData(updatedJSON)
-      },
-      onEditable: (node) => isNodeEditable(node, schema),
-      onValidate: (json) => validateJSON(json, originalData, schema, validate)
-    })
+    const config = createEditorConfig(
+      schema,
+      validate,
+      originalData,
+      syncData,
+      getEditor
+    )
+    editorRef.current = new JSONEditor(container, config)
 
-    // Load data
     syncData(savedData || originalData)
-
-    const resetButton = document.getElementById(resetButtonId)
-    if (resetButton) {
-      resetButton.addEventListener('click', () => {
-        if (window.confirm('Are you sure you want to reset all changes?')) {
-          // Clear localStorage and reset
-          storageManager.clear()
-          syncData(originalData)
-        }
-      })
-    }
+    setupResetButton(resetButtonId, storageManager, syncData, originalData)
   } catch (err) {
     console.error('Failed to initialise JSONEditor:', err)
   }
