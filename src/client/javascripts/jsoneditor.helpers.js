@@ -13,7 +13,7 @@ export function findSchemaNode(schema, path) {
 
   let node = schema
   for (const segment of path) {
-    if (node.type === 'object' && node.properties && node.properties[segment]) {
+    if (node.type === 'object' && node.properties?.[segment]) {
       node = node.properties[segment]
     } else if (node.type === 'array' && node.items) {
       node = node.items
@@ -32,10 +32,7 @@ export function findSchemaNode(schema, path) {
  */
 export function getValueAtPath(obj, path) {
   if (!obj || !Array.isArray(path)) return undefined
-  return path.reduce(
-    (acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined),
-    obj
-  )
+  return path.reduce((acc, key) => acc?.[key] || undefined, obj)
 }
 
 /**
@@ -56,11 +53,22 @@ export function isNodeEditable(node, rootSchema) {
   // Check if schema indicates read-only through various patterns
   if (subschema && typeof subschema === 'object') {
     // explicit readOnly flag
-    if (subschema.readOnly) return false
+    if (subschema.readOnly) {
+      return false
+    }
+
     // common "not" pattern meaning "this field must not be changed"
-    if (subschema.not && Object.keys(subschema.not).length === 0) return false
-    if (subschema.not && subschema.not.const !== undefined) return false
-    if (subschema.not && subschema.not.type) return false
+    if (subschema.not && Object.keys(subschema.not).length === 0) {
+      return false
+    }
+
+    if (subschema.not?.const !== undefined) {
+      return false
+    }
+
+    if (subschema.not?.type) {
+      return false
+    }
   }
 
   // 2️⃣ Object keys: lock key names but allow editing of values
@@ -333,15 +341,10 @@ export function initJSONEditor({
 
     const originalData = JSON.parse(payloadEl.textContent)
 
-    // Get reference to hidden input for form submission
-    const hiddenInput = document.getElementById(hiddenInputId)
-
     // Clear local storage if success message present
     const messageEl = document.getElementById(successMessageId)
-    if (messageEl) {
-      if (storageManager.clear()) {
-        console.info('[JSONEditor] Cleared draft from localStorage after save')
-      }
+    if (messageEl && storageManager.clear()) {
+      console.info('[JSONEditor] Cleared draft from localStorage after save')
     }
 
     // Load from localStorage if exists
@@ -349,6 +352,9 @@ export function initJSONEditor({
     if (savedData) {
       console.info('[JSONEditor] Loaded draft from localStorage')
     }
+
+    // Get reference to hidden input for form submission
+    const hiddenInput = document.getElementById(hiddenInputId)
 
     // Helper function to sync hidden input with editor data
     const syncHiddenInput = (data) => {
@@ -363,7 +369,7 @@ export function initJSONEditor({
 
       // ✅ inline autocomplete based on schema enums
       autocomplete: {
-        getOptions: (text, path) => getAutocompleteOptions(schema, path)
+        getOptions: (_text, path) => getAutocompleteOptions(schema, path)
       },
 
       // 🧩 Remove "Duplicate" from context menu
@@ -375,7 +381,7 @@ export function initJSONEditor({
             !excludedItems.includes(item.action)
         )
       },
-      onEvent: (node, event) => {
+      onEvent: (_node, event) => {
         if (event.type === 'blur' || event.type === 'change') {
           const currentData = editor.get()
           storageManager.save(currentData)
@@ -391,12 +397,8 @@ export function initJSONEditor({
         syncHiddenInput(updatedJSON)
         highlightChanges(editor, updatedJSON, originalData)
       },
-      onEditable: (node) => {
-        return isNodeEditable(node, schema)
-      },
-      onValidate: (json) => {
-        return validateJSON(json, originalData, schema, validate)
-      }
+      onEditable: (node) => isNodeEditable(node, schema),
+      onValidate: (json) => validateJSON(json, originalData, schema, validate)
     })
 
     // 🆕 Set editor data: prefer saved draft > original
