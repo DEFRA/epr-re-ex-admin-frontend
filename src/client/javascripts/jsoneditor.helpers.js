@@ -124,6 +124,88 @@ export function checkReadOnlyChanges(
 }
 
 /**
+ * Finds the DOM element for a node in the JSONEditor tree
+ * @param {Object} node - The JSONEditor node
+ * @returns {HTMLElement|null} The DOM element or null if not found
+ */
+function findNodeDOMElement(node) {
+  return (
+    node.dom?.value ||
+    node.dom?.field ||
+    node.dom?.tr?.querySelector('.jsoneditor-value') ||
+    node.dom?.tr?.querySelector('.jsoneditor-field')
+  )
+}
+
+/**
+ * Toggles the 'jsoneditor-changed' class on an element based on changed state
+ * @param {HTMLElement} element - The DOM element to update
+ * @param {boolean} isChanged - Whether the element should be marked as changed
+ */
+function toggleChangedClass(element, isChanged) {
+  if (isChanged) {
+    element.classList.add('jsoneditor-changed')
+  } else {
+    element.classList.remove('jsoneditor-changed')
+  }
+}
+
+/**
+ * Highlights a single node in the editor tree
+ * @param {JSONEditor} editor - The JSONEditor instance
+ * @param {boolean} changed - Whether the data has changed
+ * @param {Array} path - Current path in the data structure
+ */
+function highlightNode(editor, changed, path) {
+  const node = editor.node?.findNodeByPath?.(path)
+  if (!node) {
+    return
+  }
+
+  const element = findNodeDOMElement(node)
+  if (element) {
+    toggleChangedClass(element, changed)
+  }
+}
+
+/**
+ * Recursively highlights changes in array elements
+ * @param {JSONEditor} editor - The JSONEditor instance
+ * @param {*} current - Current array data
+ * @param {*} original - Original array data
+ * @param {Array} path - Current path in the data structure
+ */
+function highlightArrayChanges(editor, current, original, path) {
+  const maxLength = Math.max(
+    Array.isArray(current) ? current.length : 0,
+    Array.isArray(original) ? original.length : 0
+  )
+
+  for (let i = 0; i < maxLength; i++) {
+    highlightChanges(
+      editor,
+      current ? current[i] : undefined,
+      original ? original[i] : undefined,
+      [...path, i]
+    )
+  }
+}
+
+/**
+ * Recursively highlights changes in object properties
+ * @param {JSONEditor} editor - The JSONEditor instance
+ * @param {Object} current - Current object data
+ * @param {Object} original - Original object data
+ * @param {Array} path - Current path in the data structure
+ */
+function highlightObjectChanges(editor, current, original, path) {
+  const keys = new Set([...Object.keys(current), ...Object.keys(original)])
+  for (const key of keys) {
+    highlightChanges(editor, current?.[key], original?.[key], [...path, key])
+  }
+}
+
+/**
  * Highlights changed fields in the JSONEditor by comparing current and original data
  * @param {JSONEditor} editor - The JSONEditor instance
  * @param {*} current - Current data state
@@ -133,55 +215,22 @@ export function checkReadOnlyChanges(
 export function highlightChanges(editor, current, original, path = []) {
   const changed = !isEqual(current, original)
 
-  // Try to find the node in the editor's tree
-  const node = editor.node?.findNodeByPath?.(path)
-  if (node) {
-    const el =
-      node.dom?.value ||
-      node.dom?.field ||
-      node.dom?.tr?.querySelector('.jsoneditor-value') ||
-      node.dom?.tr?.querySelector('.jsoneditor-field')
+  highlightNode(editor, changed, path)
 
-    if (el) {
-      if (changed) {
-        el.classList.add('jsoneditor-changed')
-      } else {
-        el.classList.remove('jsoneditor-changed')
-      }
-    }
-  }
-
-  // Recurse into children
+  // Handle arrays
   if (Array.isArray(current) || Array.isArray(original)) {
-    // handle arrays specially — highlight removals/additions
-    const maxLength = Math.max(
-      Array.isArray(current) ? current.length : 0,
-      Array.isArray(original) ? original.length : 0
-    )
-    for (let i = 0; i < maxLength; i++) {
-      highlightChanges(
-        editor,
-        current ? current[i] : undefined,
-        original ? original[i] : undefined,
-        [...path, i]
-      )
-    }
+    highlightArrayChanges(editor, current, original, path)
     return
   }
 
+  // Handle objects
   if (
     typeof current === 'object' &&
     current !== null &&
     typeof original === 'object' &&
     original !== null
   ) {
-    // objects: merge keys from both sides
-    // Since we've already checked current and original are not null,
-    // no need for || {} fallbacks
-    const keys = new Set([...Object.keys(current), ...Object.keys(original)])
-    for (const key of keys) {
-      highlightChanges(editor, current?.[key], original?.[key], [...path, key])
-    }
+    highlightObjectChanges(editor, current, original, path)
   }
 }
 
