@@ -62,7 +62,7 @@ export default {
     rules: [
       {
         test: /\.ajv\.js$/,
-        type: 'javascript/auto' // 👈 Treat as CommonJS
+        type: 'javascript/auto' // Treat as CommonJS
       },
       {
         test: /\.(js|mjs|scss)$/,
