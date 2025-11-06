@@ -460,74 +460,6 @@ function clearStorageIfSuccessful(successMessageId, storageManager) {
 }
 
 /**
- * Creates JSONEditor configuration options
- * @param {Object} schema - JSON schema
- * @param {Function} validate - AJV validation function
- * @param {Object} originalData - Original data for comparison
- * @param {Function} syncData - Function to sync editor data
- * @param {Function} getEditor - Function to get the editor instance
- * @returns {Object} JSONEditor configuration object
- */
-function createEditorConfig(
-  schema,
-  validate,
-  originalData,
-  syncData,
-  getEditor
-) {
-  return {
-    mode: 'tree',
-    modes: ['text', 'tree', 'preview'],
-    autocomplete: {
-      getOptions: (_text, path) => getAutocompleteOptions(schema, path)
-    },
-    onCreateMenu: (items) => {
-      const excludedItems = new Set(['Duplicate', 'duplicate'])
-      return items.filter(
-        (item) =>
-          !excludedItems.has(item.text) && !excludedItems.has(item.action)
-      )
-    },
-    onEvent: (_node, event) => {
-      if (event.type === 'blur' || event.type === 'change') {
-        syncData()
-      }
-    },
-    onExpand: () => {
-      const editor = getEditor()
-      highlightChanges(editor, editor.get(), originalData)
-    },
-    onChangeJSON: (updatedJSON) => {
-      syncData(updatedJSON)
-    },
-    onEditable: (node) => isNodeEditable(node, schema),
-    onValidate: (json) => validateJSON(json, originalData, schema, validate)
-  }
-}
-
-/**
- * Sets up the reset button functionality
- * @param {string} resetButtonId - ID of the reset button
- * @param {LocalStorageManager} storageManager - Storage manager instance
- * @param {Function} syncData - Function to sync editor data
- * @param {Object} originalData - Original data to reset to
- */
-function setupResetButton(
-  resetButtonId,
-  storageManager,
-  syncData,
-  originalData
-) {
-  const resetButton = document.getElementById(resetButtonId)
-  resetButton.addEventListener('click', () => {
-    if (globalThis.confirm('Are you sure you want to reset all changes?')) {
-      storageManager.clear()
-      syncData(originalData)
-    }
-  })
-}
-
-/**
  * Initialize the JSONEditor for organisation data
  * @param {Object} options - Configuration options
  * @param {Object} options.schema - The JSON schema for validation
@@ -568,27 +500,57 @@ export function initJSONEditor({
       console.info('[JSONEditor] Loaded draft from localStorage')
     }
 
-    const editorRef = { current: null }
-    const getEditor = () => editorRef.current
-    const syncData = (json) => {
-      const dataToSync = json || editorRef.current.get()
-      editorRef.current.set(dataToSync)
-      storageManager.save(dataToSync)
-      syncHiddenInput(hiddenInputId, dataToSync)
-      highlightChanges(editorRef.current, dataToSync, originalData)
+    const editor = new JSONEditor(container, {
+      mode: 'tree',
+      modes: ['text', 'tree', 'preview'],
+      autocomplete: {
+        getOptions: (_text, path) => getAutocompleteOptions(schema, path)
+      },
+      onCreateMenu: (items) => {
+        const excludedItems = ['Duplicate', 'duplicate']
+        return items.filter(
+          (item) =>
+            !excludedItems.includes(item.text) &&
+            !excludedItems.includes(item.action)
+        )
+      },
+      onEvent: (_node, event) => {
+        if (event.type === 'blur' || event.type === 'change') {
+          const currentData = editor.get()
+          storageManager.save(currentData)
+          syncHiddenInput(hiddenInputId, currentData)
+          highlightChanges(editor, currentData, originalData)
+        }
+      },
+      onExpand: () => {
+        highlightChanges(editor, editor.get(), originalData)
+      },
+      onChangeJSON: (updatedJSON) => {
+        storageManager.save(updatedJSON)
+        syncHiddenInput(hiddenInputId, updatedJSON)
+        highlightChanges(editor, updatedJSON, originalData)
+      },
+      onEditable: (node) => isNodeEditable(node, schema),
+      onValidate: (json) => validateJSON(json, originalData, schema, validate)
+    })
+
+    // Load data
+    editor.set(savedData || originalData)
+    syncHiddenInput(hiddenInputId, savedData || originalData)
+    highlightChanges(editor, savedData || originalData, originalData)
+
+    const resetButton = document.getElementById(resetButtonId)
+    if (resetButton) {
+      resetButton.addEventListener('click', () => {
+        if (globalThis.confirm('Are you sure you want to reset all changes?')) {
+          // Clear localStorage and reset
+          storageManager.clear()
+          editor.set(originalData)
+          syncHiddenInput(hiddenInputId, originalData)
+          highlightChanges(editor, originalData, originalData)
+        }
+      })
     }
-
-    const config = createEditorConfig(
-      schema,
-      validate,
-      originalData,
-      syncData,
-      getEditor
-    )
-    editorRef.current = new JSONEditor(container, config)
-
-    syncData(savedData || originalData)
-    setupResetButton(resetButtonId, storageManager, syncData, originalData)
   } catch (err) {
     console.error('Failed to initialise JSONEditor:', err)
   }
