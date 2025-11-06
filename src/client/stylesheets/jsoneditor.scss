@@ -1,0 +1,14 @@
+.jsoneditor {
+  border: thin solid #1d70b8;
+  margin-bottom: 20px;
+
+  .jsoneditor-menu {
+    background-color: #1d70b8;
+  }
+
+  .jsoneditor-changed {
+    background-color: rgba(255, 220, 180, 0.4);
+    transition: background-color 0.3s ease;
+    border-radius: 4px;
+  }
+}

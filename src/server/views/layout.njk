@@ -10,7 +10,7 @@
 
 
 {% block head %}
-  <link href="{{ getAssetPath('stylesheets/application.scss') }}" rel="stylesheet">
+  <link href="{{ getAssetPath('stylesheets/application.css') }}" rel="stylesheet">
 {% endblock %}
 
 {% block header %}
@@ -31,11 +31,11 @@
 {% endblock %}
 
 {% block beforeContent %}
-  {% if breadcrumbs.length > 1 %}
+
     {{ govukBreadcrumbs({
       items: breadcrumbs
     }) }}
-  {% endif %}
+
 {% endblock %}
 
 {% block content %}{% endblock %}
@@ -62,5 +62,6 @@
 {% endblock %}
 
 {% block bodyEnd %}
-  <script type="module" src="{{ getAssetPath('application.js') }}"></script>
+  <script type="text/javascript" src="{{ getAssetPath('application.js') }}"></script>
+  {% block pageScripts %}{% endblock %}
 {% endblock %}

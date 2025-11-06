@@ -79,7 +79,7 @@ describe('organisation POST controller', () => {
         }
       }
 
-      const { statusCode, headers } = await server.inject({
+      const { result, statusCode } = await server.inject({
         method: 'POST',
         url: '/organisations/org-1',
         payload: {
@@ -91,9 +91,11 @@ describe('organisation POST controller', () => {
         }
       })
 
-      // Should redirect after successful update (302 Found)
-      expect(statusCode).toBe(302)
-      expect(headers.location).toBe('/organisations/org-1')
+      expect(statusCode).toBe(statusCodes.ok)
+
+      // Verify the page shows success message
+      expect(result).toEqual(expect.stringContaining('Organisation'))
+      expect(result).toEqual(expect.stringContaining('Updated Acme Ltd'))
 
       // Verify fetch was called with correct parameters
       expect(fetchMock).toHaveBeenCalledWith(

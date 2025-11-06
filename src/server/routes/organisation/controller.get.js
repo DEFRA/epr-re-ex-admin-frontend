@@ -14,8 +14,7 @@ export const organisationsGETController = {
     return h.view('routes/organisation/index', {
       pageTitle: 'Organisation',
       heading: 'Organisation',
-      organisationData: data,
-      organisationId: id,
+      organisationJson: JSON.stringify(data),
       breadcrumbs: [organisationsBreadcrumb]
     })
   }
