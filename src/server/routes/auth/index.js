@@ -176,6 +176,7 @@ async function defraIdBellOptions(oidcConfig) {
   // Azure AD B2C may include policy parameters like ?p=policy_name
   const authUrl = new URL(oidcConfig.authorization_endpoint)
   const authBaseUrl = authUrl.origin + authUrl.pathname
+  const authParams = Object.fromEntries(authUrl.searchParams)
 
   return {
     provider: {
@@ -208,8 +209,8 @@ async function defraIdBellOptions(oidcConfig) {
     },
     providerParams: function (request) {
       const params = {
+        ...authParams,
         serviceId: config.get('oidc.defraId.serviceId'),
-        p: config.get('oidc.defraId.policy'),
         response_mode: 'query'
       }
       return params

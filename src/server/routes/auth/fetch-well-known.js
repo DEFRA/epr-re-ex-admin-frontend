@@ -7,8 +7,7 @@ async function fetchWellKnown(endpoint) {
 }
 
 async function fetchDefraIdWellKnown() {
-  const url = `${config.get('oidc.defraId.wellKnownUrl')}?p=${config.get('oidc.defraId.policy')}`
-  return fetchWellKnown(url)
+  return fetchWellKnown(config.get('oidc.defraId.wellKnownUrl'))
 }
 
 async function fetchEntraIdWellKnown() {
