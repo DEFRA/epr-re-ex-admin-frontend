@@ -466,9 +466,69 @@ function clearStorageIfSuccessful(successMessageId, storageManager) {
  */
 function updateSaveButtonState(saveButtonId, errors) {
   const saveButton = document.getElementById(saveButtonId)
-  console.log(saveButton)
   if (saveButton) {
     saveButton.disabled = errors.length > 0
+  }
+}
+
+/**
+ * Creates the JSONEditor configuration object
+ * @param {Object} schema - The JSON schema
+ * @param {*} originalData - The original data
+ * @param {Function} validate - The AJV validation function
+ * @param {string} hiddenInputId - The ID of the hidden input element
+ * @param {string} saveButtonId - The ID of the save button
+ * @param {LocalStorageManager} storageManager - Storage manager instance
+ * @param {Function} getEditor - Function that returns the editor instance
+ * @returns {Object} JSONEditor configuration options
+ */
+function createEditorConfig(
+  schema,
+  originalData,
+  validate,
+  hiddenInputId,
+  saveButtonId,
+  storageManager,
+  getEditor
+) {
+  return {
+    mode: 'tree',
+    modes: ['text', 'tree', 'preview'],
+    autocomplete: {
+      getOptions: (_text, path) => getAutocompleteOptions(schema, path)
+    },
+    onCreateMenu: (items) => {
+      const excludedItems = new Set(['Duplicate', 'duplicate'])
+      return items.filter(
+        (item) =>
+          !excludedItems.has(item.text) && !excludedItems.has(item.action)
+      )
+    },
+    onEvent: (_node, event) => {
+      if (event.type === 'blur' || event.type === 'change') {
+        const editor = getEditor()
+        const currentData = editor.get()
+        storageManager.save(currentData)
+        syncHiddenInput(hiddenInputId, currentData)
+        highlightChanges(editor, currentData, originalData)
+      }
+    },
+    onExpand: () => {
+      const editor = getEditor()
+      highlightChanges(editor, editor.get(), originalData)
+    },
+    onChangeJSON: (updatedJSON) => {
+      const editor = getEditor()
+      storageManager.save(updatedJSON)
+      syncHiddenInput(hiddenInputId, updatedJSON)
+      highlightChanges(editor, updatedJSON, originalData)
+    },
+    onEditable: (node) => isNodeEditable(node, schema),
+    onValidate: (json) => {
+      const errors = validateJSON(json, originalData, schema, validate)
+      updateSaveButtonState(saveButtonId, errors)
+      return errors
+    }
   }
 }
 
@@ -488,7 +548,6 @@ function setupResetButton(
   hiddenInputId
 ) {
   const resetButton = document.getElementById(resetButtonId)
-
   resetButton.addEventListener('click', () => {
     if (globalThis.confirm('Are you sure you want to reset all changes?')) {
       storageManager.clear()
@@ -542,42 +601,18 @@ export function initJSONEditor({
       console.info('[JSONEditor] Loaded draft from localStorage')
     }
 
-    const editor = new JSONEditor(container, {
-      mode: 'tree',
-      modes: ['text', 'tree', 'preview'],
-      autocomplete: {
-        getOptions: (_text, path) => getAutocompleteOptions(schema, path)
-      },
-      onCreateMenu: (items) => {
-        const excludedItems = new Set(['Duplicate', 'duplicate'])
-        return items.filter(
-          (item) =>
-            !excludedItems.has(item.text) && !excludedItems.has(item.action)
-        )
-      },
-      onEvent: (_node, event) => {
-        if (event.type === 'blur' || event.type === 'change') {
-          const currentData = editor.get()
-          storageManager.save(currentData)
-          syncHiddenInput(hiddenInputId, currentData)
-          highlightChanges(editor, currentData, originalData)
-        }
-      },
-      onExpand: () => {
-        highlightChanges(editor, editor.get(), originalData)
-      },
-      onChangeJSON: (updatedJSON) => {
-        storageManager.save(updatedJSON)
-        syncHiddenInput(hiddenInputId, updatedJSON)
-        highlightChanges(editor, updatedJSON, originalData)
-      },
-      onEditable: (node) => isNodeEditable(node, schema),
-      onValidate: (json) => {
-        const errors = validateJSON(json, originalData, schema, validate)
-        updateSaveButtonState(saveButtonId, errors)
-        return errors
-      }
-    })
+    // eslint-disable-next-line prefer-const
+    let editor
+    const editorConfig = createEditorConfig(
+      schema,
+      originalData,
+      validate,
+      hiddenInputId,
+      saveButtonId,
+      storageManager,
+      () => editor
+    )
+    editor = new JSONEditor(container, editorConfig)
 
     // Load data
     editor.set(savedData || originalData)
