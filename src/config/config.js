@@ -127,33 +127,32 @@ export const config = convict({
     env: 'ENABLE_METRICS'
   },
   oidc: {
-    azureAD: {
+    entraId: {
       tenantId: {
-        doc: 'Azure Active Directory Tenant ID',
+        doc: 'Entra ID Active Directory Tenant ID',
         format: String,
-        env: 'AZURE_TENANT_ID',
+        env: 'ENTRA_TENANT_ID',
         default: '6f504113-6b64-43f2-ade9-242e05780007'
       },
       clientId: {
-        doc: 'Azure App Client ID (for configured tenantId)',
+        doc: 'Entra ID App Client ID (for configured tenantId)',
         format: String,
-        env: 'AZURE_CLIENT_ID',
+        env: 'ENTRA_CLIENT_ID',
         default: 'bd06da51-53f6-46d0-a9f0-ac562864c887'
       },
       clientSecret: {
-        doc: 'Azure App Client Secret (for configured tenantId)',
+        doc: 'Entra ID App Client Secret (for configured tenantId)',
         format: String,
         sensitive: true,
-        env: 'AZURE_CLIENT_SECRET',
+        env: 'ENTRA_CLIENT_SECRET',
         default: 'test_value'
       },
       get wellKnownUrl() {
         return {
-          doc: 'Azure AD OIDC .well-known configuration URL',
+          doc: 'Entra ID OIDC .well-known configuration URL',
           format: String,
-          // default: `http://cdp.127.0.0.1.sslip.io:3939/${this.azureTenantId.default}/v2.0/.well-known/openid-configuration`,
           default: `https://login.microsoftonline.com/${this.tenantId.default}/v2.0/.well-known/openid-configuration`,
-          env: 'AZURE_OIDC_WELL_KNOWN_URL'
+          env: 'ENTRA_OIDC_WELL_KNOWN_URL'
         }
       }
     },

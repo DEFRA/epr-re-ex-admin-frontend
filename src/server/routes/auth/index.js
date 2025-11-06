@@ -31,7 +31,7 @@ export default {
       : await fetchDefraIdWellKnown()
 
     if (useEntra) {
-      server.auth.strategy('sso', 'bell', await aadBellOptions(oidcConfig))
+      server.auth.strategy('sso', 'bell', await entraIdBellOptions(oidcConfig))
     } else {
       server.auth.strategy('sso', 'bell', await defraIdBellOptions(oidcConfig))
     }
@@ -117,7 +117,7 @@ export default {
   }
 }
 
-async function aadBellOptions(oidcConfig) {
+async function entraIdBellOptions(oidcConfig) {
   return {
     location: (_request) => {
       // TODO understand hapi/yar usage
@@ -128,7 +128,7 @@ async function aadBellOptions(oidcConfig) {
       return `${config.get('appBaseUrl')}/auth/callback`
     },
     provider: {
-      name: 'azure-oidc',
+      name: 'entra-id',
       protocol: 'oauth2',
       useParamsAuth: true,
       auth: oidcConfig.authorization_endpoint,
@@ -145,12 +145,13 @@ async function aadBellOptions(oidcConfig) {
          * api://... scope needed to make the aud in the returned token be the service's clientId
          * (without this Entra ID returns a token where the audience is Microsoft Graph API)
          */
-        `api://${config.get('oidc.azureAD.clientId')}/.default`
+        `api://${config.get('oidc.entraId.clientId')}/.default`
       ],
       profile: async function (credentials, _params, get) {
         const decodedPayload = jwt.token.decode(credentials.token).decoded
           .payload
 
+        // note Entra ID token specific parsing
         credentials.profile = {
           id: decodedPayload.oid,
           displayName: decodedPayload.name,
@@ -158,22 +159,22 @@ async function aadBellOptions(oidcConfig) {
         }
       }
     },
-    clientId: config.get('oidc.azureAD.clientId'),
+    clientId: config.get('oidc.entraId.clientId'),
     forceHttps: config.get('isProduction'),
-    clientSecret: config.get('oidc.azureAD.clientSecret'),
-    cookie: 'bell-azure-oidc',
+    clientSecret: config.get('oidc.entraId.clientSecret'),
+    cookie: 'bell-entra-id',
     password: config.get('session.cookie.password'),
     isSecure: config.get('session.cookie.secure'),
     ttl: config.get('session.cookie.ttl'),
     config: {
-      tenant: config.get('oidc.azureAD.tenantId')
+      tenant: config.get('oidc.entraId.tenantId')
     }
   }
 }
 
 async function defraIdBellOptions(oidcConfig) {
   // Parse authorization endpoint to extract any existing query parameters
-  // Azure AD B2C may include policy parameters like ?p=policy_name
+  // Defra ID oidc urls may include query parameters like ?p=policy_name
   const authUrl = new URL(oidcConfig.authorization_endpoint)
   const authBaseUrl = authUrl.origin + authUrl.pathname
   const authParams = Object.fromEntries(authUrl.searchParams)
@@ -190,7 +191,7 @@ async function defraIdBellOptions(oidcConfig) {
         const decodedPayload = jwt.token.decode(credentials.token).decoded
           .payload
 
-        // note decodedPayload parsed differently for AAD vs Defra ID token
+        // note Defra ID token specific parsing
         credentials.profile = {
           id: decodedPayload.contactId,
           displayName: `${decodedPayload.firstName} ${decodedPayload.lastName}`,
@@ -200,6 +201,7 @@ async function defraIdBellOptions(oidcConfig) {
     },
     clientId: config.get('oidc.defraId.clientId'),
     clientSecret: config.get('oidc.defraId.clientSecret'),
+    cookie: 'bell-defra-id',
     password: config.get('session.cookie.password'),
     isSecure: config.get('session.cookie.secure'),
     ttl: config.get('session.cookie.ttl'),

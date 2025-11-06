@@ -25,7 +25,7 @@ export const data = {
             issuer: defraIdWellKnownDetails.issuer
           },
           entra: {
-            audience: config.get('oidc.azureAD.clientId'),
+            audience: config.get('oidc.entraId.clientId'),
             jwksUri: entraWellKnownDetails.jwks_uri,
             issuer: entraWellKnownDetails.issuer
           }

@@ -11,7 +11,7 @@ async function fetchDefraIdWellKnown() {
 }
 
 async function fetchEntraIdWellKnown() {
-  return fetchWellKnown(config.get('oidc.azureAD.wellKnownUrl'))
+  return fetchWellKnown(config.get('oidc.entraId.wellKnownUrl'))
 }
 
 export { fetchDefraIdWellKnown, fetchEntraIdWellKnown }
