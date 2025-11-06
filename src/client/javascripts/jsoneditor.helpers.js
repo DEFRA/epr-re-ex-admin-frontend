@@ -460,6 +460,19 @@ function clearStorageIfSuccessful(successMessageId, storageManager) {
 }
 
 /**
+ * Updates the save button state based on validation errors
+ * @param {string} saveButtonId - The ID of the save button
+ * @param {Array} errors - Array of validation errors
+ */
+function updateSaveButtonState(saveButtonId, errors) {
+  const saveButton = document.getElementById(saveButtonId)
+  console.log(saveButton)
+  if (saveButton) {
+    saveButton.disabled = errors.length > 0
+  }
+}
+
+/**
  * Sets up the reset button handler
  * @param {string} resetButtonId - The ID of the reset button
  * @param {LocalStorageManager} storageManager - Storage manager instance
@@ -497,6 +510,7 @@ function setupResetButton(
  * @param {string} options.hiddenInputId - The ID of the hidden input for form submission
  * @param {string} options.successMessageId - The ID of the success message element
  * @param {string} options.resetButtonId - The ID of the reset button
+ * @param {string} options.saveButtonId - The ID of the save button
  */
 export function initJSONEditor({
   schema,
@@ -506,7 +520,8 @@ export function initJSONEditor({
   payloadElementId = 'organisation-json',
   hiddenInputId = 'jsoneditor-organisation-object',
   successMessageId = 'organisation-success-message',
-  resetButtonId = 'jsoneditor-reset-button'
+  resetButtonId = 'jsoneditor-reset-button',
+  saveButtonId = 'jsoneditor-save-button'
 }) {
   const container = document.getElementById(containerId)
   if (!container) {
@@ -557,13 +572,26 @@ export function initJSONEditor({
         highlightChanges(editor, updatedJSON, originalData)
       },
       onEditable: (node) => isNodeEditable(node, schema),
-      onValidate: (json) => validateJSON(json, originalData, schema, validate)
+      onValidate: (json) => {
+        const errors = validateJSON(json, originalData, schema, validate)
+        updateSaveButtonState(saveButtonId, errors)
+        return errors
+      }
     })
 
     // Load data
     editor.set(savedData || originalData)
     syncHiddenInput(hiddenInputId, savedData || originalData)
     highlightChanges(editor, savedData || originalData, originalData)
+
+    // Initialize save button state
+    const initialErrors = validateJSON(
+      savedData || originalData,
+      originalData,
+      schema,
+      validate
+    )
+    updateSaveButtonState(saveButtonId, initialErrors)
 
     setupResetButton(
       resetButtonId,
