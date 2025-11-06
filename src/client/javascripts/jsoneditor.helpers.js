@@ -460,6 +460,33 @@ function clearStorageIfSuccessful(successMessageId, storageManager) {
 }
 
 /**
+ * Sets up the reset button handler
+ * @param {string} resetButtonId - The ID of the reset button
+ * @param {LocalStorageManager} storageManager - Storage manager instance
+ * @param {JSONEditor} editor - The JSONEditor instance
+ * @param {*} originalData - The original data to reset to
+ * @param {string} hiddenInputId - The ID of the hidden input element
+ */
+function setupResetButton(
+  resetButtonId,
+  storageManager,
+  editor,
+  originalData,
+  hiddenInputId
+) {
+  const resetButton = document.getElementById(resetButtonId)
+
+  resetButton.addEventListener('click', () => {
+    if (globalThis.confirm('Are you sure you want to reset all changes?')) {
+      storageManager.clear()
+      editor.set(originalData)
+      syncHiddenInput(hiddenInputId, originalData)
+      highlightChanges(editor, originalData, originalData)
+    }
+  })
+}
+
+/**
  * Initialize the JSONEditor for organisation data
  * @param {Object} options - Configuration options
  * @param {Object} options.schema - The JSON schema for validation
@@ -539,18 +566,13 @@ export function initJSONEditor({
     syncHiddenInput(hiddenInputId, savedData || originalData)
     highlightChanges(editor, savedData || originalData, originalData)
 
-    const resetButton = document.getElementById(resetButtonId)
-    if (resetButton) {
-      resetButton.addEventListener('click', () => {
-        if (globalThis.confirm('Are you sure you want to reset all changes?')) {
-          // Clear localStorage and reset
-          storageManager.clear()
-          editor.set(originalData)
-          syncHiddenInput(hiddenInputId, originalData)
-          highlightChanges(editor, originalData, originalData)
-        }
-      })
-    }
+    setupResetButton(
+      resetButtonId,
+      storageManager,
+      editor,
+      originalData,
+      hiddenInputId
+    )
   } catch (err) {
     console.error('Failed to initialise JSONEditor:', err)
   }
