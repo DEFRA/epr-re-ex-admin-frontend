@@ -537,8 +537,7 @@ export function initJSONEditor({
         const excludedItems = new Set(['Duplicate', 'duplicate'])
         return items.filter(
           (item) =>
-            !excludedItems.has(item.text) &&
-            !excludedItems.has(item.action)
+            !excludedItems.has(item.text) && !excludedItems.has(item.action)
         )
       },
       onEvent: (_node, event) => {
