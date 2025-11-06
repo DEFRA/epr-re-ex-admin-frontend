@@ -2,15 +2,17 @@ import Boom from '@hapi/boom'
 import bell from '@hapi/bell'
 import cookie from '@hapi/cookie'
 import jwt from '@hapi/jwt'
-import { fetchWellknown } from './fetch-well-known.js'
+import {
+  fetchDefraIdWellKnown,
+  fetchEntraIdWellKnown
+} from './fetch-well-known.js'
 import { config } from '../../../config/config.js'
 import escape from 'lodash/escape.js'
 import { randomUUID } from 'node:crypto'
 import Wreck from '@hapi/wreck'
 import jwkToPem from 'jwk-to-pem'
 
-const signInStrategy = 'aad'
-// const signInStrategy = 'defra-id'
+const useEntra = false // set to false for Defra ID
 
 export default {
   name: 'auth',
@@ -24,8 +26,15 @@ export default {
 
     await server.register([bell, cookie])
 
-    server.auth.strategy('aad', 'bell', await aadBellOptions())
-    server.auth.strategy('defra-id', 'bell', await defraIdBellOptions())
+    const oidcConfig = useEntra
+      ? await fetchEntraIdWellKnown()
+      : await fetchDefraIdWellKnown()
+
+    if (useEntra) {
+      server.auth.strategy('sso', 'bell', await aadBellOptions(oidcConfig))
+    } else {
+      server.auth.strategy('sso', 'bell', await defraIdBellOptions(oidcConfig))
+    }
     server.auth.strategy('session', 'cookie', await cookieOptions())
 
     server.route([
@@ -33,7 +42,7 @@ export default {
         method: 'GET',
         path: '/auth/callback',
         options: {
-          auth: 'aad',
+          auth: 'sso',
           response: {
             failAction: () => Boom.boomify(Boom.unauthorized())
           }
@@ -44,58 +53,7 @@ export default {
           const { profile, refreshToken, token, expiresIn } =
             request.auth.credentials
 
-          await verifyToken(
-            token,
-            (await fetchWellknown(config.get('oidc.azureAD.wellKnownUrl')))
-              .jwks_uri
-          )
-
-          // Store token and all useful data in the session cache
-          await createUserSession(request, sessionId, {
-            isAuthenticated: true,
-            id: profile.id,
-            email: profile.email,
-            displayName: profile.displayName,
-            scope: profile.scope,
-            token,
-            refreshToken,
-            expiresIn
-          })
-
-          // store session ID in cookie
-          // from fcp example - the request is automagically decorated with cookieAuth by @hapi/cookie (see https://hapi.dev/module/cookie/api/?v=12.0.1)
-          request.cookieAuth.set({ sessionId })
-
-          // TODO redirect to page user originally tried to access (see FCP example)
-          // TODO ensure safe redirect (from FCP example)
-          // redirectWithRefresh (from CDP example)
-          return h
-            .response(
-              `<html><head><meta http-equiv="refresh" content="0;URL='${escape('/protected')}'"></head><body></body></html>`
-            )
-            .takeover()
-        }
-      },
-      {
-        method: 'GET',
-        path: '/auth/sign-in-oidc',
-        options: {
-          auth: 'defra-id',
-          response: {
-            failAction: () => Boom.boomify(Boom.unauthorized())
-          }
-        },
-        handler: async function GET(request, h) {
-          const sessionId = randomUUID()
-
-          const { profile, refreshToken, token, expiresIn } =
-            request.auth.credentials
-
-          await verifyToken(
-            token,
-            (await fetchWellknown(config.get('oidc.defraId.wellKnownUrl')))
-              .jwks_uri
-          )
+          await verifyToken(token, oidcConfig.jwks_uri)
 
           // Store token and all useful data in the session cache
           await createUserSession(request, sessionId, {
@@ -130,7 +88,7 @@ export default {
           return h.redirect('/')
         },
         options: {
-          auth: signInStrategy
+          auth: 'sso'
         }
       },
       {
@@ -145,16 +103,11 @@ export default {
           // from fcp example - the request is automagically decorated with cookieAuth by @hapi/cookie (see https://hapi.dev/module/cookie/api/?v=12.0.1)
           request.cookieAuth.clear()
 
-          const wellKnownUrl = {
-            aad: config.get('oidc.azureAD.wellKnownUrl'),
-            'defra-id': config.get('oidc.defraId.wellKnownUrl')
-          }[signInStrategy]
-
-          const { end_session_endpoint: aadLogoutUrl } =
-            await fetchWellknown(wellKnownUrl)
-
-          const logoutUrl = encodeURI(
-            `${aadLogoutUrl}?post_logout_redirect_uri=${config.get('appBaseUrl')}/`
+          const logoutUrl = new URL(oidcConfig.end_session_endpoint)
+          // Assume end_session_endpoint could already contain query params
+          logoutUrl.searchParams.append(
+            'post_logout_redirect_uri',
+            `${config.get('appBaseUrl')}/`
           )
 
           return h.redirect(logoutUrl)
@@ -164,14 +117,9 @@ export default {
   }
 }
 
-async function aadBellOptions() {
-  const {
-    authorization_endpoint: authEndpoint,
-    token_endpoint: tokenEndpoint
-  } = await fetchWellknown(config.get('oidc.azureAD.wellKnownUrl'))
-
+async function aadBellOptions(oidcConfig) {
   return {
-    location: (request) => {
+    location: (_request) => {
       // TODO understand hapi/yar usage
       // if (request.info.referrer) {
       //   request.yar.flash(sessionNames.referrer, request.info.referrer)
@@ -183,8 +131,8 @@ async function aadBellOptions() {
       name: 'azure-oidc',
       protocol: 'oauth2',
       useParamsAuth: true,
-      auth: authEndpoint,
-      token: tokenEndpoint,
+      auth: oidcConfig.authorization_endpoint,
+      token: oidcConfig.token_endpoint,
       scope: [
         'openid',
         'profile',
@@ -223,19 +171,19 @@ async function aadBellOptions() {
   }
 }
 
-async function defraIdBellOptions() {
-  const {
-    authorization_endpoint: authEndpoint,
-    token_endpoint: tokenEndpoint
-  } = await fetchWellknown(config.get('oidc.defraId.wellKnownUrl'))
+async function defraIdBellOptions(oidcConfig) {
+  // Parse authorization endpoint to extract any existing query parameters
+  // Azure AD B2C may include policy parameters like ?p=policy_name
+  const authUrl = new URL(oidcConfig.authorization_endpoint)
+  const authBaseUrl = authUrl.origin + authUrl.pathname
 
   return {
     provider: {
       name: 'defra-id',
       protocol: 'oauth2',
       useParamsAuth: true,
-      auth: authEndpoint,
-      token: tokenEndpoint,
+      auth: authBaseUrl,
+      token: oidcConfig.token_endpoint,
       scope: ['openid', 'offline_access', config.get('oidc.defraId.clientId')],
       profile: function (credentials, _params, _get) {
         const decodedPayload = jwt.token.decode(credentials.token).decoded
@@ -256,7 +204,7 @@ async function defraIdBellOptions() {
     ttl: config.get('session.cookie.ttl'),
     location: function (request) {
       // has to be port 3000 to match whats configured in Defra ID for this client
-      return `${config.get('appBaseUrl')}/auth/sign-in-oidc`
+      return `${config.get('appBaseUrl')}/auth/callback`
     },
     providerParams: function (request) {
       const params = {

@@ -186,7 +186,7 @@ export const config = convict({
         doc: 'The Defra Identity well known URL.',
         format: String,
         default:
-          'https://login.microsoftonline.com/6f504113-6b64-43f2-ade9-242e05780007/v2.0/.well-known/openid-configuration', // TODO Replace with Defra ID well known URL
+          'https://dcidmtest.b2clogin.com/DCIDMTest.onmicrosoft.com/v2.0/.well-known/openid-configuration',
         env: 'DEFRA_ID_OIDC_WELL_KNOWN_URL'
       }
     }

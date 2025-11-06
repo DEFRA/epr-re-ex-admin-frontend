@@ -1,6 +1,9 @@
 import { statusCodes } from '../../../common/constants/status-codes.js'
 import jwt from '@hapi/jwt'
-import { fetchWellknown } from '../../auth/fetch-well-known.js'
+import {
+  fetchDefraIdWellKnown,
+  fetchEntraIdWellKnown
+} from '../../auth/fetch-well-known.js'
 import { config } from '../../../../config/config.js'
 
 export const data = {
@@ -9,12 +12,8 @@ export const data = {
     async register(server) {
       await server.register([jwt])
 
-      const entraWellKnownDetails = await fetchWellknown(
-        config.get('oidc.azureAD.wellKnownUrl')
-      )
-      const defraIdWellKnownDetails = await fetchWellknown(
-        config.get('oidc.defraId.wellKnownUrl')
-      )
+      const entraWellKnownDetails = await fetchEntraIdWellKnown()
+      const defraIdWellKnownDetails = await fetchDefraIdWellKnown()
 
       server.auth.strategy(
         'access-token',
