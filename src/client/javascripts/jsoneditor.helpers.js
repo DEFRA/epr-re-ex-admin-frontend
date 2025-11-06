@@ -472,20 +472,20 @@ function updateSaveButtonState(saveButtonId, errors) {
 }
 
 /**
- * Creates the JSONEditor configuration object
- * @param {Object} schema - The JSON schema
- * @param {*} originalData - The original data
- * @param {Function} validate - The AJV validation function
+ * Creates JSONEditor configuration options
+ * @param {Object} schema - JSON schema
+ * @param {Function} validate - AJV validation function
  * @param {string} hiddenInputId - The ID of the hidden input element
  * @param {string} saveButtonId - The ID of the save button
  * @param {LocalStorageManager} storageManager - Storage manager instance
- * @param {Function} getEditor - Function that returns the editor instance
- * @returns {Object} JSONEditor configuration options
+ * @param {Object} originalData - Original data for comparison
+ * @param {Function} getEditor - Function to get the editor instance
+ * @returns {Object} JSONEditor configuration object
  */
 function createEditorConfig(
   schema,
-  originalData,
   validate,
+  originalData,
   hiddenInputId,
   saveButtonId,
   storageManager,
@@ -605,8 +605,8 @@ export function initJSONEditor({
     let editor
     const editorConfig = createEditorConfig(
       schema,
-      originalData,
       validate,
+      originalData,
       hiddenInputId,
       saveButtonId,
       storageManager,
