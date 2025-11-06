@@ -534,11 +534,11 @@ export function initJSONEditor({
         getOptions: (_text, path) => getAutocompleteOptions(schema, path)
       },
       onCreateMenu: (items) => {
-        const excludedItems = ['Duplicate', 'duplicate']
+        const excludedItems = new Set(['Duplicate', 'duplicate'])
         return items.filter(
           (item) =>
-            !excludedItems.includes(item.text) &&
-            !excludedItems.includes(item.action)
+            !excludedItems.has(item.text) &&
+            !excludedItems.has(item.action)
         )
       },
       onEvent: (_node, event) => {
