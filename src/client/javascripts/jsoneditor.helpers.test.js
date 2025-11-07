@@ -1087,7 +1087,7 @@ describe('JSONEditor Helpers', () => {
       })
 
       expect(localStorageMock.removeItem).toHaveBeenCalledWith(
-        'test-storage-key'
+        'test-storage-key-1'
       )
       expect(console.info).toHaveBeenCalledWith(
         '[JSONEditor] Cleared draft from localStorage after save'

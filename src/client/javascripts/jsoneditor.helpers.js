@@ -588,11 +588,14 @@ export function initJSONEditor({
   }
 
   try {
-    const storageManager = new LocalStorageManager(storageKey)
     const originalData = loadOriginalData(payloadElementId)
     if (!originalData) {
       return
     }
+
+    const organisationId = originalData.id || 'unknown'
+    const fullStorageKey = `${storageKey}-${organisationId}`
+    const storageManager = new LocalStorageManager(fullStorageKey)
 
     clearStorageIfSuccessful(successMessageId, storageManager)
 
