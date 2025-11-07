@@ -475,10 +475,10 @@ function updateSaveButtonState(saveButtonId, errors) {
  * Creates JSONEditor configuration options
  * @param {Object} schema - JSON schema
  * @param {Function} validate - AJV validation function
+ * @param {Object} originalData - Original data for comparison
  * @param {string} hiddenInputId - The ID of the hidden input element
  * @param {string} saveButtonId - The ID of the save button
  * @param {LocalStorageManager} storageManager - Storage manager instance
- * @param {Object} originalData - Original data for comparison
  * @param {Function} getEditor - Function to get the editor instance
  * @returns {Object} JSONEditor configuration object
  */
@@ -601,8 +601,6 @@ export function initJSONEditor({
       console.info('[JSONEditor] Loaded draft from localStorage')
     }
 
-    // eslint-disable-next-line prefer-const
-    let editor
     const editorConfig = createEditorConfig(
       schema,
       validate,
@@ -612,7 +610,7 @@ export function initJSONEditor({
       storageManager,
       () => editor
     )
-    editor = new JSONEditor(container, editorConfig)
+    const editor = new JSONEditor(container, editorConfig)
 
     // Load data
     editor.set(savedData || originalData)

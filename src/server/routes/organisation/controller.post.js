@@ -30,7 +30,7 @@ export const organisationsPOSTController = {
         {}
       )
 
-      const [errorTitle, message] = data.message.split(': ')
+      const [errorTitle, message = data.message] = data.message.split(': ')
       const errorMessages = message.split('; ')
 
       return h.view('routes/organisation/index', {
