@@ -1,6 +1,4 @@
 import { config } from '#config/config.js'
-import { organisationsBreadcrumb } from '#server/routes/organisations/controller.js'
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
 export const organisationsPOSTController = {
   async handler(request, h) {
@@ -23,32 +21,19 @@ export const organisationsPOSTController = {
     const data = await response.json()
 
     if (!response.ok) {
-      // Return original JSON to the frontend for change highlighting
-      const originalData = await fetchJsonFromBackend(
-        request,
-        `/v1/organisations/${id}`,
-        {}
-      )
-
       const [errorTitle, message = data.message] = data.message.split(': ')
       const errorMessages = message.split('; ')
 
-      return h.view('routes/organisation/index', {
-        pageTitle: 'Organisation',
-        heading: 'Organisation',
+      request.yar.set('organisationErrors', {
         errorTitle,
-        errors: errorMessages.map((err) => ({ text: err })),
-        organisationJson: JSON.stringify(originalData),
-        breadcrumbs: [organisationsBreadcrumb]
+        errors: errorMessages.map((err) => ({ text: err }))
       })
+
+      return h.redirect(`/organisations/${id}`)
     }
 
-    return h.view('routes/organisation/index', {
-      pageTitle: 'Organisation',
-      heading: 'Organisation',
-      message: 'success',
-      organisationJson: JSON.stringify(data),
-      breadcrumbs: [organisationsBreadcrumb]
-    })
+    request.yar.set('organisationSuccess', true)
+
+    return h.redirect(`/organisations/${id}`)
   }
 }
