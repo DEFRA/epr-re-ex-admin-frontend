@@ -560,7 +560,6 @@ export function initJSONEditor({
       return
     }
 
-    // Include organisation ID in storage key to avoid conflicts
     const organisationId = originalData.id || 'unknown'
     const fullStorageKey = `${storageKey}-${organisationId}`
     const storageManager = new LocalStorageManager(fullStorageKey)
