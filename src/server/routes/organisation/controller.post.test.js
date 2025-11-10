@@ -49,11 +49,11 @@ describe('organisation POST controller', () => {
   })
 
   describe('When user is authenticated', () => {
-    test('Should successfully update organisation and redirect to GET page', async () => {
-      // Mock an authenticated session
+    beforeEach(() => {
       getUserSession.mockReturnValue(mockUserSession)
+    })
 
-      // Mock successful backend API response
+    test('Should successfully update organisation and redirect with success message in session', async () => {
       const mockUpdatedOrganisation = {
         id: 'org-1',
         version: 2,
@@ -79,7 +79,7 @@ describe('organisation POST controller', () => {
         }
       }
 
-      const { result, statusCode } = await server.inject({
+      const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: '/organisations/org-1',
         payload: {
@@ -91,11 +91,9 @@ describe('organisation POST controller', () => {
         }
       })
 
-      expect(statusCode).toBe(statusCodes.ok)
-
-      // Verify the page shows success message
-      expect(result).toEqual(expect.stringContaining('Organisation'))
-      expect(result).toEqual(expect.stringContaining('Updated Acme Ltd'))
+      // Should redirect (302 Found)
+      expect(statusCode).toBe(302)
+      expect(headers.location).toBe('/organisations/org-1')
 
       // Verify fetch was called with correct parameters
       expect(fetchMock).toHaveBeenCalledWith(
@@ -111,6 +109,170 @@ describe('organisation POST controller', () => {
           })
         }
       )
+    })
+
+    test('Should handle backend validation error and redirect with error messages in session', async () => {
+      const mockErrorResponse = {
+        message:
+          'Validation Error: Field "companyDetails.name" is required; Field "version" must be a number'
+      }
+
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 400,
+        json: async () => mockErrorResponse
+      })
+
+      vi.stubGlobal('fetch', fetchMock)
+
+      const postData = {
+        version: 1,
+        companyDetails: {
+          name: '',
+          registrationNumber: '12345678'
+        }
+      }
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: '/organisations/org-1',
+        payload: {
+          organisation: JSON.stringify(postData)
+        },
+        auth: {
+          strategy: 'session',
+          credentials: mockUserSession
+        }
+      })
+
+      // Should redirect (302 Found)
+      expect(statusCode).toBe(302)
+      expect(headers.location).toBe('/organisations/org-1')
+    })
+
+    test('Should handle backend error with simple message format', async () => {
+      const mockErrorResponse = {
+        message: 'Conflict Error: Organisation version mismatch'
+      }
+
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 409,
+        json: async () => mockErrorResponse
+      })
+
+      vi.stubGlobal('fetch', fetchMock)
+
+      const postData = {
+        version: 3,
+        companyDetails: {
+          name: 'Test Company',
+          registrationNumber: '87654321'
+        }
+      }
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: '/organisations/org-2',
+        payload: {
+          organisation: JSON.stringify(postData)
+        },
+        auth: {
+          strategy: 'session',
+          credentials: mockUserSession
+        }
+      })
+
+      // Should redirect (302 Found)
+      expect(statusCode).toBe(302)
+      expect(headers.location).toBe('/organisations/org-2')
+    })
+
+    test('Should handle backend server error and redirect', async () => {
+      const mockErrorResponse = {
+        message: 'Internal Server Error: Database connection failed'
+      }
+
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+        json: async () => mockErrorResponse
+      })
+
+      vi.stubGlobal('fetch', fetchMock)
+
+      const postData = {
+        version: 1,
+        companyDetails: {
+          name: 'Updated Name',
+          registrationNumber: '11111111'
+        }
+      }
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: '/organisations/org-3',
+        payload: {
+          organisation: JSON.stringify(postData)
+        },
+        auth: {
+          strategy: 'session',
+          credentials: mockUserSession
+        }
+      })
+
+      // Should redirect (302 Found)
+      expect(statusCode).toBe(302)
+      expect(headers.location).toBe('/organisations/org-3')
+    })
+
+    test('Should use correct organisation ID from route params', async () => {
+      const mockUpdatedOrganisation = {
+        id: 'specific-org-id-456',
+        version: 2,
+        companyDetails: {
+          name: 'Specific Company',
+          registrationNumber: '99999999'
+        }
+      }
+
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => mockUpdatedOrganisation
+      })
+
+      vi.stubGlobal('fetch', fetchMock)
+
+      const postData = {
+        version: 1,
+        companyDetails: {
+          name: 'Specific Company',
+          registrationNumber: '99999999'
+        }
+      }
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: '/organisations/specific-org-id-456',
+        payload: {
+          organisation: JSON.stringify(postData)
+        },
+        auth: {
+          strategy: 'session',
+          credentials: mockUserSession
+        }
+      })
+
+      // Verify the correct ID was used in the fetch URL
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:3001/v1/organisations/specific-org-id-456',
+        expect.any(Object)
+      )
+
+      // Should redirect to correct URL (302 Found)
+      expect(statusCode).toBe(302)
+      expect(headers.location).toBe('/organisations/specific-org-id-456')
     })
   })
 })

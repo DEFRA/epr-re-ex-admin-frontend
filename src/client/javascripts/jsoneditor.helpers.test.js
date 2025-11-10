@@ -49,16 +49,7 @@ const localStorageMock = {
   clear: vi.fn()
 }
 
-// Mock window object for Node.js environment
-Object.defineProperty(globalThis, 'window', {
-  value: {
-    localStorage: localStorageMock,
-    confirm: vi.fn()
-  },
-  writable: true
-})
-
-// Also add localStorage and confirm directly to globalThis
+// Add localStorage and confirm directly to globalThis
 Object.defineProperty(globalThis, 'localStorage', {
   value: localStorageMock,
   writable: true
@@ -953,6 +944,7 @@ describe('JSONEditor Helpers', () => {
     let payloadEl
     let hiddenInput
     let resetButton
+    let saveButton
     let messageEl
     let resetButtonListeners
     let mockValidate
@@ -1004,6 +996,10 @@ describe('JSONEditor Helpers', () => {
           resetButtonListeners.push({ event, handler })
         })
       }
+      saveButton = {
+        id: 'jsoneditor-save-button',
+        disabled: false
+      }
       messageEl = null
 
       // Mock document.getElementById
@@ -1013,6 +1009,7 @@ describe('JSONEditor Helpers', () => {
         if (id === 'organisation-json') return payloadEl
         if (id === 'jsoneditor-organisation-object') return hiddenInput
         if (id === 'jsoneditor-reset-button') return resetButton
+        if (id === 'jsoneditor-save-button') return saveButton
         if (id === 'organisation-success-message') return messageEl
         return null
       })
@@ -1369,6 +1366,106 @@ describe('JSONEditor Helpers', () => {
         expect(mockValidate).toHaveBeenCalledWith(json)
         expect(Array.isArray(errors)).toBe(true)
       })
+
+      it('should disable save button when validation has errors via onValidate', () => {
+        mockValidate.mockReturnValue(false)
+        mockValidate.errors = [
+          {
+            instancePath: '/name',
+            message: 'is required'
+          }
+        ]
+        const json = { id: 1 }
+
+        saveButton.disabled = false
+        editorOptions.onValidate(json)
+
+        expect(saveButton.disabled).toBe(true)
+      })
+
+      it('should enable save button when validation passes via onValidate', () => {
+        mockValidate.mockReturnValue(true)
+        mockValidate.errors = null
+        const json = { id: 1, name: 'Test' }
+
+        saveButton.disabled = true
+        editorOptions.onValidate(json)
+
+        expect(saveButton.disabled).toBe(false)
+      })
+    })
+
+    it('should initialize save button state based on initial validation', () => {
+      mockValidate.mockReturnValue(true)
+      mockValidate.errors = null
+
+      initJSONEditor({
+        schema: testSchema,
+        validate: mockValidate,
+        storageKey: 'test-storage-key'
+      })
+
+      // When original data is loaded, no changes means no errors shown
+      expect(saveButton.disabled).toBe(false)
+    })
+
+    it('should enable save button when draft has no validation errors', () => {
+      const draftData = { id: 1, name: 'Draft' }
+      localStorageMock.getItem.mockReturnValue(JSON.stringify(draftData))
+      mockValidate.mockReturnValue(true)
+      mockValidate.errors = null
+
+      initJSONEditor({
+        schema: testSchema,
+        validate: mockValidate,
+        storageKey: 'test-storage-key'
+      })
+
+      // Draft data that validates correctly should enable button
+      expect(saveButton.disabled).toBe(false)
+    })
+
+    it('should disable save button when draft has validation errors', () => {
+      const draftData = { id: 1, status: 'invalid-status' }
+      localStorageMock.getItem.mockReturnValue(JSON.stringify(draftData))
+      mockValidate.mockReturnValue(false)
+      mockValidate.errors = [
+        {
+          instancePath: '/status',
+          message: 'must be one of: created, approved, rejected'
+        }
+      ]
+
+      initJSONEditor({
+        schema: testSchema,
+        validate: mockValidate,
+        storageKey: 'test-storage-key'
+      })
+
+      // Draft data with validation errors should disable button
+      expect(saveButton.disabled).toBe(true)
+    })
+
+    it('should handle missing save button gracefully', () => {
+      document.getElementById = vi.fn((id) => {
+        if (id === 'jsoneditor') return container
+        if (id === 'organisation-json') return payloadEl
+        if (id === 'jsoneditor-organisation-object') return hiddenInput
+        if (id === 'jsoneditor-reset-button') return resetButton
+        if (id === 'jsoneditor-save-button') return null
+        return null
+      })
+
+      mockValidate.mockReturnValue(true)
+      mockValidate.errors = null
+
+      initJSONEditor({
+        schema: testSchema,
+        validate: mockValidate,
+        storageKey: 'test-storage-key'
+      })
+
+      expect(MockJSONEditorConstructor).toHaveBeenCalled()
     })
   })
 })

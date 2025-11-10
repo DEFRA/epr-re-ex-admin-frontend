@@ -1,5 +1,4 @@
 import { config } from '#config/config.js'
-import { organisationsBreadcrumb } from '#server/routes/organisations/controller.js'
 
 export const organisationsPOSTController = {
   async handler(request, h) {
@@ -21,12 +20,20 @@ export const organisationsPOSTController = {
 
     const data = await response.json()
 
-    return h.view('routes/organisation/index', {
-      pageTitle: 'Organisation',
-      heading: 'Organisation',
-      message: 'success',
-      organisationJson: JSON.stringify(data),
-      breadcrumbs: [organisationsBreadcrumb]
-    })
+    if (!response.ok) {
+      const [errorTitle, message = data.message] = data.message.split(': ')
+      const errorMessages = message.split('; ')
+
+      request.yar.set('organisationErrors', {
+        errorTitle,
+        errors: errorMessages.map((err) => ({ text: err }))
+      })
+
+      return h.redirect(`/organisations/${id}`)
+    }
+
+    request.yar.set('organisationSuccess', true)
+
+    return h.redirect(`/organisations/${id}`)
   }
 }
