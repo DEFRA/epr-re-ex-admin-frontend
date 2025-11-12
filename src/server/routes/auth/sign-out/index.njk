@@ -1,0 +1,20 @@
+{% extends "layout.njk" %}
+
+{% set pageTitle = "Signing out" %}
+
+{% block bodyStart %}
+  <div data-logout-url="{{ logoutUrl }}" id="sign-out-data"></div>
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-l">Signing out...</h1>
+      <p class="govuk-body">Please wait while we sign you out.</p>
+    </div>
+  </div>
+{% endblock %}
+
+{% block pageScripts %}
+  <script type="text/javascript" src="{{ getAssetPath('sign-out.js') }}"></script>
+{% endblock %}

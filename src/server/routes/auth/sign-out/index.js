@@ -19,8 +19,11 @@ export default {
       `${entraLogoutUrl}?post_logout_redirect_uri=${config.get('appBaseUrl')}/`
     )
 
-    clearUserSession(request)
+    await clearUserSession(request)
 
-    return h.redirect(logoutUrl)
+    return h.view('routes/auth/sign-out/index', {
+      pageTitle: 'Signing out',
+      logoutUrl
+    })
   }
 }

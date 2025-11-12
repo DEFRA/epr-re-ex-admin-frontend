@@ -26,6 +26,9 @@ export default {
     },
     jsoneditor: {
       import: ['./javascripts/jsoneditor.js', './stylesheets/jsoneditor.scss']
+    },
+    'sign-out': {
+      import: './javascripts/sign-out.js'
     }
   },
   experiments: {
