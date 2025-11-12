@@ -50,12 +50,13 @@ describe('GET /defra-forms-submission/{documentId}', () => {
   })
 
   describe('When user is authenticated', () => {
+    const documentId = '000000-0000-1234'
+
     beforeEach(() => {
       getUserSession.mockReturnValue(mockUserSession)
     })
 
     test('Should return OK and render defra forms submission details', async () => {
-      const documentId = '000000-0000-1234'
       const org1 = { id: 'org-1' }
       const reg1 = { id: 'reg-1' }
       const reg2 = { id: 'reg-2' }
@@ -101,14 +102,19 @@ describe('GET /defra-forms-submission/{documentId}', () => {
         .toContain(quotesEscaped('"id": "acc-2"'))
     })
 
-    test('Should page with no data when backend fetch throws', async () => {
-      const fetchMock = vi.fn().mockRejectedValue(new Error('Network error'))
-
-      vi.stubGlobal('fetch', fetchMock)
+    test('Should render page with no data when backend returns 404', async () => {
+      mswServer.use(
+        http.get(`${backendUrl}/v1/form-submissions/${documentId}`, () => {
+          return HttpResponse.json(
+            { organisation: null, registrations: [], accreditations: [] },
+            { status: statusCodes.notFound }
+          )
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/defra-forms-submission/456',
+        url: `/defra-forms-submission/${documentId}`,
         auth: {
           strategy: 'session',
           credentials: mockUserSession
@@ -123,6 +129,52 @@ describe('GET /defra-forms-submission/{documentId}', () => {
         .toContain('No registrations submission data found.')
         .toContain('<h3 class="govuk-heading-m">Accreditations</h3>')
         .toContain('No accreditations submission data found.')
+    })
+
+    test('Should render not authorised page when backend request is not authorised', async () => {
+      const documentId = '000000-0000-1234'
+
+      const getFormSubmissionsDataHandler = http.get(
+        `${backendUrl}/v1/form-submissions/${documentId}`,
+        () => {
+          return HttpResponse.json(
+            { error: 'Not Authorized' },
+            { status: statusCodes.unauthorised }
+          )
+        }
+      )
+
+      mswServer.use(getFormSubmissionsDataHandler)
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: `/defra-forms-submission/${documentId}`,
+        auth: {
+          strategy: 'session',
+          credentials: mockUserSession
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.unauthorised)
+      expect(result).toContain('<h1 class="govuk-heading-l">Unauthorised</h1>')
+    })
+
+    test('Should render page with no data when backend fetch throws', async () => {
+      const fetchMock = vi.fn().mockRejectedValue(new Error('Network error'))
+
+      vi.stubGlobal('fetch', fetchMock)
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/defra-forms-submission/456',
+        auth: {
+          strategy: 'session',
+          credentials: mockUserSession
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('Sorry, there is a problem with the service')
       expect(fetchMock).toHaveBeenCalledTimes(1)
     })
   })

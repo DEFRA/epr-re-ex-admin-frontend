@@ -1,4 +1,5 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
 
 export const defraFormsSubmission = {
   plugin: {
@@ -34,7 +35,10 @@ async function loadData(request, documentId) {
       `/v1/form-submissions/${documentId}`
     )
   } catch (e) {
-    return {}
+    if (e.isBoom && e.output.statusCode === statusCodes.notFound) {
+      return {}
+    }
+    throw e
   }
 }
 
