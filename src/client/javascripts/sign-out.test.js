@@ -20,7 +20,7 @@ const localStorageMock = {
   }
 }
 
-// Mock window.location
+// Mock location
 const mockLocation = {
   href: ''
 }
@@ -38,8 +38,8 @@ Object.defineProperty(globalThis, 'localStorage', {
   configurable: true
 })
 
-Object.defineProperty(globalThis, 'window', {
-  value: { location: mockLocation },
+Object.defineProperty(globalThis, 'location', {
+  value: mockLocation,
   writable: true,
   configurable: true
 })

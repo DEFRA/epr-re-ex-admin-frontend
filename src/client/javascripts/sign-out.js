@@ -14,7 +14,7 @@ function signOut() {
   const logoutUrl = signOutData?.dataset.logoutUrl
 
   if (logoutUrl) {
-    window.location.href = logoutUrl
+    globalThis.location.href = logoutUrl
   }
 }
 
