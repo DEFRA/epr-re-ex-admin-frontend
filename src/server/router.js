@@ -5,6 +5,7 @@ import { organisations } from './routes/organisations/index.js'
 import { organisation } from './routes/organisation/index.js'
 import { health } from './routes/health/index.js'
 import { auth } from './routes/auth/index.js'
+import { defraFormsSubmission } from './routes/defra-forms-submission/index.js'
 
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
 
@@ -18,7 +19,13 @@ export const router = {
 
       // These are the routes containing our application logic
       // Some routes contain nested routes
-      await server.register([home, organisations, organisation, auth])
+      await server.register([
+        home,
+        organisations,
+        organisation,
+        auth,
+        defraFormsSubmission
+      ])
 
       await server.register([serveStaticFiles])
     }

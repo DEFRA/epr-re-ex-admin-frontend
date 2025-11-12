@@ -1,0 +1,70 @@
+{% extends 'layout.njk' %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/warning-text/macro.njk" import govukWarningText %}
+{% from "govuk/components/textarea/macro.njk" import govukTextarea %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <div class="govuk-body" data-testid="app-page-body">
+
+      <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
+
+      <h2 class="govuk-heading-l">{{ heading }}</h2>
+
+      {{ govukWarningText({
+        text: 'This data contains sensitive information - it must be kept within the Defra network.'
+      }) }}
+
+      <h3 class="govuk-heading-m">Organisation</h3>
+
+      {% if organisation %}
+        {{ govukTextarea({
+          name: "organisation",
+          id: "organisation",
+          value: organisation
+        }) }}
+      {% else %}
+        {{ govukInsetText({ text: "No organisations submission data found." }) }}
+      {% endif %}
+
+      <h3 class="govuk-heading-m">Registrations</h3>
+
+      {% if registrations and registrations.length %}
+
+        {% for registration in registrations %}
+          <p>{{loop.index}} of {{registrations.length}}
+          {% set id = 'registration-' ~ loop.index %}
+          {{ govukTextarea({
+            name: id,
+            id: id,
+            value: registration
+          }) }}
+        {% endfor %}
+
+      {% else %}
+        {{ govukInsetText({ text: "No registrations submission data found." }) }}
+      {% endif %}
+
+      <h3 class="govuk-heading-m">Accreditations</h3>
+
+      {% if accreditations and accreditations.length %}
+        {% for accreditation in accreditations %}
+          <p>{{loop.index}} of {{accreditations.length}}
+          {% set id = 'accreditation-' ~ loop.index %}
+          {{ govukTextarea({
+            name: id,
+            id: id,
+            value: accreditation
+          }) }}
+        {% endfor %}
+
+      {% else %}
+        {{ govukInsetText({ text: "No accreditations submission data found." }) }}
+      {% endif %}
+
+      </div>
+    </div>
+  </div>
+
+{% endblock %}
