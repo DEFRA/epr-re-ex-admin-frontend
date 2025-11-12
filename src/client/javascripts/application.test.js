@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach, vi } from 'vitest'
+import { vi } from 'vitest'
 
 const mockCreateAll = vi.fn()
 
@@ -19,8 +19,6 @@ describe('#application', () => {
 
   describe('When module is loaded', () => {
     test('Should call createAll once for each component', async () => {
-      // Need to reset modules to ensure fresh import
-      vi.resetModules()
       await import('./application.js')
 
       expect(mockCreateAll).toHaveBeenCalledTimes(6)
