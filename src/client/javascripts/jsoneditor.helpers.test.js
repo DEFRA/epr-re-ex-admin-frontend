@@ -1051,9 +1051,8 @@ describe('JSONEditor Helpers', () => {
 
       expect(containerArg).toBe(container)
       expect(optionsArg.mode).toBe('tree')
-      expect(optionsArg.modes).toEqual(['text', 'tree', 'preview'])
+      expect(optionsArg.modes).toEqual(['text', 'tree'])
       expect(typeof optionsArg.autocomplete.getOptions).toBe('function')
-      expect(typeof optionsArg.onCreateMenu).toBe('function')
       expect(typeof optionsArg.onEvent).toBe('function')
       expect(typeof optionsArg.onExpand).toBe('function')
       expect(typeof optionsArg.onChangeJSON).toBe('function')
@@ -1072,9 +1071,6 @@ describe('JSONEditor Helpers', () => {
       })
 
       expect(mockSet).toHaveBeenCalledWith(draftData)
-      expect(console.info).toHaveBeenCalledWith(
-        '[JSONEditor] Loaded draft from localStorage'
-      )
     })
 
     it('should clear localStorage when success message is present', () => {
@@ -1088,9 +1084,6 @@ describe('JSONEditor Helpers', () => {
 
       expect(localStorageMock.removeItem).toHaveBeenCalledWith(
         'test-storage-key-1'
-      )
-      expect(console.info).toHaveBeenCalledWith(
-        '[JSONEditor] Cleared draft from localStorage after save'
       )
     })
 
@@ -1291,17 +1284,6 @@ describe('JSONEditor Helpers', () => {
       it('should call callbacks via autocomplete.getOptions', () => {
         const result = editorOptions.autocomplete.getOptions('text', ['status'])
         expect(result).toEqual(['created', 'approved', 'rejected'])
-      })
-
-      it('should filter duplicate items via onCreateMenu', () => {
-        const items = [
-          { text: 'Insert', action: 'insert' },
-          { text: 'Duplicate', action: 'duplicate' },
-          { text: 'Remove', action: 'remove' }
-        ]
-        const result = editorOptions.onCreateMenu(items)
-        expect(result).toHaveLength(2)
-        expect(result.find((i) => i.text === 'Duplicate')).toBeUndefined()
       })
 
       it('should handle blur event via onEvent', () => {

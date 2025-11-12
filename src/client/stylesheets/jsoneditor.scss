@@ -11,4 +11,12 @@
     transition: background-color 0.3s ease;
     border-radius: 4px;
   }
+
+  .jsoneditor-button.jsoneditor-contextmenu-button {
+    display: none;
+  }
+
+  .jsoneditor-text {
+    field-sizing: content;
+  }
 }

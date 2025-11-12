@@ -454,8 +454,8 @@ function loadOriginalData(payloadElementId) {
  */
 function clearStorageIfSuccessful(successMessageId, storageManager) {
   const messageEl = document.getElementById(successMessageId)
-  if (messageEl && storageManager.clear()) {
-    console.info('[JSONEditor] Cleared draft from localStorage after save')
+  if (messageEl) {
+    storageManager.clear()
   }
 }
 
@@ -493,16 +493,12 @@ function createEditorConfig(
 ) {
   return {
     mode: 'tree',
-    modes: ['text', 'tree', 'preview'],
+    modes: ['text', 'tree'],
+    enableSort: false,
+    enableTransform: false,
+    limitDragging: true,
     autocomplete: {
       getOptions: (_text, path) => getAutocompleteOptions(schema, path)
-    },
-    onCreateMenu: (items) => {
-      const excludedItems = new Set(['Duplicate', 'duplicate'])
-      return items.filter(
-        (item) =>
-          !excludedItems.has(item.text) && !excludedItems.has(item.action)
-      )
     },
     onEvent: (_node, event) => {
       if (event.type === 'blur' || event.type === 'change') {
@@ -600,9 +596,6 @@ export function initJSONEditor({
     clearStorageIfSuccessful(successMessageId, storageManager)
 
     const savedData = storageManager.load()
-    if (savedData) {
-      console.info('[JSONEditor] Loaded draft from localStorage')
-    }
 
     const editorConfig = createEditorConfig(
       schema,
