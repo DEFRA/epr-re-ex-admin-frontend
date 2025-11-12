@@ -599,7 +599,7 @@ describe('JSONEditor Helpers', () => {
       })
     })
 
-    it('should customize enum error messages', () => {
+    it('should customise enum error messages', () => {
       mockValidate.mockReturnValue(false)
       mockValidate.errors = [
         {
@@ -1039,7 +1039,7 @@ describe('JSONEditor Helpers', () => {
       console.error = originalConsoleError
     })
 
-    it('should initialize JSONEditor with correct configuration', () => {
+    it('should initialise JSONEditor with correct configuration', () => {
       initJSONEditor({
         schema: testSchema,
         validate: mockValidate,
@@ -1142,7 +1142,7 @@ describe('JSONEditor Helpers', () => {
       expect(customInput.value).toBe(JSON.stringify({ name: 'Custom' }))
     })
 
-    it('should not initialize when container does not exist', () => {
+    it('should not initialise when container does not exist', () => {
       document.getElementById = vi.fn(() => null)
 
       const initialCallCount = MockJSONEditorConstructor.mock.calls.length
@@ -1156,7 +1156,7 @@ describe('JSONEditor Helpers', () => {
       expect(MockJSONEditorConstructor.mock.calls.length).toBe(initialCallCount)
     })
 
-    it('should not initialize when payload element does not exist', () => {
+    it('should not initialise when payload element does not exist', () => {
       document.getElementById = vi.fn((id) => {
         if (id === 'jsoneditor') return container
         if (id === 'organisation-json') return null
@@ -1395,7 +1395,7 @@ describe('JSONEditor Helpers', () => {
       })
     })
 
-    it('should initialize save button state based on initial validation', () => {
+    it('should initialise save button state based on initial validation', () => {
       mockValidate.mockReturnValue(true)
       mockValidate.errors = null
 

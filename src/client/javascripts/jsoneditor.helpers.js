@@ -559,7 +559,7 @@ function setupResetButton(
 }
 
 /**
- * Initialize the JSONEditor for organisation data
+ * Initialise the JSONEditor for organisation data
  * @param {Object} options - Configuration options
  * @param {Object} options.schema - The JSON schema for validation
  * @param {Function} options.validate - The AJV validation function
@@ -620,7 +620,7 @@ export function initJSONEditor({
     syncHiddenInput(hiddenInputId, savedData || originalData)
     highlightChanges(editor, savedData || originalData, originalData)
 
-    // Initialize save button state
+    // Initialise save button state
     const initialErrors = validateJSON(
       savedData || originalData,
       originalData,

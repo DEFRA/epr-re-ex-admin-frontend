@@ -97,13 +97,13 @@ describe('#fetchJsonFromBackend', () => {
 
   test('throws Boom unauthorised error when status is 401', async () => {
     const url = `${backendUrl}/secure`
-    const unauthorizedHandler = http.get(url, () => {
+    const unauthorisedHandler = http.get(url, () => {
       return new HttpResponse(null, {
         status: 401,
         statusText: 'Unauthorized'
       })
     })
-    mswServer.use(unauthorizedHandler)
+    mswServer.use(unauthorisedHandler)
 
     await expect(
       fetchJsonFromBackend({}, '/secure', { method: 'GET' })
