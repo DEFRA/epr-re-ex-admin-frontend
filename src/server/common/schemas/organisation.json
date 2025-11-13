@@ -1,14 +1,84 @@
 {
   "type": "object",
   "properties": {
+    "allowedUsers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fullName",
+          "email"
+        ],
+        "additionalProperties": false,
+        "anyOf": [
+          {
+            "required": [
+              "role"
+            ]
+          },
+          {
+            "required": [
+              "title"
+            ]
+          }
+        ]
+      }
+    },
     "id": {
       "not": {}
     },
     "orgId": {
       "type": "number"
     },
-    "statusHistory": {
-      "not": {}
+    "defraIdOrgId": {
+      "type": "string"
+    },
+    "users": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "const": "standardUser"
+            }
+          },
+          "isInitialUser": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "fullName",
+          "email"
+        ],
+        "additionalProperties": false
+      }
     },
     "status": {
       "type": "string",
@@ -16,6 +86,7 @@
         "created",
         "approved",
         "rejected",
+        "active",
         "suspended",
         "archived"
       ]
@@ -39,7 +110,6 @@
     },
     "reprocessingNations": {
       "type": "array",
-      "minItems": 1,
       "items": {
         "type": "string",
         "enum": [
@@ -69,7 +139,7 @@
         },
         "registrationNumber": {
           "type": "string",
-          "pattern": "^[A-Z0-9]{8}$"
+          "pattern": "^[A-Z0-9]{8}$/i"
         },
         "registeredAddress": {
           "type": "object",
@@ -97,8 +167,35 @@
             },
             "fullAddress": {
               "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "address": {
+          "type": "object",
+          "properties": {
+            "line1": {
+              "type": "string"
             },
-            "line2ToCounty": {
+            "line2": {
+              "type": "string"
+            },
+            "town": {
+              "type": "string"
+            },
+            "county": {
+              "type": "string"
+            },
+            "country": {
+              "type": "string"
+            },
+            "postcode": {
+              "type": "string"
+            },
+            "region": {
+              "type": "string"
+            },
+            "fullAddress": {
               "type": "string"
             }
           },
@@ -228,8 +325,7 @@
       ]
     },
     "formSubmissionTime": {
-      "type": "string",
-      "format": "date-time"
+      "type": "integer"
     },
     "submittedToRegulator": {
       "type": "string",
@@ -246,14 +342,7 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "readOnly": true
-          },
-          "statusHistory": {
-            "type": "array",
-            "items": {
-              "not": {}
-            }
+            "type": "string"
           },
           "status": {
             "type": "string",
@@ -261,13 +350,22 @@
               "created",
               "approved",
               "rejected",
+              "active",
               "suspended",
               "archived"
             ]
           },
+          "registrationNumber": {
+            "type": "string"
+          },
+          "validFrom": {
+            "type": "integer"
+          },
+          "validTo": {
+            "type": "integer"
+          },
           "formSubmissionTime": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer"
           },
           "submittedToRegulator": {
             "type": "string",
@@ -309,9 +407,6 @@
                     "type": "string"
                   },
                   "fullAddress": {
-                    "type": "string"
-                  },
-                  "line2ToCounty": {
                     "type": "string"
                   }
                 },
@@ -381,8 +476,7 @@
             ]
           },
           "accreditationId": {
-            "type": "string",
-            "readOnly": true
+            "type": "string"
           },
           "recyclingProcess": {
             "type": "array",
@@ -419,9 +513,6 @@
                 "type": "string"
               },
               "fullAddress": {
-                "type": "string"
-              },
-              "line2ToCounty": {
                 "type": "string"
               }
             },
@@ -749,17 +840,10 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "readOnly": true
+            "type": "string"
           },
           "accreditationNumber": {
-            "type": "number"
-          },
-          "statusHistory": {
-            "type": "array",
-            "items": {
-              "not": {}
-            }
+            "type": "string"
           },
           "status": {
             "type": "string",
@@ -767,13 +851,19 @@
               "created",
               "approved",
               "rejected",
+              "active",
               "suspended",
               "archived"
             ]
           },
+          "validFrom": {
+            "type": "integer"
+          },
+          "validTo": {
+            "type": "integer"
+          },
           "formSubmissionTime": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer"
           },
           "submittedToRegulator": {
             "type": "string",
@@ -815,9 +905,6 @@
                     "type": "string"
                   },
                   "fullAddress": {
-                    "type": "string"
-                  },
-                  "line2ToCounty": {
                     "type": "string"
                   }
                 },
@@ -1069,9 +1156,6 @@
                 "type": "string"
               },
               "fullAddress": {
-                "type": "string"
-              },
-              "line2ToCounty": {
                 "type": "string"
               }
             },
