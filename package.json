@@ -114,6 +114,7 @@
     "webpack-cli": "6.0.1"
   },
   "overrides": {
-    "tmp": "0.2.5"
+    "tmp": "0.2.5",
+    "validator": "13.15.20"
   }
 }
