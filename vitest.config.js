@@ -22,14 +22,15 @@ export default defineConfig({
       exclude: [
         ...configDefaults.exclude,
         ...parsedGitignore,
-        '.server',
         '.gitkeep',
-        'src/server/common/test-helpers',
-        'src/server/components/icons',
-        'src/**/*.scss',
+        '.server',
+        '**/*.md',
         'src/**/*.njk', // Vitest can't parse them anyway
+        'src/**/*.scss',
         'src/index.js',
-        'src/server/common/schemas/**'
+        'src/server/common/schemas/**',
+        'src/server/common/test-helpers',
+        'src/server/components/icons'
       ],
       thresholds: {
         lines: 100,
