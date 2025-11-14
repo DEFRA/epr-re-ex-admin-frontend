@@ -1,14 +1,14 @@
-import { vi } from 'vitest'
-import { createServer } from '#server/server.js'
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
+import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
+import { createServer } from '#server/server.js'
+import { vi } from 'vitest'
 import {
   http,
-  server as mswServer,
-  HttpResponse
+  HttpResponse,
+  server as mswServer
 } from '../../../../.vite/setup-msw.js'
 
 vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
@@ -122,7 +122,7 @@ describe('#organisationsController', () => {
 
     test('Should show 500 error page when backend returns a non-OK response', async () => {
       const getOrganisationsHandler = http.get(
-        'http://localhost:3001/v1/organisations',
+        `${backendUrl}/v1/organisations`,
         () => {
           throw HttpResponse.text('', { status: 500 })
         }

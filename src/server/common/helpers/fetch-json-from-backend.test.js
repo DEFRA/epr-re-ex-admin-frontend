@@ -113,7 +113,7 @@ describe('#fetchJsonFromBackend', () => {
         statusCode: 401
       },
       message: expect.stringContaining(
-        'Failed to fetch from backend at path: /secure: 401 Unauthorized'
+        `Failed to fetch from backend at url: ${backendUrl}/secure: 401 Unauthorized`
       )
     })
   })
@@ -137,7 +137,7 @@ describe('#fetchJsonFromBackend', () => {
         statusCode: 500
       },
       message: expect.stringContaining(
-        'Failed to fetch from backend at path: /boom: 500 Internal Server Error'
+        `Failed to fetch from backend at url: ${backendUrl}/boom: 500 Internal Server Error`
       )
     })
   })
@@ -158,7 +158,7 @@ describe('#fetchJsonFromBackend', () => {
         statusCode: 500
       },
       message: expect.stringContaining(
-        'Failed to fetch from backend at path: /network:'
+        `Failed to fetch from backend at url: ${backendUrl}/network:`
       )
     })
   })
@@ -193,7 +193,7 @@ describe('#fetchJsonFromBackend', () => {
         payload: errorPayload
       },
       message: expect.stringContaining(
-        'Failed to fetch from backend at path: /validation-error: 400 Bad Request'
+        `Failed to fetch from backend at url: ${backendUrl}/validation-error: 400 Bad Request`
       )
     })
   })
@@ -221,7 +221,7 @@ describe('#fetchJsonFromBackend', () => {
         statusCode: 500
       },
       message: expect.stringContaining(
-        'Failed to fetch from backend at path: /malformed:'
+        `Failed to fetch from backend at url: ${backendUrl}/malformed:`
       )
     })
   })
