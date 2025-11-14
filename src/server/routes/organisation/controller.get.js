@@ -12,12 +12,12 @@ export const organisationsGETController = {
     )
 
     // Get flash messages from session
-    const errors = await request.yar.get('organisationErrors')
-    const success = await request.yar.get('organisationSuccess')
+    const errorMessage = request.yar.get('error')
+    const successMessage = request.yar.get('success')
 
     // Clear flash messages after reading
-    await request.yar.clear('organisationErrors')
-    await request.yar.clear('organisationSuccess')
+    await request.yar.clear('error')
+    await request.yar.clear('success')
 
     const viewContext = {
       pageTitle: 'Organisation',
@@ -26,12 +26,11 @@ export const organisationsGETController = {
       breadcrumbs: [organisationsBreadcrumb]
     }
 
-    if (errors) {
-      viewContext.errorTitle = errors.errorTitle
-      viewContext.errors = errors.errors
+    if (errorMessage) {
+      viewContext.error = errorMessage
     }
 
-    if (success) {
+    if (successMessage) {
       viewContext.message = 'success'
     }
 

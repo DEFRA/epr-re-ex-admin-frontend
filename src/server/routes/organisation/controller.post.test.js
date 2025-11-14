@@ -4,9 +4,14 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
+import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
 vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
   getUserSession: vi.fn().mockReturnValue(null)
+}))
+
+vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
+  fetchJsonFromBackend: vi.fn()
 }))
 
 describe('organisation POST controller', () => {
@@ -63,13 +68,8 @@ describe('organisation POST controller', () => {
         }
       }
 
-      const fetchMock = vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        json: async () => mockUpdatedOrganisation
-      })
-
-      vi.stubGlobal('fetch', fetchMock)
+      // Mock fetchJsonFromBackend to return the parsed JSON directly
+      fetchJsonFromBackend.mockResolvedValue(mockUpdatedOrganisation)
 
       const postData = {
         version: 1,
@@ -95,9 +95,10 @@ describe('organisation POST controller', () => {
       expect(statusCode).toBe(302)
       expect(headers.location).toBe('/organisations/org-1')
 
-      // Verify fetch was called with correct parameters
-      expect(fetchMock).toHaveBeenCalledWith(
-        'http://localhost:3001/v1/organisations/org-1',
+      // Verify fetchJsonFromBackend was called with correct parameters
+      expect(fetchJsonFromBackend).toHaveBeenCalledWith(
+        expect.anything(),
+        '/v1/organisations/org-1',
         {
           method: 'PUT',
           headers: {
@@ -117,13 +118,14 @@ describe('organisation POST controller', () => {
           'Validation Error: Field "companyDetails.name" is required; Field "version" must be a number'
       }
 
-      const fetchMock = vi.fn().mockResolvedValue({
-        ok: false,
-        status: 400,
-        json: async () => mockErrorResponse
-      })
-
-      vi.stubGlobal('fetch', fetchMock)
+      // Mock fetchJsonFromBackend to throw a Boom error
+      const boomError = new Error('Bad Request')
+      boomError.isBoom = true
+      boomError.output = {
+        statusCode: 400,
+        payload: mockErrorResponse
+      }
+      fetchJsonFromBackend.mockRejectedValue(boomError)
 
       const postData = {
         version: 1,
@@ -155,13 +157,14 @@ describe('organisation POST controller', () => {
         message: 'Conflict Error: Organisation version mismatch'
       }
 
-      const fetchMock = vi.fn().mockResolvedValue({
-        ok: false,
-        status: 409,
-        json: async () => mockErrorResponse
-      })
-
-      vi.stubGlobal('fetch', fetchMock)
+      // Mock fetchJsonFromBackend to throw a Boom error
+      const boomError = new Error('Conflict')
+      boomError.isBoom = true
+      boomError.output = {
+        statusCode: 409,
+        payload: mockErrorResponse
+      }
+      fetchJsonFromBackend.mockRejectedValue(boomError)
 
       const postData = {
         version: 3,
@@ -193,13 +196,14 @@ describe('organisation POST controller', () => {
         message: 'Internal Server Error: Database connection failed'
       }
 
-      const fetchMock = vi.fn().mockResolvedValue({
-        ok: false,
-        status: 500,
-        json: async () => mockErrorResponse
-      })
-
-      vi.stubGlobal('fetch', fetchMock)
+      // Mock fetchJsonFromBackend to throw a Boom error
+      const boomError = new Error('Internal Server Error')
+      boomError.isBoom = true
+      boomError.output = {
+        statusCode: 500,
+        payload: mockErrorResponse
+      }
+      fetchJsonFromBackend.mockRejectedValue(boomError)
 
       const postData = {
         version: 1,
@@ -236,13 +240,12 @@ describe('organisation POST controller', () => {
         }
       }
 
-      const fetchMock = vi.fn().mockResolvedValue({
+      // Mock fetchJsonFromBackend to return a Response-like object
+      fetchJsonFromBackend.mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => mockUpdatedOrganisation
       })
-
-      vi.stubGlobal('fetch', fetchMock)
 
       const postData = {
         version: 1,
@@ -264,9 +267,10 @@ describe('organisation POST controller', () => {
         }
       })
 
-      // Verify the correct ID was used in the fetch URL
-      expect(fetchMock).toHaveBeenCalledWith(
-        'http://localhost:3001/v1/organisations/specific-org-id-456',
+      // Verify the correct ID was used in the fetchJsonFromBackend call
+      expect(fetchJsonFromBackend).toHaveBeenCalledWith(
+        expect.anything(),
+        '/v1/organisations/specific-org-id-456',
         expect.any(Object)
       )
 
