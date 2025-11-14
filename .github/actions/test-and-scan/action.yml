@@ -1,5 +1,5 @@
 name: 'Test and Scan'
-description: 'Run format check, lint, test, and SonarCloud scan'
+description: 'Run format check, lint, build, test, and SonarCloud scan'
 
 inputs:
   github-token:
