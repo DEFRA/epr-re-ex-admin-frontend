@@ -61,9 +61,9 @@ describe('organisation GET controller - Unit Tests - Flash message handling', ()
       {}
     )
 
-    expect(mockRequest.yar.get).toHaveBeenCalledWith('organisationErrors')
+    expect(mockRequest.yar.get).toHaveBeenCalledWith('organisationError')
     expect(mockRequest.yar.get).toHaveBeenCalledWith('organisationSuccess')
-    expect(mockRequest.yar.clear).toHaveBeenCalledWith('organisationErrors')
+    expect(mockRequest.yar.clear).toHaveBeenCalledWith('organisationError')
     expect(mockRequest.yar.clear).toHaveBeenCalledWith('organisationSuccess')
 
     expect(mockH.view).toHaveBeenCalledWith('routes/organisation/index', {
@@ -80,14 +80,11 @@ describe('organisation GET controller - Unit Tests - Flash message handling', ()
       companyDetails: { name: 'Test Org' }
     }
 
-    const mockErrors = {
-      errorTitle: 'Validation Error',
-      errors: [{ text: 'Field is required' }]
-    }
+    const mockError = 'Validation Error: Field is required'
 
     fetchJsonFromBackend.mockResolvedValue(mockOrgData)
     mockRequest.yar.get.mockImplementation((key) => {
-      if (key === 'organisationErrors') return Promise.resolve(mockErrors)
+      if (key === 'organisationError') return Promise.resolve(mockError)
       return Promise.resolve(null)
     })
 
@@ -96,8 +93,7 @@ describe('organisation GET controller - Unit Tests - Flash message handling', ()
     expect(mockH.view).toHaveBeenCalledWith(
       'routes/organisation/index',
       expect.objectContaining({
-        errorTitle: 'Validation Error',
-        errors: [{ text: 'Field is required' }]
+        error: mockError
       })
     )
   })
@@ -130,14 +126,11 @@ describe('organisation GET controller - Unit Tests - Flash message handling', ()
       companyDetails: { name: 'Test Org' }
     }
 
-    const mockErrors = {
-      errorTitle: 'Test Error',
-      errors: [{ text: 'Error message' }]
-    }
+    const mockError = 'Test Error'
 
     fetchJsonFromBackend.mockResolvedValue(mockOrgData)
     mockRequest.yar.get.mockImplementation((key) => {
-      if (key === 'organisationErrors') return Promise.resolve(mockErrors)
+      if (key === 'organisationError') return Promise.resolve(mockError)
       if (key === 'organisationSuccess') return Promise.resolve(true)
       return Promise.resolve(null)
     })
@@ -147,8 +140,7 @@ describe('organisation GET controller - Unit Tests - Flash message handling', ()
     expect(mockH.view).toHaveBeenCalledWith(
       'routes/organisation/index',
       expect.objectContaining({
-        errorTitle: 'Test Error',
-        errors: [{ text: 'Error message' }],
+        error: mockError,
         message: 'success'
       })
     )

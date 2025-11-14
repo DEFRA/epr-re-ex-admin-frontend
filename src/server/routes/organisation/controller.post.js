@@ -1,22 +1,27 @@
-import { config } from '#config/config.js'
+import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
 export const organisationsPOSTController = {
   async handler(request, h) {
     const id = request.params.id
 
     const postedData = JSON.parse(request.payload.organisation)
-    const eprBackendUrl = config.get('eprBackendUrl')
 
-    const response = await fetch(`${eprBackendUrl}/v1/organisations/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        version: postedData.version,
-        updateFragment: postedData
-      })
-    })
+    const response = await fetchJsonFromBackend(
+      request,
+      `/v1/organisations/${id}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          version: postedData.version,
+          updateFragment: postedData
+        })
+      }
+    )
+
+    console.log(response)
 
     const data = await response.json()
 
