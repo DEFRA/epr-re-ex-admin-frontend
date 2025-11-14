@@ -35,7 +35,7 @@ describe('organisation GET controller - Unit Tests - Flash message handling', ()
     mockRequest = {
       params: { id: 'test-org-id' },
       yar: {
-        get: vi.fn().mockResolvedValue(null),
+        get: vi.fn().mockReturnValue(null),
         clear: vi.fn().mockResolvedValue(undefined)
       }
     }
@@ -61,10 +61,10 @@ describe('organisation GET controller - Unit Tests - Flash message handling', ()
       {}
     )
 
-    expect(mockRequest.yar.get).toHaveBeenCalledWith('organisationError')
-    expect(mockRequest.yar.get).toHaveBeenCalledWith('organisationSuccess')
-    expect(mockRequest.yar.clear).toHaveBeenCalledWith('organisationError')
-    expect(mockRequest.yar.clear).toHaveBeenCalledWith('organisationSuccess')
+    expect(mockRequest.yar.get).toHaveBeenCalledWith('error')
+    expect(mockRequest.yar.get).toHaveBeenCalledWith('success')
+    expect(mockRequest.yar.clear).toHaveBeenCalledWith('error')
+    expect(mockRequest.yar.clear).toHaveBeenCalledWith('success')
 
     expect(mockH.view).toHaveBeenCalledWith('routes/organisation/index', {
       pageTitle: 'Organisation',
@@ -84,8 +84,8 @@ describe('organisation GET controller - Unit Tests - Flash message handling', ()
 
     fetchJsonFromBackend.mockResolvedValue(mockOrgData)
     mockRequest.yar.get.mockImplementation((key) => {
-      if (key === 'organisationError') return Promise.resolve(mockError)
-      return Promise.resolve(null)
+      if (key === 'error') return mockError
+      return null
     })
 
     await organisationsGETController.handler(mockRequest, mockH)
@@ -106,8 +106,8 @@ describe('organisation GET controller - Unit Tests - Flash message handling', ()
 
     fetchJsonFromBackend.mockResolvedValue(mockOrgData)
     mockRequest.yar.get.mockImplementation((key) => {
-      if (key === 'organisationSuccess') return Promise.resolve(true)
-      return Promise.resolve(null)
+      if (key === 'success') return true
+      return null
     })
 
     await organisationsGETController.handler(mockRequest, mockH)
@@ -130,9 +130,9 @@ describe('organisation GET controller - Unit Tests - Flash message handling', ()
 
     fetchJsonFromBackend.mockResolvedValue(mockOrgData)
     mockRequest.yar.get.mockImplementation((key) => {
-      if (key === 'organisationError') return Promise.resolve(mockError)
-      if (key === 'organisationSuccess') return Promise.resolve(true)
-      return Promise.resolve(null)
+      if (key === 'error') return mockError
+      if (key === 'success') return true
+      return null
     })
 
     await organisationsGETController.handler(mockRequest, mockH)

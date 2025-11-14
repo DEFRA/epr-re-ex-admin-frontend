@@ -6,10 +6,8 @@ export const organisationsPOSTController = {
 
     const postedData = JSON.parse(request.payload.organisation)
 
-    const response = await fetchJsonFromBackend(
-      request,
-      `/v1/organisations/${id}`,
-      {
+    try {
+      await fetchJsonFromBackend(request, `/v1/organisations/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -18,21 +16,15 @@ export const organisationsPOSTController = {
           version: postedData.version,
           updateFragment: postedData
         })
-      }
-    )
+      })
 
-    console.log(response)
+      request.yar.set('success', true)
 
-    const data = await response.json()
-
-    if (!response.ok) {
-      request.yar.set('organisationError', data.message)
+      return h.redirect(`/organisations/${id}`)
+    } catch (error) {
+      request.yar.set('error', error.output.payload.message)
 
       return h.redirect(`/organisations/${id}`)
     }
-
-    request.yar.set('organisationSuccess', true)
-
-    return h.redirect(`/organisations/${id}`)
   }
 }

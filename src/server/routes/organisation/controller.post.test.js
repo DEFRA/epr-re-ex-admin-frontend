@@ -68,12 +68,8 @@ describe('organisation POST controller', () => {
         }
       }
 
-      // Mock fetchJsonFromBackend to return a Response-like object
-      fetchJsonFromBackend.mockResolvedValue({
-        ok: true,
-        status: 200,
-        json: async () => mockUpdatedOrganisation
-      })
+      // Mock fetchJsonFromBackend to return the parsed JSON directly
+      fetchJsonFromBackend.mockResolvedValue(mockUpdatedOrganisation)
 
       const postData = {
         version: 1,
@@ -122,12 +118,14 @@ describe('organisation POST controller', () => {
           'Validation Error: Field "companyDetails.name" is required; Field "version" must be a number'
       }
 
-      // Mock fetchJsonFromBackend to return a Response-like object with error
-      fetchJsonFromBackend.mockResolvedValue({
-        ok: false,
-        status: 400,
-        json: async () => mockErrorResponse
-      })
+      // Mock fetchJsonFromBackend to throw a Boom error
+      const boomError = new Error('Bad Request')
+      boomError.isBoom = true
+      boomError.output = {
+        statusCode: 400,
+        payload: mockErrorResponse
+      }
+      fetchJsonFromBackend.mockRejectedValue(boomError)
 
       const postData = {
         version: 1,
@@ -159,12 +157,14 @@ describe('organisation POST controller', () => {
         message: 'Conflict Error: Organisation version mismatch'
       }
 
-      // Mock fetchJsonFromBackend to return a Response-like object with error
-      fetchJsonFromBackend.mockResolvedValue({
-        ok: false,
-        status: 409,
-        json: async () => mockErrorResponse
-      })
+      // Mock fetchJsonFromBackend to throw a Boom error
+      const boomError = new Error('Conflict')
+      boomError.isBoom = true
+      boomError.output = {
+        statusCode: 409,
+        payload: mockErrorResponse
+      }
+      fetchJsonFromBackend.mockRejectedValue(boomError)
 
       const postData = {
         version: 3,
@@ -196,12 +196,14 @@ describe('organisation POST controller', () => {
         message: 'Internal Server Error: Database connection failed'
       }
 
-      // Mock fetchJsonFromBackend to return a Response-like object with error
-      fetchJsonFromBackend.mockResolvedValue({
-        ok: false,
-        status: 500,
-        json: async () => mockErrorResponse
-      })
+      // Mock fetchJsonFromBackend to throw a Boom error
+      const boomError = new Error('Internal Server Error')
+      boomError.isBoom = true
+      boomError.output = {
+        statusCode: 500,
+        payload: mockErrorResponse
+      }
+      fetchJsonFromBackend.mockRejectedValue(boomError)
 
       const postData = {
         version: 1,
