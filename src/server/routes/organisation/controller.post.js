@@ -21,13 +21,7 @@ export const organisationsPOSTController = {
     const data = await response.json()
 
     if (!response.ok) {
-      const [errorTitle, message = data.message] = data.message.split(': ')
-      const errorMessages = message.split('; ')
-
-      request.yar.set('organisationErrors', {
-        errorTitle,
-        errors: errorMessages.map((err) => ({ text: err }))
-      })
+      request.yar.set('organisationError', data.message)
 
       return h.redirect(`/organisations/${id}`)
     }
