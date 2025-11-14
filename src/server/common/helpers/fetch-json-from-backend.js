@@ -22,14 +22,16 @@ export const fetchJsonFromBackend = async (request, path, options) => {
     }
   }
 
+  const url = `${eprBackendUrl}${path}`
+
   try {
-    const response = await fetch(`${eprBackendUrl}${path}`, completeOptions)
+    const response = await fetch(url, completeOptions)
 
     if (!response.ok) {
       // Create a Boom error that matches the backend response
       const error = Boom.boomify(
         new Error(
-          `Failed to fetch from backend at path: ${path}: ${response.status} ${response.statusText}`
+          `Failed to fetch from backend at url: ${url}: ${response.status} ${response.statusText}`
         ),
         { statusCode: response.status }
       )
@@ -51,7 +53,7 @@ export const fetchJsonFromBackend = async (request, path, options) => {
 
     // For network errors or other non-HTTP errors, create a 500 Boom error
     throw Boom.internal(
-      `Failed to fetch from backend at path: ${path}: ${error.message}`
+      `Failed to fetch from backend at url: ${url}: ${error.message}`
     )
   }
 }
