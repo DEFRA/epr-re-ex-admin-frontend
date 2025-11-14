@@ -38,6 +38,8 @@ services:
       dockerfile: Dockerfile.local
     ports:
       - '3002:3002'
+    extra_hosts:
+      - 'localhost:host-gateway'
     links:
       - 'localstack:localstack'
       - 'redis:redis'
@@ -71,7 +73,8 @@ services:
       REDIS_HOST: redis
       LOCALSTACK_ENDPOINT: http://localstack:4566
       USE_SINGLE_INSTANCE_CACHE: true
-      EPR_BACKEND_URL: http://localhost:3001/v1
+      EPR_BACKEND_URL: http://localhost:3001
+      ENTRA_CLIENT_SECRET: $ENTRA_CLIENT_SECRET
     networks:
       - cdp-tenant
 
