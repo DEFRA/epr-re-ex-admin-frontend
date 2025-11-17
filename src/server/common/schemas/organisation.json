@@ -1,45 +1,6 @@
 {
   "type": "object",
   "properties": {
-    "id": {
-      "not": {}
-    },
-    "orgId": {
-      "type": "number"
-    },
-    "status": {
-      "type": "string",
-      "enum": [
-        "created",
-        "approved",
-        "rejected",
-        "suspended",
-        "archived"
-      ]
-    },
-    "wasteProcessingTypes": {
-      "type": "array",
-      "minItems": 1,
-      "items": {
-        "type": "string",
-        "enum": [
-          "reprocessor",
-          "exporter"
-        ]
-      }
-    },
-    "reprocessingNations": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "enum": [
-          "england",
-          "wales",
-          "scotland",
-          "northern_ireland"
-        ]
-      }
-    },
     "businessType": {
       "type": "string",
       "enum": [
@@ -127,6 +88,19 @@
       ],
       "additionalProperties": false
     },
+    "defraIdOrgId": {
+      "type": "string"
+    },
+    "formSubmissionTime": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "id": {
+      "not": {}
+    },
+    "orgId": {
+      "type": "number"
+    },
     "partnership": {
       "type": "object",
       "properties": {
@@ -165,6 +139,38 @@
         "type"
       ],
       "additionalProperties": false
+    },
+    "reprocessingNations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "england",
+          "wales",
+          "scotland",
+          "northern_ireland"
+        ]
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "created",
+        "approved",
+        "active",
+        "rejected",
+        "suspended",
+        "archived"
+      ]
+    },
+    "submittedToRegulator": {
+      "type": "string",
+      "enum": [
+        "ea",
+        "nrw",
+        "sepa",
+        "niea"
+      ]
     },
     "submitterContactDetails": {
       "type": "object",
@@ -205,57 +211,45 @@
         }
       ]
     },
-    "managementContactDetails": {
-      "type": "object",
-      "properties": {
-        "fullName": {
-          "type": "string"
+    "users": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "const": "standard-user"
+            }
+          },
+          "isInitialUser": {
+            "type": "boolean"
+          }
         },
-        "email": {
-          "type": "string",
-          "format": "email"
-        },
-        "phone": {
-          "type": "string"
-        },
-        "role": {
-          "type": "string"
-        },
-        "title": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "fullName",
-        "email",
-        "phone"
-      ],
-      "additionalProperties": false,
-      "anyOf": [
-        {
-          "required": [
-            "role"
-          ]
-        },
-        {
-          "required": [
-            "title"
-          ]
-        }
-      ]
+        "required": [
+          "fullName",
+          "email"
+        ],
+        "additionalProperties": false
+      }
     },
-    "formSubmissionTime": {
-      "type": "string",
-      "format": "date-time"
-    },
-    "submittedToRegulator": {
-      "type": "string",
-      "enum": [
-        "ea",
-        "nrw",
-        "sepa",
-        "niea"
-      ]
+    "wasteProcessingTypes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "enum": [
+          "reprocessor",
+          "exporter"
+        ]
+      }
     },
     "registrations": {
       "type": "array",
@@ -270,6 +264,7 @@
             "enum": [
               "created",
               "approved",
+              "active",
               "rejected",
               "suspended",
               "archived"
@@ -618,7 +613,7 @@
                 }
               },
               {
-                "not": {}
+                "const": null
               }
             ]
           },
@@ -695,10 +690,40 @@
             ]
           },
           "cbduNumber": {
-            "type": "string",
-            "minLength": 8,
-            "maxLength": 10,
-            "pattern": "^[cC][bB][dD][uU]"
+            "type": [
+              "array",
+              "boolean",
+              "number",
+              "object",
+              "string",
+              "null"
+            ],
+            "oneOf": [
+              {
+                "type": "string",
+                "minLength": 8,
+                "maxLength": 10,
+                "pattern": "^[cC][bB][dD][uU]"
+              },
+              {
+                "type": [
+                  "array",
+                  "boolean",
+                  "number",
+                  "object",
+                  "string",
+                  "null"
+                ],
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            ]
           },
           "wasteManagementPermits": {
             "type": [
@@ -735,10 +760,25 @@
                       ],
                       "oneOf": [
                         {
-                          "not": {}
+                          "type": [
+                            "array",
+                            "boolean",
+                            "number",
+                            "object",
+                            "string",
+                            "null"
+                          ],
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "not": {}
+                            }
+                          ]
                         },
                         {
-                          "type": "string"
+                          "not": {}
                         }
                       ]
                     },
@@ -753,50 +793,93 @@
                       ],
                       "oneOf": [
                         {
-                          "type": "array",
-                          "minItems": 1,
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "reference": {
-                                "type": "string",
-                                "pattern": "^[wW][eE][xX]\\d{6}$"
-                              },
-                              "exemptionCode": {
-                                "type": "string",
-                                "pattern": "^^[a-zA-Z]\\d{1,2}$"
-                              },
-                              "materials": {
-                                "type": "array",
-                                "minItems": 1,
-                                "items": {
-                                  "type": [
-                                    "array",
-                                    "boolean",
-                                    "number",
-                                    "object",
-                                    "string",
-                                    "null"
-                                  ],
-                                  "enum": [
-                                    "aluminium",
-                                    "fibre",
-                                    "glass",
-                                    "paper",
-                                    "plastic",
-                                    "steel",
-                                    "wood"
-                                  ]
-                                }
+                          "type": [
+                            "array",
+                            "boolean",
+                            "number",
+                            "object",
+                            "string",
+                            "null"
+                          ],
+                          "oneOf": [
+                            {
+                              "type": "array",
+                              "minItems": 1,
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "reference": {
+                                    "type": [
+                                      "array",
+                                      "boolean",
+                                      "number",
+                                      "object",
+                                      "string",
+                                      "null"
+                                    ],
+                                    "oneOf": [
+                                      {
+                                        "type": "string",
+                                        "pattern": "^[wW][eE][xX]\\d{6}$"
+                                      },
+                                      {
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "exemptionCode": {
+                                    "type": [
+                                      "array",
+                                      "boolean",
+                                      "number",
+                                      "object",
+                                      "string",
+                                      "null"
+                                    ],
+                                    "oneOf": [
+                                      {
+                                        "type": "string",
+                                        "pattern": "^[a-zA-Z]\\d{1,2}$"
+                                      },
+                                      {
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "materials": {
+                                    "type": "array",
+                                    "minItems": 1,
+                                    "items": {
+                                      "type": [
+                                        "array",
+                                        "boolean",
+                                        "number",
+                                        "object",
+                                        "string",
+                                        "null"
+                                      ],
+                                      "enum": [
+                                        "aluminium",
+                                        "fibre",
+                                        "glass",
+                                        "paper",
+                                        "plastic",
+                                        "steel",
+                                        "wood"
+                                      ]
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "materials"
+                                ],
+                                "additionalProperties": false
                               }
                             },
-                            "required": [
-                              "reference",
-                              "exemptionCode",
-                              "materials"
-                            ],
-                            "additionalProperties": false
-                          }
+                            {
+                              "not": {}
+                            }
+                          ]
                         },
                         {
                           "not": {}
@@ -814,45 +897,60 @@
                       ],
                       "oneOf": [
                         {
-                          "not": {}
-                        },
-                        {
-                          "type": "array",
-                          "minItems": 1,
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "material": {
-                                "type": "string",
-                                "enum": [
-                                  "aluminium",
-                                  "fibre",
-                                  "glass",
-                                  "paper",
-                                  "plastic",
-                                  "steel",
-                                  "wood"
-                                ]
-                              },
-                              "authorisedWeightInTonnes": {
-                                "type": "number"
-                              },
-                              "timeScale": {
-                                "type": "string",
-                                "enum": [
-                                  "weekly",
-                                  "monthly",
-                                  "yearly"
-                                ]
+                          "type": [
+                            "array",
+                            "boolean",
+                            "number",
+                            "object",
+                            "string",
+                            "null"
+                          ],
+                          "oneOf": [
+                            {
+                              "type": "array",
+                              "minItems": 1,
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "material": {
+                                    "type": "string",
+                                    "enum": [
+                                      "aluminium",
+                                      "fibre",
+                                      "glass",
+                                      "paper",
+                                      "plastic",
+                                      "steel",
+                                      "wood"
+                                    ]
+                                  },
+                                  "authorisedWeightInTonnes": {
+                                    "type": "number"
+                                  },
+                                  "timeScale": {
+                                    "type": "string",
+                                    "enum": [
+                                      "weekly",
+                                      "monthly",
+                                      "yearly"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "material",
+                                  "authorisedWeightInTonnes",
+                                  "timeScale"
+                                ],
+                                "additionalProperties": false
                               }
                             },
-                            "required": [
-                              "material",
-                              "authorisedWeightInTonnes",
-                              "timeScale"
-                            ],
-                            "additionalProperties": false
-                          }
+                            {
+                              "not": {}
+                            }
+                          ]
+                        },
+                        {
+                          "not": {}
                         }
                       ]
                     }
@@ -864,7 +962,229 @@
                 }
               },
               {
-                "not": {}
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "environmental_permit",
+                        "installation_permit",
+                        "waste_exemption"
+                      ]
+                    },
+                    "permitNumber": {
+                      "type": [
+                        "array",
+                        "boolean",
+                        "number",
+                        "object",
+                        "string",
+                        "null"
+                      ],
+                      "oneOf": [
+                        {
+                          "type": [
+                            "array",
+                            "boolean",
+                            "number",
+                            "object",
+                            "string",
+                            "null"
+                          ],
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "not": {}
+                            }
+                          ]
+                        },
+                        {
+                          "not": {}
+                        }
+                      ]
+                    },
+                    "exemptions": {
+                      "type": [
+                        "array",
+                        "boolean",
+                        "number",
+                        "object",
+                        "string",
+                        "null"
+                      ],
+                      "oneOf": [
+                        {
+                          "type": [
+                            "array",
+                            "boolean",
+                            "number",
+                            "object",
+                            "string",
+                            "null"
+                          ],
+                          "oneOf": [
+                            {
+                              "type": "array",
+                              "minItems": 1,
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "reference": {
+                                    "type": [
+                                      "array",
+                                      "boolean",
+                                      "number",
+                                      "object",
+                                      "string",
+                                      "null"
+                                    ],
+                                    "oneOf": [
+                                      {
+                                        "type": "string",
+                                        "pattern": "^[wW][eE][xX]\\d{6}$"
+                                      },
+                                      {
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "exemptionCode": {
+                                    "type": [
+                                      "array",
+                                      "boolean",
+                                      "number",
+                                      "object",
+                                      "string",
+                                      "null"
+                                    ],
+                                    "oneOf": [
+                                      {
+                                        "type": "string",
+                                        "pattern": "^[a-zA-Z]\\d{1,2}$"
+                                      },
+                                      {
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "materials": {
+                                    "type": "array",
+                                    "minItems": 1,
+                                    "items": {
+                                      "type": [
+                                        "array",
+                                        "boolean",
+                                        "number",
+                                        "object",
+                                        "string",
+                                        "null"
+                                      ],
+                                      "enum": [
+                                        "aluminium",
+                                        "fibre",
+                                        "glass",
+                                        "paper",
+                                        "plastic",
+                                        "steel",
+                                        "wood"
+                                      ]
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "materials"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            {
+                              "not": {}
+                            }
+                          ]
+                        },
+                        {
+                          "not": {}
+                        }
+                      ]
+                    },
+                    "authorisedMaterials": {
+                      "type": [
+                        "array",
+                        "boolean",
+                        "number",
+                        "object",
+                        "string",
+                        "null"
+                      ],
+                      "oneOf": [
+                        {
+                          "type": [
+                            "array",
+                            "boolean",
+                            "number",
+                            "object",
+                            "string",
+                            "null"
+                          ],
+                          "oneOf": [
+                            {
+                              "type": "array",
+                              "minItems": 1,
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "material": {
+                                    "type": "string",
+                                    "enum": [
+                                      "aluminium",
+                                      "fibre",
+                                      "glass",
+                                      "paper",
+                                      "plastic",
+                                      "steel",
+                                      "wood"
+                                    ]
+                                  },
+                                  "authorisedWeightInTonnes": {
+                                    "type": "number"
+                                  },
+                                  "timeScale": {
+                                    "type": "string",
+                                    "enum": [
+                                      "weekly",
+                                      "monthly",
+                                      "yearly"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "material",
+                                  "authorisedWeightInTonnes",
+                                  "timeScale"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            {
+                              "not": {}
+                            }
+                          ]
+                        },
+                        {
+                          "not": {}
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "additionalProperties": false
+                }
               }
             ]
           },
@@ -1128,7 +1448,6 @@
           },
           "samplingInspectionPlanPart1FileUploads": {
             "type": "array",
-            "minItems": 1,
             "items": {
               "type": "object",
               "properties": {
@@ -1197,7 +1516,6 @@
           "orgName",
           "material",
           "wasteProcessingType",
-          "cbduNumber",
           "approvedPersons",
           "suppliers",
           "submitterContactDetails",
@@ -1219,6 +1537,7 @@
             "enum": [
               "created",
               "approved",
+              "active",
               "rejected",
               "suspended",
               "archived"
@@ -1359,6 +1678,32 @@
               "wood"
             ]
           },
+          "glassRecyclingProcess": {
+            "type": [
+              "array",
+              "boolean",
+              "number",
+              "object",
+              "string",
+              "null"
+            ],
+            "oneOf": [
+              {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "glass_re_melt",
+                    "glass_other"
+                  ]
+                }
+              },
+              {
+                "const": null
+              }
+            ]
+          },
           "wasteProcessingType": {
             "type": "string",
             "enum": [
@@ -1454,7 +1799,8 @@
               },
               "incomeBusinessPlan": {
                 "type": "array",
-                "minItems": 1,
+                "maxItems": 7,
+                "minItems": 7,
                 "items": {
                   "type": "object",
                   "properties": {
@@ -1525,7 +1871,6 @@
           },
           "samplingInspectionPlanPart2FileUploads": {
             "type": "array",
-            "minItems": 1,
             "items": {
               "type": "object",
               "properties": {
