@@ -27,10 +27,14 @@
           }) }}
         {% endif %}
 
-        {% if errors %}
+        {% if error %}
           {{ govukErrorSummary({
-            titleText: errorTitle,
-            errorList: errors
+            titleText: "Failed saving organisation",
+            errorList: [
+              {
+                text: error
+              }
+            ]
           }) }}
         {% endif %}
 
