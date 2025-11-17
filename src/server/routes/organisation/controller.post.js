@@ -9,9 +9,6 @@ export const organisationsPOSTController = {
     try {
       await fetchJsonFromBackend(request, `/v1/organisations/${id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({
           version: postedData.version,
           updateFragment: postedData
