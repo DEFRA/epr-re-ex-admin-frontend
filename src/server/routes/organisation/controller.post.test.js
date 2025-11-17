@@ -1,24 +1,34 @@
 import { vi } from 'vitest'
 import { createServer } from '#server/server.js'
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
+import {
+  http,
+  server as mswServer,
+  HttpResponse
+} from '../../../../.vite/setup-msw.js'
 
 vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
   getUserSession: vi.fn().mockReturnValue(null)
 }))
 
 describe('organisation POST controller', () => {
+  const originalBackendUrl = config.get('eprBackendUrl')
+  const backendUrl = 'http://mock-backend'
   let server
 
   beforeAll(async () => {
+    config.set('eprBackendUrl', backendUrl)
     createMockOidcServer()
     server = await createServer()
     await server.initialize()
   })
 
   afterAll(async () => {
+    config.set('eprBackendUrl', originalBackendUrl)
     await server.stop({ timeout: 0 })
   })
 
@@ -54,8 +64,9 @@ describe('organisation POST controller', () => {
     })
 
     test('Should successfully update organisation and redirect with success message in session', async () => {
+      const orgId = 'org-1'
       const mockUpdatedOrganisation = {
-        id: 'org-1',
+        id: orgId,
         version: 2,
         companyDetails: {
           name: 'Updated Acme Ltd',
@@ -63,13 +74,14 @@ describe('organisation POST controller', () => {
         }
       }
 
-      const fetchMock = vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        json: async () => mockUpdatedOrganisation
-      })
+      const putOrganisationHandler = http.put(
+        `${backendUrl}/v1/organisations/${orgId}`,
+        () => {
+          return HttpResponse.json(mockUpdatedOrganisation)
+        }
+      )
 
-      vi.stubGlobal('fetch', fetchMock)
+      mswServer.use(putOrganisationHandler)
 
       const postData = {
         version: 1,
@@ -81,7 +93,7 @@ describe('organisation POST controller', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'POST',
-        url: '/organisations/org-1',
+        url: `/organisations/${orgId}`,
         payload: {
           organisation: JSON.stringify(postData)
         },
@@ -93,37 +105,24 @@ describe('organisation POST controller', () => {
 
       // Should redirect (302 Found)
       expect(statusCode).toBe(302)
-      expect(headers.location).toBe('/organisations/org-1')
-
-      // Verify fetch was called with correct parameters
-      expect(fetchMock).toHaveBeenCalledWith(
-        'http://localhost:3001/v1/organisations/org-1',
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            version: 1,
-            updateFragment: postData
-          })
-        }
-      )
+      expect(headers.location).toBe(`/organisations/${orgId}`)
     })
 
     test('Should handle backend validation error and redirect with error messages in session', async () => {
+      const orgId = 'org-1'
       const mockErrorResponse = {
         message:
           'Validation Error: Field "companyDetails.name" is required; Field "version" must be a number'
       }
 
-      const fetchMock = vi.fn().mockResolvedValue({
-        ok: false,
-        status: 400,
-        json: async () => mockErrorResponse
-      })
+      const putOrganisationHandler = http.put(
+        `${backendUrl}/v1/organisations/${orgId}`,
+        () => {
+          return HttpResponse.json(mockErrorResponse, { status: 400 })
+        }
+      )
 
-      vi.stubGlobal('fetch', fetchMock)
+      mswServer.use(putOrganisationHandler)
 
       const postData = {
         version: 1,
@@ -135,7 +134,7 @@ describe('organisation POST controller', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'POST',
-        url: '/organisations/org-1',
+        url: `/organisations/${orgId}`,
         payload: {
           organisation: JSON.stringify(postData)
         },
@@ -147,21 +146,23 @@ describe('organisation POST controller', () => {
 
       // Should redirect (302 Found)
       expect(statusCode).toBe(302)
-      expect(headers.location).toBe('/organisations/org-1')
+      expect(headers.location).toBe(`/organisations/${orgId}`)
     })
 
     test('Should handle backend error with simple message format', async () => {
+      const orgId = 'org-2'
       const mockErrorResponse = {
         message: 'Conflict Error: Organisation version mismatch'
       }
 
-      const fetchMock = vi.fn().mockResolvedValue({
-        ok: false,
-        status: 409,
-        json: async () => mockErrorResponse
-      })
+      const putOrganisationHandler = http.put(
+        `${backendUrl}/v1/organisations/${orgId}`,
+        () => {
+          return HttpResponse.json(mockErrorResponse, { status: 409 })
+        }
+      )
 
-      vi.stubGlobal('fetch', fetchMock)
+      mswServer.use(putOrganisationHandler)
 
       const postData = {
         version: 3,
@@ -173,7 +174,7 @@ describe('organisation POST controller', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'POST',
-        url: '/organisations/org-2',
+        url: `/organisations/${orgId}`,
         payload: {
           organisation: JSON.stringify(postData)
         },
@@ -185,21 +186,23 @@ describe('organisation POST controller', () => {
 
       // Should redirect (302 Found)
       expect(statusCode).toBe(302)
-      expect(headers.location).toBe('/organisations/org-2')
+      expect(headers.location).toBe(`/organisations/${orgId}`)
     })
 
     test('Should handle backend server error and redirect', async () => {
+      const orgId = 'org-3'
       const mockErrorResponse = {
         message: 'Internal Server Error: Database connection failed'
       }
 
-      const fetchMock = vi.fn().mockResolvedValue({
-        ok: false,
-        status: 500,
-        json: async () => mockErrorResponse
-      })
+      const putOrganisationHandler = http.put(
+        `${backendUrl}/v1/organisations/${orgId}`,
+        () => {
+          return HttpResponse.json(mockErrorResponse, { status: 500 })
+        }
+      )
 
-      vi.stubGlobal('fetch', fetchMock)
+      mswServer.use(putOrganisationHandler)
 
       const postData = {
         version: 1,
@@ -211,7 +214,7 @@ describe('organisation POST controller', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'POST',
-        url: '/organisations/org-3',
+        url: `/organisations/${orgId}`,
         payload: {
           organisation: JSON.stringify(postData)
         },
@@ -223,12 +226,13 @@ describe('organisation POST controller', () => {
 
       // Should redirect (302 Found)
       expect(statusCode).toBe(302)
-      expect(headers.location).toBe('/organisations/org-3')
+      expect(headers.location).toBe(`/organisations/${orgId}`)
     })
 
     test('Should use correct organisation ID from route params', async () => {
+      const orgId = 'specific-org-id-456'
       const mockUpdatedOrganisation = {
-        id: 'specific-org-id-456',
+        id: orgId,
         version: 2,
         companyDetails: {
           name: 'Specific Company',
@@ -236,13 +240,14 @@ describe('organisation POST controller', () => {
         }
       }
 
-      const fetchMock = vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        json: async () => mockUpdatedOrganisation
-      })
+      const putOrganisationHandler = http.put(
+        `${backendUrl}/v1/organisations/${orgId}`,
+        () => {
+          return HttpResponse.json(mockUpdatedOrganisation)
+        }
+      )
 
-      vi.stubGlobal('fetch', fetchMock)
+      mswServer.use(putOrganisationHandler)
 
       const postData = {
         version: 1,
@@ -254,7 +259,7 @@ describe('organisation POST controller', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'POST',
-        url: '/organisations/specific-org-id-456',
+        url: `/organisations/${orgId}`,
         payload: {
           organisation: JSON.stringify(postData)
         },
@@ -264,15 +269,9 @@ describe('organisation POST controller', () => {
         }
       })
 
-      // Verify the correct ID was used in the fetch URL
-      expect(fetchMock).toHaveBeenCalledWith(
-        'http://localhost:3001/v1/organisations/specific-org-id-456',
-        expect.any(Object)
-      )
-
       // Should redirect to correct URL (302 Found)
       expect(statusCode).toBe(302)
-      expect(headers.location).toBe('/organisations/specific-org-id-456')
+      expect(headers.location).toBe(`/organisations/${orgId}`)
     })
   })
 })

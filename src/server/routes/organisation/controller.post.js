@@ -1,39 +1,27 @@
-import { config } from '#config/config.js'
+import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
 export const organisationsPOSTController = {
   async handler(request, h) {
     const id = request.params.id
 
     const postedData = JSON.parse(request.payload.organisation)
-    const eprBackendUrl = config.get('eprBackendUrl')
 
-    const response = await fetch(`${eprBackendUrl}/v1/organisations/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        version: postedData.version,
-        updateFragment: postedData
+    try {
+      await fetchJsonFromBackend(request, `/v1/organisations/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          version: postedData.version,
+          updateFragment: postedData
+        })
       })
-    })
 
-    const data = await response.json()
+      request.yar.set('success', true)
 
-    if (!response.ok) {
-      const [errorTitle, message = data.message] = data.message.split(': ')
-      const errorMessages = message.split('; ')
-
-      request.yar.set('organisationErrors', {
-        errorTitle,
-        errors: errorMessages.map((err) => ({ text: err }))
-      })
+      return h.redirect(`/organisations/${id}`)
+    } catch (error) {
+      request.yar.set('error', error.output.payload.message)
 
       return h.redirect(`/organisations/${id}`)
     }
-
-    request.yar.set('organisationSuccess', true)
-
-    return h.redirect(`/organisations/${id}`)
   }
 }
