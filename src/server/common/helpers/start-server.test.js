@@ -11,7 +11,7 @@ describe('#startServer', () => {
   let createServerImport
 
   beforeAll(async () => {
-    vi.stubEnv('PORT', '3097')
+    vi.stubEnv('PORT', '0')
     vi.resetModules()
 
     createMockOidcServer()
