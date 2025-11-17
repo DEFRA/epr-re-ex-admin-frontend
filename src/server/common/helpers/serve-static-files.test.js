@@ -1,15 +1,17 @@
 import { vi } from 'vitest'
-import { startServer } from './start-server.js'
 import { statusCodes } from '../constants/status-codes.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 
 describe('#serveStaticFiles', () => {
   let server
+  let startServer
 
   beforeAll(async () => {
-    vi.stubEnv('PORT', '3098')
+    vi.stubEnv('PORT', '0')
     vi.resetModules()
     createMockOidcServer()
+    const startServerModule = await import('./start-server.js')
+    startServer = startServerModule.startServer
     server = await startServer()
   })
 
