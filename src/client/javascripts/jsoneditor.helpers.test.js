@@ -726,6 +726,37 @@ describe('JSONEditor Helpers', () => {
         expect.arrayContaining([['name'], ['id']])
       )
     })
+
+    it('should handle additionalProperties errors correctly', () => {
+      mockValidate.mockReturnValue(false)
+      mockValidate.errors = [
+        {
+          instancePath: '/address',
+          keyword: 'additionalProperties',
+          params: { additionalProperty: 'invalidField' },
+          message: 'must NOT have additional properties'
+        }
+      ]
+
+      const json = {
+        id: '123',
+        name: 'John',
+        age: 30,
+        address: { street: '123 Main St', invalidField: 'extra' }
+      }
+      const original = {
+        id: '123',
+        name: 'John',
+        age: 30,
+        address: { street: '123 Main St' }
+      }
+
+      const errors = validateJSON(json, original, schema, mockValidate)
+
+      expect(errors).toHaveLength(1)
+      expect(errors[0].path).toEqual(['address', 'invalidField'])
+      expect(errors[0].message).toBe('must NOT have additional properties')
+    })
   })
 
   describe('highlightChanges', () => {

@@ -395,13 +395,24 @@ export function validateJSON(json, originalData, schema, validate) {
           message = `must be one of: ${allowed}`
         }
 
+        // Parse the base path
+        let path = err.instancePath
+          ? err.instancePath
+              .replace(/^\//, '')
+              .split('/')
+              .map(decodeURIComponent)
+          : []
+
+        // Handle additionalProperties errors - append the property name to the path
+        if (
+          err.keyword === 'additionalProperties' &&
+          err.params?.additionalProperty
+        ) {
+          path = [...path, err.params.additionalProperty]
+        }
+
         return {
-          path: err.instancePath
-            ? err.instancePath
-                .replace(/^\//, '')
-                .split('/')
-                .map(decodeURIComponent)
-            : [],
+          path,
           message
         }
       })
