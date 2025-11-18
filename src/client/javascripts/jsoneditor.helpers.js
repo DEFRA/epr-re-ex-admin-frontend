@@ -530,6 +530,20 @@ function createEditorConfig(
       syncHiddenInput(hiddenInputId, updatedJSON)
       highlightChanges(editor, updatedJSON, originalData)
     },
+    onChangeText: (updatedJSONText) => {
+      const updatedJSON = JSON.parse(updatedJSONText)
+
+      const editor = getEditor()
+      storageManager.save(updatedJSON)
+      syncHiddenInput(hiddenInputId, updatedJSON)
+      highlightChanges(editor, updatedJSON, originalData)
+    },
+    onModeChange: () => {
+      const editor = getEditor()
+      const latestData = editor.get()
+      syncHiddenInput(hiddenInputId, latestData)
+      highlightChanges(editor, latestData, originalData)
+    },
     onEditable: (node) => isNodeEditable(node, schema),
     onValidate: (json) => {
       const errors = validateJSON(json, originalData, schema, validate)
