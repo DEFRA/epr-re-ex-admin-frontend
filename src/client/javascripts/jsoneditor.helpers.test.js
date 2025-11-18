@@ -1332,6 +1332,41 @@ describe('JSONEditor Helpers', () => {
         expect(hiddenInput.value).toBe(JSON.stringify(updatedData))
       })
 
+      it('should save and sync via onChangeText with valid JSON', () => {
+        localStorageMock.setItem.mockClear()
+        const updatedData = { id: 1, name: 'TextUpdate' }
+        const updatedJSONText = JSON.stringify(updatedData)
+
+        editorOptions.onChangeText(updatedJSONText)
+
+        expect(localStorageMock.setItem).toHaveBeenCalled()
+        expect(hiddenInput.value).toBe(updatedJSONText)
+      })
+
+      it('should handle invalid JSON in onChangeText gracefully', () => {
+        localStorageMock.setItem.mockClear()
+        const invalidJSON = '{ id: 1, name: "missing quotes" }'
+
+        // Should not throw error
+        expect(() => {
+          editorOptions.onChangeText(invalidJSON)
+        }).not.toThrow()
+
+        // Should not save or sync invalid JSON
+        expect(localStorageMock.setItem).not.toHaveBeenCalled()
+      })
+
+      it('should sync data via onModeChange', () => {
+        const latestData = { id: 1, name: 'ModeChanged' }
+        mockGet.mockReturnValue(latestData)
+        hiddenInput.value = ''
+
+        editorOptions.onModeChange()
+
+        expect(mockGet).toHaveBeenCalled()
+        expect(hiddenInput.value).toBe(JSON.stringify(latestData))
+      })
+
       it('should check editability via onEditable', () => {
         const node = { path: ['name'], type: 'string' }
         const result = editorOptions.onEditable(node)
