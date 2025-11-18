@@ -59,7 +59,7 @@
         },
         "registrationNumber": {
           "type": "string",
-          "pattern": "^[A-Z0-9]{8}$/i"
+          "pattern": "^[a-zA-Z0-9]{2}\\d{6}$"
         },
         "registeredAddress": {
           "type": "object",
@@ -494,7 +494,9 @@
                         }
                       },
                       "required": [
-                        "material"
+                        "material",
+                        "siteCapacityInTonnes",
+                        "siteCapacityTimescale"
                       ],
                       "additionalProperties": false
                     }
@@ -574,7 +576,9 @@
                         }
                       },
                       "required": [
-                        "material"
+                        "material",
+                        "siteCapacityInTonnes",
+                        "siteCapacityTimescale"
                       ],
                       "additionalProperties": false
                     }
@@ -721,7 +725,22 @@
                       ]
                     },
                     "permitNumber": {
-                      "type": "string"
+                      "type": [
+                        "array",
+                        "boolean",
+                        "number",
+                        "object",
+                        "string",
+                        "null"
+                      ],
+                      "oneOf": [
+                        {
+                          "not": {}
+                        },
+                        {
+                          "type": "string"
+                        }
+                      ]
                     },
                     "exemptions": {
                       "type": [
@@ -740,10 +759,12 @@
                             "type": "object",
                             "properties": {
                               "reference": {
-                                "type": "string"
+                                "type": "string",
+                                "pattern": "^[wW][eE][xX]\\d{6}$"
                               },
                               "exemptionCode": {
-                                "type": "string"
+                                "type": "string",
+                                "pattern": "^^[a-zA-Z]\\d{1,2}$"
                               },
                               "materials": {
                                 "type": "array",
