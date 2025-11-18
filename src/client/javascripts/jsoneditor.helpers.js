@@ -520,14 +520,12 @@ function createEditorConfig(
       highlightChanges(editor, updatedJSON, originalData)
     },
     onChangeText: (updatedJSONText) => {
-      try {
-        const updatedJSON = JSON.parse(updatedJSONText)
+      const updatedJSON = JSON.parse(updatedJSONText)
 
-        const editor = getEditor()
-        storageManager.save(updatedJSON)
-        syncHiddenInput(hiddenInputId, updatedJSON)
-        highlightChanges(editor, updatedJSON, originalData)
-      } catch (_e) {}
+      const editor = getEditor()
+      storageManager.save(updatedJSON)
+      syncHiddenInput(hiddenInputId, updatedJSON)
+      highlightChanges(editor, updatedJSON, originalData)
     },
     onModeChange: () => {
       const editor = getEditor()

@@ -1343,19 +1343,6 @@ describe('JSONEditor Helpers', () => {
         expect(hiddenInput.value).toBe(updatedJSONText)
       })
 
-      it('should handle invalid JSON in onChangeText gracefully', () => {
-        localStorageMock.setItem.mockClear()
-        const invalidJSON = '{ id: 1, name: "missing quotes" }'
-
-        // Should not throw error
-        expect(() => {
-          editorOptions.onChangeText(invalidJSON)
-        }).not.toThrow()
-
-        // Should not save or sync invalid JSON
-        expect(localStorageMock.setItem).not.toHaveBeenCalled()
-      })
-
       it('should sync data via onModeChange', () => {
         const latestData = { id: 1, name: 'ModeChanged' }
         mockGet.mockReturnValue(latestData)
