@@ -7,48 +7,18 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <div class="govuk-body" data-testid="app-page-body">
+        <h1 class="govuk-heading-xl">Organisations</h1>
 
-{# Render a table when organisations data is provided, otherwise show a message #}
-{% if organisations and organisations.length %}
-  {% set tableRows = [] %}
-  {% for org in organisations %}
-    {% set orgId = org.orgId %}
+        <p class="govuk-body-l">Choose an option to manage organisations:</p>
 
-    {# build cells as objects expected by govukTable #}
-    {% set nameCell = { text: org.name } %}
-    {% set orgIdCell = { text: orgId } %}
-    {% set registrationNumberCell = { text: org.registrationNumber } %}
-
-    {% set regulatorCell = { text: org.regulator | upper } %}
-    {% set statusCell = { html: govukTag({
-      text: org.status
-    }) } %}
-    {% set actionsHtml = '<a class="govuk-link govuk-link--no-visited-state" href="/organisations/' ~ org.id ~ '">Edit</a>' %}
-    {% set actionsHtml = actionsHtml ~ '<br><a class="govuk-link govuk-link--no-visited-state" href="/defra-forms-submission/' ~ org.id ~ '">View Submission Data</a>' %}
-    {% set actionCell = { html:  actionsHtml } %}
-
-    {% set row = [ nameCell, orgIdCell, registrationNumberCell, regulatorCell, statusCell, actionCell ] %}
-    {% set tableRows = tableRows.concat([row]) %}
-  {% endfor %}
-
-  {{ govukTable({
-    caption: "Organisations",
-    captionClasses: "govuk-table__caption--m",
-    firstCellIsHeader: true,
-    head: [
-      { text: "Name" },
-      { text: "Organisation ID" },
-      { text: "Registration Number" },
-      { text: "Regulator" },
-      { text: "Status" },
-      { text: "Actions" }
-    ],
-    rows: tableRows
-  }) }}
-
-  {% else %}
-    {{ govukInsetText({ text: "No organisations found." }) }}
-  {% endif %}
+        <ul class="govuk-list">
+          <li>
+            <a href="/organisations/search" class="govuk-link govuk-link--no-visited-state">Search organisations</a>
+          </li>
+          <li>
+            <a href="/organisations/all" class="govuk-link govuk-link--no-visited-state">View all organisations</a>
+          </li>
+        </ul>
       </div>
     </div>
   </div>

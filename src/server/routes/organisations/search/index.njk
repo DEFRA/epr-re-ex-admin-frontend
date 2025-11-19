@@ -1,0 +1,92 @@
+{% extends 'layout.njk' %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/tag/macro.njk" import govukTag %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-xl">Search the register</h1>
+      
+      <p class="govuk-body">Search for an organisation by name.</p>
+
+      <form method="get" action="/organisations/search" class="govuk-!-margin-top-6">
+        <div class="govuk-form-group govuk-!-margin-bottom-6">
+          {{ govukInput({
+            label: {
+              text: "Enter organisation name",
+              classes: "govuk-label--m"
+            },
+            hint: {
+              text: "For example, 'Acme Ltd' or 'Smith Trading'"
+            },
+            id: "search",
+            name: "search",
+            type: "search",
+            value: searchTerm,
+            autocomplete: "off",
+            classes: "govuk-input--width-20"
+          }) }}
+        </div>
+
+        {{ govukButton({
+          text: "Search",
+          classes: "govuk-!-margin-bottom-4"
+        }) }}
+      </form>
+
+      <p class="govuk-body">
+        <a href="/" class="govuk-link">Back to home</a>
+      </p>
+    </div>
+  </div>
+
+  {% if searchTerm %}
+    <div class="govuk-grid-row govuk-!-margin-top-8">
+      <div class="govuk-grid-column-full">
+        {% if organisations and organisations.length %}
+          <h2 class="govuk-heading-l">{{ organisations.length }} result{% if organisations.length != 1 %}s{% endif %} found</h2>
+          
+          {% set tableRows = [] %}
+          {% for org in organisations %}
+            {% set orgId = org.orgId %}
+
+            {# build cells as objects expected by govukTable #}
+            {% set nameCell = { text: org.name } %}
+            {% set regCell = { text: org.registrationNumber } %}
+            {% set orgIdCell = { text: orgId } %}
+            {% set statusCell = { html: govukTag({
+              text: org.status
+            }) } %}
+            {% set actionsHtml = '<a class="govuk-link govuk-link--no-visited-state" href="/organisations/' ~ org.id ~ '">Edit</a>' %}
+            {% set actionsHtml = actionsHtml ~ '<br><a class="govuk-link govuk-link--no-visited-state" href="/defra-forms-submission/' ~ org.id ~ '">View Submission Data</a>' %}
+            {% set actionCell = { html:  actionsHtml } %}
+
+            {% set row = [ nameCell, orgIdCell, regCell, statusCell, actionCell ] %}
+            {% set tableRows = tableRows.concat([row]) %}
+          {% endfor %}
+
+          {{ govukTable({
+            firstCellIsHeader: true,
+            head: [
+              { text: "Name" },
+              { text: "Organisation ID" },
+              { text: "Registration Number" },
+              { text: "Status" },
+              { text: "Actions" }
+            ],
+            rows: tableRows
+          }) }}
+        {% else %}
+          <h2 class="govuk-heading-l">0 results found</h2>
+          {{ govukInsetText({ 
+            text: "No organisations found matching '" + searchTerm + "'. Try searching with a different name or check your spelling." 
+          }) }}
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+
+{% endblock %}

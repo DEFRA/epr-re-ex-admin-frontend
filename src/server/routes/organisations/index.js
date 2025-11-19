@@ -1,4 +1,6 @@
 import { organisationsController } from './controller.js'
+import { organisationsAllController } from './all/controller.js'
+import { organisationsSearchController } from './search/controller.js'
 
 /**
  * Sets up the routes used in the /organisations page.
@@ -13,6 +15,16 @@ export const organisations = {
           method: 'GET',
           path: '/organisations',
           ...organisationsController
+        },
+        {
+          method: 'GET',
+          path: '/organisations/all',
+          ...organisationsAllController
+        },
+        {
+          method: 'GET',
+          path: '/organisations/search',
+          ...organisationsSearchController
         }
       ])
     }
