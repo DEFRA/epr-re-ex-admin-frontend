@@ -72,7 +72,8 @@ describe('#organisationsController', () => {
           companyDetails: {
             name: 'Acme Ltd',
             registrationNumber: '12345678'
-          }
+          },
+          submittedToRegulator: 'regulator-name'
         }
       ]
 
@@ -106,6 +107,7 @@ describe('#organisationsController', () => {
       expect(result).toEqual(expect.stringContaining('Name'))
       expect(result).toEqual(expect.stringContaining('Organisation ID'))
       expect(result).toEqual(expect.stringContaining('Registration Number'))
+      expect(result).toEqual(expect.stringContaining('Regulator'))
       expect(result).toEqual(expect.stringContaining('Status'))
       expect(result).toEqual(expect.stringContaining('Actions'))
 
@@ -113,6 +115,7 @@ describe('#organisationsController', () => {
       expect(result).toEqual(expect.stringContaining('Acme Ltd'))
       expect(result).toEqual(expect.stringContaining('org-1'))
       expect(result).toEqual(expect.stringContaining('12345678'))
+      expect(result).toEqual(expect.stringContaining('REGULATOR-NAME'))
       expect(result).toEqual(expect.stringContaining('ACTIVE'))
       expect(result).toEqual(expect.stringContaining('/organisations/org-1'))
       expect(result).toEqual(expect.stringContaining('Edit'))
@@ -155,7 +158,8 @@ describe('#organisationsController', () => {
           companyDetails: {
             name: 'Beta Corp',
             registrationNumber: '87654321'
-          }
+          },
+          submittedToRegulator: 'regulator-name'
         }
       ]
 
@@ -184,12 +188,14 @@ describe('#organisationsController', () => {
       expect(result).toEqual(expect.stringContaining('Name'))
       expect(result).toEqual(expect.stringContaining('Organisation ID'))
       expect(result).toEqual(expect.stringContaining('Registration Number'))
+      expect(result).toEqual(expect.stringContaining('Regulator'))
       expect(result).toEqual(expect.stringContaining('Status'))
 
       // Row content excluding status value
       expect(result).toEqual(expect.stringContaining('Beta Corp'))
       expect(result).toEqual(expect.stringContaining('org-2'))
       expect(result).toEqual(expect.stringContaining('87654321'))
+      expect(result).toEqual(expect.stringContaining('REGULATOR-NAME'))
 
       // Ensure status text is not the string 'undefined'
       expect(result).not.toEqual(expect.stringContaining('undefined'))
