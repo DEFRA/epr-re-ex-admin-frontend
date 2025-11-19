@@ -67,8 +67,8 @@ describe('organisation GET controller - Unit Tests - Flash message handling', ()
     expect(mockRequest.yar.clear).toHaveBeenCalledWith('success')
 
     expect(mockH.view).toHaveBeenCalledWith('routes/organisation/index', {
-      pageTitle: 'Organisation',
-      heading: 'Organisation',
+      pageTitle: 'Organisation Details',
+      heading: 'Test Org',
       organisationJson: JSON.stringify(mockOrgData),
       breadcrumbs: [{ text: 'Organisations', href: '/organisations' }]
     })
