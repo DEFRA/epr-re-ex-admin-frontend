@@ -14,13 +14,15 @@ export const organisationsController = {
         id,
         orgId,
         companyDetails: { name, registrationNumber },
-        status
+        status,
+        submittedToRegulator
       }) => ({
         id,
         orgId,
         name,
         registrationNumber,
-        status
+        status,
+        regulator: submittedToRegulator
       })
     )
 

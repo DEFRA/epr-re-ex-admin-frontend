@@ -16,8 +16,10 @@
 
     {# build cells as objects expected by govukTable #}
     {% set nameCell = { text: org.name } %}
-    {% set regCell = { text: org.registrationNumber } %}
     {% set orgIdCell = { text: orgId } %}
+    {% set registrationNumberCell = { text: org.registrationNumber } %}
+
+    {% set regulatorCell = { text: org.regulator | upper } %}
     {% set statusCell = { html: govukTag({
       text: org.status
     }) } %}
@@ -25,7 +27,7 @@
     {% set actionsHtml = actionsHtml ~ '<br><a class="govuk-link govuk-link--no-visited-state" href="/defra-forms-submission/' ~ org.id ~ '">View Submission Data</a>' %}
     {% set actionCell = { html:  actionsHtml } %}
 
-    {% set row = [ nameCell, orgIdCell, regCell, statusCell, actionCell ] %}
+    {% set row = [ nameCell, orgIdCell, registrationNumberCell, regulatorCell, statusCell, actionCell ] %}
     {% set tableRows = tableRows.concat([row]) %}
   {% endfor %}
 
@@ -37,6 +39,7 @@
       { text: "Name" },
       { text: "Organisation ID" },
       { text: "Registration Number" },
+      { text: "Regulator" },
       { text: "Status" },
       { text: "Actions" }
     ],
