@@ -12,7 +12,10 @@ export const organisations = {
         {
           method: 'GET',
           path: '/organisations',
-          ...organisationsController
+          ...organisationsController,
+          options: {
+            app: { pageTitle: 'Organisations' }
+          }
         }
       ])
     }

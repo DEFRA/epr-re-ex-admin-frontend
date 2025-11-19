@@ -9,7 +9,10 @@ export const organisation = {
         {
           method: 'GET',
           path: '/organisations/{id}',
-          ...organisationsGETController
+          ...organisationsGETController,
+          options: {
+            app: { pageTitle: 'Organisation' }
+          }
         },
         {
           method: 'POST',
