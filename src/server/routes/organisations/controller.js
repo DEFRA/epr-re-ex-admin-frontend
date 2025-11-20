@@ -7,7 +7,7 @@ export const organisationsBreadcrumb = {
 
 export const organisationsController = {
   async handler(request, h) {
-    const searchTerm = request.payload?.search || ''
+    const searchTerm = request.payload?.search?.trim() || ''
     const data = await fetchJsonFromBackend(request, `/v1/organisations`)
 
     let organisations = (Array.isArray(data) ? data : []).map(
