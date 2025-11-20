@@ -11,7 +11,7 @@ export const organisation = {
           path: '/organisations/{id}',
           ...organisationsGETController,
           options: {
-            app: { pageTitle: 'Organisation' }
+            app: { pageTitle: 'Organisation Details' }
           }
         },
         {
