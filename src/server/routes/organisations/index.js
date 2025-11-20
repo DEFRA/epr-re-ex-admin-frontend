@@ -16,6 +16,14 @@ export const organisations = {
           options: {
             app: { pageTitle: 'Organisations' }
           }
+        },
+        {
+          method: 'POST',
+          path: '/organisations',
+          ...organisationsController,
+          options: {
+            app: { pageTitle: 'Organisations' }
+          }
         }
       ])
     }

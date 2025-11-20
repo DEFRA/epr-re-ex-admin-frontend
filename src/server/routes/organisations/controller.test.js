@@ -235,5 +235,114 @@ describe('#organisationsController', () => {
       expect(result).toEqual(expect.stringContaining('No organisations found.'))
       expect(result).not.toEqual(expect.stringContaining('Organisation ID'))
     })
+
+    test('Should filter organisations by search term when POSTing', async () => {
+      const mockOrganisations = [
+        {
+          id: 'org-1',
+          orgId: 'org-1',
+          status: 'ACTIVE',
+          statusHistory: [
+            { status: 'ACTIVE', updatedAt: '2025-10-01T00:00:00Z' }
+          ],
+          companyDetails: {
+            name: 'Acme Ltd',
+            registrationNumber: '12345678'
+          },
+          submittedToRegulator: 'regulator-name'
+        },
+        {
+          id: 'org-2',
+          orgId: 'org-2',
+          status: 'PENDING',
+          statusHistory: [
+            { status: 'PENDING', updatedAt: '2025-10-01T00:00:00Z' }
+          ],
+          companyDetails: {
+            name: 'Beta Corp',
+            registrationNumber: '87654321'
+          },
+          submittedToRegulator: 'another-regulator'
+        }
+      ]
+
+      const getOrganisationsHandler = http.get(
+        `${backendUrl}/v1/organisations`,
+        () => {
+          return HttpResponse.json(mockOrganisations)
+        }
+      )
+
+      mswServer.use(getOrganisationsHandler)
+
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: '/organisations',
+        payload: { search: 'Acme' },
+        auth: {
+          strategy: 'session',
+          credentials: mockUserSession
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      // Should show matching organisation
+      expect(result).toEqual(expect.stringContaining('Acme Ltd'))
+      expect(result).toEqual(expect.stringContaining('org-1'))
+
+      // Should not show non-matching organisation
+      expect(result).not.toEqual(expect.stringContaining('Beta Corp'))
+      expect(result).not.toEqual(expect.stringContaining('org-2'))
+    })
+
+    test('Should show no organisations when search term matches nothing', async () => {
+      const mockOrganisations = [
+        {
+          id: 'org-1',
+          orgId: 'org-1',
+          status: 'ACTIVE',
+          statusHistory: [
+            { status: 'ACTIVE', updatedAt: '2025-10-01T00:00:00Z' }
+          ],
+          companyDetails: {
+            name: 'Acme Ltd',
+            registrationNumber: '12345678'
+          },
+          submittedToRegulator: 'regulator-name'
+        }
+      ]
+
+      const getOrganisationsHandler = http.get(
+        `${backendUrl}/v1/organisations`,
+        () => {
+          return HttpResponse.json(mockOrganisations)
+        }
+      )
+
+      mswServer.use(getOrganisationsHandler)
+
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: '/organisations',
+        payload: { search: 'NonExistent Company' },
+        auth: {
+          strategy: 'session',
+          credentials: mockUserSession
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      // Should not show the organisation that didn't match
+      expect(result).not.toEqual(expect.stringContaining('Acme Ltd'))
+
+      // Should show search-specific message about no results
+      expect(result).toEqual(expect.stringContaining('0 results found'))
+      expect(result).toEqual(
+        expect.stringContaining('No organisations found matching')
+      )
+      expect(result).toEqual(expect.stringContaining('NonExistent Company'))
+    })
   })
 })
