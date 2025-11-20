@@ -80,7 +80,9 @@ describe('#catchAll unit tests', () => {
   test('Should render 403 template for forbidden status', () => {
     catchAll(mockRequest(statusCodes.forbidden), mockToolkit)
 
-    expect(mockToolkitView).toHaveBeenCalledWith('403')
+    expect(mockToolkitView).toHaveBeenCalledWith('403', {
+      pageTitle: undefined
+    })
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.forbidden)
     expect(mockLog).not.toHaveBeenCalled()
   })
@@ -88,7 +90,9 @@ describe('#catchAll unit tests', () => {
   test('Should render 404 template for not found status', () => {
     catchAll(mockRequest(statusCodes.notFound), mockToolkit)
 
-    expect(mockToolkitView).toHaveBeenCalledWith('404')
+    expect(mockToolkitView).toHaveBeenCalledWith('404', {
+      pageTitle: undefined
+    })
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.notFound)
     expect(mockLog).not.toHaveBeenCalled()
   })
@@ -96,7 +100,9 @@ describe('#catchAll unit tests', () => {
   test('Should render unauthorised template for unauthorised status', () => {
     catchAll(mockRequest(statusCodes.unauthorised), mockToolkit)
 
-    expect(mockToolkitView).toHaveBeenCalledWith('unauthorised')
+    expect(mockToolkitView).toHaveBeenCalledWith('unauthorised', {
+      pageTitle: undefined
+    })
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.unauthorised)
     expect(mockLog).not.toHaveBeenCalled()
   })
@@ -104,7 +110,9 @@ describe('#catchAll unit tests', () => {
   test('Should render 500 template for bad request status (uncategorised)', () => {
     catchAll(mockRequest(statusCodes.badRequest), mockToolkit)
 
-    expect(mockToolkitView).toHaveBeenCalledWith('500')
+    expect(mockToolkitView).toHaveBeenCalledWith('500', {
+      pageTitle: undefined
+    })
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.badRequest)
     expect(mockLog).not.toHaveBeenCalled()
   })
@@ -112,7 +120,9 @@ describe('#catchAll unit tests', () => {
   test('Should render 500 template and log error for internal server error', () => {
     catchAll(mockRequest(statusCodes.internalServerError), mockToolkit)
 
-    expect(mockToolkitView).toHaveBeenCalledWith('500')
+    expect(mockToolkitView).toHaveBeenCalledWith('500', {
+      pageTitle: undefined
+    })
     expect(mockToolkitCode).toHaveBeenCalledWith(
       statusCodes.internalServerError
     )
@@ -127,7 +137,9 @@ describe('#catchAll unit tests', () => {
     const customServerErrorCode = 503
     catchAll(mockRequest(customServerErrorCode), mockToolkit)
 
-    expect(mockToolkitView).toHaveBeenCalledWith('500')
+    expect(mockToolkitView).toHaveBeenCalledWith('500', {
+      pageTitle: undefined
+    })
     expect(mockToolkitCode).toHaveBeenCalledWith(customServerErrorCode)
     expect(mockLog).toHaveBeenCalledWith(['error'], {
       statusCode: customServerErrorCode,
@@ -191,7 +203,33 @@ describe('#catchAll unit tests', () => {
 
     catchAll(request, mockToolkit)
 
-    expect(mockToolkitView).toHaveBeenCalledWith('404')
+    expect(mockToolkitView).toHaveBeenCalledWith('404', {
+      pageTitle: undefined
+    })
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.notFound)
+  })
+
+  test('Should pass pageTitle from route settings to view context', () => {
+    const request = {
+      response: {
+        isBoom: true,
+        message: mockMessage,
+        data: { stack: mockStack },
+        output: { statusCode: statusCodes.unauthorised }
+      },
+      route: {
+        settings: {
+          app: { pageTitle: 'Demo Page' }
+        }
+      },
+      log: mockLog
+    }
+
+    catchAll(request, mockToolkit)
+
+    expect(mockToolkitView).toHaveBeenCalledWith('unauthorised', {
+      pageTitle: 'Demo Page'
+    })
+    expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.unauthorised)
   })
 })

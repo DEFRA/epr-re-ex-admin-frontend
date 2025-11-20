@@ -49,6 +49,9 @@ describe('#organisationsController', () => {
 
       expect(statusCode).toBe(statusCodes.unauthorised)
       expect(result).toEqual(expect.stringContaining('Unauthorised'))
+      expect(result).toEqual(
+        expect.stringMatching(/Organisations.*\|.*epr-re-ex-admin-frontend/)
+      )
     })
   })
 
@@ -144,6 +147,9 @@ describe('#organisationsController', () => {
 
       expect(result).toEqual(
         expect.stringContaining('Sorry, there is a problem with the service')
+      )
+      expect(result).toEqual(
+        expect.stringMatching(/Organisations.*\|.*epr-re-ex-admin-frontend/)
       )
     })
 

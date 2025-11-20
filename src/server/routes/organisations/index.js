@@ -12,12 +12,18 @@ export const organisations = {
         {
           method: 'GET',
           path: '/organisations',
-          ...organisationsController
+          ...organisationsController,
+          options: {
+            app: { pageTitle: 'Organisations' }
+          }
         },
         {
           method: 'POST',
           path: '/organisations',
-          ...organisationsController
+          ...organisationsController,
+          options: {
+            app: { pageTitle: 'Organisations' }
+          }
         }
       ])
     }
