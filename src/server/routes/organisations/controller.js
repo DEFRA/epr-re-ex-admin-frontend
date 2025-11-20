@@ -1,13 +1,45 @@
+import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+
 export const organisationsBreadcrumb = {
   text: 'Organisations',
   href: '/organisations'
 }
 
 export const organisationsController = {
-  async handler(_request, h) {
+  async handler(request, h) {
+    const searchTerm = request.payload?.search || ''
+    const data = await fetchJsonFromBackend(request, `/v1/organisations`)
+
+    let organisations = (Array.isArray(data) ? data : []).map(
+      ({
+        id,
+        orgId,
+        companyDetails: { name, registrationNumber },
+        status,
+        submittedToRegulator
+      }) => ({
+        id,
+        orgId,
+        name,
+        registrationNumber,
+        status,
+        regulator: submittedToRegulator
+      })
+    )
+
+    // Filter organisations by search term if provided
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase()
+      organisations = organisations.filter((org) =>
+        org.name.toLowerCase().includes(searchLower)
+      )
+    }
+
     return h.view('routes/organisations/index', {
-      pageTitle: 'Organisations',
-      heading: 'Organisations'
+      pageTitle: 'All organisations',
+      heading: 'All organisations',
+      searchTerm,
+      organisations
     })
   }
 }
