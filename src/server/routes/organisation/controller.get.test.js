@@ -37,6 +37,11 @@ describe('organisation GET controller - Unit Tests - Flash message handling', ()
       yar: {
         get: vi.fn().mockReturnValue(null),
         clear: vi.fn().mockResolvedValue(undefined)
+      },
+      route: {
+        settings: {
+          app: { pageTitle: 'Organisation Details' }
+        }
       }
     }
 

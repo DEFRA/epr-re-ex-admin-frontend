@@ -34,7 +34,8 @@ export function catchAll(request, h) {
 
   // Copy all headers from the original response except content-type
   // since the view will set its own content-type
-  const viewResponse = h.view(template).code(statusCode)
+  const pageTitle = request.route?.settings?.app?.pageTitle
+  const viewResponse = h.view(template, { pageTitle }).code(statusCode)
 
   const originalHeaders = response.headers || response.output?.headers || {}
   for (const [key, value] of Object.entries(originalHeaders)) {

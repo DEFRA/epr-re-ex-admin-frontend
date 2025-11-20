@@ -19,8 +19,10 @@ export const organisationsGETController = {
     await request.yar.clear('error')
     await request.yar.clear('success')
 
+    const pageTitle = request.route.settings.app.pageTitle
+
     const viewContext = {
-      pageTitle: 'Organisation Details',
+      pageTitle,
       heading: data.companyDetails.name,
       organisationJson: JSON.stringify(data),
       breadcrumbs: [organisationsBreadcrumb]

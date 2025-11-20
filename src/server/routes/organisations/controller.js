@@ -26,9 +26,11 @@ export const organisationsController = {
       })
     )
 
+    const pageTitle = request.route.settings.app.pageTitle
+
     return h.view('routes/organisations/index', {
-      pageTitle: 'Organisations',
-      heading: 'Organisations',
+      pageTitle,
+      heading: pageTitle,
       organisations
     })
   }
