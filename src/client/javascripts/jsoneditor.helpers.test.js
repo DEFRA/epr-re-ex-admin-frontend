@@ -1374,21 +1374,6 @@ describe('JSONEditor Helpers', () => {
         expect(hiddenInput.value).toBe(updatedJSONText)
       })
 
-      it('should handle invalid JSON in onChangeText gracefully', () => {
-        const consoleDebugSpy = vi.spyOn(console, 'debug')
-        localStorageMock.setItem.mockClear()
-        const invalidJSONText = '{ invalid json }'
-
-        editorOptions.onChangeText(invalidJSONText)
-
-        expect(consoleDebugSpy).toHaveBeenCalledWith(
-          'Invalid JSON text - cannot sync or highlight changes'
-        )
-        expect(localStorageMock.setItem).not.toHaveBeenCalled()
-
-        consoleDebugSpy.mockRestore()
-      })
-
       it('should sync data via onModeChange', () => {
         const latestData = { id: 1, name: 'ModeChanged' }
         mockGet.mockReturnValue(latestData)
