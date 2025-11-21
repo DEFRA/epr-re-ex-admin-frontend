@@ -91,6 +91,43 @@ describe('context and cache', () => {
           )
         })
       })
+
+      describe('In development mode', () => {
+        let originalNodeEnv
+        let contextImportDev
+        let contextResultDev
+
+        beforeAll(async () => {
+          originalNodeEnv = process.env.NODE_ENV
+          process.env.NODE_ENV = 'development'
+          vi.resetModules()
+          contextImportDev = await import('./context.js')
+          contextResultDev = await contextImportDev.context(mockRequest)
+        })
+
+        afterAll(() => {
+          process.env.NODE_ENV = originalNodeEnv
+          vi.resetModules()
+        })
+
+        test('Should add timestamp query parameter to asset paths', () => {
+          const assetPath = contextResultDev.getAssetPath('application.js')
+
+          expect(assetPath).toMatch(
+            /^\/public\/javascripts\/application\.js\?v=\d+$/
+          )
+        })
+
+        test('Should use current timestamp for cache busting', () => {
+          const before = Date.now()
+          const assetPath = contextResultDev.getAssetPath('application.js')
+          const after = Date.now()
+
+          const timestamp = parseInt(assetPath.split('?v=')[1])
+          expect(timestamp).toBeGreaterThanOrEqual(before)
+          expect(timestamp).toBeLessThanOrEqual(after)
+        })
+      })
     })
 
     describe('When webpack manifest file read fails', () => {
