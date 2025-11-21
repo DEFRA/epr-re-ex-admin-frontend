@@ -539,7 +539,7 @@ function createEditorConfig(
         syncHiddenInput(hiddenInputId, updatedJSON)
         highlightChanges(editor, updatedJSON, originalData)
       } catch (error_) {
-        console.debug("Invalid JSON text - cannot sync or highlight changes")
+        console.debug('Invalid JSON text - cannot sync or highlight changes')
       }
     },
     onModeChange: () => {
