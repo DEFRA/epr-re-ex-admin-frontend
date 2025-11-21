@@ -35,7 +35,11 @@ export async function context(request) {
     navigation: buildNavigation(request),
     getAssetPath(asset) {
       const webpackAssetPath = webpackManifest?.[asset]
-      return `${assetPath}/${webpackAssetPath ?? asset}`
+      const newAssetPath = `${assetPath}/${webpackAssetPath ?? asset}`
+      // Add timestamp query string in development to bust browser cache
+      return config.get('isDevelopment')
+        ? `${newAssetPath}?v=${Date.now()}`
+        : newAssetPath
     }
   }
 }
