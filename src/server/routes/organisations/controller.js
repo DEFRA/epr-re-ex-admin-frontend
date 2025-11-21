@@ -1,10 +1,5 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
-export const organisationsBreadcrumb = {
-  text: 'Organisations',
-  href: '/organisations'
-}
-
 export const organisationsController = {
   async handler(request, h) {
     const searchTerm = request.payload?.search?.trim() || ''

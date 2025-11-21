@@ -531,12 +531,16 @@ function createEditorConfig(
       highlightChanges(editor, updatedJSON, originalData)
     },
     onChangeText: (updatedJSONText) => {
-      const updatedJSON = JSON.parse(updatedJSONText)
+      try {
+        const updatedJSON = JSON.parse(updatedJSONText)
 
-      const editor = getEditor()
-      storageManager.save(updatedJSON)
-      syncHiddenInput(hiddenInputId, updatedJSON)
-      highlightChanges(editor, updatedJSON, originalData)
+        const editor = getEditor()
+        storageManager.save(updatedJSON)
+        syncHiddenInput(hiddenInputId, updatedJSON)
+        highlightChanges(editor, updatedJSON, originalData)
+      } catch (_e) {
+        // do nothing as this only triggers if json is invalid
+      }
     },
     onModeChange: () => {
       const editor = getEditor()
