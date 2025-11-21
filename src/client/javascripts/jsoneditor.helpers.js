@@ -538,8 +538,8 @@ function createEditorConfig(
         storageManager.save(updatedJSON)
         syncHiddenInput(hiddenInputId, updatedJSON)
         highlightChanges(editor, updatedJSON, originalData)
-      } catch (_e) {
-        // do nothing as this only triggers if json is invalid
+      } catch (error_) {
+        console.debug("Invalid JSON text - cannot sync or highlight changes")
       }
     },
     onModeChange: () => {
