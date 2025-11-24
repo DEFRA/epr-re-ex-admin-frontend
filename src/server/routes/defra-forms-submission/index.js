@@ -9,13 +9,16 @@ export const defraFormsSubmission = {
         {
           method: 'GET',
           path: '/defra-forms-submission/{documentId}',
+          options: {
+            app: { pageTitle: 'Defra Forms submission data' }
+          },
           async handler(request, h) {
             const documentId = request.params.documentId
 
             const data = await loadData(request, documentId)
 
             return h.view('routes/defra-forms-submission/index', {
-              pageTitle: 'Defra forms submission data',
+              pageTitle: request.route.settings.app.pageTitle,
               heading: `ID: ${documentId}`,
               organisation: pretty(data.organisation),
               registrations: (data.registrations || []).map(pretty),
