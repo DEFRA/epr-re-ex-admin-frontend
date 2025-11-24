@@ -30,7 +30,16 @@ export function getBellOptions(oidcConfig) {
     password: config.get('session.cookie.password'),
     isSecure: config.get('isProduction'),
     forceHttps: config.get('isProduction'),
-    location: function () {
+    location: function (request) {
+      if (request.info.referrer) {
+        const { hash, pathname, search } = new URL(request.info.referrer)
+
+        if (!pathname.startsWith('/auth/callback')) {
+          const referrer = `${pathname}${search}${hash}`
+          request.yar.flash('referrer', referrer)
+        }
+      }
+
       return `${config.get('appBaseUrl')}/auth/callback`
     },
 

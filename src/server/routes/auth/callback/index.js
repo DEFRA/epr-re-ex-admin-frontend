@@ -31,6 +31,15 @@ export default {
 
     await createUserSession(request, userSession)
 
-    return h.redirect('/')
+    const redirect = request.yar?.flash('referrer')?.at(0) ?? '/'
+
+    const safeRedirect = getSafeRedirect(redirect)
+    return h.redirect(safeRedirect)
   }
+}
+
+function getSafeRedirect(redirect) {
+  return !redirect?.startsWith('/') || redirect.startsWith('//')
+    ? '/'
+    : redirect
 }
