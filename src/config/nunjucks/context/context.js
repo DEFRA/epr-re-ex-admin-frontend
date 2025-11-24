@@ -29,7 +29,6 @@ export async function context(request) {
     assetPath: `${assetPath}/assets`,
     serviceName: config.get('serviceName'),
     serviceUrl: '/',
-    breadcrumbs: [],
     userSession,
     isAuthenticated: userSession?.isAuthenticated ?? false,
     navigation: buildNavigation(request),

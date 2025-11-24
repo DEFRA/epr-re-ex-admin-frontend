@@ -1,5 +1,4 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
-import { organisationsBreadcrumb } from '#server/routes/organisations/controller.js'
 
 export const organisationsGETController = {
   async handler(request, h) {
@@ -24,8 +23,7 @@ export const organisationsGETController = {
     const viewContext = {
       pageTitle,
       heading: data.companyDetails.name,
-      organisationJson: JSON.stringify(data),
-      breadcrumbs: [organisationsBreadcrumb]
+      organisationJson: JSON.stringify(data)
     }
 
     if (errorMessage) {

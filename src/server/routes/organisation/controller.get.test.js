@@ -5,18 +5,8 @@ vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
 }))
 
-vi.mock(
-  '#server/routes/organisations/controller.js',
-  async (importOriginal) => {
-    const actual = await importOriginal()
-    return {
-      ...actual,
-      organisationsBreadcrumb: {
-        text: 'Organisations',
-        href: '/organisations'
-      }
-    }
-  }
+vi.mock('#server/routes/organisations/controller.js', async (importOriginal) =>
+  importOriginal()
 )
 
 describe('organisation GET controller - Unit Tests - Flash message handling', () => {
@@ -74,8 +64,7 @@ describe('organisation GET controller - Unit Tests - Flash message handling', ()
     expect(mockH.view).toHaveBeenCalledWith('routes/organisation/index', {
       pageTitle: 'Organisation Details',
       heading: 'Test Org',
-      organisationJson: JSON.stringify(mockOrgData),
-      breadcrumbs: [{ text: 'Organisations', href: '/organisations' }]
+      organisationJson: JSON.stringify(mockOrgData)
     })
   })
 

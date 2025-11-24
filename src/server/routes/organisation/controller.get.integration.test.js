@@ -15,18 +15,8 @@ vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
   getUserSession: vi.fn().mockReturnValue(null)
 }))
 
-vi.mock(
-  '#server/routes/organisations/controller.js',
-  async (importOriginal) => {
-    const actual = await importOriginal()
-    return {
-      ...actual,
-      organisationsBreadcrumb: {
-        text: 'Organisations',
-        href: '/organisations'
-      }
-    }
-  }
+vi.mock('#server/routes/organisations/controller.js', async (importOriginal) =>
+  importOriginal()
 )
 
 describe('organisation GET controller', () => {
@@ -106,9 +96,6 @@ describe('organisation GET controller', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('Organisation')
-
-      // Verify breadcrumb is included
-      expect(result).toContain('Organisations')
     })
 
     test('Should show 500 error page when backend fetch throws', async () => {
