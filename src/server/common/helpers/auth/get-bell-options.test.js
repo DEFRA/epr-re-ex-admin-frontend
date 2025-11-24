@@ -92,7 +92,8 @@ describe('#getBellOptions', () => {
 
   test('Should return correct location callback URL', () => {
     const result = getBellOptions(mockOidcConfig)
-    const locationUrl = result.location()
+    const mockRequest = { info: {} }
+    const locationUrl = result.location(mockRequest)
 
     expect(locationUrl).toBe('https://example-app.test/auth/callback')
     expect(config.get).toHaveBeenCalledWith('appBaseUrl')
@@ -163,9 +164,64 @@ describe('#getBellOptions', () => {
       })
 
       const result = getBellOptions(mockOidcConfig)
-      const locationUrl = result.location()
+      const mockRequest = { info: {} }
+      const locationUrl = result.location(mockRequest)
 
       expect(locationUrl).toBe(`${url}/auth/callback`)
+    })
+  })
+
+  describe('Redirection after SSO complete', () => {
+    it('should store referrer in flash when present', () => {
+      const bellConfig = getBellOptions(mockOidcConfig)
+
+      const mockRequest = {
+        info: {
+          referrer: 'http://localhost:3000/dashboard'
+        },
+        yar: {
+          flash: vi.fn()
+        }
+      }
+
+      bellConfig.location(mockRequest)
+
+      expect(mockRequest.yar.flash).toHaveBeenCalledWith(
+        'referrer',
+        '/dashboard'
+      )
+    })
+
+    it('should not store referrer in flash when referrer is callback URL', async () => {
+      const bellConfig = getBellOptions(mockOidcConfig)
+
+      const mockRequest = {
+        info: {
+          referrer: 'http://localhost:3000/auth/callback'
+        },
+        yar: {
+          flash: vi.fn()
+        }
+      }
+
+      bellConfig.location(mockRequest)
+
+      expect(mockRequest.yar.flash).not.toHaveBeenCalled()
+    })
+
+    it('should not store referrer in flash when referrer is not present in request', async () => {
+      const bellConfig = getBellOptions(mockOidcConfig)
+
+      const mockRequest = {
+        info: {},
+        yar: {
+          flash: vi.fn()
+        }
+      }
+
+      bellConfig.location(mockRequest)
+
+      expect(mockRequest.yar.flash).not.toHaveBeenCalled()
     })
   })
 })

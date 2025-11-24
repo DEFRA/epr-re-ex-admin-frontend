@@ -72,30 +72,44 @@ describe('#callback route', () => {
     expect(randomUUID).not.toHaveBeenCalled()
   })
 
-  test('Should create session and redirect to home if authenticated', async () => {
-    const mockRequest = {
-      auth: {
-        isAuthenticated: true,
-        credentials: {
-          profile: mockProfile,
+  describe('User is authenticated', () => {
+    it.each([
+      { referrer: ['/some-page'], expectedRedirectUrl: '/some-page' },
+      { referrer: [], expectedRedirectUrl: '/' }, // no referrer in flash
+      { referrer: ['//protocol-relative-page'], expectedRedirectUrl: '/' },
+      { referrer: ['http://some-other-domain'], expectedRedirectUrl: '/' },
+      { referrer: ['non-relative-page'], expectedRedirectUrl: '/' }
+    ])(
+      'Should create session and redirect to either flash referrer (when present and safe) or home',
+      async ({ referrer, expectedRedirectUrl }) => {
+        const mockRequest = {
+          auth: {
+            isAuthenticated: true,
+            credentials: {
+              profile: mockProfile,
+              token: mockToken,
+              refreshToken: mockRefreshToken
+            }
+          },
+          yar: {
+            flash: vi.fn().mockReturnValue(referrer)
+          }
+        }
+
+        const result = await callbackRoute.handler(mockRequest, mockToolkit)
+
+        expect(randomUUID).toHaveBeenCalledTimes(1)
+        expect(createUserSession).toHaveBeenCalledWith(mockRequest, {
+          sessionId: mockSessionId,
+          displayName: mockProfile.displayName,
+          isAuthenticated: true,
           token: mockToken,
           refreshToken: mockRefreshToken
-        }
+        })
+        expect(mockToolkit.redirect).toHaveBeenCalledWith(expectedRedirectUrl)
+        expect(result).toBe('redirect-result')
       }
-    }
-
-    const result = await callbackRoute.handler(mockRequest, mockToolkit)
-
-    expect(randomUUID).toHaveBeenCalledTimes(1)
-    expect(createUserSession).toHaveBeenCalledWith(mockRequest, {
-      sessionId: mockSessionId,
-      displayName: mockProfile.displayName,
-      isAuthenticated: true,
-      token: mockToken,
-      refreshToken: mockRefreshToken
-    })
-    expect(mockToolkit.redirect).toHaveBeenCalledWith('/')
-    expect(result).toBe('redirect-result')
+    )
   })
 
   test('Should handle missing displayName in profile', async () => {
