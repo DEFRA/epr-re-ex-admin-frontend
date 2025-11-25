@@ -57,11 +57,11 @@ describe('GET /defra-forms-submission/{documentId}', () => {
     })
 
     test('Should return OK and render defra forms submission details', async () => {
-      const org1 = { id: 'org-1' }
-      const reg1 = { id: 'reg-1' }
-      const reg2 = { id: 'reg-2' }
-      const acc1 = { id: 'acc-1' }
-      const acc2 = { id: 'acc-2' }
+      const org1 = { id: 'org-1', rawSubmissionData: { meta: {} } }
+      const reg1 = { id: 'reg-1', rawSubmissionData: { meta: {} } }
+      const reg2 = { id: 'reg-2', rawSubmissionData: { meta: {} } }
+      const acc1 = { id: 'acc-1', rawSubmissionData: { meta: {} } }
+      const acc2 = { id: 'acc-2', rawSubmissionData: { meta: {} } }
       const backendResponse = {
         organisation: org1,
         registrations: [reg1, reg2],

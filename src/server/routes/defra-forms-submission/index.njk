@@ -1,4 +1,5 @@
-{% extends 'layout.njk' %}
+{% extends "layout.njk" %}
+{% from "govuk/components/details/macro.njk" import govukDetails %}
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "govuk/components/warning-text/macro.njk" import govukWarningText %}
 {% from "govuk/components/textarea/macro.njk" import govukTextarea %}
@@ -13,7 +14,7 @@
       <h2 class="govuk-heading-l">{{ heading }}</h2>
 
       {{ govukWarningText({
-        text: 'This data contains sensitive information - it must be kept within the Defra network.'
+        text: "This data contains sensitive information - it must be kept within the Defra network."
       }) }}
 
       <h3 class="govuk-heading-m">Organisation</h3>
@@ -22,8 +23,11 @@
         {{ govukTextarea({
           name: "organisation",
           id: "organisation",
-          value: organisation
+          value: organisation.payload
         }) }}
+
+        {% set schemaHtml = govukTextarea({ name: "organisation-schema", id: "organisation-schema", value: organisation.schema }) %}
+        {{ govukDetails({ summaryText: "Schema", html: schemaHtml }) }}
       {% else %}
         {{ govukInsetText({ text: "No organisations submission data found." }) }}
       {% endif %}
@@ -34,12 +38,15 @@
 
         {% for registration in registrations %}
           <p>{{loop.index}} of {{registrations.length}}
-          {% set id = 'registration-' ~ loop.index %}
+          {% set id = "registration-" ~ loop.index %}
           {{ govukTextarea({
             name: id,
             id: id,
-            value: registration
+            value: registration.payload
           }) }}
+
+          {% set schemaHtml = govukTextarea({ name: id ~ "-schema", id: id ~ "-schema", value: registration.schema }) %}
+          {{ govukDetails({ summaryText: "Schema", html: schemaHtml }) }}
         {% endfor %}
 
       {% else %}
@@ -51,12 +58,15 @@
       {% if accreditations and accreditations.length %}
         {% for accreditation in accreditations %}
           <p>{{loop.index}} of {{accreditations.length}}
-          {% set id = 'accreditation-' ~ loop.index %}
+          {% set id = "accreditation-" ~ loop.index %}
           {{ govukTextarea({
             name: id,
             id: id,
-            value: accreditation
+            value: accreditation.payload
           }) }}
+
+          {% set schemaHtml = govukTextarea({ name: id ~ "-schema", id: id ~ "-schema", value: accreditation.schema }) %}
+          {{ govukDetails({ summaryText: "Schema", html: schemaHtml }) }}
         {% endfor %}
 
       {% else %}
