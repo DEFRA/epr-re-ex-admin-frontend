@@ -17,12 +17,18 @@ export const defraFormsSubmission = {
 
             const data = await loadData(request, documentId)
 
+            const organisation = data.organisation
+              ? asPayloadAndSchema(data.organisation)
+              : undefined
+
             return h.view('routes/defra-forms-submission/index', {
               pageTitle: request.route.settings.app.pageTitle,
               heading: `ID: ${documentId}`,
-              organisation: pretty(data.organisation),
-              registrations: (data.registrations || []).map(pretty),
-              accreditations: (data.accreditations || []).map(pretty)
+              organisation,
+              registrations: (data.registrations || []).map(asPayloadAndSchema),
+              accreditations: (data.accreditations || []).map(
+                asPayloadAndSchema
+              )
             })
           }
         }
@@ -42,6 +48,22 @@ async function loadData(request, documentId) {
       return {}
     }
     throw e
+  }
+}
+
+function asPayloadAndSchema(raw) {
+  return {
+    schema: pretty(raw.rawSubmissionData.meta.definition),
+    payload: pretty({
+      ...raw,
+      rawSubmissionData: {
+        ...raw.rawSubmissionData,
+        meta: {
+          ...raw.rawSubmissionData.meta,
+          definition: 'See schema'
+        }
+      }
+    })
   }
 }
 
