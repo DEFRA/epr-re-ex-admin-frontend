@@ -4,6 +4,7 @@ import { authPlugin } from './auth-plugin.js'
 import { getOidcConfig } from '#server/common/helpers/auth/get-oidc-config.js'
 import { getBellOptions } from '#server/common/helpers/auth/get-bell-options.js'
 import { getCookieOptions } from '#server/common/helpers/auth/get-cookie-options.js'
+import { TEST_COOKIE_PASSWORD } from '#server/common/test-helpers/test-constants.js'
 
 vi.mock('#server/common/helpers/auth/get-oidc-config.js')
 vi.mock('#server/common/helpers/auth/get-bell-options.js')
@@ -29,7 +30,7 @@ describe('#authPlugin', () => {
 
   const mockCookieOptions = {
     cookie: {
-      password: 'test-cookie-password',
+      password: TEST_COOKIE_PASSWORD,
       path: '/',
       isSecure: false,
       isSameSite: 'Lax'

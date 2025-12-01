@@ -1,6 +1,8 @@
+import { makeToken } from './test-constants.js'
+
 export const mockUserSession = {
   sessionId: '123',
   displayName: ' John Doe',
   isAuthenticated: true,
-  token: 'aaaaaa'
+  token: makeToken('user-token')
 }

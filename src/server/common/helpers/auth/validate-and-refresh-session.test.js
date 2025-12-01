@@ -9,6 +9,7 @@ import { config } from '#config/config.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 
 import { validateAndRefreshSession } from './validate-and-refresh-session.js'
+import { makeToken } from '#server/common/test-helpers/test-constants.js'
 
 vi.mock('./create-user-session.js', () => ({
   createUserSession: vi.fn().mockResolvedValue(undefined)
@@ -51,8 +52,8 @@ describe('#validateAndRefreshSession', () => {
     })
 
     const newTokens = {
-      access_token: 'new.access.token',
-      refresh_token: 'new-refresh-token',
+      access_token: makeToken('access'),
+      refresh_token: makeToken('refresh'),
       token_type: 'Bearer',
       expires_in: 3600
     }
@@ -91,8 +92,8 @@ describe('#validateAndRefreshSession', () => {
       })
 
     const newTokens = {
-      access_token: 'refreshed.access.token',
-      refresh_token: 'refreshed-refresh-token',
+      access_token: makeToken('access'),
+      refresh_token: makeToken('refresh'),
       token_type: 'Bearer',
       expires_in: 3600
     }
