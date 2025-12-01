@@ -16,9 +16,8 @@ describe('organisation GET controller - Unit Tests - Flash message handling', ()
 
   beforeEach(async () => {
     // Import the mocked function
-    const module = await import(
-      '#server/common/helpers/fetch-json-from-backend.js'
-    )
+    const module =
+      await import('#server/common/helpers/fetch-json-from-backend.js')
     fetchJsonFromBackend = module.fetchJsonFromBackend
     vi.clearAllMocks()
 
