@@ -1,7 +1,6 @@
 {% extends "govuk/template.njk" %}
 
 {# Import GOVUK components globally #}
-{% from "govuk/components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 {% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
 
 {% from "service-header/macro.njk" import appServiceHeader with context%}
@@ -28,14 +27,6 @@
 
 {% block pageTitle %}
   {{ pageTitle }} | {{ serviceName }}
-{% endblock %}
-
-{% block beforeContent %}
-
-    {{ govukBreadcrumbs({
-      items: breadcrumbs
-    }) }}
-
 {% endblock %}
 
 {% block content %}{% endblock %}
