@@ -1,6 +1,7 @@
 import { vi, beforeEach, describe, test, expect } from 'vitest'
 
 import { getCookieOptions } from './get-cookie-options.js'
+import { TEST_COOKIE_PASSWORD } from '#server/common/test-helpers/test-constants.js'
 import { config } from '#config/config.js'
 import { getUserSession } from './get-user-session.js'
 import { validateAndRefreshSession } from './validate-and-refresh-session.js'
@@ -12,7 +13,7 @@ vi.mock('./validate-and-refresh-session.js')
 
 describe('#getCookieOptions', () => {
   const mockConfig = {
-    'session.cookie.password': 'test-cookie-password',
+    'session.cookie.password': TEST_COOKIE_PASSWORD,
     'session.cookie.ttl': 1000,
     isProduction: false
   }
@@ -29,7 +30,7 @@ describe('#getCookieOptions', () => {
     const result = getCookieOptions()
 
     expect(result.cookie).toEqual({
-      password: 'test-cookie-password',
+      password: TEST_COOKIE_PASSWORD,
       path: '/',
       isSecure: false,
       isSameSite: 'Lax',
