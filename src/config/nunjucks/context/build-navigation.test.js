@@ -18,6 +18,11 @@ describe('#buildNavigation', () => {
         current: false,
         text: 'Organisations',
         href: '/organisations'
+      },
+      {
+        current: false,
+        text: 'System logs',
+        href: '/system-logs'
       }
     ])
   })
@@ -33,6 +38,11 @@ describe('#buildNavigation', () => {
         current: false,
         text: 'Organisations',
         href: '/organisations'
+      },
+      {
+        current: false,
+        text: 'System logs',
+        href: '/system-logs'
       }
     ])
   })
