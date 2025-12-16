@@ -51,18 +51,21 @@ export const systemLogs = {
 }
 
 function difference(previous, next) {
-  const changes = (next, previous) => {
-    let arrayIndexCounter = 0
-    return transform(next, (result, value, key) => {
-      if (!isEqual(value, previous[key])) {
-        const resultKey = isArray(previous) ? arrayIndexCounter++ : key
+  let arrayIndexCounter = 0
+  return transform(next, (result, value, key) => {
+    if (isEqual(value, previous[key])) {
+      return
+    }
 
-        result[resultKey] =
-          isObject(value) && isObject(previous[key])
-            ? changes(value, previous[key])
-            : value
-      }
-    })
-  }
-  return changes(next, previous)
+    const resultKey = isArray(previous) ? arrayIndexCounter : key
+
+    result[resultKey] =
+      isObject(value) && isObject(previous[key])
+        ? difference(previous[key], value)
+        : value
+
+    if (isArray(previous)) {
+      arrayIndexCounter++
+    }
+  })
 }
