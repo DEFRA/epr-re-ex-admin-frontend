@@ -1,0 +1,91 @@
+{% extends 'layout.njk' %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/details/macro.njk" import govukDetails %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <div class="govuk-body" data-testid="app-page-body">
+
+        <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
+
+        <form method="get" class="govuk-!-margin-top-6 govuk-!-margin-bottom-8">
+          <div class="govuk-form-group govuk-!-margin-bottom-4">
+            {{ govukInput({
+              label: {
+                text: "Search by organisation reference number",
+                classes: "govuk-label--m"
+              },
+              id: "referenceNumber",
+              name: "referenceNumber",
+              type: "search",
+              value: searchTerms.referenceNumber,
+              autocomplete: "off",
+              classes: "govuk-input--width-20"
+            }) }}
+          </div>
+
+          {{ govukButton({
+            text: "Search"
+          }) }}
+
+          <a href="?" class="govuk-link govuk-link--no-visited-state">Clear search</a>
+        </form>
+
+        {% for systemLog in systemLogs %}
+          {%set previousHtml = govukDetails({ summaryText: "Show", html: '<code>' ~ systemLog.previous | dump(2) ~ '</code>' }) %}
+          {%set nextHtml = govukDetails({ summaryText: "Show", html: '<code>' ~ systemLog.next | dump(2) ~ '</code>' }) %}
+
+          {% set differenceHtml = '<code>' ~ systemLog.difference | dump(2) ~ '</code>' %}
+
+          {{ govukSummaryList({
+            card: {
+              title: {
+                text: [systemLog.event.category, systemLog.event.subCategory, systemLog.event.action] | select | join(', ')
+              }
+            },
+            rows: [
+              {
+                key: { text: "Timestamp" },
+                value: { html: systemLog.timestamp }
+              },
+              {
+                key: { text: "User ID" },
+                value: { html: systemLog.user.id }
+              },
+              {
+                key: { text: "User email" },
+                value: { html: systemLog.user.email }
+              },
+                            {
+                key: { text: "User roles" },
+                value: { html: systemLog.user.scope }
+              },
+              {
+                key: { text: "Previous" },
+                value: { html: previousHtml }
+              },
+              {
+                key: { text: "Next" },
+                value: { html: nextHtml }
+              },
+              {
+                key: { text: "Difference" },
+                value: { html: '<code>' ~ systemLog.difference | dump(2) ~ '</code>' }
+              }
+            ]
+          }) }}
+        {% endfor %}
+
+        {% if not systemLogs.length %}
+          {{ govukInsetText({ text: "No system logs found" }) }}
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+
+{% endblock %}
