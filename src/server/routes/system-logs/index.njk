@@ -12,12 +12,13 @@
 
         <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
 
-        <form method="get" class="govuk-!-margin-top-6 govuk-!-margin-bottom-8">
-          <div class="govuk-form-group govuk-!-margin-bottom-4">
+        <form method="get">
+          <h2 class="govuk-heading-m">Search system logs by</h2>
+          <div class="govuk-form-group">
             {{ govukInput({
               label: {
-                text: "Search by organisation reference number",
-                classes: "govuk-label--m"
+                text: "Organisation reference number",
+                classes: "govuk-label--s"
               },
               id: "referenceNumber",
               name: "referenceNumber",
@@ -28,12 +29,17 @@
             }) }}
           </div>
 
-          {{ govukButton({
-            text: "Search"
-          }) }}
+          <div class="govuk-button-group">
 
-          <a href="?" class="govuk-link govuk-link--no-visited-state">Clear search</a>
+            {{ govukButton({
+              text: "Search"
+            }) }}
+
+            <a href="?" class="govuk-button govuk-button--secondary">Clear search</a>
+          </div>
         </form>
+
+        <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
 
         {% for systemLog in systemLogs %}
           {%set previousHtml = govukDetails({ summaryText: "Show", html: '<code>' ~ systemLog.previous | dump(2) ~ '</code>' }) %}
