@@ -1,0 +1,11 @@
+@use 'govuk-frontend' as *;
+
+.app-filters {
+  background-color: govuk-colour("light-grey");
+  margin-bottom: govuk-spacing(8);
+  padding: govuk-spacing(2);
+}
+
+.app-filters .govuk-button {
+  margin-bottom: govuk-spacing(0);
+}

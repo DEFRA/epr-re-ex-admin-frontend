@@ -12,7 +12,7 @@
 
         <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
 
-        <form method="get">
+        <form method="get" class="app-filters">
           <h2 class="govuk-heading-m">Search system logs by</h2>
           <div class="govuk-form-group">
             {{ govukInput({
@@ -31,15 +31,11 @@
 
           <div class="govuk-button-group">
 
-            {{ govukButton({
-              text: "Search"
-            }) }}
+            {{ govukButton({ text: "Search" }) }}
 
-            <a href="?" class="govuk-button govuk-button--secondary">Clear search</a>
+            <a href="?" class="govuk-button govuk-button--inverse">Clear search</a>
           </div>
         </form>
-
-        <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
 
         {% for systemLog in systemLogs %}
           {%set previousHtml = govukDetails({ summaryText: "Show", html: '<code>' ~ systemLog.previous | dump(2) ~ '</code>' }) %}
