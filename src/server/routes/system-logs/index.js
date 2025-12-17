@@ -52,7 +52,7 @@ export const systemLogs = {
 
 function difference(previous, next) {
   if (isEqual(previous, next)) {
-    return
+    return undefined
   }
   if (isSimple(previous) || isSimple(next)) {
     return renderChange(previous, next)
