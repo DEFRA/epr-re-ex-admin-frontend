@@ -71,7 +71,7 @@ function difference(previous, next) {
   })
 }
 
-function renderChange (a, b) {
+function renderChange(a, b) {
   if (isSimple(a) && isSimple(b)) {
     if (!a) {
       return `(added) ${b}`
@@ -82,6 +82,6 @@ function renderChange (a, b) {
   return ['(added)', b]
 }
 
-function isSimple (x) {
+function isSimple(x) {
   return !isObject(x) && !isArray(x)
 }

@@ -192,7 +192,7 @@ describe('GET /system-logs', () => {
           {
             previous: 'a',
             next: 'b',
-            expectedDifference: { '0': 'a -> b' }
+            expectedDifference: { 0: 'a -> b' }
           }
         ],
         [
@@ -274,9 +274,16 @@ describe('GET /system-logs', () => {
             },
             next: {
               id: 1,
-              nested: { items: [{ title: 'a', sub: 'subtitle' }, { title: 'b', sub: 'subtitle' }] }
+              nested: {
+                items: [
+                  { title: 'a', sub: 'subtitle' },
+                  { title: 'b', sub: 'subtitle' }
+                ]
+              }
             },
-            expectedDifference: { nested: { items: [['(added)', { title: 'b', sub: 'subtitle' }]] } }
+            expectedDifference: {
+              nested: { items: [['(added)', { title: 'b', sub: 'subtitle' }]] }
+            }
           }
         ],
         [
