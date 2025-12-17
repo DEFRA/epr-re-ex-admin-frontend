@@ -38,10 +38,14 @@
         </form>
 
         {% for systemLog in systemLogs %}
-          {%set previousHtml = govukDetails({ summaryText: "Show", html: '<code>' ~ systemLog.previous | dump(2) ~ '</code>' }) %}
-          {%set nextHtml = govukDetails({ summaryText: "Show", html: '<code>' ~ systemLog.next | dump(2) ~ '</code>' }) %}
-
-          {% set differenceHtml = '<code>' ~ systemLog.difference | dump(2) ~ '</code>' %}
+          {#
+            Whitespace added at the start of the contents of <code> elements so the rendered opening brace aligns
+            The summaryList component calls nunjucks indent function to render supplied html
+            - this indents every line (expect the first!) by 6 spaces
+          #}
+          {%set previousHtml = govukDetails({ summaryText: "Show", html: '<code class="app-json-display">          ' ~ systemLog.previous | dump(2) ~ '</code>' }) %}
+          {%set nextHtml = govukDetails({ summaryText: "Show", html: '<code class="app-json-display">          ' ~ systemLog.next | dump(2) ~ '</code>' }) %}
+          {%set differenceHtml = '<code class="app-json-display">          ' ~ systemLog.difference | dump(2) ~ '</code>' %}
 
           {{ govukSummaryList({
             card: {
@@ -62,7 +66,7 @@
                 key: { text: "User email" },
                 value: { html: systemLog.user.email }
               },
-                            {
+              {
                 key: { text: "User roles" },
                 value: { html: systemLog.user.scope }
               },
@@ -76,7 +80,7 @@
               },
               {
                 key: { text: "Difference" },
-                value: { html: '<code>' ~ systemLog.difference | dump(2) ~ '</code>' }
+                value: { html: differenceHtml }
               }
             ]
           }) }}

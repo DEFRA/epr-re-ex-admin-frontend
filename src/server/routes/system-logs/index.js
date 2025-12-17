@@ -52,20 +52,36 @@ export const systemLogs = {
 
 function difference(previous, next) {
   let arrayIndexCounter = 0
-  return transform(next, (result, value, key) => {
-    if (isEqual(value, previous[key])) {
+  return transform(next, (result, nextValue, key) => {
+    const previousValue = previous[key]
+    if (isEqual(nextValue, previousValue)) {
       return
     }
 
     const resultKey = isArray(previous) ? arrayIndexCounter : key
 
     result[resultKey] =
-      isObject(value) && isObject(previous[key])
-        ? difference(previous[key], value)
-        : value
+      isObject(nextValue) && isObject(previousValue)
+        ? difference(previousValue, nextValue)
+        : renderChange(previousValue, nextValue)
 
     if (isArray(previous)) {
       arrayIndexCounter++
     }
   })
+}
+
+function renderChange (a, b) {
+  if (isSimple(a) && isSimple(b)) {
+    if (!a) {
+      return `(added) ${b}`
+    }
+    return `${a} -> ${b}`
+  }
+
+  return ['(added)', b]
+}
+
+function isSimple (x) {
+  return !isObject(x) && !isArray(x)
 }

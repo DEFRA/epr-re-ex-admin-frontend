@@ -172,7 +172,7 @@ describe('GET /system-logs', () => {
             $(previousRow).find('dd details .govuk-details__text').html()
           )
         ).toEqual(
-          '<code>{ "version": 1, "title": "A", "subTitle": "a" }</code>'
+          '<code class="app-json-display"> { "version": 1, "title": "A", "subTitle": "a" }</code>'
         )
 
         const nextRow = $('.govuk-summary-card .govuk-summary-list__row').has(
@@ -182,59 +182,120 @@ describe('GET /system-logs', () => {
         expect(
           normalise($(nextRow).find('dd details .govuk-details__text').html())
         ).toEqual(
-          '<code>{ "version": 2, "title": "A", "subTitle": "a2" }</code>'
+          '<code class="app-json-display"> { "version": 2, "title": "A", "subTitle": "a2" }</code>'
         )
       })
 
       it.each([
-        // one key different
-        {
-          previous: { id: 1 },
-          next: { id: 2 },
-          expectedDifference: { id: 2 }
-        },
-        // multiple keys different
-        {
-          previous: { id: 1, item: 'a', another: 'same' },
-          next: { id: 2, item: 'b', another: 'same' },
-          expectedDifference: { id: 2, item: 'b' }
-        },
-        // nested keys different
-        {
-          previous: { id: 1, nested: { item: 'a', another: 'same' } },
-          next: { id: 1, nested: { item: 'b', another: 'same' } },
-          expectedDifference: { nested: { item: 'b' } }
-        },
-        // nested arrays element added
-        {
-          previous: { id: 1, nested: { items: ['a'] } },
-          next: { id: 1, nested: { items: ['a', 'b'] } },
-          expectedDifference: { nested: { items: ['b'] } }
-        },
-        // nested arrays element removed
-        {
-          previous: { id: 1, nested: { items: ['a', 'b'] } },
-          next: { id: 1, nested: { items: ['b'] } },
-          expectedDifference: { nested: { items: ['b'] } }
-        },
-        // nested arrays element order changed
-        {
-          previous: { id: 1, nested: { items: ['a', 'b'] } },
-          next: { id: 1, nested: { items: ['b', 'a'] } },
-          expectedDifference: { nested: { items: ['b', 'a'] } }
-        },
-        // nested arrays of objects
-        {
-          previous: {
-            id: 1,
-            nested: { items: [{ title: 'a', sub: 'subtitle' }] }
-          },
-          next: { id: 1, nested: { items: [{ title: 'b', sub: 'subtitle' }] } },
-          expectedDifference: { nested: { items: [{ title: 'b' }] } }
-        }
+        [
+          'strings',
+          {
+            previous: 'a',
+            next: 'b',
+            expectedDifference: { '0': 'a -> b' }
+          }
+        ],
+        [
+          'multiple keys different',
+          {
+            previous: { id: 1, item: 'a', another: 'same' },
+            next: { id: 2, item: 'b', another: 'same' },
+            expectedDifference: { id: '1 -> 2', item: 'a -> b' }
+          }
+        ],
+        [
+          'keys added',
+          {
+            previous: { id: 1 },
+            next: { id: 1, item: 'a' },
+            expectedDifference: { item: '(added) a' }
+          }
+        ],
+        [
+          'keys removed',
+          {
+            previous: { id: 1, item: 'a' },
+            next: { id: 1 },
+            expectedDifference: {} // TODO should be { item: '(removed) a' }
+          }
+        ],
+        [
+          'nested keys different',
+          {
+            previous: { id: 1, nested: { item: 'a', another: 'same' } },
+            next: { id: 1, nested: { item: 'b', another: 'same' } },
+            expectedDifference: { nested: { item: 'a -> b' } }
+          }
+        ],
+        [
+          'nested arrays element added',
+          {
+            previous: { id: 1, nested: { items: ['a'] } },
+            next: { id: 1, nested: { items: ['a', 'b'] } },
+            expectedDifference: { nested: { items: ['(added) b'] } }
+          }
+        ],
+        [
+          'nested arrays element removed',
+          {
+            previous: { id: 1, nested: { items: ['a', 'b'] } },
+            next: { id: 1, nested: { items: ['b'] } },
+            expectedDifference: { nested: { items: ['a -> b'] } }
+          }
+        ],
+        [
+          'nested arrays element order changed',
+          {
+            previous: { id: 1, nested: { items: ['a', 'b'] } },
+            next: { id: 1, nested: { items: ['b', 'a'] } },
+            expectedDifference: { nested: { items: ['a -> b', 'b -> a'] } }
+          }
+        ],
+        [
+          'nested arrays of objects changed',
+          {
+            previous: {
+              id: 1,
+              nested: { items: [{ title: 'a', sub: 'subtitle' }] }
+            },
+            next: {
+              id: 1,
+              nested: { items: [{ title: 'b', sub: 'subtitle' }] }
+            },
+            expectedDifference: { nested: { items: [{ title: 'a -> b' }] } }
+          }
+        ],
+        [
+          'nested arrays of objects added',
+          {
+            previous: {
+              id: 1,
+              nested: { items: [{ title: 'a', sub: 'subtitle' }] }
+            },
+            next: {
+              id: 1,
+              nested: { items: [{ title: 'a', sub: 'subtitle' }, { title: 'b', sub: 'subtitle' }] }
+            },
+            expectedDifference: { nested: { items: [['(added)', { title: 'b', sub: 'subtitle' }]] } }
+          }
+        ],
+        [
+          'nested arrays of objects removed',
+          {
+            previous: {
+              id: 1,
+              nested: { items: [{ title: 'a', sub: 'subtitle' }] }
+            },
+            next: {
+              id: 1,
+              nested: { items: [] }
+            },
+            expectedDifference: { nested: { items: [] } } // TODO should describe removed item
+          }
+        ]
       ])(
-        'Renders the difference between previous and next',
-        async ({ previous, next, expectedDifference }) => {
+        'Renders the difference between previous and next - %s',
+        async (_description, { previous, next, expectedDifference }) => {
           stubBackendReponse(
             HttpResponse.json({
               systemLogs: [
