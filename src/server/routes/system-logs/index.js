@@ -59,14 +59,13 @@ function difference(previous, next) {
   }
 
   const allKeysDeDuped = [...new Set([previous, next].flatMap(Object.keys))]
-  return allKeysDeDuped
-    .reduce((acc, key) => {
-      const diff = difference(previous[key], next[key])
-      if (diff) {
-        acc[key] = diff
-      }
-      return acc
-    }, {})
+  return allKeysDeDuped.reduce((acc, key) => {
+    const diff = difference(previous[key], next[key])
+    if (diff) {
+      acc[key] = diff
+    }
+    return acc
+  }, {})
 }
 
 function renderChange(a, b) {

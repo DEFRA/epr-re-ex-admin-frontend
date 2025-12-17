@@ -270,7 +270,10 @@ describe('GET /system-logs', () => {
           {
             previous: { id: 1, one: 'a', two: 'b' },
             next: { id: 1, two: '' },
-            expectedDifference: { one: { _removed: 'a' }, two: { _removed: 'b' } }
+            expectedDifference: {
+              one: { _removed: 'a' },
+              two: { _removed: 'b' }
+            }
           }
         ],
         [
