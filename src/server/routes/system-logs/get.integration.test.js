@@ -188,19 +188,73 @@ describe('GET /system-logs', () => {
 
       it.each([
         [
-          'strings',
+          'primitive unchanged',
           {
             previous: 'a',
-            next: 'b',
-            expectedDifference: { 0: 'a -> b' }
+            next: 'a',
+            expectedDifference: ''
           }
         ],
         [
-          'multiple keys different',
+          'primitive changed',
+          {
+            previous: 'a',
+            next: 'b',
+            expectedDifference: { _changed: 'a -> b' }
+          }
+        ],
+        [
+          'primitive type and value',
+          {
+            previous: 'a',
+            next: { something: 'else' },
+            expectedDifference: { _previous: 'a', _next: { something: 'else' } }
+          }
+        ],
+        [
+          'primitive added',
+          {
+            previous: '',
+            next: 'b',
+            expectedDifference: { _added: 'b' }
+          }
+        ],
+        [
+          'primitive removed',
+          {
+            previous: 'a',
+            next: '',
+            expectedDifference: { _removed: 'a' }
+          }
+        ],
+        [
+          'keys unchanged',
+          {
+            previous: { id: 1, item: 'a', another: 'same' },
+            next: { id: 1, item: 'a', another: 'same' },
+            expectedDifference: ''
+          }
+        ],
+        [
+          'keys changed',
           {
             previous: { id: 1, item: 'a', another: 'same' },
             next: { id: 2, item: 'b', another: 'same' },
-            expectedDifference: { id: '1 -> 2', item: 'a -> b' }
+            expectedDifference: {
+              id: { _changed: '1 -> 2' },
+              item: { _changed: 'a -> b' }
+            }
+          }
+        ],
+        [
+          'keys type and value changed',
+          {
+            previous: { id: 1, item: 'a', another: 'same' },
+            next: { id: 2, item: { nested: 'value' }, another: 'same' },
+            expectedDifference: {
+              id: { _changed: '1 -> 2' },
+              item: { _previous: 'a', _next: { nested: 'value' } }
+            }
           }
         ],
         [
@@ -208,23 +262,23 @@ describe('GET /system-logs', () => {
           {
             previous: { id: 1 },
             next: { id: 1, item: 'a' },
-            expectedDifference: { item: '(added) a' }
+            expectedDifference: { item: { _added: 'a' } }
           }
         ],
         [
           'keys removed',
           {
-            previous: { id: 1, item: 'a' },
-            next: { id: 1 },
-            expectedDifference: {} // TODO should be { item: '(removed) a' }
+            previous: { id: 1, one: 'a', two: 'b' },
+            next: { id: 1, two: '' },
+            expectedDifference: { one: { _removed: 'a' }, two: { _removed: 'b' } }
           }
         ],
         [
-          'nested keys different',
+          'nested keys changed',
           {
             previous: { id: 1, nested: { item: 'a', another: 'same' } },
             next: { id: 1, nested: { item: 'b', another: 'same' } },
-            expectedDifference: { nested: { item: 'a -> b' } }
+            expectedDifference: { nested: { item: { _changed: 'a -> b' } } }
           }
         ],
         [
@@ -232,7 +286,7 @@ describe('GET /system-logs', () => {
           {
             previous: { id: 1, nested: { items: ['a'] } },
             next: { id: 1, nested: { items: ['a', 'b'] } },
-            expectedDifference: { nested: { items: ['(added) b'] } }
+            expectedDifference: { nested: { items: { 1: { _added: 'b' } } } }
           }
         ],
         [
@@ -240,7 +294,11 @@ describe('GET /system-logs', () => {
           {
             previous: { id: 1, nested: { items: ['a', 'b'] } },
             next: { id: 1, nested: { items: ['b'] } },
-            expectedDifference: { nested: { items: ['a -> b'] } }
+            expectedDifference: {
+              nested: {
+                items: { 0: { _changed: 'a -> b' }, 1: { _removed: 'b' } }
+              }
+            }
           }
         ],
         [
@@ -248,7 +306,11 @@ describe('GET /system-logs', () => {
           {
             previous: { id: 1, nested: { items: ['a', 'b'] } },
             next: { id: 1, nested: { items: ['b', 'a'] } },
-            expectedDifference: { nested: { items: ['a -> b', 'b -> a'] } }
+            expectedDifference: {
+              nested: {
+                items: { 0: { _changed: 'a -> b' }, 1: { _changed: 'b -> a' } }
+              }
+            }
           }
         ],
         [
@@ -262,7 +324,9 @@ describe('GET /system-logs', () => {
               id: 1,
               nested: { items: [{ title: 'b', sub: 'subtitle' }] }
             },
-            expectedDifference: { nested: { items: [{ title: 'a -> b' }] } }
+            expectedDifference: {
+              nested: { items: { 0: { title: { _changed: 'a -> b' } } } }
+            }
           }
         ],
         [
@@ -282,22 +346,47 @@ describe('GET /system-logs', () => {
               }
             },
             expectedDifference: {
-              nested: { items: [['(added)', { title: 'b', sub: 'subtitle' }]] }
+              nested: {
+                items: { 1: { _added: { title: 'b', sub: 'subtitle' } } }
+              }
             }
           }
         ],
         [
-          'nested arrays of objects removed',
+          'nested arrays of objects last removed',
           {
             previous: {
               id: 1,
-              nested: { items: [{ title: 'a', sub: 'subtitle' }] }
+              nested: { items: [{ title: 'a' }, { title: 'b' }] }
             },
             next: {
               id: 1,
-              nested: { items: [] }
+              nested: { items: [{ title: 'a' }] }
             },
-            expectedDifference: { nested: { items: [] } } // TODO should describe removed item
+            expectedDifference: {
+              nested: { items: { 1: { _removed: { title: 'b' } } } }
+            }
+          }
+        ],
+        [
+          'nested arrays of objects first removed',
+          {
+            previous: {
+              id: 1,
+              nested: { items: [{ title: 'a' }, { title: 'b' }] }
+            },
+            next: {
+              id: 1,
+              nested: { items: [{ title: 'b' }] }
+            },
+            expectedDifference: {
+              nested: {
+                items: {
+                  0: { title: { _changed: 'a -> b' } },
+                  1: { _removed: { title: 'b' } }
+                }
+              }
+            }
           }
         ]
       ])(

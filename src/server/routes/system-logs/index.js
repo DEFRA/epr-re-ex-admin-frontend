@@ -1,5 +1,4 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
-import transform from 'lodash/transform.js'
 import isEqual from 'lodash/isEqual.js'
 import isArray from 'lodash/isArray.js'
 import isObject from 'lodash/isObject.js'
@@ -34,10 +33,11 @@ export const systemLogs = {
                 user: systemLog.createdBy,
                 previous: systemLog.context.previous,
                 next: systemLog.context.next,
-                difference: difference(
-                  systemLog.context.previous,
-                  systemLog.context.next
-                )
+                difference:
+                  difference(
+                    systemLog.context.previous,
+                    systemLog.context.next
+                  ) || ''
               })),
               searchTerms: {
                 referenceNumber: searchTermReferenceNumber
@@ -51,37 +51,46 @@ export const systemLogs = {
 }
 
 function difference(previous, next) {
-  let arrayIndexCounter = 0
-  return transform(next, (result, nextValue, key) => {
-    const previousValue = previous[key]
-    if (isEqual(nextValue, previousValue)) {
-      return
-    }
+  if (isEqual(previous, next)) {
+    return
+  }
+  if (isSimple(previous) || isSimple(next)) {
+    return renderChange(previous, next)
+  }
 
-    const resultKey = isArray(previous) ? arrayIndexCounter : key
-
-    result[resultKey] =
-      isObject(nextValue) && isObject(previousValue)
-        ? difference(previousValue, nextValue)
-        : renderChange(previousValue, nextValue)
-
-    if (isArray(previous)) {
-      arrayIndexCounter++
-    }
-  })
+  const allKeysDeDuped = [...new Set([previous, next].flatMap(Object.keys))]
+  return allKeysDeDuped
+    .reduce((acc, key) => {
+      const diff = difference(previous[key], next[key])
+      if (diff) {
+        acc[key] = diff
+      }
+      return acc
+    }, {})
 }
 
 function renderChange(a, b) {
   if (isSimple(a) && isSimple(b)) {
     if (!a) {
-      return `(added) ${b}`
+      return { _added: b }
     }
-    return `${a} -> ${b}`
+    if (!b) {
+      return { _removed: a }
+    }
+    return { _changed: `${a} -> ${b}` }
   }
 
-  return ['(added)', b]
+  if (!a) {
+    return { _added: b }
+  }
+
+  if (!b) {
+    return { _removed: a }
+  }
+
+  return { _previous: a, _next: b }
 }
 
 function isSimple(x) {
-  return !isObject(x) && !isArray(x)
+  return x === undefined || x === null || (!isObject(x) && !isArray(x))
 }
