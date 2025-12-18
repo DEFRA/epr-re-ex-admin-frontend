@@ -41,15 +41,6 @@ describe('#organisationsController', () => {
     }
   })
 
-  const stubBackendReponse = (response) => {
-    mswServer.use(
-      http.get(
-        `${config.get('eprBackendUrl')}/v1/organisations`,
-        () => response
-      )
-    )
-  }
-
   describe('When user is unauthenticated', () => {
     test('Should return unauthorised status code and unauthorised view', async () => {
       const { result, statusCode } = await server.inject({
@@ -71,10 +62,38 @@ describe('#organisationsController', () => {
       getUserSession.mockReturnValue(mockUserSession)
     })
 
-    const loadPage = async ({ method, payload } = { method: 'GET' }) => {
+    test('Should return OK and render organisations table from backend data', async () => {
+      // Mock backend API response for organisations
+      const mockOrganisations = [
+        {
+          id: 'org-1',
+          orgId: 'org-1',
+          status: 'ACTIVE',
+          statusHistory: [
+            { status: 'PENDING', updatedAt: '2025-09-01T00:00:00Z' },
+            { status: 'ACTIVE', updatedAt: '2025-10-01T00:00:00Z' }
+          ],
+          companyDetails: {
+            name: 'Acme Ltd',
+            registrationNumber: '12345678'
+          },
+          submittedToRegulator: 'regulator-name'
+        }
+      ]
+
+      const getOrganisationsHandler = http.get(
+        `${backendUrl}/v1/organisations`,
+        () => {
+          return HttpResponse.json(mockOrganisations)
+        }
+      )
+
+      mswServer.use(getOrganisationsHandler)
+      const requestSpy = vi.fn()
+      mswServer.events.on('request:start', requestSpy)
+
       const { result, statusCode } = await server.inject({
-        method,
-        payload,
+        method: 'GET',
         url: '/organisations',
         auth: {
           strategy: 'session',
@@ -82,35 +101,9 @@ describe('#organisationsController', () => {
         }
       })
 
-      return { $: cheerio.load(result), statusCode }
-    }
-
-    test('Should return OK and render organisations table from backend data', async () => {
-      stubBackendReponse(
-        HttpResponse.json([
-          {
-            id: 'org-1',
-            orgId: 'org-1',
-            status: 'ACTIVE',
-            statusHistory: [
-              { status: 'PENDING', updatedAt: '2025-09-01T00:00:00Z' },
-              { status: 'ACTIVE', updatedAt: '2025-10-01T00:00:00Z' }
-            ],
-            companyDetails: {
-              name: 'Acme Ltd',
-              registrationNumber: '12345678'
-            },
-            submittedToRegulator: 'regulator-name'
-          }
-        ])
-      )
-
-      const requestSpy = vi.fn()
-      mswServer.events.on('request:start', requestSpy)
-
-      const { $, statusCode } = await loadPage()
-
       expect(statusCode).toBe(statusCodes.ok)
+
+      const $ = cheerio.load(result)
 
       // Basic page assertions
       expect($.text()).not.toContain('Sign in')
@@ -156,10 +149,23 @@ describe('#organisationsController', () => {
     })
 
     test('Should show 500 error page when backend returns a non-OK response', async () => {
-      stubBackendReponse(HttpResponse.text('', { status: 500 }))
+      const getOrganisationsHandler = http.get(
+        `${backendUrl}/v1/organisations`,
+        () => {
+          throw HttpResponse.text('', { status: 500 })
+        }
+      )
 
-      const { $ } = await loadPage()
-      const result = $.html()
+      mswServer.use(getOrganisationsHandler)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/organisations',
+        auth: {
+          strategy: 'session',
+          credentials: mockUserSession
+        }
+      })
 
       expect(result).toEqual(
         expect.stringContaining('Sorry, there is a problem with the service')
@@ -171,25 +177,41 @@ describe('#organisationsController', () => {
 
     test('Should render without status when statusHistory is empty', async () => {
       // Organisation with empty statusHistory
-      stubBackendReponse(
-        HttpResponse.json([
-          {
-            id: 'org-2',
-            orgId: 'org-2',
-            status: null,
-            statusHistory: [],
-            companyDetails: {
-              name: 'Beta Corp',
-              registrationNumber: '87654321'
-            },
-            submittedToRegulator: 'regulator-name'
-          }
-        ])
+      const mockOrganisations = [
+        {
+          id: 'org-2',
+          orgId: 'org-2',
+          status: null,
+          statusHistory: [],
+          companyDetails: {
+            name: 'Beta Corp',
+            registrationNumber: '87654321'
+          },
+          submittedToRegulator: 'regulator-name'
+        }
+      ]
+
+      const getOrganisationsHandler = http.get(
+        `${backendUrl}/v1/organisations`,
+        () => {
+          return HttpResponse.json(mockOrganisations)
+        }
       )
 
-      const { $, statusCode } = await loadPage()
+      mswServer.use(getOrganisationsHandler)
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/organisations',
+        auth: {
+          strategy: 'session',
+          credentials: mockUserSession
+        }
+      })
 
       expect(statusCode).toBe(statusCodes.ok)
+
+      const $ = cheerio.load(result)
 
       // Rendered row data
       const rowHeader = $('table tbody tr th')
@@ -207,10 +229,23 @@ describe('#organisationsController', () => {
     })
 
     test('Should display message when backend returns non array', async () => {
-      stubBackendReponse(HttpResponse.json({}))
+      const getOrganisationsHandler = http.get(
+        `${backendUrl}/v1/organisations`,
+        () => {
+          return HttpResponse.json({})
+        }
+      )
 
-      const { $, statusCode } = await loadPage()
-      const result = $.html()
+      mswServer.use(getOrganisationsHandler)
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/organisations',
+        auth: {
+          strategy: 'session',
+          credentials: mockUserSession
+        }
+      })
 
       expect(statusCode).toBe(statusCodes.ok)
 
@@ -220,42 +255,53 @@ describe('#organisationsController', () => {
     })
 
     test('Should filter organisations by search term when POSTing', async () => {
-      stubBackendReponse(
-        HttpResponse.json([
-          {
-            id: 'org-1',
-            orgId: 'org-1',
-            status: 'ACTIVE',
-            statusHistory: [
-              { status: 'ACTIVE', updatedAt: '2025-10-01T00:00:00Z' }
-            ],
-            companyDetails: {
-              name: 'Acme Ltd',
-              registrationNumber: '12345678'
-            },
-            submittedToRegulator: 'regulator-name'
+      const mockOrganisations = [
+        {
+          id: 'org-1',
+          orgId: 'org-1',
+          status: 'ACTIVE',
+          statusHistory: [
+            { status: 'ACTIVE', updatedAt: '2025-10-01T00:00:00Z' }
+          ],
+          companyDetails: {
+            name: 'Acme Ltd',
+            registrationNumber: '12345678'
           },
-          {
-            id: 'org-2',
-            orgId: 'org-2',
-            status: 'PENDING',
-            statusHistory: [
-              { status: 'PENDING', updatedAt: '2025-10-01T00:00:00Z' }
-            ],
-            companyDetails: {
-              name: 'Beta Corp',
-              registrationNumber: '87654321'
-            },
-            submittedToRegulator: 'another-regulator'
-          }
-        ])
+          submittedToRegulator: 'regulator-name'
+        },
+        {
+          id: 'org-2',
+          orgId: 'org-2',
+          status: 'PENDING',
+          statusHistory: [
+            { status: 'PENDING', updatedAt: '2025-10-01T00:00:00Z' }
+          ],
+          companyDetails: {
+            name: 'Beta Corp',
+            registrationNumber: '87654321'
+          },
+          submittedToRegulator: 'another-regulator'
+        }
+      ]
+
+      const getOrganisationsHandler = http.get(
+        `${backendUrl}/v1/organisations`,
+        () => {
+          return HttpResponse.json(mockOrganisations)
+        }
       )
 
-      const { $, statusCode } = await loadPage({
+      mswServer.use(getOrganisationsHandler)
+
+      const { result, statusCode } = await server.inject({
         method: 'POST',
-        payload: { search: 'Acme' }
+        url: '/organisations',
+        payload: { search: 'Acme' },
+        auth: {
+          strategy: 'session',
+          credentials: mockUserSession
+        }
       })
-      const result = $.html()
 
       expect(statusCode).toBe(statusCodes.ok)
 
@@ -269,40 +315,52 @@ describe('#organisationsController', () => {
     })
 
     test('Should show no organisations when search term matches nothing', async () => {
-      stubBackendReponse(
-        HttpResponse.json([
-          {
-            id: 'org-1',
-            orgId: 'org-1',
-            status: 'ACTIVE',
-            statusHistory: [
-              { status: 'ACTIVE', updatedAt: '2025-10-01T00:00:00Z' }
-            ],
-            companyDetails: {
-              name: 'Acme Ltd',
-              registrationNumber: '12345678'
-            },
-            submittedToRegulator: 'regulator-name'
-          }
-        ])
+      const mockOrganisations = [
+        {
+          id: 'org-1',
+          orgId: 'org-1',
+          status: 'ACTIVE',
+          statusHistory: [
+            { status: 'ACTIVE', updatedAt: '2025-10-01T00:00:00Z' }
+          ],
+          companyDetails: {
+            name: 'Acme Ltd',
+            registrationNumber: '12345678'
+          },
+          submittedToRegulator: 'regulator-name'
+        }
+      ]
+
+      const getOrganisationsHandler = http.get(
+        `${backendUrl}/v1/organisations`,
+        () => {
+          return HttpResponse.json(mockOrganisations)
+        }
       )
 
-      const { $, statusCode } = await loadPage({
+      mswServer.use(getOrganisationsHandler)
+
+      const { result, statusCode } = await server.inject({
         method: 'POST',
-        payload: { search: 'NonExistent Company' }
+        url: '/organisations',
+        payload: { search: 'NonExistent Company' },
+        auth: {
+          strategy: 'session',
+          credentials: mockUserSession
+        }
       })
 
       expect(statusCode).toBe(statusCodes.ok)
 
       // Should not show the organisation that didn't match
-      expect($.text()).not.toContain('Acme Ltd')
+      expect(result).not.toEqual(expect.stringContaining('Acme Ltd'))
 
       // Should show search-specific message about no results
-      expect($.text()).toContain('0 results found')
-      expect($.text()).toContain('No organisations found matching')
-
-      // search form populated with criteria
-      expect($('form input[name=search]').val()).toEqual('NonExistent Company')
+      expect(result).toEqual(expect.stringContaining('0 results found'))
+      expect(result).toEqual(
+        expect.stringContaining('No organisations found matching')
+      )
+      expect(result).toEqual(expect.stringContaining('NonExistent Company'))
     })
   })
 })
