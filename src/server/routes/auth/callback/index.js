@@ -18,7 +18,12 @@ export default {
 
     const { profile, token, refreshToken } = request.auth.credentials
 
-    await verifyToken(token)
+    try {
+      await verifyToken(token)
+    } catch (err) {
+      metrics.signInFailure()
+      throw err
+    }
 
     const { displayName = '' } = profile
 
@@ -31,7 +36,6 @@ export default {
       token,
       refreshToken
     }
-
     await createUserSession(request, userSession)
 
     const redirect = request.yar?.flash('referrer')?.at(0) ?? '/'
@@ -40,7 +44,6 @@ export default {
 
     auditSignIn(request)
     metrics.signInSuccess()
-
     return h.redirect(safeRedirect)
   }
 }
