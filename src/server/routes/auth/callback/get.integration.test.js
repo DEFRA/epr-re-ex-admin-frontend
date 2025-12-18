@@ -157,7 +157,9 @@ describe('GET /auth/callback', () => {
 
     it('renders unauthorised page', async () => {
       expect(response.statusCode).toBe(statusCodes.internalServerError)
-      expect(response.result).toContain('Sorry, there is a problem with the service')
+      expect(response.result).toContain(
+        'Sorry, there is a problem with the service'
+      )
     })
 
     it('records sign in failure metric', () => {
