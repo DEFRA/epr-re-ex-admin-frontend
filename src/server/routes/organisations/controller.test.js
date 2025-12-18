@@ -3,6 +3,7 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
+import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { createServer } from '#server/server.js'
 import { vi } from 'vitest'
 import {
@@ -10,6 +11,7 @@ import {
   HttpResponse,
   server as mswServer
 } from '../../../../.vite/setup-msw.js'
+import * as cheerio from 'cheerio'
 
 vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
   getUserSession: vi.fn().mockReturnValue(null)
@@ -102,26 +104,47 @@ describe('#organisationsController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
 
+      const $ = cheerio.load(result)
+
       // Basic page assertions
-      expect(result).not.toEqual(expect.stringContaining('Sign in'))
-      expect(result).toEqual(expect.stringContaining('Organisations'))
+      expect($.text()).not.toContain('Sign in')
+      expect($.text()).toContain('Organisations')
 
-      // Table headers
-      expect(result).toEqual(expect.stringContaining('Name'))
-      expect(result).toEqual(expect.stringContaining('Organisation ID'))
-      expect(result).toEqual(expect.stringContaining('Registration Number'))
-      expect(result).toEqual(expect.stringContaining('Regulator'))
-      expect(result).toEqual(expect.stringContaining('Status'))
-      expect(result).toEqual(expect.stringContaining('Actions'))
+      // Rendered table headers
+      const tableHeaders = $('table thead tr th')
+      expect(tableHeaders).toHaveLength(6)
+      expect($(tableHeaders[0]).text()).toEqual('Name')
+      expect($(tableHeaders[1]).text()).toEqual('Organisation ID')
+      expect($(tableHeaders[2]).text()).toEqual('Registration Number')
+      expect($(tableHeaders[3]).text()).toEqual('Regulator')
+      expect($(tableHeaders[4]).text()).toEqual('Status')
+      expect($(tableHeaders[5]).text()).toEqual('Actions')
 
-      // Row data from mocked backend
-      expect(result).toEqual(expect.stringContaining('Acme Ltd'))
-      expect(result).toEqual(expect.stringContaining('org-1'))
-      expect(result).toEqual(expect.stringContaining('12345678'))
-      expect(result).toEqual(expect.stringContaining('REGULATOR-NAME'))
-      expect(result).toEqual(expect.stringContaining('ACTIVE'))
-      expect(result).toEqual(expect.stringContaining('/organisations/org-1'))
-      expect(result).toEqual(expect.stringContaining('Edit'))
+      // Rendered row data
+      const rowHeader = $('table tbody tr th')
+      expect(rowHeader).toHaveLength(1)
+      expect($(rowHeader).text()).toEqual('Acme Ltd')
+      const rowData = $('table tbody tr td')
+      expect(rowData).toHaveLength(5)
+      expect($(rowData[0]).text()).toEqual('org-1')
+      expect($(rowData[1]).text()).toEqual('12345678')
+      expect($(rowData[2]).text()).toEqual('REGULATOR-NAME')
+      expect($(rowData[3]).find('strong.govuk-tag').text().trim()).toEqual(
+        'ACTIVE'
+      )
+
+      const actionLinks = $(rowData[4]).find('a')
+      expect(actionLinks).toHaveLength(3)
+      expect($(actionLinks[0]).text()).toEqual('Edit')
+      expect($(actionLinks[0]).attr('href')).toEqual('/organisations/org-1')
+      expect($(actionLinks[1]).text()).toEqual('View submission data')
+      expect($(actionLinks[1]).attr('href')).toEqual(
+        '/defra-forms-submission/org-1'
+      )
+      expect($(actionLinks[2]).text()).toEqual('View system logs')
+      expect($(actionLinks[2]).attr('href')).toEqual(
+        '/system-logs?referenceNumber=org-1'
+      )
 
       expect(requestSpy).toHaveBeenCalledTimes(1)
     })
@@ -189,25 +212,21 @@ describe('#organisationsController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
 
-      // Page and table basics
-      expect(result).toEqual(expect.stringContaining('Organisations'))
-      expect(result).toEqual(expect.stringContaining('Name'))
-      expect(result).toEqual(expect.stringContaining('Organisation ID'))
-      expect(result).toEqual(expect.stringContaining('Registration Number'))
-      expect(result).toEqual(expect.stringContaining('Regulator'))
-      expect(result).toEqual(expect.stringContaining('Status'))
+      const $ = cheerio.load(result)
 
-      // Row content excluding status value
-      expect(result).toEqual(expect.stringContaining('Beta Corp'))
-      expect(result).toEqual(expect.stringContaining('org-2'))
-      expect(result).toEqual(expect.stringContaining('87654321'))
-      expect(result).toEqual(expect.stringContaining('REGULATOR-NAME'))
+      // Rendered row data
+      const rowHeader = $('table tbody tr th')
+      expect(rowHeader).toHaveLength(1)
+      expect($(rowHeader).text()).toEqual('Beta Corp')
+      const rowData = $('table tbody tr td')
+      expect(rowData).toHaveLength(5)
+      expect($(rowData[0]).text()).toEqual('org-2')
+      expect($(rowData[1]).text()).toEqual('87654321')
+      expect($(rowData[2]).text()).toEqual('REGULATOR-NAME')
 
-      // Ensure status text is not the string 'undefined'
-      expect(result).not.toEqual(expect.stringContaining('undefined'))
-
-      // govukTag should still be present but with empty content
-      expect(result).toEqual(expect.stringContaining('govuk-tag'))
+      // status rendered as an empty govukTag
+      expect($(rowData[3]).html()).toContain('govuk-tag')
+      expect($(rowData[3]).find('strong.govuk-tag').text().trim()).toEqual('')
     })
 
     test('Should display message when backend returns non array', async () => {
@@ -275,10 +294,16 @@ describe('#organisationsController', () => {
 
       mswServer.use(getOrganisationsHandler)
 
+      const { cookie, crumb } = await getCsrfToken(server, '/organisations', {
+        strategy: 'session',
+        credentials: mockUserSession
+      })
+
       const { result, statusCode } = await server.inject({
         method: 'POST',
         url: '/organisations',
-        payload: { search: 'Acme' },
+        headers: { cookie },
+        payload: { search: 'Acme', crumb },
         auth: {
           strategy: 'session',
           credentials: mockUserSession
@@ -322,10 +347,16 @@ describe('#organisationsController', () => {
 
       mswServer.use(getOrganisationsHandler)
 
+      const { cookie, crumb } = await getCsrfToken(server, '/organisations', {
+        strategy: 'session',
+        credentials: mockUserSession
+      })
+
       const { result, statusCode } = await server.inject({
         method: 'POST',
         url: '/organisations',
-        payload: { search: 'NonExistent Company' },
+        headers: { cookie },
+        payload: { search: 'NonExistent Company', crumb },
         auth: {
           strategy: 'session',
           credentials: mockUserSession
@@ -343,6 +374,40 @@ describe('#organisationsController', () => {
         expect.stringContaining('No organisations found matching')
       )
       expect(result).toEqual(expect.stringContaining('NonExistent Company'))
+    })
+
+    test('Should reject POST request without CSRF token', async () => {
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: '/organisations',
+        payload: { search: 'Test' },
+        auth: {
+          strategy: 'session',
+          credentials: mockUserSession
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.forbidden)
+    })
+
+    test('Should reject POST request with invalid CSRF token', async () => {
+      const { cookie } = await getCsrfToken(server, '/organisations', {
+        strategy: 'session',
+        credentials: mockUserSession
+      })
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: '/organisations',
+        headers: { cookie },
+        payload: { search: 'Test', crumb: 'invalid-csrf-token' },
+        auth: {
+          strategy: 'session',
+          credentials: mockUserSession
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.forbidden)
     })
   })
 })

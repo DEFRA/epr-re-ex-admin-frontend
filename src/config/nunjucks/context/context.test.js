@@ -67,6 +67,11 @@ describe('context and cache', () => {
               current: false,
               text: 'Organisations',
               href: '/organisations'
+            },
+            {
+              current: false,
+              text: 'System logs',
+              href: '/system-logs'
             }
           ],
           serviceName: 'epr-re-ex-admin-frontend',
@@ -202,6 +207,11 @@ describe('context and cache', () => {
               current: false,
               text: 'Organisations',
               href: '/organisations'
+            },
+            {
+              current: false,
+              text: 'System logs',
+              href: '/system-logs'
             }
           ],
           serviceName: 'epr-re-ex-admin-frontend',

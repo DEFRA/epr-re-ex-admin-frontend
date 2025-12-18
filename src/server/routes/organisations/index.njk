@@ -7,15 +7,17 @@
 
 {% block content %}
   <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
+    <div class="govuk-grid-column-full">
       <h1 class="govuk-heading-xl">All organisations</h1>
 
-      <form method="post" class="govuk-!-margin-top-6 govuk-!-margin-bottom-8">
-        <div class="govuk-form-group govuk-!-margin-bottom-4">
+      <form method="post" class="app-filters">
+        <h2 class="govuk-heading-m">Search for an organisation by</h2>
+        <input type="hidden" name="crumb" value="{{ crumb }}" />
+        <div class="govuk-form-group">
           {{ govukInput({
             label: {
-              text: "Search for an organisation by name.",
-              classes: "govuk-label--m"
+              text: "Organisation name",
+              classes: "govuk-label--s"
             },
             id: "search",
             name: "search",
@@ -25,17 +27,16 @@
             classes: "govuk-input--width-20"
           }) }}
         </div>
-
-        {{ govukButton({
-          text: "Search"
-        }) }}
+        <div class="govuk-button-group">
+          {{ govukButton({
+            text: "Search"
+          }) }}
+          {% if searchTerm %}
+            <a href="/organisations" class="govuk-button govuk-button--inverse">Clear search and view all organisations</a>
+          {% endif %}
+          </div>
       </form>
 
-      {% if searchTerm %}
-        <p class="govuk-body">
-          <a href="/organisations" class="govuk-link govuk-link--no-visited-state">Clear search and view all organisations</a>
-        </p>
-      {% endif %}
     </div>
   </div>
 
@@ -63,7 +64,8 @@
               text: org.status
             }) } %}
             {% set actionsHtml = '<a class="govuk-link govuk-link--no-visited-state" href="/organisations/' ~ org.id ~ '">Edit</a>' %}
-            {% set actionsHtml = actionsHtml ~ '<br><a class="govuk-link govuk-link--no-visited-state" href="/defra-forms-submission/' ~ org.id ~ '">View Submission Data</a>' %}
+            {% set actionsHtml = actionsHtml ~ '<br><a class="govuk-link govuk-link--no-visited-state" href="/defra-forms-submission/' ~ org.id ~ '">View submission data</a>' %}
+            {% set actionsHtml = actionsHtml ~ '<br><a class="govuk-link govuk-link--no-visited-state" href="/system-logs?referenceNumber=' ~ org.id ~ '">View system logs</a>' %}
             {% set actionCell = { html:  actionsHtml } %}
 
             {% set row = [ nameCell, orgIdCell, registrationNumberCell, regulatorCell, statusCell, actionCell ] %}
