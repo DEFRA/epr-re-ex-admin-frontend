@@ -5,6 +5,7 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
+import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import {
   http,
   server as mswServer,
@@ -91,11 +92,19 @@ describe('organisation POST controller', () => {
         }
       }
 
+      const { cookie, crumb } = await getCsrfToken(
+        server,
+        `/organisations/${orgId}`,
+        { strategy: 'session', credentials: mockUserSession }
+      )
+
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/organisations/${orgId}`,
+        headers: { cookie },
         payload: {
-          organisation: JSON.stringify(postData)
+          organisation: JSON.stringify(postData),
+          crumb
         },
         auth: {
           strategy: 'session',
@@ -132,11 +141,19 @@ describe('organisation POST controller', () => {
         }
       }
 
+      const { cookie, crumb } = await getCsrfToken(
+        server,
+        `/organisations/${orgId}`,
+        { strategy: 'session', credentials: mockUserSession }
+      )
+
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/organisations/${orgId}`,
+        headers: { cookie },
         payload: {
-          organisation: JSON.stringify(postData)
+          organisation: JSON.stringify(postData),
+          crumb
         },
         auth: {
           strategy: 'session',
@@ -172,11 +189,19 @@ describe('organisation POST controller', () => {
         }
       }
 
+      const { cookie, crumb } = await getCsrfToken(
+        server,
+        `/organisations/${orgId}`,
+        { strategy: 'session', credentials: mockUserSession }
+      )
+
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/organisations/${orgId}`,
+        headers: { cookie },
         payload: {
-          organisation: JSON.stringify(postData)
+          organisation: JSON.stringify(postData),
+          crumb
         },
         auth: {
           strategy: 'session',
@@ -212,11 +237,19 @@ describe('organisation POST controller', () => {
         }
       }
 
+      const { cookie, crumb } = await getCsrfToken(
+        server,
+        `/organisations/${orgId}`,
+        { strategy: 'session', credentials: mockUserSession }
+      )
+
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/organisations/${orgId}`,
+        headers: { cookie },
         payload: {
-          organisation: JSON.stringify(postData)
+          organisation: JSON.stringify(postData),
+          crumb
         },
         auth: {
           strategy: 'session',
@@ -257,11 +290,19 @@ describe('organisation POST controller', () => {
         }
       }
 
+      const { cookie, crumb } = await getCsrfToken(
+        server,
+        `/organisations/${orgId}`,
+        { strategy: 'session', credentials: mockUserSession }
+      )
+
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/organisations/${orgId}`,
+        headers: { cookie },
         payload: {
-          organisation: JSON.stringify(postData)
+          organisation: JSON.stringify(postData),
+          crumb
         },
         auth: {
           strategy: 'session',
@@ -272,6 +313,49 @@ describe('organisation POST controller', () => {
       // Should redirect to correct URL (302 Found)
       expect(statusCode).toBe(302)
       expect(headers.location).toBe(`/organisations/${orgId}`)
+    })
+
+    test('Should reject POST request without CSRF token', async () => {
+      const orgId = 'org-1'
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: `/organisations/${orgId}`,
+        payload: {
+          organisation: JSON.stringify({ version: 1 })
+        },
+        auth: {
+          strategy: 'session',
+          credentials: mockUserSession
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.forbidden)
+    })
+
+    test('Should reject POST request with invalid CSRF token', async () => {
+      const orgId = 'org-1'
+
+      const { cookie } = await getCsrfToken(server, `/organisations/${orgId}`, {
+        strategy: 'session',
+        credentials: mockUserSession
+      })
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: `/organisations/${orgId}`,
+        headers: { cookie },
+        payload: {
+          organisation: JSON.stringify({ version: 1 }),
+          crumb: 'invalid-csrf-token'
+        },
+        auth: {
+          strategy: 'session',
+          credentials: mockUserSession
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.forbidden)
     })
   })
 })

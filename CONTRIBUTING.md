@@ -225,6 +225,7 @@ Both secrets and environment variables are managed by CDP, speak with the engine
 ### Development Notes
 
 - API keys are stored securely in CDP — never commit them to the repo. See [Secrets](#secrets) for how to handle them.
+- **CSRF Protection**: All forms with POST/PUT/DELETE methods must include CSRF tokens (`<input type="hidden" name="crumb" value="{{ crumb }}" />`). The `@hapi/crumb` plugin handles validation automatically.
 
 ## Further Documentation
 

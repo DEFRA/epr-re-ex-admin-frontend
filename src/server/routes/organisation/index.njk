@@ -20,6 +20,7 @@
       </div>
 
       <form id="jsoneditor-form" method="POST">
+        <input type="hidden" name="crumb" value="{{ crumb }}" />
         {% if message === "success" %}
           {% set html %}
             <p id="organisation-success-message" class="govuk-body">Organisation record updated</p>
