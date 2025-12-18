@@ -18,7 +18,7 @@ describe('#callback route', () => {
   const mockProfile = {
     displayName: 'John Doe',
     email: 'john.doe@example-user.test',
-    sub: 'user-id-123'
+    oid: 'user-id-123'
   }
 
   const mockToken = 'mock-jwt-token'
@@ -115,7 +115,7 @@ describe('#callback route', () => {
   test('Should handle missing displayName in profile', async () => {
     const profileWithoutDisplayName = {
       email: 'test@example-user.test',
-      sub: 'user-id'
+      oid: 'user-id'
     }
 
     const mockRequest = {

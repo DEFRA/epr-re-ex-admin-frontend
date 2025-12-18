@@ -1,6 +1,8 @@
 import { createUserSession } from '#server/common/helpers/auth/create-user-session.js'
 import { randomUUID } from 'node:crypto'
 import { verifyToken } from '#server/common/helpers/auth/verify-token.js'
+import { auditSignIn } from '#server/common/helpers/auditing/index.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 
 export default {
   method: 'GET',
@@ -10,6 +12,7 @@ export default {
   },
   handler: async function (request, h) {
     if (!request.auth.isAuthenticated) {
+      metrics.signInFailure()
       return h.view('unauthorised')
     }
 
@@ -34,6 +37,10 @@ export default {
     const redirect = request.yar?.flash('referrer')?.at(0) ?? '/'
 
     const safeRedirect = getSafeRedirect(redirect)
+
+    auditSignIn(request)
+    metrics.signInSuccess()
+
     return h.redirect(safeRedirect)
   }
 }
