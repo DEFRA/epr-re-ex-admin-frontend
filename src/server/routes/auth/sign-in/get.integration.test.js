@@ -15,10 +15,6 @@ vi.mock('#server/common/helpers/metrics/index.js', () => ({
   }
 }))
 
-vi.mock('@defra/cdp-auditing', () => ({
-  audit: (...args) => mockCdpAuditing(...args)
-}))
-
 describe('GET /sign-in', () => {
   let server
 
