@@ -15,7 +15,7 @@ vi.mock('#server/common/helpers/metrics/index.js', () => ({
   }
 }))
 
-describe('GET /sign-in', () => {
+describe('GET /auth/sign-in', () => {
   let server
 
   beforeAll(async () => {
