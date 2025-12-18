@@ -11,8 +11,6 @@ import {
 import { http, server as mswServer, HttpResponse } from '#vite/setup-msw.js'
 import Jwt from '@hapi/jwt'
 
-// TODO assert audit
-
 const mock = {
   cdpAuditing: vi.fn(),
   signInSuccessMetric: vi.fn(),
