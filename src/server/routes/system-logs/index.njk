@@ -1,0 +1,97 @@
+{% extends 'layout.njk' %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/details/macro.njk" import govukDetails %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <div class="govuk-body" data-testid="app-page-body">
+
+        <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
+
+        <form method="get" class="app-filters">
+          <h2 class="govuk-heading-m">Search system logs by</h2>
+          <div class="govuk-form-group">
+            {{ govukInput({
+              label: {
+                text: "Organisation reference number",
+                classes: "govuk-label--s"
+              },
+              id: "referenceNumber",
+              name: "referenceNumber",
+              type: "search",
+              value: searchTerms.referenceNumber,
+              autocomplete: "off",
+              classes: "govuk-input--width-20"
+            }) }}
+          </div>
+
+          <div class="govuk-button-group">
+
+            {{ govukButton({ text: "Search" }) }}
+
+            <a href="?" class="govuk-button govuk-button--inverse">Clear search</a>
+          </div>
+        </form>
+
+        {% for systemLog in systemLogs %}
+          {#
+            Whitespace added at the start of the contents of <code> elements so the rendered opening brace aligns
+            The summaryList component calls nunjucks indent function to render supplied html
+            - this indents every line (expect the first!) by 6 spaces
+          #}
+          {%set previousHtml = govukDetails({ summaryText: "Show", html: '<code class="app-json-display">          ' ~ systemLog.previous | dump(2) ~ '</code>' }) %}
+          {%set nextHtml = govukDetails({ summaryText: "Show", html: '<code class="app-json-display">          ' ~ systemLog.next | dump(2) ~ '</code>' }) %}
+          {%set differenceHtml = '<code class="app-json-display">          ' ~ systemLog.difference | dump(2) ~ '</code>' %}
+
+          {{ govukSummaryList({
+            card: {
+              title: {
+                text: [systemLog.event.category, systemLog.event.subCategory, systemLog.event.action] | select | join(', ')
+              }
+            },
+            rows: [
+              {
+                key: { text: "Timestamp" },
+                value: { html: systemLog.timestamp }
+              },
+              {
+                key: { text: "User ID" },
+                value: { html: systemLog.user.id }
+              },
+              {
+                key: { text: "User email" },
+                value: { html: systemLog.user.email }
+              },
+              {
+                key: { text: "User roles" },
+                value: { html: systemLog.user.scope }
+              },
+              {
+                key: { text: "Previous" },
+                value: { html: previousHtml }
+              },
+              {
+                key: { text: "Next" },
+                value: { html: nextHtml }
+              },
+              {
+                key: { text: "Difference" },
+                value: { html: differenceHtml }
+              }
+            ]
+          }) }}
+        {% endfor %}
+
+        {% if not systemLogs.length %}
+          {{ govukInsetText({ text: "No system logs found" }) }}
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+
+{% endblock %}

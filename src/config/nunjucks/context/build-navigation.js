@@ -9,6 +9,11 @@ export function buildNavigation(request) {
       text: 'Organisations',
       href: '/organisations',
       current: request?.path === '/organisations'
+    },
+    {
+      text: 'System logs',
+      href: '/system-logs',
+      current: request?.path === '/system-logs'
     }
   ]
 }
