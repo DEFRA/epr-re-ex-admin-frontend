@@ -40,13 +40,7 @@ export const metrics = {
   async signInFailure() {
     return metricsCounter('signInFailure')
   },
-  async signOutAttempted() {
-    return metricsCounter('signOutAttempted')
-  },
   async signOutSuccess() {
     return metricsCounter('signOutSuccess')
-  },
-  async signOutFailure() {
-    return metricsCounter('signOutFailure')
   }
 }

@@ -24,6 +24,7 @@ vi.mock('#server/common/helpers/metrics/index.js', async (importOriginal) => ({
     signInSuccess: () => mock.signInSuccessMetric()
   }
 }))
+
 vi.mock('@defra/cdp-auditing', () => ({
   audit: (...args) => mock.cdpAuditing(...args)
 }))

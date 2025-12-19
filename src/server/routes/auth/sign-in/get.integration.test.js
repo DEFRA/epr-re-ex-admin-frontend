@@ -9,8 +9,9 @@ import {
 
 const mockSignInAttemptedMetric = vi.fn()
 
-vi.mock('#server/common/helpers/metrics/index.js', () => ({
+vi.mock('#server/common/helpers/metrics/index.js', async (importOriginal) => ({
   metrics: {
+    ...(await importOriginal()).metrics,
     signInAttempted: () => mockSignInAttemptedMetric()
   }
 }))
@@ -18,17 +19,14 @@ vi.mock('#server/common/helpers/metrics/index.js', () => ({
 describe('GET /auth/sign-in', () => {
   let server
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     createMockOidcServer()
     server = await createServer()
     await server.initialize()
   })
 
-  afterAll(async () => {
+  afterEach(async () => {
     await server.stop({ timeout: 0 })
-  })
-
-  afterEach(() => {
     vi.clearAllMocks()
     // Ensure any stubbed globals are reset after each test
     if (typeof vi.unstubAllGlobals === 'function') {
@@ -36,7 +34,7 @@ describe('GET /auth/sign-in', () => {
     }
   })
 
-  describe('on access', () => {
+  describe('on sign in', () => {
     let response
 
     beforeEach(async () => {
