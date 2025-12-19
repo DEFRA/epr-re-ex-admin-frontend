@@ -15,11 +15,7 @@ export function getBellOptions(oidcConfig) {
       scope: scopes,
       profile: function (credentials, _params, _get) {
         const payload = Jwt.token.decode(credentials.token).decoded.payload
-        const {
-          oid: id,
-          name = '',
-          preferred_username: email
-        } = payload
+        const { oid: id, name = '', preferred_username: email } = payload
 
         credentials.profile = {
           id,
