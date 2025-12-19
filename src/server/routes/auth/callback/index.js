@@ -25,13 +25,15 @@ export default {
       throw err
     }
 
-    const { displayName = '' } = profile
+    const { displayName = '', id: userId, email } = profile
 
     const sessionId = randomUUID()
 
     const userSession = {
       sessionId,
+      userId,
       displayName,
+      email,
       isAuthenticated: true,
       token,
       refreshToken
@@ -42,7 +44,7 @@ export default {
 
     const safeRedirect = getSafeRedirect(redirect)
 
-    auditSignIn(request)
+    auditSignIn(userSession)
     metrics.signInSuccess()
     return h.redirect(safeRedirect)
   }

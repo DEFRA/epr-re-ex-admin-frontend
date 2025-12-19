@@ -1,4 +1,3 @@
-// TODO GET an check metric recorded
 import { beforeEach, vi } from 'vitest'
 import { createServer } from '#server/server.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'

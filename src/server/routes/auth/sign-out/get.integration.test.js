@@ -10,12 +10,17 @@ import {
 } from '#server/common/test-helpers/mock-oidc.js'
 
 const mockSignOutSuccessMetric = vi.fn()
+const mockCdpAuditing = vi.fn()
 
 vi.mock('#server/common/helpers/metrics/index.js', async (importOriginal) => ({
   metrics: {
     ...(await importOriginal()).metrics,
     signOutSuccess: () => mockSignOutSuccessMetric()
   }
+}))
+
+vi.mock('@defra/cdp-auditing', () => ({
+  audit: (...args) => mockCdpAuditing(...args)
 }))
 
 vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
@@ -66,6 +71,22 @@ describe('GET /auth/sign-out', () => {
       expect(response.result).toContain(
         '<script type="text/javascript" src="/public/javascripts/sign-out'
       )
+    })
+
+    it('audits a successful sign out attempt', () => {
+      expect(mockCdpAuditing).toHaveBeenCalledTimes(1)
+      expect(mockCdpAuditing).toHaveBeenCalledWith({
+        event: {
+          category: 'access',
+          subCategory: 'sso',
+          action: 'sign-out'
+        },
+        context: {},
+        user: {
+          id: 'user-id',
+          email: 'user@email.com'
+        }
+      })
     })
 
     it('records sign out success metric', () => {
