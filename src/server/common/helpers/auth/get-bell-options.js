@@ -18,7 +18,6 @@ export function getBellOptions(oidcConfig) {
         const {
           oid: id,
           name = '',
-          sub = '',
           preferred_username: email
         } = payload
 
