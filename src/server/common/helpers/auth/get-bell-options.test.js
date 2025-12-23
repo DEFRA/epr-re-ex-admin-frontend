@@ -22,8 +22,9 @@ describe('#getBellOptions', () => {
   }
 
   const mockJwtPayload = {
+    oid: 'user-id',
     name: 'John Doe',
-    email: 'john.doe@example-user.test'
+    preferred_username: 'john.doe@example-user.test'
   }
 
   beforeEach(() => {
@@ -118,16 +119,17 @@ describe('#getBellOptions', () => {
 
     expect(Jwt.token.decode).toHaveBeenCalledWith('mock-jwt-token')
     expect(mockCredentials.profile).toEqual({
-      ...mockJwtPayload,
-      sub: '',
-      displayName: 'John Doe'
+      id: 'user-id',
+      displayName: 'John Doe',
+      name: 'John Doe',
+      email: 'john.doe@example-user.test'
     })
   })
 
   test('Should handle displayName fallback to empty when no names available', () => {
     const noNamePayload = {
-      email: 'user@example-user.test',
-      sub: 'user-id'
+      preferred_username: 'user@example-user.test',
+      oid: 'user-id'
     }
 
     Jwt.token.decode = vi.fn().mockReturnValue({
@@ -144,7 +146,8 @@ describe('#getBellOptions', () => {
     result.provider.profile(mockCredentials, {}, {})
 
     expect(mockCredentials.profile).toEqual({
-      ...noNamePayload,
+      id: 'user-id',
+      email: 'user@example-user.test',
       name: '',
       displayName: ''
     })

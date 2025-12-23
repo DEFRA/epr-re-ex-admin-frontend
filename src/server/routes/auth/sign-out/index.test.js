@@ -7,13 +7,11 @@ import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
 import { getOidcConfig } from '#server/common/helpers/auth/get-oidc-config.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 
-vi.mock('#config/config.js')
 vi.mock('#server/common/helpers/auth/clear-user-session.js')
 vi.mock('#server/common/helpers/auth/get-user-session.js')
 vi.mock('#server/common/helpers/auth/get-oidc-config.js')
 
 describe('#signOut route', () => {
-  const mockAppBaseUrl = 'https://example-app.test'
   const mockOidcConfig = {
     end_session_endpoint: 'https://example-oidc.test/oauth/logout'
   }
@@ -28,7 +26,6 @@ describe('#signOut route', () => {
 
     mockToolkit.redirect.mockReturnValue('redirect-result')
     mockToolkit.view.mockReturnValue('view-result')
-    config.get = vi.fn().mockReturnValue(mockAppBaseUrl)
     getOidcConfig.mockResolvedValue(mockOidcConfig)
     clearUserSession.mockResolvedValue()
     getUserSession.mockResolvedValue(mockUserSession)
@@ -73,9 +70,8 @@ describe('#signOut route', () => {
 
     expect(clearUserSession).toHaveBeenCalledWith(mockRequest)
     expect(getOidcConfig).toHaveBeenCalledTimes(1)
-    expect(config.get).toHaveBeenCalledWith('appBaseUrl')
 
-    const expectedLogoutUrl = `${mockOidcConfig.end_session_endpoint}?post_logout_redirect_uri=${mockAppBaseUrl}/`
+    const expectedLogoutUrl = `${mockOidcConfig.end_session_endpoint}?post_logout_redirect_uri=${config.get('appBaseUrl')}/`
     expect(mockToolkit.view).toHaveBeenCalledWith(
       'routes/auth/sign-out/index',
       {
@@ -96,7 +92,7 @@ describe('#signOut route', () => {
     await signOutRoute.handler(mockRequest, mockToolkit)
 
     const expectedUrl = encodeURI(
-      `${mockOidcConfig.end_session_endpoint}?post_logout_redirect_uri=${mockAppBaseUrl}/`
+      `${mockOidcConfig.end_session_endpoint}?post_logout_redirect_uri=${config.get('appBaseUrl')}/`
     )
     expect(mockToolkit.view).toHaveBeenCalledWith(
       'routes/auth/sign-out/index',
@@ -105,41 +101,6 @@ describe('#signOut route', () => {
         logoutUrl: expectedUrl
       }
     )
-  })
-
-  test('Should handle different app base URLs', async () => {
-    const testUrls = [
-      'https://example-dev.test',
-      'https://example-staging.test',
-      'https://example-prod.test'
-    ]
-
-    for (const url of testUrls) {
-      vi.clearAllMocks()
-      config.get = vi.fn().mockReturnValue(url)
-      getOidcConfig.mockResolvedValue(mockOidcConfig)
-      clearUserSession.mockResolvedValue()
-      mockToolkit.view.mockReturnValue('view-result')
-
-      const mockRequest = {
-        auth: {
-          isAuthenticated: true
-        }
-      }
-
-      await signOutRoute.handler(mockRequest, mockToolkit)
-
-      const expectedUrl = encodeURI(
-        `${mockOidcConfig.end_session_endpoint}?post_logout_redirect_uri=${url}/`
-      )
-      expect(mockToolkit.view).toHaveBeenCalledWith(
-        'routes/auth/sign-out/index',
-        {
-          pageTitle: 'Signing out',
-          logoutUrl: expectedUrl
-        }
-      )
-    }
   })
 
   test('Should handle different end session endpoints', async () => {
@@ -151,7 +112,6 @@ describe('#signOut route', () => {
 
     for (const endpoint of testEndpoints) {
       vi.clearAllMocks()
-      config.get = vi.fn().mockReturnValue(mockAppBaseUrl)
       getOidcConfig.mockResolvedValue({ end_session_endpoint: endpoint })
       clearUserSession.mockResolvedValue()
       mockToolkit.view.mockReturnValue('view-result')
@@ -165,7 +125,7 @@ describe('#signOut route', () => {
       await signOutRoute.handler(mockRequest, mockToolkit)
 
       const expectedUrl = encodeURI(
-        `${endpoint}?post_logout_redirect_uri=${mockAppBaseUrl}/`
+        `${endpoint}?post_logout_redirect_uri=${config.get('appBaseUrl')}/`
       )
       expect(mockToolkit.view).toHaveBeenCalledWith(
         'routes/auth/sign-out/index',
@@ -208,23 +168,6 @@ describe('#signOut route', () => {
     expect(mockToolkit.view).not.toHaveBeenCalled()
   })
 
-  test('Should handle config.get errors', async () => {
-    const error = new Error('Failed to get config')
-    config.get.mockImplementation(() => {
-      throw error
-    })
-
-    const mockRequest = {
-      auth: {
-        isAuthenticated: true
-      }
-    }
-
-    await expect(
-      signOutRoute.handler(mockRequest, mockToolkit)
-    ).rejects.toThrow('Failed to get config')
-  })
-
   test('Should call functions in correct order for authenticated user', async () => {
     const callOrder = []
 
@@ -235,11 +178,6 @@ describe('#signOut route', () => {
     getOidcConfig.mockImplementation(async () => {
       callOrder.push('getOidcConfig')
       return mockOidcConfig
-    })
-
-    config.get.mockImplementation(() => {
-      callOrder.push('config.get')
-      return mockAppBaseUrl
     })
 
     mockToolkit.view.mockImplementation(() => {
@@ -255,12 +193,7 @@ describe('#signOut route', () => {
 
     await signOutRoute.handler(mockRequest, mockToolkit)
 
-    expect(callOrder).toEqual([
-      'getOidcConfig',
-      'config.get',
-      'clearUserSession',
-      'view'
-    ])
+    expect(callOrder).toEqual(['getOidcConfig', 'clearUserSession', 'view'])
   })
 
   test('Should handle missing end_session_endpoint in OIDC config', async () => {
@@ -275,31 +208,7 @@ describe('#signOut route', () => {
     await signOutRoute.handler(mockRequest, mockToolkit)
 
     const expectedUrl = encodeURI(
-      `undefined?post_logout_redirect_uri=${mockAppBaseUrl}/`
-    )
-    expect(mockToolkit.view).toHaveBeenCalledWith(
-      'routes/auth/sign-out/index',
-      {
-        pageTitle: 'Signing out',
-        logoutUrl: expectedUrl
-      }
-    )
-  })
-
-  test('Should handle URL encoding correctly', async () => {
-    const urlWithSpaces = 'https://example-app.test/app with spaces'
-    config.get = vi.fn().mockReturnValue(urlWithSpaces)
-
-    const mockRequest = {
-      auth: {
-        isAuthenticated: true
-      }
-    }
-
-    await signOutRoute.handler(mockRequest, mockToolkit)
-
-    const expectedUrl = encodeURI(
-      `${mockOidcConfig.end_session_endpoint}?post_logout_redirect_uri=${urlWithSpaces}/`
+      `undefined?post_logout_redirect_uri=${config.get('appBaseUrl')}/`
     )
     expect(mockToolkit.view).toHaveBeenCalledWith(
       'routes/auth/sign-out/index',

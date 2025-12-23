@@ -80,6 +80,14 @@ export const config = convict({
       env: 'APP_BASE_URL'
     }
   },
+  audit: {
+    isEnabled: {
+      doc: 'Is auditing enabled',
+      format: Boolean,
+      default: isProduction,
+      env: 'AUDIT_ENABLED'
+    }
+  },
   log: {
     enabled: {
       doc: 'Is logging enabled',

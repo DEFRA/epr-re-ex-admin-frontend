@@ -5,14 +5,13 @@ import {
 } from 'aws-embedded-metrics'
 
 import { config } from '#config/config.js'
-import { createLogger } from './logging/logger.js'
+import { createLogger } from '#server/common/helpers/logging/logger.js'
 
 /**
  * Aws embedded metrics wrapper
  */
-export async function metricsCounter(metricName, value = 1) {
+async function metricsCounter(metricName, value = 1) {
   const isMetricsEnabled = config.get('isMetricsEnabled')
-
   if (!isMetricsEnabled) {
     return
   }
@@ -28,5 +27,20 @@ export async function metricsCounter(metricName, value = 1) {
     await metricsLogger.flush()
   } catch (error) {
     createLogger().error(error, error.message)
+  }
+}
+
+export const metrics = {
+  async signInAttempted() {
+    return metricsCounter('signInAttempted')
+  },
+  async signInSuccess() {
+    return metricsCounter('signInSuccess')
+  },
+  async signInFailure() {
+    return metricsCounter('signInFailure')
+  },
+  async signOutSuccess() {
+    return metricsCounter('signOutSuccess')
   }
 }
