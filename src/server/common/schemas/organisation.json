@@ -323,7 +323,7 @@
             "enum": [
               "created",
               "approved",
-              "active",
+              "cancelled",
               "rejected",
               "suspended"
             ]
@@ -1492,7 +1492,7 @@
             "enum": [
               "created",
               "approved",
-              "active",
+              "cancelled",
               "rejected",
               "suspended"
             ]
