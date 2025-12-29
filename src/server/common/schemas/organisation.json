@@ -339,14 +339,14 @@
               "string",
               "null"
             ],
-            "format": "date-time"
+            "format": "date"
           },
           "validTo": {
             "type": [
               "string",
               "null"
             ],
-            "format": "date-time"
+            "format": "date"
           },
           "formSubmissionTime": {
             "type": "string",
@@ -1502,14 +1502,14 @@
               "string",
               "null"
             ],
-            "format": "date-time"
+            "format": "date"
           },
           "validTo": {
             "type": [
               "string",
               "null"
             ],
-            "format": "date-time"
+            "format": "date"
           },
           "accreditationNumber": {
             "type": [
