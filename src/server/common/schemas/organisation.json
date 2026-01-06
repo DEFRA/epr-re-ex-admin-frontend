@@ -221,9 +221,7 @@
         "created",
         "approved",
         "active",
-        "rejected",
-        "suspended",
-        "archived"
+        "rejected"
       ]
     },
     "submittedToRegulator": {
@@ -262,6 +260,7 @@
     },
     "users": {
       "type": "array",
+      "default": [],
       "items": {
         "type": "object",
         "properties": {
@@ -271,6 +270,10 @@
           "email": {
             "type": "string",
             "format": "email"
+          },
+          "contactId": {
+            "type": "string",
+            "minLength": 1
           },
           "roles": {
             "type": "array",
@@ -307,10 +310,8 @@
       "const": 1
     },
     "registrations": {
-      "type": [
-        "array",
-        "null"
-      ],
+      "type": "array",
+      "default": [],
       "items": {
         "type": "object",
         "properties": {
@@ -322,118 +323,30 @@
             "enum": [
               "created",
               "approved",
-              "active",
+              "cancelled",
               "rejected",
-              "suspended",
-              "archived"
+              "suspended"
             ]
           },
           "registrationNumber": {
-            "type": "string",
-            "anyOf": [
-              {
-                "type": [
-                  "array",
-                  "boolean",
-                  "number",
-                  "object",
-                  "string",
-                  "null"
-                ]
-              },
-              {
-                "type": [
-                  "array",
-                  "boolean",
-                  "number",
-                  "object",
-                  "string",
-                  "null"
-                ]
-              },
-              {
-                "type": [
-                  "array",
-                  "boolean",
-                  "number",
-                  "object",
-                  "string",
-                  "null"
-                ]
-              }
+            "type": [
+              "string",
+              "null"
             ]
           },
           "validFrom": {
-            "type": "string",
-            "format": "date-time",
-            "anyOf": [
-              {
-                "type": [
-                  "array",
-                  "boolean",
-                  "number",
-                  "object",
-                  "string",
-                  "null"
-                ]
-              },
-              {
-                "type": [
-                  "array",
-                  "boolean",
-                  "number",
-                  "object",
-                  "string",
-                  "null"
-                ]
-              },
-              {
-                "type": [
-                  "array",
-                  "boolean",
-                  "number",
-                  "object",
-                  "string",
-                  "null"
-                ]
-              }
-            ]
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
           },
           "validTo": {
-            "type": "string",
-            "format": "date-time",
-            "anyOf": [
-              {
-                "type": [
-                  "array",
-                  "boolean",
-                  "number",
-                  "object",
-                  "string",
-                  "null"
-                ]
-              },
-              {
-                "type": [
-                  "array",
-                  "boolean",
-                  "number",
-                  "object",
-                  "string",
-                  "null"
-                ]
-              },
-              {
-                "type": [
-                  "array",
-                  "boolean",
-                  "number",
-                  "object",
-                  "string",
-                  "null"
-                ]
-              }
-            ]
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
           },
           "formSubmissionTime": {
             "type": "string",
@@ -468,6 +381,17 @@
             "enum": [
               "reprocessor",
               "exporter"
+            ]
+          },
+          "reprocessingType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "input",
+              "output",
+              null
             ]
           },
           "site": {
@@ -1555,10 +1479,8 @@
       }
     },
     "accreditations": {
-      "type": [
-        "array",
-        "null"
-      ],
+      "type": "array",
+      "default": [],
       "items": {
         "type": "object",
         "properties": {
@@ -1570,117 +1492,29 @@
             "enum": [
               "created",
               "approved",
-              "active",
+              "cancelled",
               "rejected",
-              "suspended",
-              "archived"
-            ]
-          },
-          "accreditationNumber": {
-            "type": "string",
-            "anyOf": [
-              {
-                "type": [
-                  "array",
-                  "boolean",
-                  "number",
-                  "object",
-                  "string",
-                  "null"
-                ]
-              },
-              {
-                "type": [
-                  "array",
-                  "boolean",
-                  "number",
-                  "object",
-                  "string",
-                  "null"
-                ]
-              },
-              {
-                "type": [
-                  "array",
-                  "boolean",
-                  "number",
-                  "object",
-                  "string",
-                  "null"
-                ]
-              }
+              "suspended"
             ]
           },
           "validFrom": {
-            "type": "string",
-            "format": "date-time",
-            "anyOf": [
-              {
-                "type": [
-                  "array",
-                  "boolean",
-                  "number",
-                  "object",
-                  "string",
-                  "null"
-                ]
-              },
-              {
-                "type": [
-                  "array",
-                  "boolean",
-                  "number",
-                  "object",
-                  "string",
-                  "null"
-                ]
-              },
-              {
-                "type": [
-                  "array",
-                  "boolean",
-                  "number",
-                  "object",
-                  "string",
-                  "null"
-                ]
-              }
-            ]
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
           },
           "validTo": {
-            "type": "string",
-            "format": "date-time",
-            "anyOf": [
-              {
-                "type": [
-                  "array",
-                  "boolean",
-                  "number",
-                  "object",
-                  "string",
-                  "null"
-                ]
-              },
-              {
-                "type": [
-                  "array",
-                  "boolean",
-                  "number",
-                  "object",
-                  "string",
-                  "null"
-                ]
-              },
-              {
-                "type": [
-                  "array",
-                  "boolean",
-                  "number",
-                  "object",
-                  "string",
-                  "null"
-                ]
-              }
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "accreditationNumber": {
+            "type": [
+              "string",
+              "null"
             ]
           },
           "formSubmissionTime": {
@@ -1744,6 +1578,17 @@
               "exporter"
             ]
           },
+          "reprocessingType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "input",
+              "output",
+              null
+            ]
+          },
           "site": {
             "type": [
               "array",
@@ -1767,10 +1612,6 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "line1",
-                      "postcode"
-                    ],
                     "additionalProperties": false
                   }
                 },
