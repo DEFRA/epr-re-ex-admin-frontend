@@ -18,7 +18,7 @@ describe('#callback route', () => {
   const mockProfile = {
     displayName: 'John Doe',
     email: 'john.doe@example-user.test',
-    sub: 'user-id-123'
+    id: 'user-id-123'
   }
 
   const mockToken = 'mock-jwt-token'
@@ -100,6 +100,8 @@ describe('#callback route', () => {
 
         expect(randomUUID).toHaveBeenCalledTimes(1)
         expect(createUserSession).toHaveBeenCalledWith(mockRequest, {
+          userId: mockProfile.id,
+          email: mockProfile.email,
           sessionId: mockSessionId,
           displayName: mockProfile.displayName,
           isAuthenticated: true,
@@ -115,7 +117,7 @@ describe('#callback route', () => {
   test('Should handle missing displayName in profile', async () => {
     const profileWithoutDisplayName = {
       email: 'test@example-user.test',
-      sub: 'user-id'
+      id: 'user-id'
     }
 
     const mockRequest = {
@@ -132,6 +134,8 @@ describe('#callback route', () => {
     await callbackRoute.handler(mockRequest, mockToolkit)
 
     expect(createUserSession).toHaveBeenCalledWith(mockRequest, {
+      userId: profileWithoutDisplayName.id,
+      email: profileWithoutDisplayName.email,
       sessionId: mockSessionId,
       displayName: '',
       isAuthenticated: true,
@@ -259,6 +263,8 @@ describe('#callback route', () => {
     await callbackRoute.handler(mockRequest, mockToolkit)
 
     const expectedUserSession = {
+      userId: mockProfile.id,
+      email: mockProfile.email,
       sessionId: mockSessionId,
       displayName: mockProfile.displayName,
       isAuthenticated: true,
@@ -322,12 +328,10 @@ describe('#callback route', () => {
 
   test('Should handle different profile structures', async () => {
     const complexProfile = {
-      displayName: 'Jane Smith',
+      id: 'user-456',
+      name: 'J Smith',
       email: 'jane@example-user.test',
-      sub: 'user-456',
-      given_name: 'Jane',
-      family_name: 'Smith',
-      roles: ['admin']
+      displayName: 'Jane Smith'
     }
 
     const mockRequest = {
@@ -343,10 +347,13 @@ describe('#callback route', () => {
     await callbackRoute.handler(mockRequest, mockToolkit)
 
     expect(createUserSession).toHaveBeenCalledWith(mockRequest, {
+      userId: complexProfile.id,
+      email: complexProfile.email,
       sessionId: mockSessionId,
       displayName: complexProfile.displayName,
       isAuthenticated: true,
-      token: mockToken
+      token: mockToken,
+      refreshToken: undefined
     })
   })
 

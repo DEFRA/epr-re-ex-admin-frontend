@@ -2,6 +2,8 @@ import { config } from '#config/config.js'
 import { clearUserSession } from '#server/common/helpers/auth/clear-user-session.js'
 import { getOidcConfig } from '#server/common/helpers/auth/get-oidc-config.js'
 import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
+import { auditSignOut } from '#server/common/helpers/auditing/index.js'
 
 export default {
   method: 'GET',
@@ -20,6 +22,9 @@ export default {
     )
 
     await clearUserSession(request)
+
+    auditSignOut(userSession)
+    metrics.signOutSuccess()
 
     return h.view('routes/auth/sign-out/index', {
       pageTitle: 'Signing out',

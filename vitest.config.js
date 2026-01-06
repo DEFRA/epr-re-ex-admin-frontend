@@ -11,7 +11,11 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     clearMocks: true,
-    setupFiles: ['.vite/setup-files.js', '.vite/setup-msw.js'],
+    setupFiles: [
+      '.vite/setup-auditing.js',
+      '.vite/setup-files.js',
+      '.vite/setup-msw.js'
+    ],
     hookTimeout: 60000,
     fileParallelism: !process.env.CI,
     coverage: {
@@ -27,7 +31,6 @@ export default defineConfig({
         '**/*.md',
         'src/**/*.njk', // Vitest can't parse them anyway
         'src/**/*.scss',
-        'src/index.js',
         'src/server/common/schemas/**',
         'src/server/common/test-helpers',
         'src/server/components/icons'
