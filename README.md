@@ -25,8 +25,8 @@ If you intend to contribute to this repository and/or run the application locall
 
 ## Architecture
 
-You can find more information about [pEPR's Re-Ex architecture here](https://github.com/DEFRA/epr-backend/blob/main/docs/architecture/index.md).
-See also these [Architecture Decision Records](https://github.com/DEFRA/epr-backend/blob/main/docs/architecture/decisions/index.md).
+You can find more information about [pEPR's Re-Ex architecture here](https://github.com/DEFRA/epr-re-ex-service/blob/main/docs/architecture/index.md).
+See also these [Architecture Decision Records](https://github.com/DEFRA/epr-re-ex-service/blob/main/docs/architecture/decisions/index.md).
 
 ## Runbooks
 
