@@ -1,5 +1,9 @@
 # Admin UI for the Re-Ex packaging Extended Producer Responsibilities service (pEPR)
 
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_epr-re-ex-admin-frontend&metric=security_rating&token=36631c019a18ef442892e626b01a63e85c8539a1)](https://sonarcloud.io/summary/new_code?id=DEFRA_epr-re-ex-admin-frontend)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_epr-re-ex-admin-frontend&metric=alert_status&token=36631c019a18ef442892e626b01a63e85c8539a1)](https://sonarcloud.io/summary/new_code?id=DEFRA_epr-re-ex-admin-frontend)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_epr-re-ex-admin-frontend&metric=coverage&token=36631c019a18ef442892e626b01a63e85c8539a1)](https://sonarcloud.io/summary/new_code?id=DEFRA_epr-re-ex-admin-frontend)
+
 <!-- prettier-ignore-start -->
 
 <!--toc:start-->
@@ -14,10 +18,6 @@
 <!--toc:end-->
 
 <!-- prettier-ignore-end -->
-
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_epr-re-ex-admin-frontend&metric=security_rating&token=36631c019a18ef442892e626b01a63e85c8539a1)](https://sonarcloud.io/summary/new_code?id=DEFRA_epr-re-ex-admin-frontend)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_epr-re-ex-admin-frontend&metric=alert_status&token=36631c019a18ef442892e626b01a63e85c8539a1)](https://sonarcloud.io/summary/new_code?id=DEFRA_epr-re-ex-admin-frontend)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_epr-re-ex-admin-frontend&metric=coverage&token=36631c019a18ef442892e626b01a63e85c8539a1)](https://sonarcloud.io/summary/new_code?id=DEFRA_epr-re-ex-admin-frontend)
 
 ## Contributing
 
