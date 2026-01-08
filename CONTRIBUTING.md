@@ -65,7 +65,7 @@ Please see the [root `README.md`](./README.md).
 
 ### Architecture Decision Records (ADRs)
 
-ADRs affecting this service must, for the time being, be placed in the `epr-backend` repository together with all other ADRs for the global pERP Re-Ex project.
+ADRs affecting this service must, for the time being, be placed in the [epr-re-ex-service](https://github.com/DEFRA/epr-re-ex-service) repository together with all other ADRs for the global pERP Re-Ex project.
 
 ## Local development
 
