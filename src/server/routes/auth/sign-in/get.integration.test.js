@@ -44,7 +44,7 @@ describe('GET /auth/sign-in', () => {
     })
 
     it('redirects to Entra ID', async () => {
-      expect(response.statusCode).toBe(statusCodes.redirect)
+      expect(response.statusCode).toBe(statusCodes.found)
       expect(response.headers['location']).toContain(
         mockOidcResponse.authorization_endpoint
       )
