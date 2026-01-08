@@ -96,7 +96,7 @@ describe('GET /auth/callback', () => {
     })
 
     it('redirects to home page', async () => {
-      expect(response.statusCode).toBe(statusCodes.redirect)
+      expect(response.statusCode).toBe(statusCodes.found)
       expect(response.headers['location']).toEqual('/')
     })
 
