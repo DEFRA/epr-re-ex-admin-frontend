@@ -1,25 +1,19 @@
 import { audit } from '@defra/cdp-auditing'
 
 function auditSignIn(userSession) {
-  const payload = {
-    event: {
-      category: 'access',
-      subCategory: 'sso',
-      action: 'sign-in'
-    },
-    context: {},
-    user: extractUserDetails(userSession)
-  }
-
-  audit(payload)
+  auditSSO('sign-in', userSession)
 }
 
 function auditSignOut(userSession) {
+  auditSSO('sign-out', userSession)
+}
+
+function auditSSO(action, userSession) {
   const payload = {
     event: {
       category: 'access',
       subCategory: 'sso',
-      action: 'sign-out'
+      action
     },
     context: {},
     user: extractUserDetails(userSession)
