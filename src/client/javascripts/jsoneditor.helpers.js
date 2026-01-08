@@ -482,6 +482,61 @@ function updateSaveButtonState(saveButtonId, errors) {
   }
 }
 
+function isDraftValid(draftData, backendData) {
+  const draftVersion = draftData.version
+  const backendVersion = backendData.version
+  console.log('Draft validation:', {
+    draftVersion,
+    backendVersion,
+    match: draftVersion === backendVersion
+  })
+  return draftData.version === backendVersion
+}
+
+/**
+ * Injects a GOV.UK Error Summary into the placeholder
+ * @param {string} placeholderId
+ */
+function injectStaleWarning(staleWarningPlaceholderId) {
+  const container = document.getElementById(staleWarningPlaceholderId)
+
+  container.innerHTML = `
+  <div class="govuk-notification-banner" role="region" aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner" tabindex="-1">
+    <div class="govuk-notification-banner__header">
+      <h2 class="govuk-notification-banner__title" id="govuk-notification-banner-title">
+        Important
+      </h2>
+    </div>
+    <div class="govuk-notification-banner__content">
+      <h3 class="govuk-notification-banner__heading">
+        Unsaved changes have been removed
+      </h3>
+      <p class="govuk-body">
+        This record has been updated since you started editing.
+        To prevent you from overwriting these changes, your unsaved work has been cleared and you are now viewing the latest version.
+      </p>
+    </div>
+  </div>
+`
+}
+
+function clearDraftIfStale(
+  storageManager,
+  originalData,
+  staleDraftWarningPlaceholderId
+) {
+  const savedData = storageManager.load()
+  if (savedData) {
+    const isValid = isDraftValid(savedData, originalData)
+    console.log('Saved data exists, is draftValid:', isValid)
+    if (!isValid) {
+      console.log('Clearing draft and showing warning')
+      storageManager.clear()
+      injectStaleWarning(staleDraftWarningPlaceholderId)
+    }
+  }
+}
+
 /**
  * Creates JSONEditor configuration options
  * @param {Object} schema - JSON schema
@@ -601,7 +656,8 @@ export function initJSONEditor({
   hiddenInputId = 'jsoneditor-organisation-object',
   successMessageId = 'organisation-success-message',
   resetButtonId = 'jsoneditor-reset-button',
-  saveButtonId = 'jsoneditor-save-button'
+  saveButtonId = 'jsoneditor-save-button',
+  staleDraftWarningPlaceholderId = 'stale-draft-warning-placeholder'
 }) {
   const container = document.getElementById(containerId)
   if (!container) {
@@ -619,7 +675,13 @@ export function initJSONEditor({
     const storageManager = new LocalStorageManager(fullStorageKey)
 
     clearStorageIfSuccessful(successMessageId, storageManager)
+    clearDraftIfStale(
+      storageManager,
+      originalData,
+      staleDraftWarningPlaceholderId
+    )
 
+    // Load draft and validate version
     const savedData = storageManager.load()
 
     const editorConfig = createEditorConfig(
