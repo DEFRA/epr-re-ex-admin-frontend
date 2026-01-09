@@ -98,12 +98,12 @@ describe('GET /auth/callback', () => {
     })
 
     it('records sign in success metric', async () => {
-      const response = await performSignInFlow(accessToken)
+      await performSignInFlow(accessToken)
       expect(mock.signInSuccessMetric).toHaveBeenCalledTimes(1)
     })
 
     it('audits a successful sign in attempt', async () => {
-      const response = await performSignInFlow(accessToken)
+      await performSignInFlow(accessToken)
       expect(mock.cdpAuditing).toHaveBeenCalledTimes(1)
       expect(mock.cdpAuditing).toHaveBeenCalledWith({
         event: {
