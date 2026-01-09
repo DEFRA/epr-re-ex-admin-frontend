@@ -15,14 +15,15 @@ export function getBellOptions(oidcConfig) {
       scope: scopes,
       profile: function (credentials, _params, _get) {
         const tokenPayload = Jwt.token.decode(credentials.token).decoded.payload
-        const { oid: id, name = '' } = tokenPayload
+        const { oid: id } = tokenPayload
+        const name = tokenPayload.name?.trim() || ''
         const email = tokenPayload.email || tokenPayload.preferred_username
 
         credentials.profile = {
           id,
           name,
           email,
-          displayName: tokenPayload.name?.trim() || ''
+          displayName: name
         }
       }
     },
