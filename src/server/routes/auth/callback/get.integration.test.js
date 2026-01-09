@@ -84,27 +84,26 @@ describe('GET /auth/callback', () => {
   }
 
   describe('on successful return from Entra ID', () => {
-    let response = {}
-
-    beforeEach(async () => {
-      response = await performSignInFlow({
-        oid: 'user-id',
-        preferred_username: 'user@email.com',
-        aud: config.get('entraId.clientId'),
-        iss: mockOidcResponse.issuer
-      })
-    })
+    const accessToken = {
+      oid: 'user-id',
+      email: 'user@email.com',
+      aud: config.get('entraId.clientId'),
+      iss: mockOidcResponse.issuer
+    }
 
     it('redirects to home page', async () => {
+      const response = await performSignInFlow(accessToken)
       expect(response.statusCode).toBe(statusCodes.found)
       expect(response.headers['location']).toEqual('/')
     })
 
-    it('records sign in success metric', () => {
+    it('records sign in success metric', async () => {
+      const response = await performSignInFlow(accessToken)
       expect(mock.signInSuccessMetric).toHaveBeenCalledTimes(1)
     })
 
-    it('audits a successful sign in attempt', () => {
+    it('audits a successful sign in attempt', async () => {
+      const response = await performSignInFlow(accessToken)
       expect(mock.cdpAuditing).toHaveBeenCalledTimes(1)
       expect(mock.cdpAuditing).toHaveBeenCalledWith({
         event: {
@@ -119,6 +118,43 @@ describe('GET /auth/callback', () => {
         }
       })
     })
+
+    it.each([
+      {
+        accessToken: {
+          ...accessToken,
+          email: 'a@b.com',
+          preferred_username: ''
+        },
+        expectedEmailAddress: 'a@b.com'
+      },
+      {
+        accessToken: {
+          ...accessToken,
+          email: '',
+          preferred_username: 'c@d.com'
+        },
+        expectedEmailAddress: 'c@d.com'
+      },
+      {
+        accessToken: {
+          ...accessToken,
+          email: 'a@b.com',
+          preferred_username: 'c@d.com'
+        },
+        expectedEmailAddress: 'a@b.com'
+      }
+    ])(
+      'pulls the user email address from the token, using the email field and falling back to preferred_username',
+      async ({ accessToken, expectedEmailAddress }) => {
+        await performSignInFlow(accessToken)
+        expect(mock.cdpAuditing).toHaveBeenCalledWith(
+          expect.objectContaining({
+            user: { id: accessToken.oid, email: expectedEmailAddress }
+          })
+        )
+      }
+    )
   })
 
   describe('on unsuccessful attempt to invoke callback from Entra ID', () => {
