@@ -485,21 +485,11 @@ function updateSaveButtonState(saveButtonId, errors) {
 function isDraftValid(draftData, backendData) {
   const draftVersion = draftData.version
   const backendVersion = backendData.version
-  console.log('Draft validation:', {
-    draftVersion,
-    backendVersion,
-    match: draftVersion === backendVersion
-  })
-  return draftData.version === backendVersion
+  return draftVersion === backendVersion
 }
 
-/**
- * Injects a GOV.UK Error Summary into the placeholder
- * @param {string} placeholderId
- */
-function injectStaleWarning(staleWarningPlaceholderId) {
+function injectDraftStaleWarning(staleWarningPlaceholderId) {
   const container = document.getElementById(staleWarningPlaceholderId)
-
   container.innerHTML = `
   <div class="govuk-notification-banner" role="region" aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner" tabindex="-1">
     <div class="govuk-notification-banner__header">
@@ -528,11 +518,9 @@ function clearDraftIfStale(
   const savedData = storageManager.load()
   if (savedData) {
     const isValid = isDraftValid(savedData, originalData)
-    console.log('Saved data exists, is draftValid:', isValid)
     if (!isValid) {
-      console.log('Clearing draft and showing warning')
       storageManager.clear()
-      injectStaleWarning(staleDraftWarningPlaceholderId)
+      injectDraftStaleWarning(staleDraftWarningPlaceholderId)
     }
   }
 }
