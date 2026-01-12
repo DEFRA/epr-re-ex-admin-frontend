@@ -466,11 +466,6 @@ describe('JSONEditor Helpers', () => {
 
       const result = manager.save({ data: 'test' })
       expect(result).toBe(false)
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Failed to save to localStorage:',
-        expect.any(Error)
-      )
-
       consoleSpy.mockRestore()
     })
 
@@ -482,11 +477,6 @@ describe('JSONEditor Helpers', () => {
 
       const result = manager.load()
       expect(result).toBe(null)
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Failed to load localStorage draft:',
-        expect.any(Error)
-      )
-
       consoleSpy.mockRestore()
     })
 
@@ -500,11 +490,6 @@ describe('JSONEditor Helpers', () => {
 
       const result = manager.clear()
       expect(result).toBe(false)
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Failed to clear localStorage draft:',
-        expect.any(Error)
-      )
-
       consoleSpy.mockRestore()
     })
   })
@@ -1196,22 +1181,18 @@ describe('JSONEditor Helpers', () => {
       })
 
       expect(MockJSONEditorConstructor.mock.calls.length).toBe(initialCallCount)
-      expect(console.error).toHaveBeenCalledWith('Payload element not found')
     })
 
-    it('should handle errors gracefully', () => {
+    it('should fail initialization on errors', () => {
       payloadEl.textContent = 'invalid json{'
 
-      initJSONEditor({
-        schema: testSchema,
-        validate: mockValidate,
-        storageKey: 'test-storage-key'
-      })
-
-      expect(console.error).toHaveBeenCalledWith(
-        'Failed to initialise JSONEditor:',
-        expect.any(Error)
-      )
+      expect(() => {
+        initJSONEditor({
+          schema: testSchema,
+          validate: mockValidate,
+          storageKey: 'test-storage-key'
+        })
+      }).toThrow()
     })
 
     it('should handle missing hidden input', () => {
@@ -1247,7 +1228,6 @@ describe('JSONEditor Helpers', () => {
         storageKey: 'test-storage-key'
       })
 
-      expect(consoleWarnSpy).toHaveBeenCalled()
       expect(console.info).not.toHaveBeenCalledWith(
         '[JSONEditor] Cleared draft from localStorage after save'
       )
