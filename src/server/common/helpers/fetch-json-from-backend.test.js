@@ -17,29 +17,17 @@ import {
   HttpResponse,
   server as mswServer
 } from '../../../../.vite/setup-msw.js'
-import { AsyncLocalStorage } from 'node:async_hooks'
 
 vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
   getUserSession: vi.fn().mockReturnValue(null)
 }))
 
-// Create a test AsyncLocalStorage instance to simulate hapi-tracing behavior
-const testAsyncLocalStorage = new AsyncLocalStorage()
-
-vi.mock('@defra/hapi-tracing', async () => {
-  const actual = await vi.importActual('@defra/hapi-tracing')
-
-  return {
-    ...actual,
-    withTraceId: (headerName, headers = {}) => {
-      const traceId = testAsyncLocalStorage.getStore()?.get('traceId')
-      if (traceId) {
-        headers[headerName] = traceId
-      }
-      return headers
-    }
-  }
-})
+vi.mock(import('@defra/hapi-tracing'), () => ({
+  withTraceId: vi.fn((headerName, headers = {}) => {
+    headers[headerName] = 'mock-trace-id-1'
+    return headers
+  })
+}))
 
 describe('#fetchJsonFromBackend', () => {
   const originalBackendUrl = config.get('eprBackendUrl')
@@ -246,7 +234,6 @@ describe('#fetchJsonFromBackend', () => {
   })
 
   test('propagate trace Id when it exists', async () => {
-    const traceId1 = 'request-1-trace'
     let capturedHeaders = {}
 
     const path = `/v1/organisations`
@@ -255,16 +242,10 @@ describe('#fetchJsonFromBackend', () => {
       capturedHeaders = Object.fromEntries(request.headers.entries())
       return HttpResponse.json({ id: '695bdf3b816ba41066e4eaff' })
     })
-
     mswServer.use(handler)
 
-    const store = new Map()
-    store.set('traceId', traceId1)
+    await fetchJsonFromBackend({}, path, { method: 'GET' })
 
-    await testAsyncLocalStorage.run(store, async () => {
-      await fetchJsonFromBackend({}, path, { method: 'GET' })
-    })
-
-    expect(capturedHeaders['x-cdp-request-id']).toBe(traceId1)
+    expect(capturedHeaders['x-cdp-request-id']).toBe('mock-trace-id-1')
   })
 })
