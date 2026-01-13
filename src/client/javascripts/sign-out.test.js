@@ -130,10 +130,6 @@ describe('#sign-out', () => {
 
     await import('./sign-out.js')
 
-    expect(consoleWarnSpy).toHaveBeenCalledWith(
-      'Failed to clear localStorage:',
-      expect.any(Error)
-    )
     expect(mockLocation.href).toBe(mockLogoutUrl)
 
     localStorageMock.clear = originalClear

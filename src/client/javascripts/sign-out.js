@@ -5,8 +5,8 @@
 function signOut() {
   try {
     globalThis.localStorage.clear()
-  } catch (err) {
-    console.warn('Failed to clear localStorage:', err)
+  } catch {
+    // Silently handle localStorage clear error
   }
 
   // Get the logout URL from the data element
