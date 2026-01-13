@@ -26,7 +26,10 @@ vi.mock(import('@defra/hapi-tracing'), () => ({
   withTraceId: vi.fn((headerName, headers = {}) => {
     headers[headerName] = 'mock-trace-id-1'
     return headers
-  })
+  }),
+  tracing: {
+    plugin: {}
+  }
 }))
 
 describe('#fetchJsonFromBackend', () => {
