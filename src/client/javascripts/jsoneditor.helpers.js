@@ -318,8 +318,7 @@ export class LocalStorageManager {
     try {
       globalThis.localStorage.setItem(this.storageKey, JSON.stringify(data))
       return true
-    } catch (err) {
-      console.warn('Failed to save to localStorage:', err)
+    } catch {
       return false
     }
   }
@@ -334,8 +333,8 @@ export class LocalStorageManager {
       if (saved) {
         return JSON.parse(saved)
       }
-    } catch (err) {
-      console.warn('Failed to load localStorage draft:', err)
+    } catch {
+      // Error falls through to return null
     }
     return null
   }
@@ -348,8 +347,7 @@ export class LocalStorageManager {
     try {
       globalThis.localStorage.removeItem(this.storageKey)
       return true
-    } catch (err) {
-      console.warn('Failed to clear localStorage draft:', err)
+    } catch {
       return false
     }
   }
@@ -452,7 +450,6 @@ function syncHiddenInput(hiddenInputId, data) {
 function loadOriginalData(payloadElementId) {
   const payloadEl = document.getElementById(payloadElementId)
   if (!payloadEl) {
-    console.error('Payload element not found')
     return null
   }
   return JSON.parse(payloadEl.textContent)
@@ -652,59 +649,55 @@ export function initJSONEditor({
     return
   }
 
-  try {
-    const originalData = loadOriginalData(payloadElementId)
-    if (!originalData) {
-      return
-    }
-
-    const organisationId = originalData.id || 'unknown'
-    const fullStorageKey = `${storageKey}-${organisationId}`
-    const storageManager = new LocalStorageManager(fullStorageKey)
-
-    clearStorageIfSuccessful(successMessageId, storageManager)
-    clearDraftIfStale(
-      storageManager,
-      originalData,
-      staleDraftWarningPlaceholderId
-    )
-
-    // Load draft and validate version
-    const savedData = storageManager.load()
-
-    const editorConfig = createEditorConfig(
-      schema,
-      validate,
-      originalData,
-      hiddenInputId,
-      saveButtonId,
-      storageManager,
-      () => editor
-    )
-    const editor = new JSONEditor(container, editorConfig)
-
-    // Load data
-    editor.set(savedData || originalData)
-    syncHiddenInput(hiddenInputId, savedData || originalData)
-    highlightChanges(editor, savedData || originalData, originalData)
-
-    // Initialise save button state
-    const initialErrors = validateJSON(
-      savedData || originalData,
-      originalData,
-      schema,
-      validate
-    )
-    updateSaveButtonState(saveButtonId, initialErrors)
-
-    setupResetButton(
-      resetButtonId,
-      storageManager,
-      editor,
-      originalData,
-      hiddenInputId
-    )
-  } catch (err) {
-    console.error('Failed to initialise JSONEditor:', err)
+  const originalData = loadOriginalData(payloadElementId)
+  if (!originalData) {
+    return
   }
+
+  const organisationId = originalData.id || 'unknown'
+  const fullStorageKey = `${storageKey}-${organisationId}`
+  const storageManager = new LocalStorageManager(fullStorageKey)
+
+  clearStorageIfSuccessful(successMessageId, storageManager)
+  clearDraftIfStale(
+    storageManager,
+    originalData,
+    staleDraftWarningPlaceholderId
+  )
+
+  // Load draft and validate version
+  const savedData = storageManager.load()
+
+  const editorConfig = createEditorConfig(
+    schema,
+    validate,
+    originalData,
+    hiddenInputId,
+    saveButtonId,
+    storageManager,
+    () => editor
+  )
+  const editor = new JSONEditor(container, editorConfig)
+
+  // Load data
+  editor.set(savedData || originalData)
+  syncHiddenInput(hiddenInputId, savedData || originalData)
+  highlightChanges(editor, savedData || originalData, originalData)
+
+  // Initialise save button state
+  const initialErrors = validateJSON(
+    savedData || originalData,
+    originalData,
+    schema,
+    validate
+  )
+  updateSaveButtonState(saveButtonId, initialErrors)
+
+  setupResetButton(
+    resetButtonId,
+    storageManager,
+    editor,
+    originalData,
+    hiddenInputId
+  )
 }
