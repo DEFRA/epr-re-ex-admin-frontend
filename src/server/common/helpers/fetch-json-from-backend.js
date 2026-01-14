@@ -1,6 +1,8 @@
 import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
 import { getUserSession } from './auth/get-user-session.js'
+import { withTraceId } from '@defra/hapi-tracing'
+import { getTracingHeaderName } from './request-tracing.js'
 
 /**
  * Fetch JSON from a given path in the backend service.
@@ -15,11 +17,11 @@ export const fetchJsonFromBackend = async (request, path, options) => {
 
   const completeOptions = {
     ...options,
-    headers: {
+    headers: withTraceId(getTracingHeaderName(), {
       ...options?.headers,
       Authorization: `Bearer ${userSession?.token}`,
       'Content-Type': 'application/json'
-    }
+    })
   }
 
   const url = `${eprBackendUrl}${path}`

@@ -22,6 +22,16 @@ vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
   getUserSession: vi.fn().mockReturnValue(null)
 }))
 
+vi.mock(import('@defra/hapi-tracing'), () => ({
+  withTraceId: vi.fn((headerName, headers = {}) => {
+    headers[headerName] = 'mock-trace-id-1'
+    return headers
+  }),
+  tracing: {
+    plugin: {}
+  }
+}))
+
 describe('#fetchJsonFromBackend', () => {
   const originalBackendUrl = config.get('eprBackendUrl')
   const backendUrl = 'http://mock-backend'
@@ -224,5 +234,21 @@ describe('#fetchJsonFromBackend', () => {
         `Failed to fetch from backend at url: ${backendUrl}/malformed:`
       )
     })
+  })
+
+  test('propagate trace Id when it exists', async () => {
+    let capturedHeaders = {}
+
+    const path = `/v1/organisations`
+    const url = `${backendUrl}${path}`
+    const handler = http.get(url, ({ request }) => {
+      capturedHeaders = Object.fromEntries(request.headers.entries())
+      return HttpResponse.json({ id: '695bdf3b816ba41066e4eaff' })
+    })
+    mswServer.use(handler)
+
+    await fetchJsonFromBackend({}, path, { method: 'GET' })
+
+    expect(capturedHeaders['x-cdp-request-id']).toBe('mock-trace-id-1')
   })
 })
