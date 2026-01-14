@@ -12,7 +12,7 @@ export default {
   },
   handler: async function (request, h) {
     if (!request.auth.isAuthenticated) {
-      metrics.signInFailure()
+      await metrics.signInFailure()
       return h.view('unauthorised')
     }
 
@@ -21,7 +21,7 @@ export default {
     try {
       await verifyToken(token)
     } catch (err) {
-      metrics.signInFailure()
+      await metrics.signInFailure()
       throw err
     }
 
@@ -45,7 +45,7 @@ export default {
     const safeRedirect = getSafeRedirect(redirect)
 
     auditSignIn(userSession)
-    metrics.signInSuccess()
+    await metrics.signInSuccess()
     return h.redirect(safeRedirect)
   }
 }
