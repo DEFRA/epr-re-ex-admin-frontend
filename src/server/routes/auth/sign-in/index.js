@@ -6,8 +6,8 @@ export default {
   options: {
     ext: {
       onPreAuth: {
-        method: (_request, h) => {
-          metrics.signInAttempted()
+        method: async (_request, h) => {
+          await metrics.signInAttempted()
           return h.continue
         }
       }

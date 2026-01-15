@@ -1,6 +1,6 @@
-import Jwt from '@hapi/jwt'
 import { config } from '#config/config.js'
 import { getScopesForAuth } from './get-scopes-for-auth.js'
+import { verifyToken } from '#server/common/helpers/auth/verify-token.js'
 
 export function getBellOptions(oidcConfig) {
   const scopes = getScopesForAuth()
@@ -13,8 +13,8 @@ export function getBellOptions(oidcConfig) {
       auth: oidcConfig.authorization_endpoint,
       token: oidcConfig.token_endpoint,
       scope: scopes,
-      profile: function (credentials, _params, _get) {
-        const tokenPayload = Jwt.token.decode(credentials.token).decoded.payload
+      profile: async function (credentials, _params, _get) {
+        const tokenPayload = await verifyToken(credentials.token)
         const { oid: id } = tokenPayload
         const name = tokenPayload.name?.trim() || ''
         const email = tokenPayload.email || tokenPayload.preferred_username
