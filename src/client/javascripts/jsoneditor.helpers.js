@@ -51,10 +51,9 @@ function isObjectField(node) {
 /**
  * Determines if a node in the JSONEditor is editable based on the schema
  * @param {Object} node - The JSONEditor node to check
- * @param {Object} rootSchema - The root JSON schema
  * @returns {boolean|Object} True if editable, false if not, or { field, value } for partial editability
  */
-export function isNodeEditable(node, rootSchema) {
+export function isNodeEditable(node) {
   // Object keys: lock key names but allow editing of values
   if (isObjectField(node)) {
     return { field: false, value: true }
@@ -530,7 +529,7 @@ function createEditorConfig(
       syncHiddenInput(hiddenInputId, latestData)
       highlightChanges(editor, latestData, originalData)
     },
-    onEditable: (node) => isNodeEditable(node, schema),
+    onEditable: (node) => isNodeEditable(node),
     onValidate: (json) => {
       const errors = validateJSON(json, originalData, schema, validate)
       updateSaveButtonState(saveButtonId, errors)
