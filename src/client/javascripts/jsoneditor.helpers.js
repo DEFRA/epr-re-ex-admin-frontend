@@ -40,45 +40,6 @@ export function getValueAtPath(obj, path) {
 }
 
 /**
- * Checks if a node is a root or meta node (nodes without valid paths)
- * @param {Object} node - The JSONEditor node to check
- * @returns {boolean} True if node is root/meta node
- */
-function isRootOrMetaNode(node) {
-  return !node || !Array.isArray(node.path)
-}
-
-/**
- * Checks if a schema indicates read-only status through various patterns
- * @param {Object} subschema - The schema to check
- * @returns {boolean} True if schema indicates read-only
- */
-function isSchemaReadOnly(subschema) {
-  if (typeof subschema !== 'object') {
-    return false
-  }
-
-  // Check explicit readOnly flag
-  if (subschema.readOnly) {
-    return true
-  }
-
-  // Check "not" patterns that indicate read-only
-  if (subschema.not) {
-    // Empty "not" constraint means field must not be changed
-    if (Object.keys(subschema.not).length === 0) {
-      return true
-    }
-    // "not" with const or type also indicates read-only
-    if (subschema.not.const !== undefined || subschema.not.type) {
-      return true
-    }
-  }
-
-  return false
-}
-
-/**
  * Checks if a node represents an object field (should have locked key names)
  * @param {Object} node - The JSONEditor node to check
  * @returns {boolean} True if node is an object field
@@ -94,21 +55,6 @@ function isObjectField(node) {
  * @returns {boolean|Object} True if editable, false if not, or { field, value } for partial editability
  */
 export function isNodeEditable(node, rootSchema) {
-  // Root/meta nodes are always editable
-  if (isRootOrMetaNode(node)) {
-    return true
-  }
-
-  const subschema = findSchemaNode(rootSchema, node.path)
-  if (!subschema) {
-    return false
-  }
-
-  // Read-only fields are completely locked
-  if (isSchemaReadOnly(subschema)) {
-    return false
-  }
-
   // Object keys: lock key names but allow editing of values
   if (isObjectField(node)) {
     return { field: false, value: true }
