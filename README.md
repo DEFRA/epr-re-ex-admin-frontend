@@ -1,5 +1,9 @@
 # Admin UI for the Re-Ex packaging Extended Producer Responsibilities service (pEPR)
 
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_epr-re-ex-admin-frontend&metric=security_rating&token=36631c019a18ef442892e626b01a63e85c8539a1)](https://sonarcloud.io/summary/new_code?id=DEFRA_epr-re-ex-admin-frontend)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_epr-re-ex-admin-frontend&metric=alert_status&token=36631c019a18ef442892e626b01a63e85c8539a1)](https://sonarcloud.io/summary/new_code?id=DEFRA_epr-re-ex-admin-frontend)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_epr-re-ex-admin-frontend&metric=coverage&token=36631c019a18ef442892e626b01a63e85c8539a1)](https://sonarcloud.io/summary/new_code?id=DEFRA_epr-re-ex-admin-frontend)
+
 <!-- prettier-ignore-start -->
 
 <!--toc:start-->
@@ -15,18 +19,14 @@
 
 <!-- prettier-ignore-end -->
 
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_epr-re-ex-admin-frontend&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=DEFRA_epr-re-ex-admin-frontend)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_epr-re-ex-admin-frontend&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=DEFRA_epr-re-ex-admin-frontend)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_epr-re-ex-admin-frontend&metric=coverage)](https://sonarcloud.io/summary/new_code?id=DEFRA_epr-re-ex-admin-frontend)
-
 ## Contributing
 
 If you intend to contribute to this repository and/or run the application locally, please [see the contributing guidance](./CONTRIBUTING.md).
 
 ## Architecture
 
-You can find more information about [pEPR's Re-Ex architecture here](https://github.com/DEFRA/epr-backend/blob/main/docs/architecture/index.md).
-See also these [Architecture Decision Records](https://github.com/DEFRA/epr-backend/blob/main/docs/architecture/decisions/index.md).
+You can find more information about [pEPR's Re-Ex architecture here](https://github.com/DEFRA/epr-re-ex-service/blob/main/docs/architecture/index.md).
+See also these [Architecture Decision Records](https://github.com/DEFRA/epr-re-ex-service/blob/main/docs/architecture/decisions/index.md).
 
 ## Runbooks
 

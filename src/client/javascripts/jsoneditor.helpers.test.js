@@ -419,11 +419,6 @@ describe('JSONEditor Helpers', () => {
 
       const result = manager.save({ data: 'test' })
       expect(result).toBe(false)
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Failed to save to localStorage:',
-        expect.any(Error)
-      )
-
       consoleSpy.mockRestore()
     })
 
@@ -435,11 +430,6 @@ describe('JSONEditor Helpers', () => {
 
       const result = manager.load()
       expect(result).toBe(null)
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Failed to load localStorage draft:',
-        expect.any(Error)
-      )
-
       consoleSpy.mockRestore()
     })
 
@@ -453,11 +443,6 @@ describe('JSONEditor Helpers', () => {
 
       const result = manager.clear()
       expect(result).toBe(false)
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Failed to clear localStorage draft:',
-        expect.any(Error)
-      )
-
       consoleSpy.mockRestore()
     })
   })
@@ -1149,22 +1134,18 @@ describe('JSONEditor Helpers', () => {
       })
 
       expect(MockJSONEditorConstructor.mock.calls.length).toBe(initialCallCount)
-      expect(console.error).toHaveBeenCalledWith('Payload element not found')
     })
 
-    it('should handle errors gracefully', () => {
+    it('should fail initialization on errors', () => {
       payloadEl.textContent = 'invalid json{'
 
-      initJSONEditor({
-        schema: testSchema,
-        validate: mockValidate,
-        storageKey: 'test-storage-key'
-      })
-
-      expect(console.error).toHaveBeenCalledWith(
-        'Failed to initialise JSONEditor:',
-        expect.any(Error)
-      )
+      expect(() => {
+        initJSONEditor({
+          schema: testSchema,
+          validate: mockValidate,
+          storageKey: 'test-storage-key'
+        })
+      }).toThrow()
     })
 
     it('should handle missing hidden input', () => {
@@ -1200,12 +1181,68 @@ describe('JSONEditor Helpers', () => {
         storageKey: 'test-storage-key'
       })
 
-      expect(consoleWarnSpy).toHaveBeenCalled()
       expect(console.info).not.toHaveBeenCalledWith(
         '[JSONEditor] Cleared draft from localStorage after save'
       )
 
       consoleWarnSpy.mockRestore()
+    })
+
+    it('should clear local storage when the draft organisation version is stale', () => {
+      // Backend data with version 2
+      payloadEl.textContent = JSON.stringify({
+        id: 1,
+        name: 'Original',
+        version: '2'
+      })
+
+      // Draft data with version 1 (old version)
+      const draftData = { id: 1, name: 'Draft', version: 1 }
+
+      // Mock the stale draft warning placeholder
+      const warningPlaceholder = { innerHTML: '' }
+      const originalGetById = document.getElementById
+      document.getElementById = vi.fn((id) => {
+        if (id === 'jsoneditor') return container
+        if (id === 'organisation-json') return payloadEl
+        if (id === 'jsoneditor-organisation-object') return hiddenInput
+        if (id === 'jsoneditor-reset-button') return resetButton
+        if (id === 'jsoneditor-save-button') return saveButton
+        if (id === 'organisation-success-message') return messageEl
+        if (id === 'stale-draft-warning-placeholder') return warningPlaceholder
+        return null
+      })
+
+      // First call returns draft, second call (after clear) returns null
+      localStorageMock.getItem
+        .mockReturnValueOnce(JSON.stringify(draftData))
+        .mockReturnValueOnce(null)
+
+      initJSONEditor({
+        schema: testSchema,
+        validate: mockValidate,
+        storageKey: 'test-storage-key'
+      })
+
+      // Should clear the old draft
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith(
+        'test-storage-key-1'
+      )
+
+      // Should load backend data instead of draft
+      expect(mockSet).toHaveBeenCalledWith({
+        id: 1,
+        name: 'Original',
+        version: '2'
+      })
+
+      // Should inject warning
+      expect(warningPlaceholder.innerHTML).toContain(
+        'Unsaved changes have been removed'
+      )
+
+      // Restore
+      document.getElementById = originalGetById
     })
 
     it('should reset editor when confirmed', () => {
