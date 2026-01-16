@@ -319,7 +319,11 @@
         ],
         "properties": {
           "id": {
-            "not": {}
+            "type": [
+              "string",
+              "null"
+            ],
+            "readOnly": true
           },
           "status": {
             "type": [
@@ -1111,7 +1115,11 @@
         ],
         "properties": {
           "id": {
-            "not": {}
+            "type": [
+              "string",
+              "null"
+            ],
+            "readOnly": true
           },
           "status": {
             "type": [
