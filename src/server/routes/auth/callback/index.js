@@ -1,6 +1,5 @@
 import { createUserSession } from '#server/common/helpers/auth/create-user-session.js'
 import { randomUUID } from 'node:crypto'
-import { verifyToken } from '#server/common/helpers/auth/verify-token.js'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 
@@ -11,19 +10,15 @@ export default {
     auth: { strategy: 'entra-id', mode: 'try' }
   },
   handler: async function (request, h) {
+    if (request.auth.error) {
+      await metrics.signInFailure()
+    }
+
     if (!request.auth.isAuthenticated) {
-      metrics.signInFailure()
       return h.view('unauthorised')
     }
 
     const { profile, token, refreshToken } = request.auth.credentials
-
-    try {
-      await verifyToken(token)
-    } catch (err) {
-      metrics.signInFailure()
-      throw err
-    }
 
     const { displayName = '', id: userId, email } = profile
 
@@ -45,7 +40,7 @@ export default {
     const safeRedirect = getSafeRedirect(redirect)
 
     auditSignIn(userSession)
-    metrics.signInSuccess()
+    await metrics.signInSuccess()
     return h.redirect(safeRedirect)
   }
 }

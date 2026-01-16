@@ -24,7 +24,7 @@ export default {
     await clearUserSession(request)
 
     auditSignOut(userSession)
-    metrics.signOutSuccess()
+    await metrics.signOutSuccess()
 
     return h.view('routes/auth/sign-out/index', {
       pageTitle: 'Signing out',

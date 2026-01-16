@@ -2,10 +2,10 @@ import { vi, beforeEach, afterEach, describe, test, expect } from 'vitest'
 
 import { getBellOptions } from './get-bell-options.js'
 import { config } from '#config/config.js'
-import Jwt from '@hapi/jwt'
+import { verifyToken } from '#server/common/helpers/auth/verify-token.js'
 
-vi.mock('#config/config.js')
-vi.mock('@hapi/jwt')
+vi.mock(import('#config/config.js'))
+vi.mock(import('#server/common/helpers/auth/verify-token.js'))
 
 describe('#getBellOptions', () => {
   const mockOidcConfig = {
@@ -32,11 +32,7 @@ describe('#getBellOptions', () => {
 
     config.get = vi.fn().mockImplementation((key) => mockConfig[key])
 
-    Jwt.token.decode = vi.fn().mockReturnValue({
-      decoded: {
-        payload: mockJwtPayload
-      }
-    })
+    verifyToken.mockReturnValue(mockJwtPayload)
   })
 
   afterEach(() => {
@@ -109,15 +105,15 @@ describe('#getBellOptions', () => {
     })
   })
 
-  test('Should build profile from JWT token payload with full name', () => {
+  test('Should build profile from JWT token payload with full name', async () => {
     const result = getBellOptions(mockOidcConfig)
     const mockCredentials = {
       token: 'mock-jwt-token'
     }
 
-    result.provider.profile(mockCredentials, {}, {})
+    await result.provider.profile(mockCredentials, {}, {})
 
-    expect(Jwt.token.decode).toHaveBeenCalledWith('mock-jwt-token')
+    expect(verifyToken).toHaveBeenCalledWith('mock-jwt-token')
     expect(mockCredentials.profile).toEqual({
       id: 'user-id',
       displayName: 'John Doe',
@@ -126,24 +122,20 @@ describe('#getBellOptions', () => {
     })
   })
 
-  test('Should handle displayName fallback to empty when no names available', () => {
+  test('Should handle displayName fallback to empty when no names available', async () => {
     const noNamePayload = {
       preferred_username: 'user@example-user.test',
       oid: 'user-id'
     }
 
-    Jwt.token.decode = vi.fn().mockReturnValue({
-      decoded: {
-        payload: noNamePayload
-      }
-    })
+    verifyToken.mockReturnValue(noNamePayload)
 
     const result = getBellOptions(mockOidcConfig)
     const mockCredentials = {
       token: 'mock-jwt-token'
     }
 
-    result.provider.profile(mockCredentials, {}, {})
+    await result.provider.profile(mockCredentials, {}, {})
 
     expect(mockCredentials.profile).toEqual({
       id: 'user-id',

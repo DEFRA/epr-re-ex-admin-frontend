@@ -170,7 +170,9 @@ describe('GET /auth/callback', () => {
 
     it('renders unauthorised page', async () => {
       expect(response.statusCode).toBe(statusCodes.ok)
-      expect(response.result).toContain('Unauthorised')
+      expect(response.result).toContain(
+        '<h1 class="govuk-heading-l">Unauthorised</h1>'
+      )
     })
 
     it('records sign in failure metric', () => {
@@ -191,9 +193,9 @@ describe('GET /auth/callback', () => {
     })
 
     it('renders unauthorised page', async () => {
-      expect(response.statusCode).toBe(statusCodes.internalServerError)
+      expect(response.statusCode).toBe(statusCodes.ok)
       expect(response.result).toContain(
-        'Sorry, there is a problem with the service'
+        '<h1 class="govuk-heading-l">Unauthorised</h1>'
       )
     })
 
