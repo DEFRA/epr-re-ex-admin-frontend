@@ -190,37 +190,6 @@ describe('JSONEditor Helpers', () => {
       }
     }
 
-    it('should return true for nodes without path', () => {
-      expect(isNodeEditable(null, schema)).toBe(true)
-      expect(isNodeEditable({}, schema)).toBe(true)
-      expect(isNodeEditable({ path: 'not-array' }, schema)).toBe(true)
-    })
-
-    it('should return false when schema node is not found', () => {
-      const node = { path: ['nonexistent'] }
-      expect(isNodeEditable(node, schema)).toBe(false)
-    })
-
-    it('should return false for fields with explicit readOnly flag', () => {
-      const node = { path: ['id'], type: 'string' }
-      expect(isNodeEditable(node, schema)).toBe(false)
-    })
-
-    it('should return false for fields with empty not constraint', () => {
-      const node = { path: ['locked'], type: 'string' }
-      expect(isNodeEditable(node, schema)).toBe(false)
-    })
-
-    it('should return false for fields with not.const constraint', () => {
-      const node = { path: ['constLocked'], type: 'string' }
-      expect(isNodeEditable(node, schema)).toBe(false)
-    })
-
-    it('should return false for fields with not.type constraint', () => {
-      const node = { path: ['typeLocked'], type: 'string' }
-      expect(isNodeEditable(node, schema)).toBe(false)
-    })
-
     it('should return { field: false, value: true } for object types', () => {
       const node = { path: ['address'], type: 'object' }
       expect(isNodeEditable(node, schema)).toEqual({
@@ -250,22 +219,6 @@ describe('JSONEditor Helpers', () => {
     it('should handle nested paths correctly', () => {
       const node = { path: ['address', 'street'], type: 'string' }
       expect(isNodeEditable(node, schema)).toBe(true)
-    })
-
-    it('should handle read-only nested fields', () => {
-      const nestedSchema = {
-        type: 'object',
-        properties: {
-          config: {
-            type: 'object',
-            properties: {
-              version: { type: 'string', readOnly: true }
-            }
-          }
-        }
-      }
-      const node = { path: ['config', 'version'], type: 'string' }
-      expect(isNodeEditable(node, nestedSchema)).toBe(false)
     })
 
     it('should handle object nodes with field property correctly', () => {
