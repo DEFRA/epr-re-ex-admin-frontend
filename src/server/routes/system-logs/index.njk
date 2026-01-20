@@ -38,38 +38,35 @@
         </form>
 
         {% for systemLog in systemLogs %}
-          {#
-            Whitespace added at the start of the contents of <code> elements so the rendered opening brace aligns
-            The summaryList component calls nunjucks indent function to render supplied html
-            - this indents every line (expect the first!) by 6 spaces
-          #}
-          {%set previousHtml = govukDetails({ summaryText: "Show", html: '<code class="app-json-display">          ' ~ systemLog.previous | dump(2) ~ '</code>' }) %}
-          {%set nextHtml = govukDetails({ summaryText: "Show", html: '<code class="app-json-display">          ' ~ systemLog.next | dump(2) ~ '</code>' }) %}
-          {%set differenceHtml = '<code class="app-json-display">          ' ~ systemLog.difference | dump(2) ~ '</code>' %}
-
-          {{ govukSummaryList({
-            card: {
-              title: {
-                text: [systemLog.event.category, systemLog.event.subCategory, systemLog.event.action] | select | join(', ')
-              }
+          {% set rows = [
+            {
+              key: { text: "Timestamp" },
+              value: { html: systemLog.timestamp }
             },
-            rows: [
-              {
-                key: { text: "Timestamp" },
-                value: { html: systemLog.timestamp }
-              },
-              {
-                key: { text: "User ID" },
-                value: { html: systemLog.user.id }
-              },
-              {
-                key: { text: "User email" },
-                value: { html: systemLog.user.email }
-              },
-              {
-                key: { text: "User roles" },
-                value: { html: systemLog.user.scope }
-              },
+            {
+              key: { text: "User ID" },
+              value: { html: systemLog.user.id }
+            },
+            {
+              key: { text: "User email" },
+              value: { html: systemLog.user.email }
+            },
+            {
+              key: { text: "User roles" },
+              value: { html: systemLog.user.scope }
+            }
+          ] %}
+
+          {% if systemLog.context.contextType === "organisation-update" %}
+            {#
+              Whitespace added at the start of the contents of <code> elements so the rendered opening brace aligns
+              The summaryList component calls nunjucks indent function to render supplied html
+              - this indents every line (expect the first!) by 6 spaces
+            #}
+            {% set previousHtml = govukDetails({ summaryText: "Show", html: '<code class="app-json-display">          ' ~ systemLog.context.previous | dump(2) ~ '</code>' }) %}
+            {% set nextHtml = govukDetails({ summaryText: "Show", html: '<code class="app-json-display">          ' ~ systemLog.context.next | dump(2) ~ '</code>' }) %}
+            {% set differenceHtml = '<code class="app-json-display">          ' ~ systemLog.context.difference | dump(2) ~ '</code>' %}
+            {% set rows = rows.concat([
               {
                 key: { text: "Previous" },
                 value: { html: previousHtml }
@@ -82,8 +79,31 @@
                 key: { text: "Difference" },
                 value: { html: differenceHtml }
               }
-            ]
-          }) }}
+            ]) %}
+          {% else %}
+            {#
+              Whitespace added at the start of the contents of <code> elements so the rendered opening brace aligns
+              The summaryList component calls nunjucks indent function to render supplied html
+              - this indents every line (expect the first!) by 6 spaces
+            #}
+            {% set contextHtml = '<code class="app-json-display">          ' ~ systemLog.context | dump(2) ~ '</code>' %}
+            {% set rows = rows.concat([
+              {
+                key: { text: "Context" },
+                value: { html: contextHtml }
+              }
+            ]) %}
+          {% endif %}
+
+          {{ govukSummaryList({
+            card: {
+              title: {
+                text: [systemLog.event.category, systemLog.event.subCategory, systemLog.event.action] | select | join(', ')
+              }
+            },
+            rows: rows
+            })
+          }}
         {% endfor %}
 
         {% if not systemLogs.length %}

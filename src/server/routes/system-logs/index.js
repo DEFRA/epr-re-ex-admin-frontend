@@ -31,13 +31,7 @@ export const systemLogs = {
                 timestamp: systemLog.createdAt,
                 event: systemLog.event,
                 user: systemLog.createdBy,
-                previous: systemLog.context.previous,
-                next: systemLog.context.next,
-                difference:
-                  difference(
-                    systemLog.context.previous,
-                    systemLog.context.next
-                  ) || ''
+                context: mapContext(systemLog)
               })),
               searchTerms: {
                 referenceNumber: searchTermReferenceNumber
@@ -47,6 +41,27 @@ export const systemLogs = {
         }
       ])
     }
+  }
+}
+
+function mapContext({ event, context }) {
+  if (
+    event.category === 'entity' &&
+    event.subCategory === 'epr-organisations' &&
+    event.action === 'update'
+  ) {
+    return organisationUpdate(context)
+  }
+
+  return { ...context } // return the whole context, for rendering as-is
+}
+
+function organisationUpdate(context) {
+  return {
+    contextType: 'organisation-update',
+    previous: context.previous,
+    next: context.next,
+    difference: difference(context.previous, context.next) || ''
   }
 }
 
