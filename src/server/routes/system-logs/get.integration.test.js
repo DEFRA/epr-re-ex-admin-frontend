@@ -119,34 +119,72 @@ describe('GET /system-logs', () => {
 
       const rendered = $.extract({
         pageTitle: 'h1',
-        summaryLogTitles: ['h2.govuk-summary-card__title'],
-        summaryLogs: ['.govuk-summary-card']
+        systemLogTitles: ['h2.govuk-summary-card__title'],
+        systemLogs: ['.govuk-summary-card']
       })
 
       expect(rendered.pageTitle).toEqual('System logs')
 
-      expect(rendered.summaryLogTitles).toHaveLength(2)
-      expect(rendered.summaryLogs).toHaveLength(2)
-      expect(rendered.summaryLogTitles[0].trim()).toEqual(
+      expect(rendered.systemLogTitles).toHaveLength(2)
+      expect(rendered.systemLogs).toHaveLength(2)
+      expect(rendered.systemLogTitles[0].trim()).toEqual(
         'cat-1, sub-cat-1, action-1'
       )
-      expect(rendered.summaryLogs[0]).toContain('2025-01-02T09:00:00Z')
-      expect(rendered.summaryLogs[0]).toContain('user1@email.com')
-      expect(rendered.summaryLogTitles[1].trim()).toEqual(
+      expect(rendered.systemLogs[0]).toContain('2025-01-02T09:00:00Z')
+      expect(rendered.systemLogs[0]).toContain('user1@email.com')
+      expect(rendered.systemLogTitles[1].trim()).toEqual(
         'cat-2, sub-cat-2, action-2'
       )
-      expect(rendered.summaryLogs[1]).toContain('2025-02-03T10:00:00Z')
-      expect(rendered.summaryLogs[1]).toContain('user2@email.com')
+      expect(rendered.systemLogs[1]).toContain('2025-02-03T10:00:00Z')
+      expect(rendered.systemLogs[1]).toContain('user2@email.com')
     })
 
-    describe('summary-log rendering', () => {
-      it('includes context.previous and context.next in <details> elements', async () => {
+    describe('generic system-log rendering', () => {
+      it('displays the context data', async () => {
+        const contextData = {
+          a: 'bit of data',
+          b: { some: 'more-data' }
+        }
         stubBackendReponse(
           HttpResponse.json({
             systemLogs: [
               {
                 createdBy: {},
                 event: {},
+                context: contextData
+              }
+            ]
+          })
+        )
+
+        const { $, statusCode } = await loadPage()
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const contextRow = $(
+          '.govuk-summary-card .govuk-summary-list__row'
+        ).has('dt:contains("Context")')
+
+        const renderedContext = JSON.parse(
+          contextRow.find('dd.govuk-summary-list__value').text()
+        )
+        expect(renderedContext).toEqual(contextData)
+      })
+    })
+
+    describe('organisation-update rendering', () => {
+      const organisationUpdateEvent = {
+        category: 'entity',
+        subCategory: 'epr-organisations',
+        action: 'update'
+      }
+      it('includes context.previous and context.next in <details> elements', async () => {
+        stubBackendReponse(
+          HttpResponse.json({
+            systemLogs: [
+              {
+                createdBy: {},
+                event: organisationUpdateEvent,
                 context: {
                   previous: { version: 1, title: 'A', subTitle: 'a' },
                   next: { version: 2, title: 'A', subTitle: 'a2' }
@@ -161,7 +199,9 @@ describe('GET /system-logs', () => {
         expect(statusCode).toBe(statusCodes.ok)
 
         const normalise = (textWithWhitespace) =>
-          textWithWhitespace.replace(/[\s|\n]+/g, ' ').trim()
+          textWithWhitespace
+            ? textWithWhitespace.replace(/[\s|\n]+/g, ' ').trim()
+            : ''
 
         const previousRow = $(
           '.govuk-summary-card .govuk-summary-list__row'
@@ -400,7 +440,7 @@ describe('GET /system-logs', () => {
               systemLogs: [
                 {
                   createdBy: {},
-                  event: {},
+                  event: organisationUpdateEvent,
                   context: { previous, next }
                 }
               ]
