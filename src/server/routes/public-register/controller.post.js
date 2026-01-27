@@ -9,7 +9,19 @@ export const publicRegisterPostController = {
         { method: 'POST' }
       )
 
-      return h.redirect(response.downloadUrl)
+      const fileResponse = await fetch(response.downloadUrl)
+
+      if (!fileResponse.ok) {
+        throw new Error('Failed to fetch file from storage')
+      }
+
+      const fileContent = await fileResponse.text()
+      const filename = 'public-register.csv'
+
+      return h
+        .response(fileContent)
+        .header('Content-Type', 'text/csv')
+        .header('Content-Disposition', `attachment; filename="${filename}"`)
     } catch (error) {
       const errorMessage =
         error.output?.payload?.message ||

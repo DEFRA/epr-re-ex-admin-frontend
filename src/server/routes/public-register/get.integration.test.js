@@ -143,11 +143,12 @@ describe('public-register', () => {
     })
 
     describe('When user is authenticated', () => {
-      test('Should redirect to downloadUrl on successful generation', async () => {
+      test('Should return CSV file on successful generation', async () => {
         getUserSession.mockReturnValue(mockUserSession)
 
         const mockDownloadUrl =
           'https://s3.example.com/public-register.csv?signed=abc123'
+        const mockCsvContent = 'name,status\nOrg1,approved\nOrg2,pending'
 
         mswServer.use(
           http.post(`${backendUrl}/v1/public-register/generate`, () => {
@@ -160,6 +161,12 @@ describe('public-register', () => {
               },
               { status: 201 }
             )
+          }),
+          http.get('https://s3.example.com/public-register.csv', () => {
+            return new HttpResponse(mockCsvContent, {
+              status: 200,
+              headers: { 'Content-Type': 'text/csv' }
+            })
           })
         )
 
@@ -169,7 +176,7 @@ describe('public-register', () => {
           { strategy: 'session', credentials: mockUserSession }
         )
 
-        const { statusCode, headers } = await server.inject({
+        const { statusCode, headers, payload } = await server.inject({
           method: 'POST',
           url: '/public-register',
           headers: { cookie },
@@ -180,8 +187,12 @@ describe('public-register', () => {
           }
         })
 
-        expect(statusCode).toBe(302)
-        expect(headers.location).toBe(mockDownloadUrl)
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(headers['content-type']).toContain('text/csv')
+        expect(headers['content-disposition']).toBe(
+          'attachment; filename="public-register.csv"'
+        )
+        expect(payload).toBe(mockCsvContent)
       })
 
       test('Should redirect back to GET with error on backend failure', async () => {

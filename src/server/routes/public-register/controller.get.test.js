@@ -55,8 +55,6 @@ describe('public-register GET controller', () => {
   })
 
   test('Should not include error in context when no flash error exists', async () => {
-    mockRequest.yar.get.mockReturnValue(null)
-
     await publicRegisterGetController.handler(mockRequest, mockH)
 
     expect(mockH.view).toHaveBeenCalledWith('routes/public-register/index', {
