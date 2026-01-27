@@ -11,6 +11,11 @@ export function buildNavigation(request) {
       current: request?.path === '/organisations'
     },
     {
+      text: 'Public register',
+      href: '/public-register',
+      current: request?.path === '/public-register'
+    },
+    {
       text: 'System logs',
       href: '/system-logs',
       current: request?.path === '/system-logs'
