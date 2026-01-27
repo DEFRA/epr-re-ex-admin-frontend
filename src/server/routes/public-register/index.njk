@@ -1,0 +1,36 @@
+{% extends 'layout.njk' %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <div class="govuk-body" data-testid="app-page-body">
+
+        {% if error %}
+          {{ govukErrorSummary({
+            titleText: "There is a problem",
+            errorList: [
+              {
+                text: error
+              }
+            ]
+          }) }}
+        {% endif %}
+
+        <h1 class="govuk-heading-xl">{{ heading }}</h1>
+
+        <p class="govuk-body">
+          The public register contains a full list of approved registrations and accreditations.
+        </p>
+
+        <form method="POST">
+          <input type="hidden" name="crumb" value="{{ crumb }}" />
+          {{ govukButton({
+            text: "Download public register"
+          }) }}
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}
