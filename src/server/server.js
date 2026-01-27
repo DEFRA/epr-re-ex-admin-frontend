@@ -83,7 +83,7 @@ export async function createServer() {
           const routePath = request.path
           return (
             routePath.startsWith('/health') ||
-            routePath.startsWith('/public') ||
+            routePath.startsWith('/public/') ||
             routePath.startsWith('/.well-known') ||
             routePath === '/favicon.ico'
           )

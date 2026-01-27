@@ -1,5 +1,23 @@
+import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+
 export const publicRegisterPostController = {
-  handler(request, h) {
-    return h.redirect('/public-register')
+  async handler(request, h) {
+    try {
+      const response = await fetchJsonFromBackend(
+        request,
+        '/v1/public-register/generate',
+        { method: 'POST' }
+      )
+
+      return h.redirect(response.downloadUrl)
+    } catch (error) {
+      const errorMessage =
+        error.output?.payload?.message ||
+        'There was a problem generating the public register. Please try again.'
+
+      request.yar.set('error', errorMessage)
+
+      return h.redirect('/public-register')
+    }
   }
 }
