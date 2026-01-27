@@ -1,5 +1,17 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
+const ALLOWED_URL_PATTERNS = [
+  /^https:\/\/[a-z0-9-]+\.s3\.[a-z0-9-]+\.amazonaws\.com\//,
+  /^https:\/\/s3\.[a-z0-9-]+\.amazonaws\.com\//,
+  /^https:\/\/[a-z0-9-]+\.s3\.amazonaws\.com\//,
+  /^http:\/\/localhost:4566\//,
+  /^http:\/\/localstack:4566\//
+]
+
+function isAllowedDownloadUrl(url) {
+  return ALLOWED_URL_PATTERNS.some((pattern) => pattern.test(url))
+}
+
 export const publicRegisterPostController = {
   async handler(request, h) {
     try {
@@ -8,6 +20,10 @@ export const publicRegisterPostController = {
         '/v1/public-register/generate',
         { method: 'POST' }
       )
+
+      if (!isAllowedDownloadUrl(response.downloadUrl)) {
+        throw new Error('Invalid download URL')
+      }
 
       const fileResponse = await fetch(response.downloadUrl)
 

@@ -40,7 +40,8 @@ describe('public-register POST controller', () => {
   })
 
   test('Should call backend API with correct parameters', async () => {
-    const mockDownloadUrl = 'https://s3.example.com/public-register.csv'
+    const mockDownloadUrl =
+      'https://my-bucket.s3.eu-west-2.amazonaws.com/public-register.csv'
     const mockCsvContent = 'csv,content'
 
     fetchJsonFromBackend.mockResolvedValue({ downloadUrl: mockDownloadUrl })
@@ -59,7 +60,8 @@ describe('public-register POST controller', () => {
   })
 
   test('Should fetch file from downloadUrl and return CSV content', async () => {
-    const mockDownloadUrl = 'https://s3.example.com/public-register.csv'
+    const mockDownloadUrl =
+      'https://my-bucket.s3.eu-west-2.amazonaws.com/public-register.csv'
     const mockCsvContent = 'csv,content'
 
     fetchJsonFromBackend.mockResolvedValue({ downloadUrl: mockDownloadUrl })
@@ -82,8 +84,57 @@ describe('public-register POST controller', () => {
     )
   })
 
+  test('Should accept LocalStack URLs with localhost', async () => {
+    const mockDownloadUrl = 'http://localhost:4566/bucket/public-register.csv'
+    const mockCsvContent = 'csv,content'
+
+    fetchJsonFromBackend.mockResolvedValue({ downloadUrl: mockDownloadUrl })
+    fetch.mockResolvedValue({
+      ok: true,
+      text: vi.fn().mockResolvedValue(mockCsvContent)
+    })
+
+    await publicRegisterPostController.handler(mockRequest, mockH)
+
+    expect(fetch).toHaveBeenCalledWith(mockDownloadUrl)
+    expect(mockH.response).toHaveBeenCalledWith(mockCsvContent)
+  })
+
+  test('Should accept LocalStack URLs with Docker hostname', async () => {
+    const mockDownloadUrl =
+      'http://localstack:4566/bucket/public-register.csv?signed=abc'
+    const mockCsvContent = 'csv,content'
+
+    fetchJsonFromBackend.mockResolvedValue({ downloadUrl: mockDownloadUrl })
+    fetch.mockResolvedValue({
+      ok: true,
+      text: vi.fn().mockResolvedValue(mockCsvContent)
+    })
+
+    await publicRegisterPostController.handler(mockRequest, mockH)
+
+    expect(fetch).toHaveBeenCalledWith(mockDownloadUrl)
+    expect(mockH.response).toHaveBeenCalledWith(mockCsvContent)
+  })
+
+  test('Should reject invalid download URLs to prevent SSRF', async () => {
+    const maliciousUrl = 'https://evil-site.com/steal-data'
+
+    fetchJsonFromBackend.mockResolvedValue({ downloadUrl: maliciousUrl })
+
+    await publicRegisterPostController.handler(mockRequest, mockH)
+
+    expect(fetch).not.toHaveBeenCalled()
+    expect(mockRequest.yar.set).toHaveBeenCalledWith(
+      'error',
+      'There was a problem generating the public register. Please try again.'
+    )
+    expect(mockH.redirect).toHaveBeenCalledWith('/public-register')
+  })
+
   test('Should set flash error and redirect when file fetch fails', async () => {
-    const mockDownloadUrl = 'https://s3.example.com/public-register.csv'
+    const mockDownloadUrl =
+      'https://my-bucket.s3.eu-west-2.amazonaws.com/public-register.csv'
 
     fetchJsonFromBackend.mockResolvedValue({ downloadUrl: mockDownloadUrl })
     fetch.mockResolvedValue({ ok: false, text: vi.fn() })

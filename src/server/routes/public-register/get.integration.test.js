@@ -147,7 +147,7 @@ describe('public-register', () => {
         getUserSession.mockReturnValue(mockUserSession)
 
         const mockDownloadUrl =
-          'https://s3.example.com/public-register.csv?signed=abc123'
+          'https://epr-bucket.s3.eu-west-2.amazonaws.com/public-register.csv?signed=abc123'
         const mockCsvContent = 'name,status\nOrg1,approved\nOrg2,pending'
 
         mswServer.use(
@@ -162,12 +162,15 @@ describe('public-register', () => {
               { status: 201 }
             )
           }),
-          http.get('https://s3.example.com/public-register.csv', () => {
-            return new HttpResponse(mockCsvContent, {
-              status: 200,
-              headers: { 'Content-Type': 'text/csv' }
-            })
-          })
+          http.get(
+            'https://epr-bucket.s3.eu-west-2.amazonaws.com/public-register.csv',
+            () => {
+              return new HttpResponse(mockCsvContent, {
+                status: 200,
+                headers: { 'Content-Type': 'text/csv' }
+              })
+            }
+          )
         )
 
         const { cookie, crumb } = await getCsrfToken(
