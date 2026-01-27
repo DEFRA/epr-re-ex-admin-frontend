@@ -21,6 +21,11 @@ describe('#buildNavigation', () => {
       },
       {
         current: false,
+        text: 'Public register',
+        href: '/public-register'
+      },
+      {
+        current: false,
         text: 'System logs',
         href: '/system-logs'
       }
@@ -38,6 +43,11 @@ describe('#buildNavigation', () => {
         current: false,
         text: 'Organisations',
         href: '/organisations'
+      },
+      {
+        current: false,
+        text: 'Public register',
+        href: '/public-register'
       },
       {
         current: false,

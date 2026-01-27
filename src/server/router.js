@@ -7,6 +7,7 @@ import { health } from './routes/health/index.js'
 import { auth } from './routes/auth/index.js'
 import { defraFormsSubmission } from './routes/defra-forms-submission/index.js'
 import { systemLogs } from './routes/system-logs/index.js'
+import { publicRegister } from './routes/public-register/index.js'
 
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
 
@@ -26,7 +27,8 @@ export const router = {
         organisation,
         auth,
         defraFormsSubmission,
-        systemLogs
+        systemLogs,
+        publicRegister
       ])
 
       await server.register([serveStaticFiles])
