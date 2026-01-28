@@ -557,6 +557,7 @@
               "null"
             ],
             "minItems": 1,
+            "maxItems": 1,
             "items": {
               "type": [
                 "string",
@@ -1203,6 +1204,7 @@
               "null"
             ],
             "minItems": 1,
+            "maxItems": 1,
             "items": {
               "type": [
                 "string",
