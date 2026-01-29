@@ -18,6 +18,10 @@ describe('tonnage-monitoring GET controller', () => {
         settings: {
           app: { pageTitle: 'Tonnage monitoring' }
         }
+      },
+      yar: {
+        get: vi.fn().mockReturnValue(null),
+        clear: vi.fn()
       }
     }
 
@@ -50,7 +54,8 @@ describe('tonnage-monitoring GET controller', () => {
         { material: 'Aluminium', totalTonnage: '1234.56' },
         { material: 'Glass', totalTonnage: '5678.90' }
       ],
-      total: '6913.46'
+      total: '6913.46',
+      error: null
     })
   })
 
@@ -116,7 +121,30 @@ describe('tonnage-monitoring GET controller', () => {
       pageTitle: 'Tonnage monitoring',
       generatedAt: '2026-01-29T12:00:00.000Z',
       materials: [],
-      total: '0.00'
+      total: '0.00',
+      error: null
     })
+  })
+
+  test('Should display error message from session and clear it', async () => {
+    mockRequest.yar.get.mockReturnValue('Download failed')
+
+    fetchJsonFromBackend.mockResolvedValue({
+      generatedAt: '2026-01-29T12:00:00.000Z',
+      materials: [],
+      total: 0
+    })
+
+    await tonnageMonitoringGetController.handler(mockRequest, mockH)
+
+    expect(mockRequest.yar.get).toHaveBeenCalledWith('error')
+    expect(mockRequest.yar.clear).toHaveBeenCalledWith('error')
+
+    expect(mockH.view).toHaveBeenCalledWith(
+      'routes/tonnage-monitoring/index',
+      expect.objectContaining({
+        error: 'Download failed'
+      })
+    )
   })
 })

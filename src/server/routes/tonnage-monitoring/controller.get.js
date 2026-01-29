@@ -10,6 +10,9 @@ function formatTonnage(tonnage) {
 
 export const tonnageMonitoringGetController = {
   async handler(request, h) {
+    const errorMessage = request.yar.get('error')
+    await request.yar.clear('error')
+
     const data = await fetchJsonFromBackend(request, '/v1/tonnage-monitoring')
 
     const materials = data.materials.map((item) => ({
@@ -21,7 +24,8 @@ export const tonnageMonitoringGetController = {
       pageTitle: request.route.settings.app.pageTitle,
       generatedAt: data.generatedAt,
       materials,
-      total: formatTonnage(data.total)
+      total: formatTonnage(data.total),
+      error: errorMessage
     })
   }
 }

@@ -1,4 +1,5 @@
 import { tonnageMonitoringGetController } from './controller.get.js'
+import { tonnageMonitoringPostController } from './controller.post.js'
 
 export const tonnageMonitoring = {
   plugin: {
@@ -12,6 +13,11 @@ export const tonnageMonitoring = {
           options: {
             app: { pageTitle: 'Tonnage monitoring' }
           }
+        },
+        {
+          method: 'POST',
+          path: '/tonnage-monitoring',
+          ...tonnageMonitoringPostController
         }
       ])
     }
