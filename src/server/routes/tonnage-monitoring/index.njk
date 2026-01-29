@@ -42,6 +42,7 @@
           {% set tableRows = tableRows.concat([totalRow]) %}
 
           {{ govukTable({
+            caption: "Tonnage by material",
             captionClasses: "govuk-table__caption--m",
             firstCellIsHeader: true,
             head: [
