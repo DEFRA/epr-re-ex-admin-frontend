@@ -26,6 +26,11 @@ describe('#buildNavigation', () => {
       },
       {
         current: false,
+        text: 'Tonnage monitoring',
+        href: '/tonnage-monitoring'
+      },
+      {
+        current: false,
         text: 'System logs',
         href: '/system-logs'
       }
@@ -48,6 +53,11 @@ describe('#buildNavigation', () => {
         current: false,
         text: 'Public register',
         href: '/public-register'
+      },
+      {
+        current: false,
+        text: 'Tonnage monitoring',
+        href: '/tonnage-monitoring'
       },
       {
         current: false,
