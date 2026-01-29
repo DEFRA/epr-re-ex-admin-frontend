@@ -50,6 +50,8 @@ describe('tonnage-monitoring POST controller', () => {
     const expectedCsv = [
       'Tonnage by material',
       '',
+      '"Cumulative total of incoming tonnage, excluding any PRN or sent-on deductions. Includes all uploaded records regardless of accreditation dates."',
+      '',
       'Data generated at: 29 January 2026 at 2:30pm',
       '',
       'Material,Tonnage',
@@ -125,6 +127,8 @@ describe('tonnage-monitoring POST controller', () => {
 
     const expectedCsv = [
       'Tonnage by material',
+      '',
+      '"Cumulative total of incoming tonnage, excluding any PRN or sent-on deductions. Includes all uploaded records regardless of accreditation dates."',
       '',
       'Data generated at: 29 January 2026 at 12:00pm',
       '',

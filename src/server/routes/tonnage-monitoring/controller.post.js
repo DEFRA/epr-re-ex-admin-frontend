@@ -17,6 +17,8 @@ function generateCsv(data) {
   const lines = [
     'Tonnage by material',
     '',
+    '"Cumulative total of incoming tonnage, excluding any PRN or sent-on deductions. Includes all uploaded records regardless of accreditation dates."',
+    '',
     `Data generated at: ${formatDate(data.generatedAt)}`,
     '',
     'Material,Tonnage'
