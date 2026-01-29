@@ -557,7 +557,6 @@
               "null"
             ],
             "minItems": 1,
-            "maxItems": 1,
             "items": {
               "type": [
                 "string",
@@ -1101,6 +1100,41 @@
               },
               "additionalProperties": false
             }
+          },
+          "statusHistory": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "created",
+                    "approved",
+                    "active",
+                    "cancelled",
+                    "rejected",
+                    "suspended"
+                  ]
+                },
+                "updatedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "updatedBy": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "status",
+                "updatedAt"
+              ],
+              "additionalProperties": false
+            },
+            "readOnly": true
           }
         },
         "additionalProperties": false
@@ -1204,7 +1238,6 @@
               "null"
             ],
             "minItems": 1,
-            "maxItems": 1,
             "items": {
               "type": [
                 "string",
@@ -1469,6 +1502,41 @@
               },
               "additionalProperties": false
             }
+          },
+          "statusHistory": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "created",
+                    "approved",
+                    "active",
+                    "cancelled",
+                    "rejected",
+                    "suspended"
+                  ]
+                },
+                "updatedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "updatedBy": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "status",
+                "updatedAt"
+              ],
+              "additionalProperties": false
+            },
+            "readOnly": true
           }
         },
         "additionalProperties": false
