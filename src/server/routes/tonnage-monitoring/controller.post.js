@@ -1,17 +1,8 @@
-import { format, parseISO } from 'date-fns'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { formatDate } from '#config/nunjucks/filters/format-date.js'
+import { formatMaterialName, formatTonnage } from './formatters.js'
 
-function formatMaterialName(material) {
-  return material.charAt(0).toUpperCase() + material.slice(1).toLowerCase()
-}
-
-function formatTonnage(tonnage) {
-  return tonnage.toFixed(2)
-}
-
-function formatDate(dateString) {
-  return format(parseISO(dateString), "d MMMM yyyy 'at' h:mmaaa")
-}
+const dateFormat = "d MMMM yyyy 'at' h:mmaaa"
 
 function generateCsv(data) {
   const lines = [
@@ -19,7 +10,7 @@ function generateCsv(data) {
     '',
     '"Cumulative total of incoming tonnage, excluding any PRN or sent-on deductions. Includes all uploaded records regardless of accreditation dates."',
     '',
-    `Data generated at: ${formatDate(data.generatedAt)}`,
+    `Data generated at: ${formatDate(data.generatedAt, dateFormat)}`,
     '',
     'Material,Tonnage'
   ]

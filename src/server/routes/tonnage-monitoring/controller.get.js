@@ -1,12 +1,5 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
-
-function formatMaterialName(material) {
-  return material.charAt(0).toUpperCase() + material.slice(1).toLowerCase()
-}
-
-function formatTonnage(tonnage) {
-  return tonnage.toFixed(2)
-}
+import { formatMaterialName, formatTonnage } from './formatters.js'
 
 export const tonnageMonitoringGetController = {
   async handler(request, h) {
