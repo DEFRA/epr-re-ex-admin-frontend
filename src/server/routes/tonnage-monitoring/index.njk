@@ -10,7 +10,7 @@
         <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
 
         <p class="govuk-body">
-          Data generated at: <strong>{{ generatedAt }}</strong>
+          Data generated at: <strong>{{ generatedAt | formatDate("d MMMM yyyy 'at' h:mmaaa") }}</strong>
         </p>
 
         {% if materials and materials.length %}
