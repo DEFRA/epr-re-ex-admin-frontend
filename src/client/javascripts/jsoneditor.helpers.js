@@ -97,6 +97,43 @@ function checkObjectPropertiesReadOnly(data, original, schema, path, errors) {
 }
 
 /**
+ * Checks read-only changes in array items using ID-based matching
+ * @param {Array} data - Current array data
+ * @param {Array} original - Original array data
+ * @param {Object} schema - JSON schema with array items definition
+ * @param {Array} path - Current path in the data structure
+ * @param {Array} errors - Array to accumulate errors
+ * @param {string} idField - The ID field to use for matching
+ */
+function checkArrayItemsReadOnlyByID(
+  data,
+  original,
+  schema,
+  path,
+  errors,
+  idField
+) {
+  const currentMap = createIdMap(data, idField)
+  const originalMap = createIdMap(original, idField)
+
+  for (const [id, currentEntry] of currentMap.entries()) {
+    const originalEntry = originalMap.get(id)
+
+    // Only check items that existed in the original
+    // New items (not in original) should not be flagged as read-only violations
+    if (originalEntry) {
+      checkReadOnlyChanges(
+        currentEntry.item,
+        originalEntry.item,
+        schema.items,
+        [...path, currentEntry.index],
+        errors
+      )
+    }
+  }
+}
+
+/**
  * Recursively checks read-only changes in array items
  * @param {Array} data - Current array data
  * @param {*} original - Original data (may or may not be an array)
@@ -105,6 +142,15 @@ function checkObjectPropertiesReadOnly(data, original, schema, path, errors) {
  * @param {Array} errors - Array to accumulate errors
  */
 function checkArrayItemsReadOnly(data, original, schema, path, errors) {
+  const idField = getIdFieldForPath(path)
+
+  if (idField && Array.isArray(data) && Array.isArray(original)) {
+    // Use ID-based matching for registrations/accreditations
+    checkArrayItemsReadOnlyByID(data, original, schema, path, errors, idField)
+    return
+  }
+
+  // Fall back to index-based matching for other arrays
   for (const [i, item] of data.entries()) {
     const oldItem = Array.isArray(original) ? original[i] : undefined
     checkReadOnlyChanges(item, oldItem, schema.items, [...path, i], errors)
@@ -181,6 +227,83 @@ function highlightNode(editor, changed, path) {
 }
 
 /**
+ * Determines if an array at the given path should use ID-based matching
+ * @param {Array} path - Current path in the data structure
+ * @returns {string|null} The ID field name to use, or null for index-based matching
+ */
+function getIdFieldForPath(path) {
+  if (path.length === 0) {
+    return null
+  }
+  const lastSegment = path[path.length - 1]
+  if (lastSegment === 'registrations' || lastSegment === 'accreditations') {
+    return 'id'
+  }
+  return null
+}
+
+/**
+ * Creates a Map of ID to array item for fast lookup
+ * @param {Array} arr - Array of objects to map
+ * @param {string} idField - The field name to use as the key
+ * @returns {Map} Map of ID values to array items
+ */
+function createIdMap(arr, idField) {
+  const map = new Map()
+  if (!Array.isArray(arr)) {
+    return map
+  }
+  for (let i = 0; i < arr.length; i++) {
+    const item = arr[i]
+    if (item && typeof item === 'object' && item[idField] != null) {
+      map.set(item[idField], { item, index: i })
+    }
+  }
+  return map
+}
+
+/**
+ * Highlights array changes using ID-based matching
+ * @param {JSONEditor} editor - The JSONEditor instance
+ * @param {Array} current - Current array data
+ * @param {Array} original - Original array data
+ * @param {Array} path - Current path in the data structure
+ * @param {string} idField - The ID field to use for matching
+ */
+function highlightArrayChangesByID(editor, current, original, path, idField) {
+  const currentMap = createIdMap(current, idField)
+  const originalMap = createIdMap(original, idField)
+
+  // Get union of all IDs from both arrays
+  const allIds = new Set([...currentMap.keys(), ...originalMap.keys()])
+
+  for (const id of allIds) {
+    const currentEntry = currentMap.get(id)
+    const originalEntry = originalMap.get(id)
+
+    if (currentEntry && originalEntry) {
+      // Item exists in both arrays - compare by ID
+      highlightChanges(
+        editor,
+        currentEntry.item,
+        originalEntry.item,
+        [...path, currentEntry.index]
+      )
+    } else if (currentEntry) {
+      // Item added (exists in current but not original)
+      highlightChanges(
+        editor,
+        currentEntry.item,
+        undefined,
+        [...path, currentEntry.index]
+      )
+    }
+    // Note: Items removed (in original but not current) don't exist in the
+    // current DOM tree, so we don't need to highlight them
+  }
+}
+
+/**
  * Recursively highlights changes in array elements
  * @param {JSONEditor} editor - The JSONEditor instance
  * @param {*} current - Current array data
@@ -188,6 +311,15 @@ function highlightNode(editor, changed, path) {
  * @param {Array} path - Current path in the data structure
  */
 function highlightArrayChanges(editor, current, original, path) {
+  const idField = getIdFieldForPath(path)
+
+  if (idField && Array.isArray(current)) {
+    // Use ID-based matching for registrations/accreditations
+    highlightArrayChangesByID(editor, current, original, path, idField)
+    return
+  }
+
+  // Fall back to index-based matching for other arrays
   const maxLength = Math.max(
     Array.isArray(current) ? current.length : 0,
     Array.isArray(original) ? original.length : 0

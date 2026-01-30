@@ -373,6 +373,190 @@ describe('JSONEditor Helpers', () => {
       expect(errors[0].path).toEqual([0])
       expect(errors[1].path).toEqual([1])
     })
+
+    describe('ID-based array matching for read-only checks', () => {
+      it('should match registrations by ID when checking read-only fields', () => {
+        const registrationsSchema = {
+          type: 'object',
+          properties: {
+            registrations: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string', readOnly: true },
+                  status: { type: 'string', readOnly: true }
+                }
+              }
+            }
+          }
+        }
+
+        const original = {
+          registrations: [
+            { id: 'reg-1', status: 'approved' },
+            { id: 'reg-2', status: 'pending' }
+          ]
+        }
+
+        // Reordered with one registration having a changed read-only field
+        const current = {
+          registrations: [
+            { id: 'reg-2', status: 'CHANGED' }, // status changed (read-only violation)
+            { id: 'reg-1', status: 'approved' }
+          ]
+        }
+
+        const errors = []
+        checkReadOnlyChanges(
+          current,
+          original,
+          registrationsSchema,
+          [],
+          errors
+        )
+
+        // Should detect that reg-2's status was changed
+        // even though it's at a different index
+        expect(errors.length).toBeGreaterThan(0)
+        const statusError = errors.find(
+          (e) => e.path[e.path.length - 1] === 'status'
+        )
+        expect(statusError).toBeDefined()
+      })
+
+      it('should match accreditations by ID when checking read-only fields', () => {
+        const accreditationsSchema = {
+          type: 'object',
+          properties: {
+            accreditations: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string', readOnly: true },
+                  type: { type: 'string' }
+                }
+              }
+            }
+          }
+        }
+
+        const original = {
+          accreditations: [
+            { id: 'acc-1', type: 'reprocessor' },
+            { id: 'acc-2', type: 'exporter' }
+          ]
+        }
+
+        // Reordered - should not flag as read-only violation
+        const current = {
+          accreditations: [
+            { id: 'acc-2', type: 'exporter' },
+            { id: 'acc-1', type: 'reprocessor' }
+          ]
+        }
+
+        const errors = []
+        checkReadOnlyChanges(
+          current,
+          original,
+          accreditationsSchema,
+          [],
+          errors
+        )
+
+        // Should not have errors because IDs match even though reordered
+        expect(errors).toHaveLength(0)
+      })
+
+      it('should not flag new registrations as read-only violations', () => {
+        const registrationsSchema = {
+          type: 'object',
+          properties: {
+            registrations: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string', readOnly: true },
+                  status: { type: 'string' }
+                }
+              }
+            }
+          }
+        }
+
+        const original = {
+          registrations: [{ id: 'reg-1', status: 'approved' }]
+        }
+
+        const current = {
+          registrations: [
+            { id: 'reg-1', status: 'approved' },
+            { id: 'reg-2', status: 'new' } // New registration
+          ]
+        }
+
+        const errors = []
+        checkReadOnlyChanges(
+          current,
+          original,
+          registrationsSchema,
+          [],
+          errors
+        )
+
+        // New registrations should not be flagged as read-only violations
+        // even though their ID doesn't exist in original
+        expect(errors).toHaveLength(0)
+      })
+
+      it('should handle registrations with null IDs in read-only checks', () => {
+        const registrationsSchema = {
+          type: 'object',
+          properties: {
+            registrations: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: ['string', 'null'], readOnly: true },
+                  status: { type: 'string' }
+                }
+              }
+            }
+          }
+        }
+
+        const original = {
+          registrations: [
+            { id: null, status: 'draft' },
+            { id: 'reg-1', status: 'approved' }
+          ]
+        }
+
+        const current = {
+          registrations: [
+            { id: 'reg-1', status: 'approved' },
+            { id: null, status: 'draft' }
+          ]
+        }
+
+        const errors = []
+
+        // Should not throw when handling null IDs
+        expect(() => {
+          checkReadOnlyChanges(
+            current,
+            original,
+            registrationsSchema,
+            [],
+            errors
+          )
+        }).not.toThrow()
+      })
+    })
   })
 
   describe('LocalStorageManager', () => {
@@ -905,6 +1089,171 @@ describe('JSONEditor Helpers', () => {
       // Non-array vs array
       highlightChanges(mockEditor, 'not-array', ['a', 'b'], [])
       expect(mockEditor.node.findNodeByPath).toHaveBeenCalled()
+    })
+
+    describe('ID-based array matching for registrations/accreditations', () => {
+      it('should match registrations by ID even when reordered', () => {
+        const original = {
+          registrations: [
+            { id: 'reg-1', status: 'approved' },
+            { id: 'reg-2', status: 'pending' },
+            { id: 'reg-3', status: 'rejected' }
+          ]
+        }
+        const current = {
+          registrations: [
+            { id: 'reg-3', status: 'rejected' }, // Reordered but unchanged
+            { id: 'reg-1', status: 'approved' }, // Reordered but unchanged
+            { id: 'reg-2', status: 'updated' } // Changed
+          ]
+        }
+
+        mockEditor.node.findNodeByPath.mockReturnValue(mockNode)
+
+        highlightChanges(mockEditor, current, original, [])
+
+        // Should not highlight reg-1 and reg-3 as changed (just reordered)
+        // Should highlight reg-2 as changed
+        const calls = mockEditor.node.findNodeByPath.mock.calls
+
+        // Find the call for reg-2 (at index 2 in current array)
+        const reg2Call = calls.find(
+          (call) =>
+            call[0].length === 2 &&
+            call[0][0] === 'registrations' &&
+            call[0][1] === 2
+        )
+        expect(reg2Call).toBeDefined()
+      })
+
+      it('should match accreditations by ID even when reordered', () => {
+        const original = {
+          accreditations: [
+            { id: 'acc-1', type: 'reprocessor' },
+            { id: 'acc-2', type: 'exporter' }
+          ]
+        }
+        const current = {
+          accreditations: [
+            { id: 'acc-2', type: 'exporter' }, // Reordered
+            { id: 'acc-1', type: 'reprocessor' } // Reordered
+          ]
+        }
+
+        mockEditor.node.findNodeByPath.mockReturnValue(mockNode)
+
+        highlightChanges(mockEditor, current, original, [])
+
+        // Both items should not be highlighted as changed (just reordered)
+        // The accreditations array itself might be checked
+        expect(mockEditor.node.findNodeByPath).toHaveBeenCalled()
+      })
+
+      it('should highlight added registrations', () => {
+        const original = {
+          registrations: [{ id: 'reg-1', status: 'approved' }]
+        }
+        const current = {
+          registrations: [
+            { id: 'reg-1', status: 'approved' },
+            { id: 'reg-2', status: 'new' } // Added
+          ]
+        }
+
+        mockEditor.node.findNodeByPath.mockReturnValue(mockNode)
+
+        highlightChanges(mockEditor, current, original, [])
+
+        // Should highlight the new registration
+        const calls = mockEditor.node.findNodeByPath.mock.calls
+        const newRegCall = calls.find(
+          (call) =>
+            call[0].length === 2 &&
+            call[0][0] === 'registrations' &&
+            call[0][1] === 1
+        )
+        expect(newRegCall).toBeDefined()
+      })
+
+      it('should handle registrations with null IDs', () => {
+        const original = {
+          registrations: [
+            { id: null, status: 'draft' },
+            { id: 'reg-1', status: 'approved' }
+          ]
+        }
+        const current = {
+          registrations: [
+            { id: 'reg-1', status: 'approved' },
+            { id: null, status: 'draft' }
+          ]
+        }
+
+        mockEditor.node.findNodeByPath.mockReturnValue(mockNode)
+
+        // Should not throw when handling null IDs
+        expect(() => {
+          highlightChanges(mockEditor, current, original, [])
+        }).not.toThrow()
+      })
+
+      it('should use index-based matching for nested arrays within registrations', () => {
+        const original = {
+          registrations: [
+            {
+              id: 'reg-1',
+              siteCapacity: [
+                { material: 'plastic', capacity: 1000 },
+                { material: 'glass', capacity: 500 }
+              ]
+            }
+          ]
+        }
+        const current = {
+          registrations: [
+            {
+              id: 'reg-1',
+              siteCapacity: [
+                { material: 'glass', capacity: 500 }, // Reordered
+                { material: 'plastic', capacity: 1000 } // Reordered
+              ]
+            }
+          ]
+        }
+
+        mockEditor.node.findNodeByPath.mockReturnValue(mockNode)
+
+        highlightChanges(mockEditor, current, original, [])
+
+        // Nested arrays don't have IDs, so they should use index-based matching
+        // This means reordering will show as changed
+        expect(mockEditor.node.findNodeByPath).toHaveBeenCalled()
+      })
+
+      it('should handle empty registrations arrays', () => {
+        const original = { registrations: [] }
+        const current = { registrations: [] }
+
+        mockEditor.node.findNodeByPath.mockReturnValue(mockNode)
+
+        expect(() => {
+          highlightChanges(mockEditor, current, original, [])
+        }).not.toThrow()
+      })
+
+      it('should handle when one registrations array is empty', () => {
+        const original = { registrations: [] }
+        const current = {
+          registrations: [{ id: 'reg-1', status: 'new' }]
+        }
+
+        mockEditor.node.findNodeByPath.mockReturnValue(mockNode)
+
+        highlightChanges(mockEditor, current, original, [])
+
+        // Should highlight the new registration
+        expect(mockEditor.node.findNodeByPath).toHaveBeenCalled()
+      })
     })
   })
 
