@@ -32,8 +32,14 @@ describe('#validateAndRefreshSession', () => {
     vi.resetAllMocks()
   })
 
-  test('Should return original session when token is valid', async () => {
-    const mockDecoded = { payload: { exp: Date.now() / 1000 + 3600 } }
+  test('Should return original session when token is valid and not approaching max age', async () => {
+    const nowSec = Math.floor(Date.now() / 1000)
+    const mockDecoded = {
+      payload: {
+        exp: nowSec + 3600,
+        iat: nowSec - 1800
+      }
+    }
     const decodeSpy = vi.spyOn(Jwt.token, 'decode').mockReturnValue(mockDecoded)
     const verifyTimeSpy = vi
       .spyOn(Jwt.token, 'verifyTime')
@@ -44,6 +50,55 @@ describe('#validateAndRefreshSession', () => {
     expect(decodeSpy).toHaveBeenCalledWith(mockUserSession.token)
     expect(verifyTimeSpy).toHaveBeenCalledWith(mockDecoded, { timeSkewSec: 60 })
     expect(result).toEqual(mockUserSession)
+  })
+
+  test('Should return original session when token has no iat claim', async () => {
+    const nowSec = Math.floor(Date.now() / 1000)
+    const mockDecoded = {
+      payload: {
+        exp: nowSec + 3600
+      }
+    }
+    const decodeSpy = vi.spyOn(Jwt.token, 'decode').mockReturnValue(mockDecoded)
+    const verifyTimeSpy = vi
+      .spyOn(Jwt.token, 'verifyTime')
+      .mockImplementation(() => {})
+
+    const result = await validateAndRefreshSession({}, mockUserSession)
+
+    expect(decodeSpy).toHaveBeenCalledWith(mockUserSession.token)
+    expect(verifyTimeSpy).toHaveBeenCalledWith(mockDecoded, { timeSkewSec: 60 })
+    expect(result).toEqual(mockUserSession)
+  })
+
+  test('Should return original session when token has no payload', async () => {
+    const mockDecoded = {}
+    const decodeSpy = vi.spyOn(Jwt.token, 'decode').mockReturnValue(mockDecoded)
+    const verifyTimeSpy = vi
+      .spyOn(Jwt.token, 'verifyTime')
+      .mockImplementation(() => {})
+
+    const result = await validateAndRefreshSession({}, mockUserSession)
+
+    expect(decodeSpy).toHaveBeenCalledWith(mockUserSession.token)
+    expect(verifyTimeSpy).toHaveBeenCalledWith(mockDecoded, { timeSkewSec: 60 })
+    expect(result).toEqual(mockUserSession)
+  })
+
+  test('Should throw error when session expired and no refresh token available', async () => {
+    const sessionWithoutRefreshToken = {
+      sessionId: 'test-session-id',
+      token: 'valid.jwt.token',
+      userId: 'user-456'
+    }
+
+    vi.spyOn(Jwt.token, 'decode').mockImplementation(() => {
+      throw new Error('Token expired')
+    })
+
+    await expect(
+      validateAndRefreshSession({}, sessionWithoutRefreshToken)
+    ).rejects.toThrow('Session expired and no refresh token available')
   })
 
   test('Should refresh tokens and update session when token is invalid', async () => {
@@ -111,6 +166,42 @@ describe('#validateAndRefreshSession', () => {
 
     expect(decodeSpy).toHaveBeenCalledWith(mockUserSession.token)
     expect(verifyTimeSpy).toHaveBeenCalledWith(mockDecoded, { timeSkewSec: 60 })
+    expect(result).toEqual({
+      ...mockUserSession,
+      token: newTokens.access_token,
+      refreshToken: newTokens.refresh_token
+    })
+  })
+
+  test('Should refresh tokens when token is approaching max age', async () => {
+    const nowSec = Math.floor(Date.now() / 1000)
+    const mockDecoded = {
+      payload: {
+        exp: nowSec + 600,
+        iat: nowSec - 3400
+      }
+    }
+    vi.spyOn(Jwt.token, 'decode').mockReturnValue(mockDecoded)
+    vi.spyOn(Jwt.token, 'verifyTime').mockImplementation(() => {})
+
+    const newTokens = {
+      access_token: makeToken('access'),
+      refresh_token: makeToken('refresh'),
+      token_type: 'Bearer',
+      expires_in: 3600
+    }
+
+    const tenantId = config.get('entraId.tenantId')
+    const tokenEndpoint = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`
+
+    mswServer.use(
+      http.post(tokenEndpoint, () => {
+        return HttpResponse.json(newTokens)
+      })
+    )
+
+    const result = await validateAndRefreshSession({}, mockUserSession)
+
     expect(result).toEqual({
       ...mockUserSession,
       token: newTokens.access_token,
