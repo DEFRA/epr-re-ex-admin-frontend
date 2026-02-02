@@ -75,6 +75,11 @@ describe('context and cache', () => {
             },
             {
               current: false,
+              text: 'Tonnage monitoring',
+              href: '/tonnage-monitoring'
+            },
+            {
+              current: false,
               text: 'System logs',
               href: '/system-logs'
             }
@@ -217,6 +222,11 @@ describe('context and cache', () => {
               current: false,
               text: 'Public register',
               href: '/public-register'
+            },
+            {
+              current: false,
+              text: 'Tonnage monitoring',
+              href: '/tonnage-monitoring'
             },
             {
               current: false,

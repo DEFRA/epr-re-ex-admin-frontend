@@ -16,6 +16,11 @@ export function buildNavigation(request) {
       current: request?.path === '/public-register'
     },
     {
+      text: 'Tonnage monitoring',
+      href: '/tonnage-monitoring',
+      current: request?.path === '/tonnage-monitoring'
+    },
+    {
       text: 'System logs',
       href: '/system-logs',
       current: request?.path === '/system-logs'
