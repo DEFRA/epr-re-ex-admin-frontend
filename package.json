@@ -117,6 +117,7 @@
     "webpack-cli": "6.0.1"
   },
   "overrides": {
+    "@isaacs/brace-expansion": "5.0.1",
     "tmp": "0.2.5",
     "ajv-cli": {
       "fast-json-patch": "3.1.1"
