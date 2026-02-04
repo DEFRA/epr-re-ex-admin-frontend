@@ -16,28 +16,34 @@ function isTokenApproachingMaxAge(decoded) {
   return tokenAgeSec > threshold
 }
 
-async function validateAndRefreshSession(request, userSession) {
+function needsRefresh(userSession) {
   try {
     const decoded = Jwt.token.decode(userSession.token)
     Jwt.token.verifyTime(decoded, { timeSkewSec: 60 })
-
-    if (isTokenApproachingMaxAge(decoded)) {
-      throw new Error('Token approaching max age')
-    }
-
-    return userSession
+    return isTokenApproachingMaxAge(decoded)
   } catch {
-    if (!userSession.refreshToken) {
-      throw new Error('Session expired and no refresh token available')
-    }
-
-    const { access_token: token, refresh_token: refreshToken } =
-      await refreshTokens(userSession.refreshToken)
-
-    const updatedSession = { ...userSession, token, refreshToken }
-    await createUserSession(request, updatedSession)
-    return updatedSession
+    return true
   }
+}
+
+async function performRefresh(request, userSession) {
+  if (!userSession.refreshToken) {
+    throw new Error('Session expired and no refresh token available')
+  }
+
+  const { access_token: token, refresh_token: refreshToken } =
+    await refreshTokens(userSession.refreshToken)
+
+  const updatedSession = { ...userSession, token, refreshToken }
+  await createUserSession(request, updatedSession)
+  return updatedSession
+}
+
+async function validateAndRefreshSession(request, userSession) {
+  if (needsRefresh(userSession)) {
+    return performRefresh(request, userSession)
+  }
+  return userSession
 }
 
 export { validateAndRefreshSession }
