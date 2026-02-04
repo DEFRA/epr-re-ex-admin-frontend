@@ -108,6 +108,18 @@ describe('tonnage-monitoring GET controller', () => {
     )
   })
 
+  test('Should throw for unknown material names', async () => {
+    fetchJsonFromBackend.mockResolvedValue({
+      generatedAt: '2026-01-29T12:00:00.000Z',
+      materials: [{ material: 'unknown_material', totalTonnage: 100 }],
+      total: 100
+    })
+
+    await expect(
+      tonnageMonitoringGetController.handler(mockRequest, mockH)
+    ).rejects.toThrow('Unknown material: unknown_material')
+  })
+
   test('Should handle empty materials array', async () => {
     fetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-01-29T12:00:00.000Z',

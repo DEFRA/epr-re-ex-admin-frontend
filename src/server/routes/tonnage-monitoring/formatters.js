@@ -10,7 +10,14 @@ const materialDisplayNames = {
 }
 
 export function formatMaterialName(material) {
-  return materialDisplayNames[material.toLowerCase()]
+  const key = material.toLowerCase()
+  const displayName = materialDisplayNames[key]
+
+  if (!displayName) {
+    throw new Error(`Unknown material: ${material}`)
+  }
+
+  return displayName
 }
 
 export function formatTonnage(tonnage) {
