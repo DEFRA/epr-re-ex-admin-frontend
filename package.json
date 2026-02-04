@@ -118,6 +118,8 @@
   },
   "overrides": {
     "tmp": "0.2.5",
-    "validator": "13.15.23"
+    "ajv-cli": {
+      "fast-json-patch": "3.1.1"
+    }
   }
 }
