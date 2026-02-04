@@ -35,7 +35,7 @@ describe('tonnage-monitoring POST controller', () => {
       generatedAt: '2026-01-29T14:30:00.000Z',
       materials: [
         { material: 'aluminium', totalTonnage: 1234.56 },
-        { material: 'glass', totalTonnage: 5678.9 }
+        { material: 'glass_re_melt', totalTonnage: 5678.9 }
       ],
       total: 6913.46
     })
@@ -56,7 +56,7 @@ describe('tonnage-monitoring POST controller', () => {
       '',
       'Material,Tonnage',
       'Aluminium,1234.56',
-      'Glass,5678.90',
+      'Glass re-melt,5678.90',
       'Total,6913.46'
     ].join('\n')
 
@@ -68,11 +68,11 @@ describe('tonnage-monitoring POST controller', () => {
     )
   })
 
-  test('Should format material names with proper capitalisation', async () => {
+  test('Should format material names to display names', async () => {
     fetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-01-29T09:00:00.000Z',
       materials: [
-        { material: 'PLASTIC', totalTonnage: 100 },
+        { material: 'plastic', totalTonnage: 100 },
         { material: 'paper', totalTonnage: 200 }
       ],
       total: 300
@@ -82,7 +82,7 @@ describe('tonnage-monitoring POST controller', () => {
 
     const csvContent = mockH.response.mock.calls[0][0]
     expect(csvContent).toContain('Plastic,100.00')
-    expect(csvContent).toContain('Paper,200.00')
+    expect(csvContent).toContain('Paper and board,200.00')
   })
 
   test('Should format tonnage values to 2 decimal places', async () => {
@@ -99,7 +99,7 @@ describe('tonnage-monitoring POST controller', () => {
 
     const csvContent = mockH.response.mock.calls[0][0]
     expect(csvContent).toContain('Wood,1000.00')
-    expect(csvContent).toContain('Fibre,99.10')
+    expect(csvContent).toContain('Fibre based composite,99.10')
     expect(csvContent).toContain('Total,1099.10')
   })
 

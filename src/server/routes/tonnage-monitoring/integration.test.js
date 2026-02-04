@@ -47,7 +47,7 @@ describe('tonnage-monitoring', () => {
     generatedAt: '2026-01-29T14:30:00.000Z',
     materials: [
       { material: 'aluminium', totalTonnage: 1234.56 },
-      { material: 'glass', totalTonnage: 5678.9 }
+      { material: 'glass_re_melt', totalTonnage: 5678.9 }
     ],
     total: 6913.46
   }
@@ -130,7 +130,7 @@ describe('tonnage-monitoring', () => {
         const tableText = $('.govuk-table').text()
         expect(tableText).toContain('Aluminium')
         expect(tableText).toContain('1234.56')
-        expect(tableText).toContain('Glass')
+        expect(tableText).toContain('Glass re-melt')
         expect(tableText).toContain('5678.90')
         expect(tableText).toContain('Total')
         expect(tableText).toContain('6913.46')
@@ -286,7 +286,7 @@ describe('tonnage-monitoring', () => {
         )
         expect(payload).toContain('Tonnage by material')
         expect(payload).toContain('Aluminium,1234.56')
-        expect(payload).toContain('Glass,5678.90')
+        expect(payload).toContain('Glass re-melt,5678.90')
         expect(payload).toContain('Total,6913.46')
       })
 

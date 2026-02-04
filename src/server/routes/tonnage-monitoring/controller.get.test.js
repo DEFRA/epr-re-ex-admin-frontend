@@ -35,7 +35,7 @@ describe('tonnage-monitoring GET controller', () => {
       generatedAt: '2026-01-29T12:00:00.000Z',
       materials: [
         { material: 'aluminium', totalTonnage: 1234.56 },
-        { material: 'glass', totalTonnage: 5678.9 }
+        { material: 'glass_re_melt', totalTonnage: 5678.9 }
       ],
       total: 6913.46
     })
@@ -52,20 +52,20 @@ describe('tonnage-monitoring GET controller', () => {
       generatedAt: '2026-01-29T12:00:00.000Z',
       materials: [
         { material: 'Aluminium', totalTonnage: '1234.56' },
-        { material: 'Glass', totalTonnage: '5678.90' }
+        { material: 'Glass re-melt', totalTonnage: '5678.90' }
       ],
       total: '6913.46',
       error: null
     })
   })
 
-  test('Should format material names with proper capitalisation', async () => {
+  test('Should format material names to display names', async () => {
     fetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-01-29T12:00:00.000Z',
       materials: [
-        { material: 'PLASTIC', totalTonnage: 100 },
+        { material: 'plastic', totalTonnage: 100 },
         { material: 'paper', totalTonnage: 200 },
-        { material: 'Steel', totalTonnage: 300 }
+        { material: 'glass_other', totalTonnage: 300 }
       ],
       total: 600
     })
@@ -77,8 +77,8 @@ describe('tonnage-monitoring GET controller', () => {
       expect.objectContaining({
         materials: [
           { material: 'Plastic', totalTonnage: '100.00' },
-          { material: 'Paper', totalTonnage: '200.00' },
-          { material: 'Steel', totalTonnage: '300.00' }
+          { material: 'Paper and board', totalTonnage: '200.00' },
+          { material: 'Glass other', totalTonnage: '300.00' }
         ]
       })
     )
@@ -101,7 +101,7 @@ describe('tonnage-monitoring GET controller', () => {
       expect.objectContaining({
         materials: [
           { material: 'Wood', totalTonnage: '1000.00' },
-          { material: 'Fibre', totalTonnage: '99.10' }
+          { material: 'Fibre based composite', totalTonnage: '99.10' }
         ],
         total: '1099.10'
       })
