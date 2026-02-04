@@ -80,7 +80,7 @@
     "undici": "7.19.2"
   },
   "devDependencies": {
-    "@babel/preset-env": "7.28.6",
+    "@babel/preset-env": "7.29.0",
     "@vitest/coverage-istanbul": "4.0.18",
     "@vitest/coverage-v8": "4.0.18",
     "ajv-cli": "5.0.0",
