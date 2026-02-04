@@ -17,16 +17,19 @@ export function getCookieOptions() {
     validate: async function (request) {
       const userSession = await getUserSession(request)
 
-      // If session does not exist, return an invalid session
       if (!userSession) {
         return { isValid: false }
       }
 
-      const validatedSession = await validateAndRefreshSession(
-        request,
-        userSession
-      )
-      return { isValid: true, credentials: validatedSession }
+      try {
+        const validatedSession = await validateAndRefreshSession(
+          request,
+          userSession
+        )
+        return { isValid: true, credentials: validatedSession }
+      } catch {
+        return { isValid: false }
+      }
     }
   }
 }

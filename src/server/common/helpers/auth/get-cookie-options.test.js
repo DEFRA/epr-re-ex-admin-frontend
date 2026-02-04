@@ -143,6 +143,20 @@ describe('#getCookieOptions', () => {
       )
     })
 
+    test('Should return isValid false when validateAndRefreshSession throws error', async () => {
+      getUserSession.mockResolvedValue({ sessionId: 'test' })
+      validateAndRefreshSession.mockRejectedValue(
+        new Error('Session expired and no refresh token available')
+      )
+
+      const result = getCookieOptions()
+      const mockRequest = {}
+
+      const validation = await result.validate(mockRequest)
+
+      expect(validation).toEqual({ isValid: false })
+    })
+
     test('Should handle different user session structures', async () => {
       const complexUserSession = {
         sessionId: 'session-789',
