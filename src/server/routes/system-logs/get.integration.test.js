@@ -165,26 +165,23 @@ describe('GET /system-logs', () => {
           '.govuk-summary-card .govuk-summary-list__row'
         ).has('dt:contains("Context")')
 
-        const renderedContext = JSON.parse(
-          contextRow.find('dd.govuk-summary-list__value').text()
-        )
+        const contextHtml = contextRow
+          .find('dd.govuk-summary-list__value')
+          .text()
+        const renderedContext = contextHtml ? JSON.parse(contextHtml) : ''
+
         expect(renderedContext).toEqual(contextData)
       })
     })
 
-    describe('organisation-update rendering', () => {
-      const organisationUpdateEvent = {
-        category: 'entity',
-        subCategory: 'epr-organisations',
-        action: 'update'
-      }
+    describe('system log with previous & next rendering', () => {
       it('includes context.previous and context.next in <details> elements', async () => {
         stubBackendReponse(
           HttpResponse.json({
             systemLogs: [
               {
                 createdBy: {},
-                event: organisationUpdateEvent,
+                event: {},
                 context: {
                   previous: { version: 1, title: 'A', subTitle: 'a' },
                   next: { version: 2, title: 'A', subTitle: 'a2' }
@@ -232,7 +229,7 @@ describe('GET /system-logs', () => {
           {
             previous: 'a',
             next: 'a',
-            expectedDifference: ''
+            expectedDifference: 'no differences'
           }
         ],
         [
@@ -272,7 +269,7 @@ describe('GET /system-logs', () => {
           {
             previous: { id: 1, item: 'a', another: 'same' },
             next: { id: 1, item: 'a', another: 'same' },
-            expectedDifference: ''
+            expectedDifference: 'no differences'
           }
         ],
         [
@@ -440,7 +437,7 @@ describe('GET /system-logs', () => {
               systemLogs: [
                 {
                   createdBy: {},
-                  event: organisationUpdateEvent,
+                  event: {},
                   context: { previous, next }
                 }
               ]
@@ -455,15 +452,17 @@ describe('GET /system-logs', () => {
             '.govuk-summary-card .govuk-summary-list__row'
           ).has('dt:contains("Difference")')
 
-          const diff = JSON.parse(
-            differenceRow.find('dd.govuk-summary-list__value').text()
-          )
+          const diffHtml = differenceRow
+            .find('dd.govuk-summary-list__value')
+            .text()
+          const diff = diffHtml ? JSON.parse(diffHtml) : ''
+
           expect(diff).toEqual(expectedDifference)
         }
       )
     })
 
-    describe('search paramaters', () => {
+    describe('search parameters', () => {
       it('uses the supplied referenceNumber as organisationId when calling the backend', async () => {
         const backendCalls = stubBackendReponse(
           HttpResponse.json({
