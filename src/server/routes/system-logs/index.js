@@ -31,7 +31,7 @@ export const systemLogs = {
                 timestamp: systemLog.createdAt,
                 event: systemLog.event,
                 user: systemLog.createdBy,
-                ...extractPreviousNextAndDiffFrom(systemLog)
+                ...contextWithPreviousNextAndDiffExtracted(systemLog)
               })),
               searchTerms: {
                 referenceNumber: searchTermReferenceNumber
@@ -44,7 +44,7 @@ export const systemLogs = {
   }
 }
 
-function extractPreviousNextAndDiffFrom({ context }) {
+function contextWithPreviousNextAndDiffExtracted({ context }) {
   const { previous, next, ...remainingContext } = context
   if ('previous' in context && 'next' in context) {
     return {
