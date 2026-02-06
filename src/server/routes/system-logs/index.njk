@@ -57,42 +57,44 @@
             }
           ] %}
 
-          {% if systemLog.context.contextType === "organisation-update" %}
-            {#
-              Whitespace added at the start of the contents of <code> elements so the rendered opening brace aligns
-              The summaryList component calls nunjucks indent function to render supplied html
-              - this indents every line (expect the first!) by 6 spaces
-            #}
-            {% set previousHtml = govukDetails({ summaryText: "Show", html: '<code class="app-json-display">          ' ~ systemLog.context.previous | dump(2) ~ '</code>' }) %}
-            {% set nextHtml = govukDetails({ summaryText: "Show", html: '<code class="app-json-display">          ' ~ systemLog.context.next | dump(2) ~ '</code>' }) %}
-            {% set differenceHtml = '<code class="app-json-display">          ' ~ systemLog.context.difference | dump(2) ~ '</code>' %}
-            {% set rows = rows.concat([
-              {
-                key: { text: "Previous" },
-                value: { html: previousHtml }
-              },
-              {
-                key: { text: "Next" },
-                value: { html: nextHtml }
-              },
-              {
-                key: { text: "Difference" },
-                value: { html: differenceHtml }
-              }
-            ]) %}
-          {% else %}
+          {% if systemLog.context %}
             {#
               Whitespace added at the start of the contents of <code> elements so the rendered opening brace aligns
               The summaryList component calls nunjucks indent function to render supplied html
               - this indents every line (expect the first!) by 6 spaces
             #}
             {% set contextHtml = '<code class="app-json-display">          ' ~ systemLog.context | dump(2) ~ '</code>' %}
-            {% set rows = rows.concat([
-              {
-                key: { text: "Context" },
-                value: { html: contextHtml }
-              }
-            ]) %}
+            {% set rows = rows.concat([ { key: { text: "Context" }, value: { html: contextHtml } } ]) %}
+          {% endif %}
+
+          {% if 'previous' in systemLog %}
+            {#
+              Whitespace added at the start of the contents of <code> elements so the rendered opening brace aligns
+              The summaryList component calls nunjucks indent function to render supplied html
+              - this indents every line (expect the first!) by 6 spaces
+            #}
+            {% set previousHtml = govukDetails({ summaryText: "Show", html: '<code class="app-json-display">          ' ~ systemLog.previous | dump(2) ~ '</code>' }) %}
+            {% set rows = rows.concat([ { key: { text: "Previous" }, value: { html: previousHtml } } ]) %}
+          {% endif %}
+
+          {% if 'next' in systemLog %}
+            {#
+              Whitespace added at the start of the contents of <code> elements so the rendered opening brace aligns
+              The summaryList component calls nunjucks indent function to render supplied html
+              - this indents every line (expect the first!) by 6 spaces
+            #}
+            {% set nextHtml = govukDetails({ summaryText: "Show", html: '<code class="app-json-display">          ' ~ systemLog.next | dump(2) ~ '</code>' }) %}
+            {% set rows = rows.concat([ { key: { text: "Next" }, value: { html: nextHtml } } ]) %}
+          {% endif %}
+
+          {% if 'difference' in systemLog %}
+            {#
+              Whitespace added at the start of the contents of <code> elements so the rendered opening brace aligns
+              The summaryList component calls nunjucks indent function to render supplied html
+              - this indents every line (expect the first!) by 6 spaces
+            #}
+            {% set differenceHtml = '<code class="app-json-display">          ' ~ systemLog.difference | dump(2) ~ '</code>' %}
+            {% set rows = rows.concat([ { key: { text: "Difference" }, value: { html: differenceHtml } } ]) %}
           {% endif %}
 
           {{ govukSummaryList({
