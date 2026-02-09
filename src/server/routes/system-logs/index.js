@@ -31,7 +31,7 @@ export const systemLogs = {
                 timestamp: systemLog.createdAt,
                 event: systemLog.event,
                 user: systemLog.createdBy,
-                context: mapContext(systemLog)
+                ...contextWithDeltaBetweenPreviousAndNextExtracted(systemLog)
               })),
               searchTerms: {
                 referenceNumber: searchTermReferenceNumber
@@ -44,25 +44,20 @@ export const systemLogs = {
   }
 }
 
-function mapContext({ event, context }) {
-  if (
-    event.category === 'entity' &&
-    event.subCategory === 'epr-organisations' &&
-    event.action === 'update'
-  ) {
-    return organisationUpdate(context)
+function contextWithDeltaBetweenPreviousAndNextExtracted({ context }) {
+  const { previous, next, ...remainingContext } = context
+  if ('previous' in context && 'next' in context) {
+    return {
+      renderDelta: {
+        previous,
+        next,
+        difference: difference(previous, next) || 'no differences'
+      },
+      context: { ...remainingContext }
+    }
   }
 
-  return { ...context } // return the whole context, for rendering as-is
-}
-
-function organisationUpdate(context) {
-  return {
-    contextType: 'organisation-update',
-    previous: context.previous,
-    next: context.next,
-    difference: difference(context.previous, context.next) || ''
-  }
+  return { context }
 }
 
 function difference(previous, next) {
