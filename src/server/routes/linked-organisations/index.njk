@@ -1,0 +1,68 @@
+{% extends 'layout.njk' %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <div class="govuk-body" data-testid="app-page-body">
+
+        {% if error %}
+          {{ govukErrorSummary({
+            titleText: "There is a problem",
+            errorList: [
+              {
+                text: error
+              }
+            ]
+          }) }}
+        {% endif %}
+
+        <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
+
+        {% if linkedOrganisations and linkedOrganisations.length %}
+          {% set tableRows = [] %}
+          {% for org in linkedOrganisations %}
+            {% set eprOrgNameCell = { text: org.eprOrgName } %}
+            {% set eprOrgIdCell = { text: org.eprOrgId } %}
+            {% set registrationNumberCell = { text: org.registrationNumber } %}
+            {% set defraOrgNameCell = { text: org.defraOrgName } %}
+            {% set defraOrgIdCell = { text: org.defraOrgId } %}
+            {% set linkedAtCell = { text: org.linkedAt | formatDate("d MMMM yyyy") } %}
+            {% set linkedByCell = { text: org.linkedByEmail } %}
+
+            {% set row = [ eprOrgNameCell, eprOrgIdCell, registrationNumberCell, defraOrgNameCell, defraOrgIdCell, linkedAtCell, linkedByCell ] %}
+            {% set tableRows = tableRows.concat([row]) %}
+          {% endfor %}
+
+          {{ govukTable({
+            captionClasses: "govuk-table__caption--m",
+            firstCellIsHeader: true,
+            head: [
+              { text: "EPR Organisation Name" },
+              { text: "EPR Organisation ID" },
+              { text: "Registration Number" },
+              { text: "Defra ID Organisation Name" },
+              { text: "Defra ID Organisation ID" },
+              { text: "Date Linked" },
+              { text: "Linked By" }
+            ],
+            rows: tableRows
+          }) }}
+
+          <form method="POST">
+            <input type="hidden" name="crumb" value="{{ crumb }}" />
+            {{ govukButton({
+              text: "Download CSV"
+            }) }}
+          </form>
+
+        {% else %}
+          {{ govukInsetText({ text: "No linked organisations found." }) }}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}
