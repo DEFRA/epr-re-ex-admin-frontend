@@ -129,6 +129,19 @@ describe('linked-organisations download controller', () => {
     expect(csvContent).toContain('"Acme ""Best"" Ltd"')
   })
 
+  test('Should prefix fields starting with formula-injection characters', async () => {
+    const orgWithFormulaValue = {
+      ...mockLinkedOrg,
+      companyDetails: { name: '=SUM(A1)', registrationNumber: '12345678' }
+    }
+    fetchJsonFromBackend.mockResolvedValue([orgWithFormulaValue])
+
+    await linkedOrganisationsDownloadController.handler(mockRequest, mockH)
+
+    const csvContent = mockH.response.mock.calls[0][0]
+    expect(csvContent).toContain("'=SUM(A1)")
+  })
+
   test('Should redirect with error message on fetch failure', async () => {
     fetchJsonFromBackend.mockRejectedValue(new Error('Network error'))
 

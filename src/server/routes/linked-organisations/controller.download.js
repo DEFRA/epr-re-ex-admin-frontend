@@ -17,7 +17,7 @@ function escapeCsvField(value) {
     prefixedValue.includes('"') ||
     prefixedValue.includes('\n')
   ) {
-    return `"${prefixedValue.replace(/"/g, '""')}"`
+    return `"${prefixedValue.replaceAll('"', '""')}"`
   }
   return prefixedValue
 }
