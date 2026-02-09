@@ -30,7 +30,7 @@
           Total rows: <strong>{{ totalRows }}</strong>
         </p>
 
-        {% if reportRows and reportRows.length %}
+        {% if reportRows and reportRows.length > 0 %}
           <form method="POST" class="govuk-!-margin-bottom-6">
             <input type="hidden" name="crumb" value="{{ crumb }}" />
             {{ govukButton({
