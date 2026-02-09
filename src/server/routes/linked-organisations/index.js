@@ -9,16 +9,9 @@ export const linkedOrganisations = {
         {
           method: 'GET',
           path: '/linked-organisations',
-          ...linkedOrganisationsController,
+          handler: linkedOrganisationsController.handler,
           options: {
-            app: { pageTitle: 'Linked organisations' }
-          }
-        },
-        {
-          method: 'POST',
-          path: '/linked-organisations',
-          ...linkedOrganisationsController,
-          options: {
+            ...linkedOrganisationsController.options,
             app: { pageTitle: 'Linked organisations' }
           }
         },

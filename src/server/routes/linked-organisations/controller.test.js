@@ -32,7 +32,7 @@ describe('linked-organisations controller', () => {
           app: { pageTitle: 'Linked organisations' }
         }
       },
-      payload: null,
+      query: {},
       yar: {
         get: vi.fn().mockReturnValue(null),
         clear: vi.fn()
@@ -73,8 +73,8 @@ describe('linked-organisations controller', () => {
     )
   })
 
-  test('Should pass search term as query param to backend on POST', async () => {
-    mockRequest.payload = { search: ' acme ' }
+  test('Should pass search term as query param to backend', async () => {
+    mockRequest.query = { search: ' acme ' }
     fetchJsonFromBackend.mockResolvedValue([mockLinkedOrg])
 
     await linkedOrganisationsController.handler(mockRequest, mockH)
@@ -93,7 +93,7 @@ describe('linked-organisations controller', () => {
   })
 
   test('Should fetch all when search term is empty', async () => {
-    mockRequest.payload = { search: '  ' }
+    mockRequest.query = { search: '  ' }
     fetchJsonFromBackend.mockResolvedValue([])
 
     await linkedOrganisationsController.handler(mockRequest, mockH)
@@ -148,7 +148,7 @@ describe('linked-organisations controller', () => {
   })
 
   test('Should encode special characters in search term', async () => {
-    mockRequest.payload = { search: 'Acme & Co' }
+    mockRequest.query = { search: 'Acme & Co' }
     fetchJsonFromBackend.mockResolvedValue([])
 
     await linkedOrganisationsController.handler(mockRequest, mockH)

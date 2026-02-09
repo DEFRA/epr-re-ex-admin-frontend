@@ -197,6 +197,22 @@ describe('linked-organisations', () => {
         )
       })
 
+      test('Should render search form with GET method', async () => {
+        stubBackendResponse(mockLinkedOrgs)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: '/linked-organisations',
+          auth: {
+            strategy: 'session',
+            credentials: mockUserSession
+          }
+        })
+
+        const $ = cheerio.load(result)
+        expect($('form.app-filters').attr('method')).toBe('get')
+      })
+
       test('Should render download CSV button', async () => {
         stubBackendResponse(mockLinkedOrgs)
 
@@ -255,24 +271,7 @@ describe('linked-organisations', () => {
     })
   })
 
-  describe('POST /linked-organisations (search)', () => {
-    describe('When user is unauthenticated', () => {
-      beforeEach(() => {
-        getUserSession.mockReturnValue(null)
-      })
-
-      test('Should return unauthorised status code', async () => {
-        const { result, statusCode } = await server.inject({
-          method: 'POST',
-          url: '/linked-organisations',
-          payload: {}
-        })
-
-        expect(statusCode).toBe(statusCodes.unauthorised)
-        expect(result).toEqual(expect.stringContaining('Unauthorised'))
-      })
-    })
-
+  describe('GET /linked-organisations?search= (search)', () => {
     describe('When user is authenticated', () => {
       beforeEach(() => {
         getUserSession.mockReturnValue(mockUserSession)
@@ -281,17 +280,9 @@ describe('linked-organisations', () => {
       test('Should render page with search results', async () => {
         stubBackendResponse(mockLinkedOrgs)
 
-        const { cookie, crumb } = await getCsrfToken(
-          server,
-          '/linked-organisations',
-          { strategy: 'session', credentials: mockUserSession }
-        )
-
         const { statusCode, result } = await server.inject({
-          method: 'POST',
-          url: '/linked-organisations',
-          headers: { cookie },
-          payload: { crumb, search: 'acme' },
+          method: 'GET',
+          url: '/linked-organisations?search=acme',
           auth: {
             strategy: 'session',
             credentials: mockUserSession
@@ -302,23 +293,15 @@ describe('linked-organisations', () => {
 
         const $ = cheerio.load(result)
         expect($('h1').text()).toContain('Linked organisations')
-        expect($('input[name="search"]').val()).toBe('acme')
+        expect($('form.app-filters input[name="search"]').val()).toBe('acme')
       })
 
       test('Should show results count when searching', async () => {
         stubBackendResponse(mockLinkedOrgs)
 
-        const { cookie, crumb } = await getCsrfToken(
-          server,
-          '/linked-organisations',
-          { strategy: 'session', credentials: mockUserSession }
-        )
-
         const { result } = await server.inject({
-          method: 'POST',
-          url: '/linked-organisations',
-          headers: { cookie },
-          payload: { crumb, search: 'acme' },
+          method: 'GET',
+          url: '/linked-organisations?search=acme',
           auth: {
             strategy: 'session',
             credentials: mockUserSession
@@ -332,17 +315,9 @@ describe('linked-organisations', () => {
       test('Should show clear search link when searching', async () => {
         stubBackendResponse(mockLinkedOrgs)
 
-        const { cookie, crumb } = await getCsrfToken(
-          server,
-          '/linked-organisations',
-          { strategy: 'session', credentials: mockUserSession }
-        )
-
         const { result } = await server.inject({
-          method: 'POST',
-          url: '/linked-organisations',
-          headers: { cookie },
-          payload: { crumb, search: 'acme' },
+          method: 'GET',
+          url: '/linked-organisations?search=acme',
           auth: {
             strategy: 'session',
             credentials: mockUserSession
@@ -360,17 +335,9 @@ describe('linked-organisations', () => {
       test('Should show 0 results message when search matches nothing', async () => {
         stubBackendResponse([])
 
-        const { cookie, crumb } = await getCsrfToken(
-          server,
-          '/linked-organisations',
-          { strategy: 'session', credentials: mockUserSession }
-        )
-
         const { result } = await server.inject({
-          method: 'POST',
-          url: '/linked-organisations',
-          headers: { cookie },
-          payload: { crumb, search: 'zzz' },
+          method: 'GET',
+          url: '/linked-organisations?search=zzz',
           auth: {
             strategy: 'session',
             credentials: mockUserSession
@@ -382,22 +349,6 @@ describe('linked-organisations', () => {
         expect($('.govuk-inset-text').text()).toContain(
           "No linked organisations found matching 'zzz'"
         )
-      })
-
-      test('Should reject request without CSRF token', async () => {
-        stubBackendResponse(mockLinkedOrgs)
-
-        const { statusCode } = await server.inject({
-          method: 'POST',
-          url: '/linked-organisations',
-          payload: {},
-          auth: {
-            strategy: 'session',
-            credentials: mockUserSession
-          }
-        })
-
-        expect(statusCode).toBe(statusCodes.forbidden)
       })
     })
   })

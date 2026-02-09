@@ -22,9 +22,8 @@
 
       <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
 
-      <form method="post" class="app-filters">
+      <form method="get" action="/linked-organisations" class="app-filters">
         <h2 class="govuk-heading-m">Search for an organisation by</h2>
-        <input type="hidden" name="crumb" value="{{ crumb }}" />
         <div class="govuk-form-group">
           {{ govukInput({
             label: {

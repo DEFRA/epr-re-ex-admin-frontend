@@ -1,3 +1,4 @@
+import Joi from 'joi'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
 function mapLinkedOrganisations(data) {
@@ -31,8 +32,15 @@ function buildBackendPath(searchTerm) {
 }
 
 export const linkedOrganisationsController = {
+  options: {
+    validate: {
+      query: Joi.object({
+        search: Joi.string().optional().allow('').trim()
+      })
+    }
+  },
   async handler(request, h) {
-    const searchTerm = request.payload?.search?.trim() || ''
+    const searchTerm = request.query.search?.trim() || ''
     const errorMessage = request.yar.get('error')
     request.yar.clear('error')
 
