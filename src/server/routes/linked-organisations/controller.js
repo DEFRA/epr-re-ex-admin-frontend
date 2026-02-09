@@ -5,7 +5,7 @@ export const linkedOrganisationsController = {
   async handler(request, h) {
     const searchTerm = request.query.search?.trim() || ''
     const errorMessage = request.yar.get('error')
-    request.yar.clear('error')
+    await request.yar.clear('error')
 
     const data = await fetchJsonFromBackend(
       request,
