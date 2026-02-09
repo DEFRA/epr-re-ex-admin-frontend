@@ -1,5 +1,5 @@
 import { vi } from 'vitest'
-import { linkedOrganisationsPostController } from './controller.post.js'
+import { linkedOrganisationsDownloadController } from './controller.download.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
 vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
@@ -19,7 +19,7 @@ const mockLinkedOrg = {
   }
 }
 
-describe('linked-organisations POST controller', () => {
+describe('linked-organisations download controller', () => {
   let mockRequest
   let mockH
   let mockResponse
@@ -28,6 +28,7 @@ describe('linked-organisations POST controller', () => {
     vi.clearAllMocks()
 
     mockRequest = {
+      payload: {},
       yar: {
         set: vi.fn()
       }
@@ -46,7 +47,7 @@ describe('linked-organisations POST controller', () => {
   test('Should generate CSV with correct headers and data', async () => {
     fetchJsonFromBackend.mockResolvedValue([mockLinkedOrg])
 
-    await linkedOrganisationsPostController.handler(mockRequest, mockH)
+    await linkedOrganisationsDownloadController.handler(mockRequest, mockH)
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
       mockRequest,
@@ -67,7 +68,7 @@ describe('linked-organisations POST controller', () => {
   test('Should set correct Content-Type and Content-Disposition headers', async () => {
     fetchJsonFromBackend.mockResolvedValue([mockLinkedOrg])
 
-    await linkedOrganisationsPostController.handler(mockRequest, mockH)
+    await linkedOrganisationsDownloadController.handler(mockRequest, mockH)
 
     expect(mockResponse.header).toHaveBeenCalledWith('Content-Type', 'text/csv')
     expect(mockResponse.header).toHaveBeenCalledWith(
@@ -79,13 +80,37 @@ describe('linked-organisations POST controller', () => {
   test('Should handle empty linked organisations', async () => {
     fetchJsonFromBackend.mockResolvedValue([])
 
-    await linkedOrganisationsPostController.handler(mockRequest, mockH)
+    await linkedOrganisationsDownloadController.handler(mockRequest, mockH)
 
     const csvContent = mockH.response.mock.calls[0][0]
     const lines = csvContent.split('\n')
     expect(lines).toHaveLength(3)
     expect(lines[0]).toBe('Linked organisations report')
     expect(lines[2]).toContain('EPR Organisation Name')
+  })
+
+  test('Should handle backend returning non-array data', async () => {
+    fetchJsonFromBackend.mockResolvedValue({})
+
+    await linkedOrganisationsDownloadController.handler(mockRequest, mockH)
+
+    const csvContent = mockH.response.mock.calls[0][0]
+    const lines = csvContent.split('\n')
+    expect(lines).toHaveLength(3)
+    expect(lines[0]).toBe('Linked organisations report')
+  })
+
+  test('Should handle null field values in CSV', async () => {
+    const orgWithNullField = {
+      ...mockLinkedOrg,
+      orgId: null
+    }
+    fetchJsonFromBackend.mockResolvedValue([orgWithNullField])
+
+    await linkedOrganisationsDownloadController.handler(mockRequest, mockH)
+
+    const csvContent = mockH.response.mock.calls[0][0]
+    expect(csvContent).toContain('Acme Ltd')
   })
 
   test('Should escape CSV fields containing commas', async () => {
@@ -95,7 +120,7 @@ describe('linked-organisations POST controller', () => {
     }
     fetchJsonFromBackend.mockResolvedValue([orgWithComma])
 
-    await linkedOrganisationsPostController.handler(mockRequest, mockH)
+    await linkedOrganisationsDownloadController.handler(mockRequest, mockH)
 
     const csvContent = mockH.response.mock.calls[0][0]
     expect(csvContent).toContain('"Acme, Ltd"')
@@ -111,7 +136,7 @@ describe('linked-organisations POST controller', () => {
     }
     fetchJsonFromBackend.mockResolvedValue([orgWithQuote])
 
-    await linkedOrganisationsPostController.handler(mockRequest, mockH)
+    await linkedOrganisationsDownloadController.handler(mockRequest, mockH)
 
     const csvContent = mockH.response.mock.calls[0][0]
     expect(csvContent).toContain('"Acme ""Best"" Ltd"')
@@ -120,7 +145,7 @@ describe('linked-organisations POST controller', () => {
   test('Should redirect with error message on fetch failure', async () => {
     fetchJsonFromBackend.mockRejectedValue(new Error('Network error'))
 
-    const result = await linkedOrganisationsPostController.handler(
+    const result = await linkedOrganisationsDownloadController.handler(
       mockRequest,
       mockH
     )
@@ -138,7 +163,7 @@ describe('linked-organisations POST controller', () => {
     error.output = { payload: { message: 'Custom backend error message' } }
     fetchJsonFromBackend.mockRejectedValue(error)
 
-    await linkedOrganisationsPostController.handler(mockRequest, mockH)
+    await linkedOrganisationsDownloadController.handler(mockRequest, mockH)
 
     expect(mockRequest.yar.set).toHaveBeenCalledWith(
       'error',
@@ -146,36 +171,36 @@ describe('linked-organisations POST controller', () => {
     )
   })
 
-  test('Should handle backend returning non-array data', async () => {
-    fetchJsonFromBackend.mockResolvedValue({})
-
-    await linkedOrganisationsPostController.handler(mockRequest, mockH)
-
-    const csvContent = mockH.response.mock.calls[0][0]
-    const lines = csvContent.split('\n')
-    expect(lines).toHaveLength(3)
-    expect(lines[0]).toBe('Linked organisations report')
-  })
-
-  test('Should handle null field values in CSV', async () => {
-    const orgWithNullField = {
-      ...mockLinkedOrg,
-      orgId: null
-    }
-    fetchJsonFromBackend.mockResolvedValue([orgWithNullField])
-
-    await linkedOrganisationsPostController.handler(mockRequest, mockH)
-
-    const csvContent = mockH.response.mock.calls[0][0]
-    expect(csvContent).toContain('Acme Ltd')
-  })
-
   test('Should format linked date in CSV', async () => {
     fetchJsonFromBackend.mockResolvedValue([mockLinkedOrg])
 
-    await linkedOrganisationsPostController.handler(mockRequest, mockH)
+    await linkedOrganisationsDownloadController.handler(mockRequest, mockH)
 
     const csvContent = mockH.response.mock.calls[0][0]
     expect(csvContent).toContain('15 June 2025 at 10:30am')
+  })
+
+  test('Should pass search term as query param to backend', async () => {
+    mockRequest.payload = { search: ' acme ' }
+    fetchJsonFromBackend.mockResolvedValue([mockLinkedOrg])
+
+    await linkedOrganisationsDownloadController.handler(mockRequest, mockH)
+
+    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
+      mockRequest,
+      '/v1/linked-organisations?name=acme'
+    )
+  })
+
+  test('Should fetch all when no search term in payload', async () => {
+    mockRequest.payload = {}
+    fetchJsonFromBackend.mockResolvedValue([mockLinkedOrg])
+
+    await linkedOrganisationsDownloadController.handler(mockRequest, mockH)
+
+    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
+      mockRequest,
+      '/v1/linked-organisations'
+    )
   })
 })

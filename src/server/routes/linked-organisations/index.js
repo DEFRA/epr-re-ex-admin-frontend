@@ -1,5 +1,5 @@
-import { linkedOrganisationsGetController } from './controller.get.js'
-import { linkedOrganisationsPostController } from './controller.post.js'
+import { linkedOrganisationsController } from './controller.js'
+import { linkedOrganisationsDownloadController } from './controller.download.js'
 
 export const linkedOrganisations = {
   plugin: {
@@ -9,7 +9,7 @@ export const linkedOrganisations = {
         {
           method: 'GET',
           path: '/linked-organisations',
-          ...linkedOrganisationsGetController,
+          ...linkedOrganisationsController,
           options: {
             app: { pageTitle: 'Linked organisations' }
           }
@@ -17,7 +17,15 @@ export const linkedOrganisations = {
         {
           method: 'POST',
           path: '/linked-organisations',
-          ...linkedOrganisationsPostController
+          ...linkedOrganisationsController,
+          options: {
+            app: { pageTitle: 'Linked organisations' }
+          }
+        },
+        {
+          method: 'POST',
+          path: '/linked-organisations/download',
+          ...linkedOrganisationsDownloadController
         }
       ])
     }

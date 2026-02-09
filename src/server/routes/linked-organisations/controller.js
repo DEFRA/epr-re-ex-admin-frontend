@@ -23,17 +23,28 @@ function mapLinkedOrganisations(data) {
   )
 }
 
-export const linkedOrganisationsGetController = {
+function buildBackendPath(searchTerm) {
+  if (searchTerm) {
+    return `/v1/linked-organisations?name=${encodeURIComponent(searchTerm)}`
+  }
+  return '/v1/linked-organisations'
+}
+
+export const linkedOrganisationsController = {
   async handler(request, h) {
+    const searchTerm = request.payload?.search?.trim() || ''
     const errorMessage = request.yar.get('error')
-    await request.yar.clear('error')
+    request.yar.clear('error')
 
-    const data = await fetchJsonFromBackend(request, '/v1/linked-organisations')
-
+    const data = await fetchJsonFromBackend(
+      request,
+      buildBackendPath(searchTerm)
+    )
     const linkedOrganisations = mapLinkedOrganisations(data)
 
     return h.view('routes/linked-organisations/index', {
       pageTitle: request.route.settings.app.pageTitle,
+      searchTerm,
       linkedOrganisations,
       error: errorMessage
     })

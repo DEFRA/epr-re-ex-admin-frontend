@@ -15,6 +15,13 @@ function escapeCsvField(value) {
   return stringValue
 }
 
+function buildBackendPath(searchTerm) {
+  if (searchTerm) {
+    return `/v1/linked-organisations?name=${encodeURIComponent(searchTerm)}`
+  }
+  return '/v1/linked-organisations'
+}
+
 function generateCsv(data) {
   const lines = [
     'Linked organisations report',
@@ -60,20 +67,23 @@ function generateCsv(data) {
   return lines.join('\n')
 }
 
-export const linkedOrganisationsPostController = {
+export const linkedOrganisationsDownloadController = {
   async handler(request, h) {
     try {
+      const searchTerm = request.payload?.search?.trim() || ''
       const data = await fetchJsonFromBackend(
         request,
-        '/v1/linked-organisations'
+        buildBackendPath(searchTerm)
       )
       const csv = generateCsv(data)
-      const filename = 'linked-organisations.csv'
 
       return h
         .response(csv)
         .header('Content-Type', 'text/csv')
-        .header('Content-Disposition', `attachment; filename="${filename}"`)
+        .header(
+          'Content-Disposition',
+          'attachment; filename="linked-organisations.csv"'
+        )
     } catch (error) {
       const errorMessage =
         error.output?.payload?.message ||

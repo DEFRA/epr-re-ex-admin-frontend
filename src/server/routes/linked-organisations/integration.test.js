@@ -178,6 +178,25 @@ describe('linked-organisations', () => {
         )
       })
 
+      test('Should render search form with input and button', async () => {
+        stubBackendResponse(mockLinkedOrgs)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: '/linked-organisations',
+          auth: {
+            strategy: 'session',
+            credentials: mockUserSession
+          }
+        })
+
+        const $ = cheerio.load(result)
+        expect($('form.app-filters input[name="search"]').length).toBe(1)
+        expect($('form.app-filters button.govuk-button').text().trim()).toBe(
+          'Search'
+        )
+      })
+
       test('Should render download CSV button', async () => {
         stubBackendResponse(mockLinkedOrgs)
 
@@ -191,7 +210,11 @@ describe('linked-organisations', () => {
         })
 
         const $ = cheerio.load(result)
-        expect($('button.govuk-button').text().trim()).toBe('Download CSV')
+        const downloadForm = $('form[action="/linked-organisations/download"]')
+        expect(downloadForm.length).toBe(1)
+        expect(downloadForm.find('button.govuk-button').text().trim()).toBe(
+          'Download CSV'
+        )
       })
 
       test('Should have navigation item for linked organisations', async () => {
@@ -232,7 +255,7 @@ describe('linked-organisations', () => {
     })
   })
 
-  describe('POST /linked-organisations', () => {
+  describe('POST /linked-organisations (search)', () => {
     describe('When user is unauthenticated', () => {
       beforeEach(() => {
         getUserSession.mockReturnValue(null)
@@ -242,6 +265,153 @@ describe('linked-organisations', () => {
         const { result, statusCode } = await server.inject({
           method: 'POST',
           url: '/linked-organisations',
+          payload: {}
+        })
+
+        expect(statusCode).toBe(statusCodes.unauthorised)
+        expect(result).toEqual(expect.stringContaining('Unauthorised'))
+      })
+    })
+
+    describe('When user is authenticated', () => {
+      beforeEach(() => {
+        getUserSession.mockReturnValue(mockUserSession)
+      })
+
+      test('Should render page with search results', async () => {
+        stubBackendResponse(mockLinkedOrgs)
+
+        const { cookie, crumb } = await getCsrfToken(
+          server,
+          '/linked-organisations',
+          { strategy: 'session', credentials: mockUserSession }
+        )
+
+        const { statusCode, result } = await server.inject({
+          method: 'POST',
+          url: '/linked-organisations',
+          headers: { cookie },
+          payload: { crumb, search: 'acme' },
+          auth: {
+            strategy: 'session',
+            credentials: mockUserSession
+          }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const $ = cheerio.load(result)
+        expect($('h1').text()).toContain('Linked organisations')
+        expect($('input[name="search"]').val()).toBe('acme')
+      })
+
+      test('Should show results count when searching', async () => {
+        stubBackendResponse(mockLinkedOrgs)
+
+        const { cookie, crumb } = await getCsrfToken(
+          server,
+          '/linked-organisations',
+          { strategy: 'session', credentials: mockUserSession }
+        )
+
+        const { result } = await server.inject({
+          method: 'POST',
+          url: '/linked-organisations',
+          headers: { cookie },
+          payload: { crumb, search: 'acme' },
+          auth: {
+            strategy: 'session',
+            credentials: mockUserSession
+          }
+        })
+
+        const $ = cheerio.load(result)
+        expect($('.govuk-heading-l').text()).toContain('2 results found')
+      })
+
+      test('Should show clear search link when searching', async () => {
+        stubBackendResponse(mockLinkedOrgs)
+
+        const { cookie, crumb } = await getCsrfToken(
+          server,
+          '/linked-organisations',
+          { strategy: 'session', credentials: mockUserSession }
+        )
+
+        const { result } = await server.inject({
+          method: 'POST',
+          url: '/linked-organisations',
+          headers: { cookie },
+          payload: { crumb, search: 'acme' },
+          auth: {
+            strategy: 'session',
+            credentials: mockUserSession
+          }
+        })
+
+        const $ = cheerio.load(result)
+        const clearLink = $(
+          'a[href="/linked-organisations"].govuk-button--inverse'
+        )
+        expect(clearLink.length).toBe(1)
+        expect(clearLink.text()).toContain('Clear search')
+      })
+
+      test('Should show 0 results message when search matches nothing', async () => {
+        stubBackendResponse([])
+
+        const { cookie, crumb } = await getCsrfToken(
+          server,
+          '/linked-organisations',
+          { strategy: 'session', credentials: mockUserSession }
+        )
+
+        const { result } = await server.inject({
+          method: 'POST',
+          url: '/linked-organisations',
+          headers: { cookie },
+          payload: { crumb, search: 'zzz' },
+          auth: {
+            strategy: 'session',
+            credentials: mockUserSession
+          }
+        })
+
+        const $ = cheerio.load(result)
+        expect($('.govuk-heading-l').text()).toContain('0 results found')
+        expect($('.govuk-inset-text').text()).toContain(
+          "No linked organisations found matching 'zzz'"
+        )
+      })
+
+      test('Should reject request without CSRF token', async () => {
+        stubBackendResponse(mockLinkedOrgs)
+
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url: '/linked-organisations',
+          payload: {},
+          auth: {
+            strategy: 'session',
+            credentials: mockUserSession
+          }
+        })
+
+        expect(statusCode).toBe(statusCodes.forbidden)
+      })
+    })
+  })
+
+  describe('POST /linked-organisations/download', () => {
+    describe('When user is unauthenticated', () => {
+      beforeEach(() => {
+        getUserSession.mockReturnValue(null)
+      })
+
+      test('Should return unauthorised status code', async () => {
+        const { result, statusCode } = await server.inject({
+          method: 'POST',
+          url: '/linked-organisations/download',
           payload: {}
         })
 
@@ -266,7 +436,7 @@ describe('linked-organisations', () => {
 
         const { statusCode, headers, payload } = await server.inject({
           method: 'POST',
-          url: '/linked-organisations',
+          url: '/linked-organisations/download',
           headers: { cookie },
           payload: { crumb },
           auth: {
@@ -297,7 +467,7 @@ describe('linked-organisations', () => {
 
         const { statusCode, headers } = await server.inject({
           method: 'POST',
-          url: '/linked-organisations',
+          url: '/linked-organisations/download',
           headers: { cookie },
           payload: { crumb },
           auth: {
@@ -315,7 +485,7 @@ describe('linked-organisations', () => {
 
         const { statusCode } = await server.inject({
           method: 'POST',
-          url: '/linked-organisations',
+          url: '/linked-organisations/download',
           payload: {},
           auth: {
             strategy: 'session',
