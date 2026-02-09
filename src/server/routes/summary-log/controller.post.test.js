@@ -90,7 +90,8 @@ describe('summaryLogUploadsReportPostController', () => {
 
     const csv = mockH.response.mock.calls[0][0]
 
-    const expectedContent = [
+    // Verify headers
+    const expectedHeaders = [
       'Summary log uploads report',
       'Report showing summary log upload activity for all registered operators with uploads.',
       'Data generated at: 6 February 2026 at 2:30pm',
@@ -105,16 +106,43 @@ describe('summaryLogUploadsReportPostController', () => {
       'Last Successful Upload',
       'Last Failed Upload',
       'Successful Uploads',
-      'Failed Uploads',
+      'Failed Uploads'
+    ]
+    expect(expectedHeaders.every((header) => csv.includes(header))).toBe(true)
+
+    // Verify EA row (with accreditation)
+    const eaRowContent = [
+      '"EA"',
+      '"reprocessor"',
       '"ACME Ltd"',
+      '"12345"',
+      '"REG1"',
       '"ACC1"',
       '"7 Glass processing site, London, SW2A 0AA"',
-      '"12345"',
-      '"Test Co"',
-      '"-"',
-      '"99999"'
+      '"glass"',
+      '"6 February 2026 at 2:30pm"',
+      '""', // empty lastFailedUpload
+      '"5"',
+      '"0"'
     ]
-    expect(expectedContent.every((content) => csv.includes(content))).toBe(true)
+    expect(eaRowContent.every((content) => csv.includes(content))).toBe(true)
+
+    // Verify NRW row (without accreditation - uses dashes)
+    const nrwRowContent = [
+      '"NRW"',
+      '"exporter"',
+      '"Test Co"',
+      '"99999"',
+      '"REG2"',
+      '"-"', // no accreditation
+      '"-"', // no reprocessing site
+      '"plastic"',
+      '""', // empty lastSuccessfulUpload
+      '"15 January 2026 at 10:00am"',
+      '"0"',
+      '"3"'
+    ]
+    expect(nrwRowContent.every((content) => csv.includes(content))).toBe(true)
 
     expect(mockH.header).toHaveBeenCalledWith('Content-Type', 'text/csv')
     expect(mockH.header).toHaveBeenCalledWith(
