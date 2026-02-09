@@ -6,14 +6,20 @@ const dateFormat = "d MMMM yyyy 'at' h:mmaaa"
 
 function escapeCsvField(value) {
   const stringValue = String(value ?? '')
+
+  // Mitigate CSV/Excel formula injection by prefixing risky leading characters
+  const prefixedValue = /^[=+\-@]/.test(stringValue)
+    ? `'${stringValue}`
+    : stringValue
+
   if (
-    stringValue.includes(',') ||
-    stringValue.includes('"') ||
-    stringValue.includes('\n')
+    prefixedValue.includes(',') ||
+    prefixedValue.includes('"') ||
+    prefixedValue.includes('\n')
   ) {
-    return `"${stringValue.replaceAll(/"/g, '""')}"`
+    return `"${prefixedValue.replace(/"/g, '""')}"`
   }
-  return stringValue
+  return prefixedValue
 }
 
 function generateCsv(data) {
