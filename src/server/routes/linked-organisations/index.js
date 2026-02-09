@@ -1,3 +1,5 @@
+import Joi from 'joi'
+
 import { linkedOrganisationsController } from './controller.js'
 import { linkedOrganisationsDownloadController } from './controller.download.js'
 
@@ -9,9 +11,13 @@ export const linkedOrganisations = {
         {
           method: 'GET',
           path: '/linked-organisations',
-          handler: linkedOrganisationsController.handler,
+          ...linkedOrganisationsController,
           options: {
-            ...linkedOrganisationsController.options,
+            validate: {
+              query: Joi.object({
+                search: Joi.string().optional().allow('').trim()
+              })
+            },
             app: { pageTitle: 'Linked organisations' }
           }
         },
