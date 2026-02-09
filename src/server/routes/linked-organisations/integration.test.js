@@ -401,7 +401,7 @@ describe('linked-organisations', () => {
         expect(headers['content-disposition']).toBe(
           'attachment; filename="linked-organisations.csv"'
         )
-        expect(payload).toContain('Linked organisations report')
+        expect(payload).toContain('EPR Organisation Name')
         expect(payload).toContain('Acme Ltd')
         expect(payload).toContain('Defra Org One')
         expect(payload).toContain('admin@defra.gov.uk')

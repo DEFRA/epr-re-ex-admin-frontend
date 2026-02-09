@@ -55,8 +55,8 @@ describe('linked-organisations download controller', () => {
     )
 
     const csvContent = mockH.response.mock.calls[0][0]
-    expect(csvContent).toContain('Linked organisations report')
-    expect(csvContent).toContain(
+    const lines = csvContent.split('\n')
+    expect(lines[0]).toBe(
       'EPR Organisation Name,EPR Organisation ID,Registration Number,Defra ID Organisation Name,Defra ID Organisation ID,Date Linked,Linked By'
     )
     expect(csvContent).toContain('Acme Ltd')
@@ -84,9 +84,8 @@ describe('linked-organisations download controller', () => {
 
     const csvContent = mockH.response.mock.calls[0][0]
     const lines = csvContent.split('\n')
-    expect(lines).toHaveLength(3)
-    expect(lines[0]).toBe('Linked organisations report')
-    expect(lines[2]).toContain('EPR Organisation Name')
+    expect(lines).toHaveLength(1)
+    expect(lines[0]).toContain('EPR Organisation Name')
   })
 
   test('Should handle backend returning non-array data', async () => {
@@ -96,8 +95,8 @@ describe('linked-organisations download controller', () => {
 
     const csvContent = mockH.response.mock.calls[0][0]
     const lines = csvContent.split('\n')
-    expect(lines).toHaveLength(3)
-    expect(lines[0]).toBe('Linked organisations report')
+    expect(lines).toHaveLength(1)
+    expect(lines[0]).toContain('EPR Organisation Name')
   })
 
   test('Should handle null field values in CSV', async () => {

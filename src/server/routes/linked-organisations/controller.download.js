@@ -24,8 +24,6 @@ function buildBackendPath(searchTerm) {
 
 function generateCsv(data) {
   const lines = [
-    'Linked organisations report',
-    '',
     'EPR Organisation Name,EPR Organisation ID,Registration Number,Defra ID Organisation Name,Defra ID Organisation ID,Date Linked,Linked By'
   ]
 
