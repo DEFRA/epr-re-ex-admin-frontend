@@ -31,7 +31,7 @@ export const systemLogs = {
                 timestamp: systemLog.createdAt,
                 event: systemLog.event,
                 user: systemLog.createdBy,
-                ...contextWithPreviousNextAndDiffExtracted(systemLog)
+                ...contextWithDeltaBetweenPreviousAndNextExtracted(systemLog)
               })),
               searchTerms: {
                 referenceNumber: searchTermReferenceNumber
@@ -44,13 +44,15 @@ export const systemLogs = {
   }
 }
 
-function contextWithPreviousNextAndDiffExtracted({ context }) {
+function contextWithDeltaBetweenPreviousAndNextExtracted({ context }) {
   const { previous, next, ...remainingContext } = context
   if ('previous' in context && 'next' in context) {
     return {
-      previous,
-      next,
-      difference: difference(previous, next) || 'no differences',
+      renderDelta: {
+        previous,
+        next,
+        difference: difference(previous, next) || 'no differences'
+      },
       context: { ...remainingContext }
     }
   }
