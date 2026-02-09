@@ -1,5 +1,6 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { formatDate } from '#config/nunjucks/filters/format-date.js'
+import { buildBackendPath, mapLinkedOrganisations } from './helpers.js'
 
 const dateFormat = "d MMMM yyyy 'at' h:mmaaa"
 
@@ -15,38 +16,12 @@ function escapeCsvField(value) {
   return stringValue
 }
 
-function buildBackendPath(searchTerm) {
-  if (searchTerm) {
-    return `/v1/linked-organisations?name=${encodeURIComponent(searchTerm)}`
-  }
-  return '/v1/linked-organisations'
-}
-
 function generateCsv(data) {
   const lines = [
     'EPR Organisation Name,EPR Organisation ID,Registration Number,Defra ID Organisation Name,Defra ID Organisation ID,Date Linked,Linked By'
   ]
 
-  const linkedOrganisations = (Array.isArray(data) ? data : []).map(
-    ({
-      orgId,
-      companyDetails: { name, registrationNumber },
-      linkedDefraOrganisation: {
-        orgId: defraOrgId,
-        orgName,
-        linkedAt,
-        linkedBy
-      }
-    }) => ({
-      eprOrgName: name,
-      eprOrgId: orgId,
-      registrationNumber,
-      defraOrgName: orgName,
-      defraOrgId,
-      linkedAt,
-      linkedByEmail: linkedBy.email
-    })
-  )
+  const linkedOrganisations = mapLinkedOrganisations(data)
 
   for (const org of linkedOrganisations) {
     lines.push(

@@ -1,35 +1,6 @@
 import Joi from 'joi'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
-
-function mapLinkedOrganisations(data) {
-  return (Array.isArray(data) ? data : []).map(
-    ({
-      orgId,
-      companyDetails: { name, registrationNumber },
-      linkedDefraOrganisation: {
-        orgId: defraOrgId,
-        orgName,
-        linkedAt,
-        linkedBy
-      }
-    }) => ({
-      eprOrgName: name,
-      eprOrgId: orgId,
-      registrationNumber,
-      defraOrgName: orgName,
-      defraOrgId,
-      linkedAt,
-      linkedByEmail: linkedBy.email
-    })
-  )
-}
-
-function buildBackendPath(searchTerm) {
-  if (searchTerm) {
-    return `/v1/linked-organisations?name=${encodeURIComponent(searchTerm)}`
-  }
-  return '/v1/linked-organisations'
-}
+import { buildBackendPath, mapLinkedOrganisations } from './helpers.js'
 
 export const linkedOrganisationsController = {
   options: {
