@@ -9,6 +9,7 @@ import { defraFormsSubmission } from './routes/defra-forms-submission/index.js'
 import { systemLogs } from './routes/system-logs/index.js'
 import { publicRegister } from './routes/public-register/index.js'
 import { tonnageMonitoring } from './routes/tonnage-monitoring/index.js'
+import { summaryLogUploadsReport } from './routes/summary-log/index.js'
 
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
 
@@ -30,7 +31,8 @@ export const router = {
         defraFormsSubmission,
         systemLogs,
         publicRegister,
-        tonnageMonitoring
+        tonnageMonitoring,
+        summaryLogUploadsReport
       ])
 
       await server.register([serveStaticFiles])

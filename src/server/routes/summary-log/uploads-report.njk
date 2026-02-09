@@ -1,0 +1,87 @@
+{% extends 'layout.njk' %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <div class="govuk-body" data-testid="app-page-body">
+
+        {% if error %}
+          {{ govukErrorSummary({
+            titleText: "There is a problem",
+            errorList: [
+              {
+                text: error
+              }
+            ]
+          }) }}
+        {% endif %}
+
+        <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
+
+        <p class="govuk-body">
+          Report showing summary log upload activity for all registered operators with uploads.
+        </p>
+
+        <p class="govuk-body">
+          Total rows: <strong>{{ totalRows }}</strong>
+        </p>
+
+        {% if reportRows and reportRows.length %}
+          <form method="POST" class="govuk-!-margin-bottom-6">
+            <input type="hidden" name="crumb" value="{{ crumb }}" />
+            {{ govukButton({
+              text: "Download CSV"
+            }) }}
+          </form>
+
+          {% set tableRows = [] %}
+          {% for row in reportRows %}
+            {% set rowData = [
+              { text: row.appropriateAgency },
+              { text: row.type },
+              { text: row.businessName },
+              { text: row.orgId, format: "numeric" },
+              { text: row.registrationNumber },
+              { text: row.accreditationNo },
+              { text: row.reprocessingSite },
+              { text: row.packagingWasteCategory },
+              { text: row.lastSuccessfulUpload },
+              { text: row.lastFailedUpload },
+              { text: row.successfulUploads, format: "numeric" },
+              { text: row.failedUploads, format: "numeric" }
+            ] %}
+            {% set tableRows = tableRows.concat([rowData]) %}
+          {% endfor %}
+
+          {{ govukTable({
+            caption: "Summary log uploads by registration",
+            captionClasses: "govuk-table__caption--m",
+            head: [
+              { text: "Appropriate Agency" },
+              { text: "Type" },
+              { text: "Business name" },
+              { text: "Org ID", format: "numeric" },
+              { text: "Registration number" },
+              { text: "Accreditation number" },
+              { text: "Registered Reprocessing site (UK)" },
+              { text: "Packaging Waste Category" },
+              { text: "Last Successful Upload" },
+              { text: "Last Failed Upload" },
+              { text: "Successful Uploads", format: "numeric" },
+              { text: "Failed Uploads", format: "numeric" }
+            ],
+            rows: tableRows
+          }) }}
+
+        {% else %}
+          {{ govukInsetText({ text: "No summary log upload data available." }) }}
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+{% endblock %}
