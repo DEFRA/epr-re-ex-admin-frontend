@@ -1,23 +1,11 @@
 import { vi } from 'vitest'
 import { linkedOrganisationsDownloadController } from './controller.download.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { mockLinkedOrg } from './test-fixtures.js'
 
 vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
 }))
-
-const mockLinkedOrg = {
-  id: 'org-1',
-  orgId: 101,
-  companyDetails: { name: 'Acme Ltd', registrationNumber: '12345678' },
-  status: 'active',
-  linkedDefraOrganisation: {
-    orgId: 'defra-uuid-1',
-    orgName: 'Defra Org One',
-    linkedAt: '2025-06-15T10:30:00.000Z',
-    linkedBy: { email: 'admin@defra.gov.uk', id: 'user-uuid-1' }
-  }
-}
 
 describe('linked-organisations download controller', () => {
   let mockRequest

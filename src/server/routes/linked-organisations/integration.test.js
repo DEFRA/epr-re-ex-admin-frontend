@@ -12,6 +12,7 @@ import {
   HttpResponse
 } from '../../../../.vite/setup-msw.js'
 import * as cheerio from 'cheerio'
+import { mockLinkedOrgs } from './test-fixtures.js'
 
 vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
   getUserSession: vi.fn().mockReturnValue(null)
@@ -42,33 +43,6 @@ describe('linked-organisations', () => {
       })
     )
   }
-
-  const mockLinkedOrgs = [
-    {
-      id: 'org-1',
-      orgId: 101,
-      companyDetails: { name: 'Acme Ltd', registrationNumber: '12345678' },
-      status: 'active',
-      linkedDefraOrganisation: {
-        orgId: 'defra-uuid-1',
-        orgName: 'Defra Org One',
-        linkedAt: '2025-06-15T10:30:00.000Z',
-        linkedBy: { email: 'admin@defra.gov.uk', id: 'user-uuid-1' }
-      }
-    },
-    {
-      id: 'org-2',
-      orgId: 202,
-      companyDetails: { name: 'Beta Corp', registrationNumber: '87654321' },
-      status: 'active',
-      linkedDefraOrganisation: {
-        orgId: 'defra-uuid-2',
-        orgName: 'Defra Org Two',
-        linkedAt: '2025-07-20T14:00:00.000Z',
-        linkedBy: { email: 'other@defra.gov.uk', id: 'user-uuid-2' }
-      }
-    }
-  ]
 
   describe('GET /linked-organisations', () => {
     describe('When user is unauthenticated', () => {

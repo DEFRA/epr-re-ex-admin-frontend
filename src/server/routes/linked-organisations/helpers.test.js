@@ -1,4 +1,5 @@
 import { buildBackendPath, mapLinkedOrganisations } from './helpers.js'
+import { mockLinkedOrg } from './test-fixtures.js'
 
 describe('linked-organisations helpers', () => {
   describe('buildBackendPath', () => {
@@ -20,19 +21,8 @@ describe('linked-organisations helpers', () => {
   })
 
   describe('mapLinkedOrganisations', () => {
-    const mockOrg = {
-      orgId: 101,
-      companyDetails: { name: 'Acme Ltd', registrationNumber: '12345678' },
-      linkedDefraOrganisation: {
-        orgId: 'defra-uuid-1',
-        orgName: 'Defra Org One',
-        linkedAt: '2025-06-15T10:30:00.000Z',
-        linkedBy: { email: 'admin@defra.gov.uk', id: 'user-uuid-1' }
-      }
-    }
-
     test('Should map backend response to view model', () => {
-      const result = mapLinkedOrganisations([mockOrg])
+      const result = mapLinkedOrganisations([mockLinkedOrg])
 
       expect(result).toEqual([
         {
