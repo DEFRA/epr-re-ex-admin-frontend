@@ -21,6 +21,11 @@ describe('#buildNavigation', () => {
       },
       {
         current: false,
+        text: 'Linked organisations',
+        href: '/linked-organisations'
+      },
+      {
+        current: false,
         text: 'Public register',
         href: '/public-register'
       },
@@ -53,6 +58,11 @@ describe('#buildNavigation', () => {
         current: false,
         text: 'Organisations',
         href: '/organisations'
+      },
+      {
+        current: false,
+        text: 'Linked organisations',
+        href: '/linked-organisations'
       },
       {
         current: false,

@@ -1,0 +1,114 @@
+{% extends 'layout.njk' %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+
+      {% if error %}
+        {{ govukErrorSummary({
+          titleText: "There is a problem",
+          errorList: [
+            {
+              text: error
+            }
+          ]
+        }) }}
+      {% endif %}
+
+      <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
+
+      <form method="get" action="/linked-organisations" class="app-filters">
+        <h2 class="govuk-heading-m">Search for an organisation by</h2>
+        <div class="govuk-form-group">
+          {{ govukInput({
+            label: {
+              text: "Organisation name",
+              classes: "govuk-label--s"
+            },
+            id: "search",
+            name: "search",
+            type: "search",
+            value: searchTerm,
+            autocomplete: "off",
+            classes: "govuk-input--width-20"
+          }) }}
+        </div>
+        <div class="govuk-button-group">
+          {{ govukButton({
+            text: "Search"
+          }) }}
+          {% if searchTerm %}
+            <a href="/linked-organisations" class="govuk-button govuk-button--inverse">Clear search and view all linked organisations</a>
+          {% endif %}
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <div class="govuk-body" data-testid="app-page-body">
+
+        {% if linkedOrganisations and linkedOrganisations.length %}
+          {% if searchTerm %}
+            <h2 class="govuk-heading-l">{{ linkedOrganisations.length }} result{% if linkedOrganisations.length != 1 %}s{% endif %} found</h2>
+          {% endif %}
+
+          {% set tableRows = [] %}
+          {% for org in linkedOrganisations %}
+            {% set eprOrgNameCell = { text: org.eprOrgName } %}
+            {% set eprOrgIdCell = { text: org.eprOrgId } %}
+            {% set registrationNumberCell = { text: org.registrationNumber } %}
+            {% set defraOrgNameCell = { text: org.defraOrgName } %}
+            {% set defraOrgIdCell = { text: org.defraOrgId } %}
+            {% set linkedAtCell = { text: org.linkedAt | formatDate("d MMMM yyyy") } %}
+            {% set linkedByCell = { text: org.linkedByEmail } %}
+
+            {% set row = [ eprOrgNameCell, eprOrgIdCell, registrationNumberCell, defraOrgNameCell, defraOrgIdCell, linkedAtCell, linkedByCell ] %}
+            {% set tableRows = tableRows.concat([row]) %}
+          {% endfor %}
+
+          {{ govukTable({
+            captionClasses: "govuk-table__caption--m",
+            firstCellIsHeader: true,
+            head: [
+              { text: "EPR Organisation Name" },
+              { text: "EPR Organisation ID" },
+              { text: "Registration Number" },
+              { text: "Defra ID Organisation Name" },
+              { text: "Defra ID Organisation ID" },
+              { text: "Date Linked" },
+              { text: "Linked By" }
+            ],
+            rows: tableRows
+          }) }}
+
+          <form method="POST" action="/linked-organisations/download">
+            <input type="hidden" name="crumb" value="{{ crumb }}" />
+            <input type="hidden" name="search" value="{{ searchTerm }}" />
+            {{ govukButton({
+              text: "Download CSV"
+            }) }}
+          </form>
+
+        {% else %}
+          {% if searchTerm %}
+            <h2 class="govuk-heading-l">0 results found</h2>
+            {{ govukInsetText({
+              text: "No linked organisations found matching '" + searchTerm + "'. Try searching with a different name or check your spelling."
+            }) }}
+          {% else %}
+            {{ govukInsetText({ text: "No linked organisations found." }) }}
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+{% endblock %}
