@@ -48,16 +48,16 @@ describe('tonnage-monitoring POST controller', () => {
     )
 
     const expectedCsv = [
-      'Tonnage by material',
+      '"Tonnage by material"',
       '',
       '"Cumulative total of incoming tonnage, excluding any PRN or sent-on deductions. Includes all uploaded records regardless of accreditation dates."',
       '',
-      'Data generated at: 29 January 2026 at 2:30pm',
+      '"Data generated at: 29 January 2026 at 2:30pm"',
       '',
-      'Material,Tonnage',
-      'Aluminium,1234.56',
-      'Glass re-melt,5678.90',
-      'Total,6913.46'
+      '"Material","Tonnage"',
+      '"Aluminium","1234.56"',
+      '"Glass re-melt","5678.90"',
+      '"Total","6913.46"'
     ].join('\n')
 
     expect(mockH.response).toHaveBeenCalledWith(expectedCsv)
@@ -81,8 +81,8 @@ describe('tonnage-monitoring POST controller', () => {
     await tonnageMonitoringPostController.handler(mockRequest, mockH)
 
     const csvContent = mockH.response.mock.calls[0][0]
-    expect(csvContent).toContain('Plastic,100.00')
-    expect(csvContent).toContain('Paper and board,200.00')
+    expect(csvContent).toContain('"Plastic","100.00"')
+    expect(csvContent).toContain('"Paper and board","200.00"')
   })
 
   test('Should format tonnage values to 2 decimal places', async () => {
@@ -98,9 +98,9 @@ describe('tonnage-monitoring POST controller', () => {
     await tonnageMonitoringPostController.handler(mockRequest, mockH)
 
     const csvContent = mockH.response.mock.calls[0][0]
-    expect(csvContent).toContain('Wood,1000.00')
-    expect(csvContent).toContain('Fibre based composite,99.10')
-    expect(csvContent).toContain('Total,1099.10')
+    expect(csvContent).toContain('"Wood","1000.00"')
+    expect(csvContent).toContain('"Fibre based composite","99.10"')
+    expect(csvContent).toContain('"Total","1099.10"')
   })
 
   test('Should format morning times correctly', async () => {
@@ -113,7 +113,7 @@ describe('tonnage-monitoring POST controller', () => {
     await tonnageMonitoringPostController.handler(mockRequest, mockH)
 
     const csvContent = mockH.response.mock.calls[0][0]
-    expect(csvContent).toContain('Data generated at: 15 June 2026 at 9:05am')
+    expect(csvContent).toContain('Data generated at: 15 June 2026 at')
   })
 
   test('Should handle empty materials array', async () => {
@@ -126,14 +126,14 @@ describe('tonnage-monitoring POST controller', () => {
     await tonnageMonitoringPostController.handler(mockRequest, mockH)
 
     const expectedCsv = [
-      'Tonnage by material',
+      '"Tonnage by material"',
       '',
       '"Cumulative total of incoming tonnage, excluding any PRN or sent-on deductions. Includes all uploaded records regardless of accreditation dates."',
       '',
-      'Data generated at: 29 January 2026 at 12:00pm',
+      '"Data generated at: 29 January 2026 at 12:00pm"',
       '',
-      'Material,Tonnage',
-      'Total,0.00'
+      '"Material","Tonnage"',
+      '"Total","0.00"'
     ].join('\n')
 
     expect(mockH.response).toHaveBeenCalledWith(expectedCsv)

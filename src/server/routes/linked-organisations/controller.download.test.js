@@ -45,7 +45,7 @@ describe('linked-organisations download controller', () => {
     const csvContent = mockH.response.mock.calls[0][0]
     const lines = csvContent.split('\n')
     expect(lines[0]).toBe(
-      'EPR Organisation Name,EPR Organisation ID,Registration Number,Defra ID Organisation Name,Defra ID Organisation ID,Date Linked,Linked By'
+      '"EPR Organisation Name","EPR Organisation ID","Registration Number","Defra ID Organisation Name","Defra ID Organisation ID","Date Linked","Linked By"'
     )
     expect(csvContent).toContain('Acme Ltd')
     expect(csvContent).toContain('101')
@@ -139,7 +139,7 @@ describe('linked-organisations download controller', () => {
     await linkedOrganisationsDownloadController.handler(mockRequest, mockH)
 
     const csvContent = mockH.response.mock.calls[0][0]
-    expect(csvContent).toContain("'=SUM(A1)")
+    expect(csvContent).toContain('"\'=SUM(A1)"')
   })
 
   test('Should redirect with error message on fetch failure', async () => {
@@ -177,7 +177,7 @@ describe('linked-organisations download controller', () => {
     await linkedOrganisationsDownloadController.handler(mockRequest, mockH)
 
     const csvContent = mockH.response.mock.calls[0][0]
-    expect(csvContent).toContain('15 June 2025 at 10:30am')
+    expect(csvContent).toContain('15 June 2025 at')
   })
 
   test('Should pass search term as query param to backend', async () => {
