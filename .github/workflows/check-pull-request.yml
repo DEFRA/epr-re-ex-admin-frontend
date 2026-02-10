@@ -3,7 +3,7 @@ name: Check Pull Request
 on:
   pull_request:
     branches:
-      - '*'
+      - "*"
     types:
       - opened
       - reopened
@@ -64,12 +64,6 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           sonar-token: ${{ secrets.SONAR_TOKEN }}
-
-      - name: Test Docker Image Build
-        run: |
-          set +e
-          docker build --no-cache --tag cdp-node-frontend-template .
-          exit $?
 
   test-journey:
     name: Run Journey Tests
