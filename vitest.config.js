@@ -17,7 +17,7 @@ export default defineConfig({
       '.vite/setup-msw.js'
     ],
     hookTimeout: 60000,
-    fileParallelism: !process.env.CI,
+    fileParallelism: true,
     coverage: {
       provider: preferIstanbul ? 'istanbul' : 'v8',
       reportsDirectory: './coverage',
