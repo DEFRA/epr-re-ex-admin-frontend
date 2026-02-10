@@ -26,6 +26,11 @@ export function buildNavigation(request) {
       current: request?.path === '/tonnage-monitoring'
     },
     {
+      text: 'Summary log uploads',
+      href: '/summary-log',
+      current: request?.path === '/summary-log'
+    },
+    {
       text: 'System logs',
       href: '/system-logs',
       current: request?.path === '/system-logs'

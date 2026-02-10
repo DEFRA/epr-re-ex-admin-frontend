@@ -10,6 +10,7 @@ import { systemLogs } from './routes/system-logs/index.js'
 import { publicRegister } from './routes/public-register/index.js'
 import { tonnageMonitoring } from './routes/tonnage-monitoring/index.js'
 import { linkedOrganisations } from './routes/linked-organisations/index.js'
+import { summaryLogUploadsReport } from './routes/summary-log/index.js'
 
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
 
@@ -32,7 +33,8 @@ export const router = {
         systemLogs,
         publicRegister,
         tonnageMonitoring,
-        linkedOrganisations
+        linkedOrganisations,
+        summaryLogUploadsReport
       ])
 
       await server.register([serveStaticFiles])
