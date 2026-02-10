@@ -11,17 +11,20 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     clearMocks: true,
+    reporters: process.env.CI
+      ? ['default', ['json', { outputFile: 'coverage/test-results.json' }]]
+      : ['default'],
     setupFiles: [
       '.vite/setup-auditing.js',
       '.vite/setup-files.js',
       '.vite/setup-msw.js'
     ],
     hookTimeout: 60000,
-    fileParallelism: !process.env.CI,
+    fileParallelism: true,
     coverage: {
       provider: preferIstanbul ? 'istanbul' : 'v8',
       reportsDirectory: './coverage',
-      reporter: ['text', 'lcov'],
+      reporter: ['text', 'lcov', 'json-summary'],
       include: ['src/**'],
       exclude: [
         ...configDefaults.exclude,
