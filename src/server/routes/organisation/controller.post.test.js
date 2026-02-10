@@ -62,6 +62,11 @@ describe('organisation POST controller', () => {
   describe('When user is authenticated', () => {
     beforeEach(() => {
       getUserSession.mockReturnValue(mockUserSession)
+      mswServer.use(
+        http.get(`${backendUrl}/v1/organisations/:id`, () =>
+          HttpResponse.json({ id: 'stub', companyDetails: { name: 'Stub' } })
+        )
+      )
     })
 
     test('Should successfully update organisation and redirect with success message in session', async () => {

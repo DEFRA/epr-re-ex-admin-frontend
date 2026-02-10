@@ -377,6 +377,10 @@ describe('#organisationsController', () => {
     })
 
     test('Should reject POST request without CSRF token', async () => {
+      mswServer.use(
+        http.get(`${backendUrl}/v1/organisations`, () => HttpResponse.json([]))
+      )
+
       const { statusCode } = await server.inject({
         method: 'POST',
         url: '/organisations',
@@ -391,6 +395,10 @@ describe('#organisationsController', () => {
     })
 
     test('Should reject POST request with invalid CSRF token', async () => {
+      mswServer.use(
+        http.get(`${backendUrl}/v1/organisations`, () => HttpResponse.json([]))
+      )
+
       const { cookie } = await getCsrfToken(server, '/organisations', {
         strategy: 'session',
         credentials: mockUserSession
