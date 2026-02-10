@@ -11,6 +11,11 @@ export function buildNavigation(request) {
       current: request?.path === '/organisations'
     },
     {
+      text: 'Linked organisations',
+      href: '/linked-organisations',
+      current: request?.path === '/linked-organisations'
+    },
+    {
       text: 'Public register',
       href: '/public-register',
       current: request?.path === '/public-register'
