@@ -6,7 +6,7 @@ import { createLogger } from '#server/common/helpers/logging/logger.js'
 
 const logger = createLogger()
 
-function generateCsv(data) {
+function generateCsv(data, generatedAt) {
   const rows = [
     ['Summary log uploads report'],
     [],
@@ -14,7 +14,7 @@ function generateCsv(data) {
       'Report showing summary log upload activity for all registered operators with uploads.'
     ],
     [],
-    [`Data generated at: ${formatDateTime(new Date().toISOString())}`],
+    [`Data generated at: ${formatDateTime(generatedAt)}`],
     [],
     [
       'Appropriate Agency',
@@ -59,7 +59,7 @@ export const summaryLogUploadsReportPostController = {
         request,
         '/v1/organisations/registrations/summary-logs/reports/uploads'
       )
-      const csv = await generateCsv(data)
+      const csv = await generateCsv(data.summaryLogUploads, data.generatedAt)
       const filename = 'summary-log.csv'
 
       return h

@@ -48,50 +48,53 @@ describe('summaryLogUploadsReportPostController', () => {
   })
 
   test('generates CSV with correct headers', async () => {
-    const mockData = [
-      {
-        appropriateAgency: 'EA',
-        type: 'reprocessor',
-        businessName: 'ACME Ltd',
-        orgId: 12345,
-        registrationNumber: 'REG1',
-        accreditationNumber: 'ACC1',
-        reprocessingSite: '7 Glass processing site, London, SW2A 0AA',
-        packagingWasteCategory: 'glass',
-        lastSuccessfulUpload: '2026-02-06T14:30:00.000Z',
-        lastFailedUpload: '',
-        successfulUploads: 5,
-        failedUploads: 0
-      },
-      {
-        appropriateAgency: 'NRW',
-        type: 'exporter',
-        businessName: 'Test Co',
-        orgId: 99999,
-        registrationNumber: 'REG2',
-        accreditationNumber: '',
-        reprocessingSite: '',
-        packagingWasteCategory: 'plastic',
-        lastSuccessfulUpload: '',
-        lastFailedUpload: '2026-01-15T10:00:00.000Z',
-        successfulUploads: 0,
-        failedUploads: 3
-      },
-      {
-        appropriateAgency: 'SEPA',
-        type: 'reprocessor',
-        businessName: 'Pending Reg Ltd',
-        orgId: 55555,
-        registrationNumber: '',
-        accreditationNumber: '',
-        reprocessingSite: '10 Processing Lane, Glasgow, G1 1AA',
-        packagingWasteCategory: 'paper',
-        lastSuccessfulUpload: '2026-02-06T14:30:00.000Z',
-        lastFailedUpload: '',
-        successfulUploads: 2,
-        failedUploads: 0
-      }
-    ]
+    const mockData = {
+      summaryLogUploads: [
+        {
+          appropriateAgency: 'EA',
+          type: 'reprocessor',
+          businessName: 'ACME Ltd',
+          orgId: 12345,
+          registrationNumber: 'REG1',
+          accreditationNumber: 'ACC1',
+          reprocessingSite: '7 Glass processing site, London, SW2A 0AA',
+          packagingWasteCategory: 'glass',
+          lastSuccessfulUpload: '2026-02-06T14:30:00.000Z',
+          lastFailedUpload: '',
+          successfulUploads: 5,
+          failedUploads: 0
+        },
+        {
+          appropriateAgency: 'NRW',
+          type: 'exporter',
+          businessName: 'Test Co',
+          orgId: 99999,
+          registrationNumber: 'REG2',
+          accreditationNumber: '',
+          reprocessingSite: '',
+          packagingWasteCategory: 'plastic',
+          lastSuccessfulUpload: '',
+          lastFailedUpload: '2026-01-15T10:00:00.000Z',
+          successfulUploads: 0,
+          failedUploads: 3
+        },
+        {
+          appropriateAgency: 'SEPA',
+          type: 'reprocessor',
+          businessName: 'Pending Reg Ltd',
+          orgId: 55555,
+          registrationNumber: '',
+          accreditationNumber: '',
+          reprocessingSite: '10 Processing Lane, Glasgow, G1 1AA',
+          packagingWasteCategory: 'paper',
+          lastSuccessfulUpload: '2026-02-06T14:30:00.000Z',
+          lastFailedUpload: '',
+          successfulUploads: 2,
+          failedUploads: 0
+        }
+      ],
+      generatedAt: '2026-02-06T14:30:00.000Z'
+    }
 
     fetchJsonFromBackend.mockResolvedValue(mockData)
 

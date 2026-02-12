@@ -15,7 +15,7 @@ export const summaryLogUploadsReportGetController = {
         '/v1/organisations/registrations/summary-logs/reports/uploads'
       )
 
-      const reportRows = data.map((row) => ({
+      const reportRows = data.summaryLogUploads.map((row) => ({
         appropriateAgency: row.appropriateAgency,
         type: row.type,
         businessName: row.businessName,
@@ -34,6 +34,7 @@ export const summaryLogUploadsReportGetController = {
         pageTitle: request.route.settings.app.pageTitle,
         reportRows,
         totalRows: reportRows.length,
+        generatedAt: formatDateTime(data.generatedAt),
         error: errorMessage
       })
     } catch (error) {

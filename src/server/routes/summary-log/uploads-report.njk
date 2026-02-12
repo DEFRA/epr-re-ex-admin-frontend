@@ -26,6 +26,12 @@
           Report showing summary log upload activity for all registered operators with uploads.
         </p>
 
+        {% if generatedAt %}
+          <p class="govuk-body">
+            Data generated at: <strong>{{ generatedAt }}</strong>
+          </p>
+        {% endif %}
+
         <p class="govuk-body">
           Total rows: <strong>{{ totalRows }}</strong>
         </p>
