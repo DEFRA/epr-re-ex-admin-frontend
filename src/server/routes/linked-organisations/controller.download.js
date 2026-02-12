@@ -24,7 +24,7 @@ function escapeCsvField(value) {
 
 function generateCsv(data) {
   const lines = [
-    'EPR Organisation Name,EPR Organisation ID,Registration Number,Defra ID Organisation Name,Defra ID Organisation ID,Date Linked,Linked By'
+    'EPR Organisation Name,EPR Organisation ID,Defra ID Organisation Name,Defra ID Organisation ID,Date Linked,Linked By'
   ]
 
   const linkedOrganisations = mapLinkedOrganisations(data)
@@ -34,7 +34,6 @@ function generateCsv(data) {
       [
         escapeCsvField(org.eprOrgName),
         escapeCsvField(org.eprOrgId),
-        escapeCsvField(org.registrationNumber),
         escapeCsvField(org.defraOrgName),
         escapeCsvField(org.defraOrgId),
         escapeCsvField(formatDate(org.linkedAt, dateFormat)),

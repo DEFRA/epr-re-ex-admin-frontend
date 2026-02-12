@@ -9,7 +9,7 @@ export function mapLinkedOrganisations(data) {
   return (Array.isArray(data) ? data : []).map(
     ({
       orgId,
-      companyDetails: { name, registrationNumber },
+      companyDetails: { name },
       linkedDefraOrganisation: {
         orgId: defraOrgId,
         orgName,
@@ -19,7 +19,6 @@ export function mapLinkedOrganisations(data) {
     }) => ({
       eprOrgName: name,
       eprOrgId: orgId,
-      registrationNumber,
       defraOrgName: orgName,
       defraOrgId,
       linkedAt,
