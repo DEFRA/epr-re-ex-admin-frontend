@@ -64,13 +64,12 @@
           {% for org in linkedOrganisations %}
             {% set eprOrgNameCell = { text: org.eprOrgName } %}
             {% set eprOrgIdCell = { text: org.eprOrgId } %}
-            {% set registrationNumberCell = { text: org.registrationNumber } %}
             {% set defraOrgNameCell = { text: org.defraOrgName } %}
             {% set defraOrgIdCell = { text: org.defraOrgId } %}
             {% set linkedAtCell = { text: org.linkedAt | formatDate("d MMMM yyyy") } %}
             {% set linkedByCell = { text: org.linkedByEmail } %}
 
-            {% set row = [ eprOrgNameCell, eprOrgIdCell, registrationNumberCell, defraOrgNameCell, defraOrgIdCell, linkedAtCell, linkedByCell ] %}
+            {% set row = [ eprOrgNameCell, eprOrgIdCell, defraOrgNameCell, defraOrgIdCell, linkedAtCell, linkedByCell ] %}
             {% set tableRows = tableRows.concat([row]) %}
           {% endfor %}
 
@@ -80,7 +79,6 @@
             head: [
               { text: "EPR Organisation Name" },
               { text: "EPR Organisation ID" },
-              { text: "Registration Number" },
               { text: "Defra ID Organisation Name" },
               { text: "Defra ID Organisation ID" },
               { text: "Date Linked" },

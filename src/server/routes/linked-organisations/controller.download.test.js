@@ -45,7 +45,7 @@ describe('linked-organisations download controller', () => {
     const csvContent = mockH.response.mock.calls[0][0]
     const lines = csvContent.split('\n')
     expect(lines[0]).toBe(
-      '"EPR Organisation Name","EPR Organisation ID","Registration Number","Defra ID Organisation Name","Defra ID Organisation ID","Date Linked","Linked By"'
+      '"EPR Organisation Name","EPR Organisation ID","Defra ID Organisation Name","Defra ID Organisation ID","Date Linked","Linked By"'
     )
     expect(csvContent).toContain('Acme Ltd')
     expect(csvContent).toContain('101')
@@ -103,7 +103,7 @@ describe('linked-organisations download controller', () => {
   test('Should escape CSV fields containing commas', async () => {
     const orgWithComma = {
       ...mockLinkedOrg,
-      companyDetails: { name: 'Acme, Ltd', registrationNumber: '12345678' }
+      companyDetails: { name: 'Acme, Ltd' }
     }
     fetchJsonFromBackend.mockResolvedValue([orgWithComma])
 
@@ -117,8 +117,7 @@ describe('linked-organisations download controller', () => {
     const orgWithQuote = {
       ...mockLinkedOrg,
       companyDetails: {
-        name: 'Acme "Best" Ltd',
-        registrationNumber: '12345678'
+        name: 'Acme "Best" Ltd'
       }
     }
     fetchJsonFromBackend.mockResolvedValue([orgWithQuote])
@@ -132,14 +131,14 @@ describe('linked-organisations download controller', () => {
   test('Should prefix fields starting with formula-injection characters', async () => {
     const orgWithFormulaValue = {
       ...mockLinkedOrg,
-      companyDetails: { name: '=SUM(A1)', registrationNumber: '12345678' }
+      companyDetails: { name: '=SUM(A1)' }
     }
     fetchJsonFromBackend.mockResolvedValue([orgWithFormulaValue])
 
     await linkedOrganisationsDownloadController.handler(mockRequest, mockH)
 
     const csvContent = mockH.response.mock.calls[0][0]
-    expect(csvContent).toContain('"\'=SUM(A1)"')
+    expect(csvContent).toContain("'=SUM(A1)")
   })
 
   test('Should redirect with error message on fetch failure', async () => {

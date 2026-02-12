@@ -50,7 +50,6 @@ describe('linked-organisations controller', () => {
           {
             eprOrgName: 'Acme Ltd',
             eprOrgId: 101,
-            registrationNumber: '12345678',
             defraOrgName: 'Defra Org One',
             defraOrgId: 'defra-uuid-1',
             linkedAt: '2025-06-15T10:30:00.000Z',

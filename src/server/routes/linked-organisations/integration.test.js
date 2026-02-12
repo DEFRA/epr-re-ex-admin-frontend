@@ -84,7 +84,7 @@ describe('linked-organisations', () => {
         expect($('h1').text()).toContain('Linked organisations')
       })
 
-      test('Should render table with 7 column headers', async () => {
+      test('Should render table with 6 column headers', async () => {
         stubBackendResponse(mockLinkedOrgs)
 
         const { result } = await server.inject({
@@ -104,7 +104,6 @@ describe('linked-organisations', () => {
         expect(headers).toEqual([
           'EPR Organisation Name',
           'EPR Organisation ID',
-          'Registration Number',
           'Defra ID Organisation Name',
           'Defra ID Organisation ID',
           'Date Linked',

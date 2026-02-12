@@ -6,12 +6,11 @@ import { buildBackendPath, mapLinkedOrganisations } from './helpers.js'
 
 const dateFormat = "d MMMM yyyy 'at' h:mmaaa"
 
-async function generateCsv(data) {
+function generateCsv(data) {
   const rows = [
     [
       'EPR Organisation Name',
       'EPR Organisation ID',
-      'Registration Number',
       'Defra ID Organisation Name',
       'Defra ID Organisation ID',
       'Date Linked',
@@ -25,7 +24,6 @@ async function generateCsv(data) {
     rows.push([
       sanitizeFormulaInjection(org.eprOrgName),
       org.eprOrgId,
-      org.registrationNumber,
       sanitizeFormulaInjection(org.defraOrgName),
       org.defraOrgId,
       formatDate(org.linkedAt, dateFormat),
