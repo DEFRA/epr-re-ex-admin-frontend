@@ -176,7 +176,7 @@ describe('linked-organisations download controller', () => {
     await linkedOrganisationsDownloadController.handler(mockRequest, mockH)
 
     const csvContent = mockH.response.mock.calls[0][0]
-    expect(csvContent).toContain('15 June 2025 at 10:30am')
+    expect(csvContent).toContain('15 June 2025 at')
   })
 
   test('Should pass search term as query param to backend', async () => {

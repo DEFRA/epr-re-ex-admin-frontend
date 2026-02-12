@@ -47,7 +47,7 @@ describe('summaryLogUploadsReportPostController', () => {
     }
   })
 
-  test('generates CSV with correct headers and data including rows with and without accreditation', async () => {
+  test('generates CSV with correct headers', async () => {
     const mockData = [
       {
         appropriateAgency: 'EA',
@@ -55,7 +55,7 @@ describe('summaryLogUploadsReportPostController', () => {
         businessName: 'ACME Ltd',
         orgId: 12345,
         registrationNumber: 'REG1',
-        accreditationNo: 'ACC1',
+        accreditationNumber: 'ACC1',
         reprocessingSite: '7 Glass processing site, London, SW2A 0AA',
         packagingWasteCategory: 'glass',
         lastSuccessfulUpload: '2026-02-06T14:30:00.000Z',
@@ -69,13 +69,27 @@ describe('summaryLogUploadsReportPostController', () => {
         businessName: 'Test Co',
         orgId: 99999,
         registrationNumber: 'REG2',
-        accreditationNo: '',
+        accreditationNumber: '',
         reprocessingSite: '',
         packagingWasteCategory: 'plastic',
         lastSuccessfulUpload: '',
         lastFailedUpload: '2026-01-15T10:00:00.000Z',
         successfulUploads: 0,
         failedUploads: 3
+      },
+      {
+        appropriateAgency: 'SEPA',
+        type: 'reprocessor',
+        businessName: 'Pending Reg Ltd',
+        orgId: 55555,
+        registrationNumber: '',
+        accreditationNumber: '',
+        reprocessingSite: '10 Processing Lane, Glasgow, G1 1AA',
+        packagingWasteCategory: 'paper',
+        lastSuccessfulUpload: '2026-02-06T14:30:00.000Z',
+        lastFailedUpload: '',
+        successfulUploads: 2,
+        failedUploads: 0
       }
     ]
 
@@ -98,9 +112,10 @@ describe('summaryLogUploadsReportPostController', () => {
       '\n' +
       '"Data generated at: 6 February 2026 at 2:30pm"\n' +
       '\n' +
-      '"Appropriate Agency","Type","Business name","Org ID","Registration number","Accreditation No","Registered Reprocessing site (UK)","Packaging Waste Category","Last Successful Upload","Last Failed Upload","Successful Uploads","Failed Uploads"\n' +
+      '"Appropriate Agency","Type","Business Name","Org ID","Registration Number","Accreditation Number","Registered Reprocessing Site (UK)","Packaging Waste Category","Last Successful Upload","Last Failed Upload","Successful Uploads","Failed Uploads"\n' +
       '"EA","reprocessor","ACME Ltd","12345","REG1","ACC1","7 Glass processing site, London, SW2A 0AA","glass","6 February 2026 at 2:30pm","","5","0"\n' +
-      '"NRW","exporter","Test Co","99999","REG2","-","-","plastic","","15 January 2026 at 10:00am","0","3"'
+      '"NRW","exporter","Test Co","99999","REG2","-","-","plastic","","15 January 2026 at 10:00am","0","3"\n' +
+      '"SEPA","reprocessor","Pending Reg Ltd","55555","-","-","10 Processing Lane, Glasgow, G1 1AA","paper","6 February 2026 at 2:30pm","","2","0"'
 
     expect(csv).toBe(expectedCSV)
 

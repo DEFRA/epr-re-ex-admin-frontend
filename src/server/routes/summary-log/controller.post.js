@@ -1,65 +1,55 @@
-import { format } from '@fast-csv/format'
+import { writeToString } from '@fast-csv/format'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { formatDateTime } from '#server/common/helpers/formatters.js'
+import { sanitizeFormulaInjection } from '#server/common/helpers/sanitize-formula-injection.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
 
 const logger = createLogger()
 
 function generateCsv(data) {
-  return new Promise((resolve, reject) => {
-    const csvStream = format({ headers: false, quoteColumns: true })
-    const rows = []
-
-    csvStream.on('data', (row) => rows.push(row))
-    csvStream.on('error', reject)
-    csvStream.on('end', () => resolve(rows.join('')))
-
-    // Write header rows
-    csvStream.write(['Summary log uploads report'])
-    csvStream.write([])
-    csvStream.write([
+  const rows = [
+    ['Summary log uploads report'],
+    [],
+    [
       'Report showing summary log upload activity for all registered operators with uploads.'
-    ])
-    csvStream.write([])
-    csvStream.write([
-      `Data generated at: ${formatDateTime(new Date().toISOString())}`
-    ])
-    csvStream.write([])
-    csvStream.write([
+    ],
+    [],
+    [`Data generated at: ${formatDateTime(new Date().toISOString())}`],
+    [],
+    [
       'Appropriate Agency',
       'Type',
-      'Business name',
+      'Business Name',
       'Org ID',
-      'Registration number',
-      'Accreditation No',
-      'Registered Reprocessing site (UK)',
+      'Registration Number',
+      'Accreditation Number',
+      'Registered Reprocessing Site (UK)',
       'Packaging Waste Category',
       'Last Successful Upload',
       'Last Failed Upload',
       'Successful Uploads',
       'Failed Uploads'
+    ]
+  ]
+
+  for (const row of data) {
+    rows.push([
+      row.appropriateAgency,
+      row.type,
+      sanitizeFormulaInjection(row.businessName),
+      row.orgId,
+      row.registrationNumber || '-',
+      row.accreditationNumber || '-',
+      sanitizeFormulaInjection(row.reprocessingSite) || '-',
+      row.packagingWasteCategory,
+      formatDateTime(row.lastSuccessfulUpload),
+      formatDateTime(row.lastFailedUpload),
+      row.successfulUploads,
+      row.failedUploads
     ])
+  }
 
-    // Write data rows
-    for (const row of data) {
-      csvStream.write([
-        row.appropriateAgency,
-        row.type,
-        row.businessName,
-        row.orgId,
-        row.registrationNumber,
-        row.accreditationNo || '-',
-        row.reprocessingSite || '-',
-        row.packagingWasteCategory,
-        formatDateTime(row.lastSuccessfulUpload),
-        formatDateTime(row.lastFailedUpload),
-        row.successfulUploads,
-        row.failedUploads
-      ])
-    }
-
-    csvStream.end()
-  })
+  return writeToString(rows, { headers: false, quoteColumns: true })
 }
 
 export const summaryLogUploadsReportPostController = {

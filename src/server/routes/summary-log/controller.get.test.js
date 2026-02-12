@@ -65,7 +65,7 @@ describe('summaryLogUploadsReportGetController', () => {
         businessName: 'ACME Ltd',
         orgId: 12345,
         registrationNumber: 'REG1',
-        accreditationNo: 'ACC1',
+        accreditationNumber: 'ACC1',
         reprocessingSite: '7 Glass processing site, London',
         packagingWasteCategory: 'glass',
         lastSuccessfulUpload: '2026-02-06T14:30:00.000Z',
@@ -96,7 +96,7 @@ describe('summaryLogUploadsReportGetController', () => {
             businessName: 'ACME Ltd',
             orgId: 12345,
             registrationNumber: 'REG1',
-            accreditationNo: 'ACC1',
+            accreditationNumber: 'ACC1',
             reprocessingSite: '7 Glass processing site, London',
             packagingWasteCategory: 'glass',
             lastSuccessfulUpload: '6 February 2026 at 2:30pm',
@@ -111,15 +111,15 @@ describe('summaryLogUploadsReportGetController', () => {
     )
   })
 
-  test('handles data without accreditation and reprocessing site', async () => {
+  test('handles data without registration number, accreditation and reprocessing site', async () => {
     const mockData = [
       {
         appropriateAgency: 'NRW',
         type: 'exporter',
         businessName: 'Test Co',
         orgId: 99999,
-        registrationNumber: 'REG2',
-        accreditationNo: '',
+        registrationNumber: '',
+        accreditationNumber: '',
         reprocessingSite: '',
         packagingWasteCategory: 'plastic',
         lastSuccessfulUpload: '',
@@ -135,7 +135,8 @@ describe('summaryLogUploadsReportGetController', () => {
     await summaryLogUploadsReportGetController.handler(mockRequest, mockH)
 
     const viewCall = mockH.view.mock.calls[0][1]
-    expect(viewCall.reportRows[0].accreditationNo).toBe('-')
+    expect(viewCall.reportRows[0].registrationNumber).toBe('-')
+    expect(viewCall.reportRows[0].accreditationNumber).toBe('-')
     expect(viewCall.reportRows[0].reprocessingSite).toBe('-')
     expect(viewCall.reportRows[0].lastSuccessfulUpload).toBe('')
     expect(viewCall.reportRows[0].lastFailedUpload).toBe(

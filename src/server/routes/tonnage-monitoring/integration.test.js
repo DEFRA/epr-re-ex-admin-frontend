@@ -285,9 +285,9 @@ describe('tonnage-monitoring', () => {
           'attachment; filename="tonnage-monitoring.csv"'
         )
         expect(payload).toContain('Tonnage by material')
-        expect(payload).toContain('Aluminium,1234.56')
-        expect(payload).toContain('Glass re-melt,5678.90')
-        expect(payload).toContain('Total,6913.46')
+        expect(payload).toContain('"Aluminium","1234.56"')
+        expect(payload).toContain('"Glass re-melt","5678.90"')
+        expect(payload).toContain('"Total","6913.46"')
       })
 
       test('Should include formatted date in CSV', async () => {
