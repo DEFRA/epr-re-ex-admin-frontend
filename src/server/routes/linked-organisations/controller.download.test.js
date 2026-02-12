@@ -45,7 +45,7 @@ describe('linked-organisations download controller', () => {
     const csvContent = mockH.response.mock.calls[0][0]
     const lines = csvContent.split('\n')
     expect(lines[0]).toBe(
-      'EPR Organisation Name,EPR Organisation ID,Defra ID Organisation Name,Defra ID Organisation ID,Date Linked,Linked By'
+      '"EPR Organisation Name","EPR Organisation ID","Defra ID Organisation Name","Defra ID Organisation ID","Date Linked","Linked By"'
     )
     expect(csvContent).toContain('Acme Ltd')
     expect(csvContent).toContain('101')

@@ -1,48 +1,37 @@
+import { writeToString } from '@fast-csv/format'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { formatDate } from '#config/nunjucks/filters/format-date.js'
+import { sanitizeFormulaInjection } from '#server/common/helpers/sanitize-formula-injection.js'
 import { buildBackendPath, mapLinkedOrganisations } from './helpers.js'
 
 const dateFormat = "d MMMM yyyy 'at' h:mmaaa"
 
-function escapeCsvField(value) {
-  const stringValue = String(value ?? '')
-
-  // Mitigate CSV/Excel formula injection by prefixing risky leading characters
-  const prefixedValue = /^[=+\-@]/.test(stringValue)
-    ? `'${stringValue}`
-    : stringValue
-
-  if (
-    prefixedValue.includes(',') ||
-    prefixedValue.includes('"') ||
-    prefixedValue.includes('\n')
-  ) {
-    return `"${prefixedValue.replaceAll('"', '""')}"`
-  }
-  return prefixedValue
-}
-
 function generateCsv(data) {
-  const lines = [
-    'EPR Organisation Name,EPR Organisation ID,Defra ID Organisation Name,Defra ID Organisation ID,Date Linked,Linked By'
+  const rows = [
+    [
+      'EPR Organisation Name',
+      'EPR Organisation ID',
+      'Defra ID Organisation Name',
+      'Defra ID Organisation ID',
+      'Date Linked',
+      'Linked By'
+    ]
   ]
 
   const linkedOrganisations = mapLinkedOrganisations(data)
 
   for (const org of linkedOrganisations) {
-    lines.push(
-      [
-        escapeCsvField(org.eprOrgName),
-        escapeCsvField(org.eprOrgId),
-        escapeCsvField(org.defraOrgName),
-        escapeCsvField(org.defraOrgId),
-        escapeCsvField(formatDate(org.linkedAt, dateFormat)),
-        escapeCsvField(org.linkedByEmail)
-      ].join(',')
-    )
+    rows.push([
+      sanitizeFormulaInjection(org.eprOrgName),
+      org.eprOrgId,
+      sanitizeFormulaInjection(org.defraOrgName),
+      org.defraOrgId,
+      formatDate(org.linkedAt, dateFormat),
+      sanitizeFormulaInjection(org.linkedByEmail)
+    ])
   }
 
-  return lines.join('\n')
+  return writeToString(rows, { headers: false, quoteColumns: true })
 }
 
 export const linkedOrganisationsDownloadController = {
@@ -53,7 +42,7 @@ export const linkedOrganisationsDownloadController = {
         request,
         buildBackendPath(searchTerm)
       )
-      const csv = generateCsv(data)
+      const csv = await generateCsv(data)
 
       return h
         .response(csv)
