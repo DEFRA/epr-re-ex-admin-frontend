@@ -31,6 +31,11 @@ export function buildNavigation(request) {
       current: request?.path === '/summary-log'
     },
     {
+      text: 'PRN activity',
+      href: '/prn-activity',
+      current: request?.path === '/prn-activity'
+    },
+    {
       text: 'System logs',
       href: '/system-logs',
       current: request?.path === '/system-logs'
