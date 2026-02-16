@@ -58,22 +58,25 @@ describe('summaryLogUploadsReportGetController', () => {
   })
 
   test('fetches data from backend and renders view with full data', async () => {
-    const mockData = [
-      {
-        appropriateAgency: 'EA',
-        type: 'reprocessor',
-        businessName: 'ACME Ltd',
-        orgId: 12345,
-        registrationNumber: 'REG1',
-        accreditationNumber: 'ACC1',
-        reprocessingSite: '7 Glass processing site, London',
-        packagingWasteCategory: 'glass',
-        lastSuccessfulUpload: '2026-02-06T14:30:00.000Z',
-        lastFailedUpload: '2026-02-05T09:00:00.000Z',
-        successfulUploads: 5,
-        failedUploads: 1
-      }
-    ]
+    const mockData = {
+      summaryLogUploads: [
+        {
+          appropriateAgency: 'EA',
+          type: 'reprocessor',
+          businessName: 'ACME Ltd',
+          orgId: 12345,
+          registrationNumber: 'REG1',
+          accreditationNumber: 'ACC1',
+          reprocessingSite: '7 Glass processing site, London',
+          packagingWasteCategory: 'glass',
+          lastSuccessfulUpload: '2026-02-06T14:30:00.000Z',
+          lastFailedUpload: '2026-02-05T09:00:00.000Z',
+          successfulUploads: 5,
+          failedUploads: 1
+        }
+      ],
+      generatedAt: '2026-02-06T14:30:00.000Z'
+    }
 
     fetchJsonFromBackend.mockResolvedValue(mockData)
     mockRequest.yar.get.mockReturnValue(null)
@@ -106,28 +109,32 @@ describe('summaryLogUploadsReportGetController', () => {
           }
         ],
         totalRows: 1,
+        generatedAt: '6 February 2026 at 2:30pm',
         error: null
       }
     )
   })
 
   test('handles data without registration number, accreditation and reprocessing site', async () => {
-    const mockData = [
-      {
-        appropriateAgency: 'NRW',
-        type: 'exporter',
-        businessName: 'Test Co',
-        orgId: 99999,
-        registrationNumber: '',
-        accreditationNumber: '',
-        reprocessingSite: '',
-        packagingWasteCategory: 'plastic',
-        lastSuccessfulUpload: '',
-        lastFailedUpload: '2026-01-15T10:00:00.000Z',
-        successfulUploads: 0,
-        failedUploads: 3
-      }
-    ]
+    const mockData = {
+      summaryLogUploads: [
+        {
+          appropriateAgency: 'NRW',
+          type: 'exporter',
+          businessName: 'Test Co',
+          orgId: 99999,
+          registrationNumber: '',
+          accreditationNumber: '',
+          reprocessingSite: '',
+          packagingWasteCategory: 'plastic',
+          lastSuccessfulUpload: '',
+          lastFailedUpload: '2026-01-15T10:00:00.000Z',
+          successfulUploads: 0,
+          failedUploads: 3
+        }
+      ],
+      generatedAt: '2026-01-15T10:00:00.000Z'
+    }
 
     fetchJsonFromBackend.mockResolvedValue(mockData)
     mockRequest.yar.get.mockReturnValue(null)
