@@ -90,6 +90,11 @@ describe('context and cache', () => {
             },
             {
               current: false,
+              text: 'PRN activity',
+              href: '/prn-activity'
+            },
+            {
+              current: false,
               text: 'System logs',
               href: '/system-logs'
             }
@@ -247,6 +252,11 @@ describe('context and cache', () => {
               current: false,
               text: 'Summary log uploads',
               href: '/summary-log'
+            },
+            {
+              current: false,
+              text: 'PRN activity',
+              href: '/prn-activity'
             },
             {
               current: false,
