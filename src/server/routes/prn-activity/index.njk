@@ -19,9 +19,9 @@
       {% endif %}
 
       {% if prns and prns.length %}
-        <p class="govuk-body">{{ prns.length }} PRN{% if prns.length != 1 %}s{% endif %} awaiting acceptance</p>
+        <p class="govuk-body">{{ prns.length }} PRN{% if prns.length != 1 %}s{% endif %} found</p>
 
-        <a href="/prn-activity/download" class="govuk-button govuk-button--secondary" data-module="govuk-button">
+        <a href="/prn-activity/download" class="govuk-button" data-module="govuk-button">
           Download as CSV
         </a>
 
@@ -71,7 +71,7 @@
         }) }}
 
       {% else %}
-        {{ govukInsetText({ text: "No PRNs currently awaiting acceptance." }) }}
+        {{ govukInsetText({ text: "No PRNs found." }) }}
       {% endif %}
     </div>
   </div>

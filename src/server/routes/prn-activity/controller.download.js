@@ -59,7 +59,7 @@ export const prnActivityDownloadController = {
     try {
       const data = await fetchJsonFromBackend(
         request,
-        '/v1/admin/packaging-recycling-notes?statuses=awaiting_acceptance'
+        '/v1/admin/packaging-recycling-notes?statuses=awaiting_authorisation,awaiting_acceptance,accepted,awaiting_cancellation,cancelled,deleted'
       )
       const csv = await generateCsv(data)
 
