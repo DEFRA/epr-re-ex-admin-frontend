@@ -57,7 +57,7 @@
     "@hapi/vision": "7.0.3",
     "@hapi/wreck": "18.1.0",
     "@hapi/yar": "11.0.3",
-    "ajv": "8.17.1",
+    "ajv": "8.18.0",
     "aws-embedded-metrics": "4.2.1",
     "blankie": "5.0.0",
     "convict": "6.2.4",
@@ -118,8 +118,12 @@
     "webpack-cli": "6.0.1"
   },
   "overrides": {
+    "ajv": "8.18.0",
     "@isaacs/brace-expansion": "5.0.1",
     "tmp": "0.2.5",
+    "jsoneditor@10.4.2": {
+      "ajv": "8.18.0"
+    },
     "ajv-cli": {
       "fast-json-patch": "3.1.1"
     }
