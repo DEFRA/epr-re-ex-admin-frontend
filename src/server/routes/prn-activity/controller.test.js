@@ -21,6 +21,10 @@ describe('prn-activity controller', () => {
         settings: {
           app: { pageTitle: 'PRN activity' }
         }
+      },
+      yar: {
+        get: vi.fn().mockReturnValue(null),
+        clear: vi.fn()
       }
     }
 
@@ -78,7 +82,8 @@ describe('prn-activity controller', () => {
           organisationName: 'Reprocessor Ltd',
           wasteProcessingType: 'reprocessor'
         })
-      ]
+      ],
+      error: null
     })
   })
 
@@ -131,7 +136,8 @@ describe('prn-activity controller', () => {
 
     expect(mockH.view).toHaveBeenCalledWith('routes/prn-activity/index', {
       pageTitle: 'PRN activity',
-      prns: []
+      prns: [],
+      error: null
     })
   })
 
@@ -213,6 +219,23 @@ describe('prn-activity controller', () => {
 
     const viewArgs = mockH.view.mock.calls[0][1]
     expect(viewArgs.prns[0].issuedTo).toBe('')
+  })
+
+  test('Should display error message from session and clear it', async () => {
+    mockRequest.yar.get.mockReturnValue('Download failed')
+    fetchJsonFromBackend.mockResolvedValue({ items: [] })
+
+    await prnActivityController.handler(mockRequest, mockH)
+
+    expect(mockRequest.yar.get).toHaveBeenCalledWith('error')
+    expect(mockRequest.yar.clear).toHaveBeenCalledWith('error')
+
+    expect(mockH.view).toHaveBeenCalledWith(
+      'routes/prn-activity/index',
+      expect.objectContaining({
+        error: 'Download failed'
+      })
+    )
   })
 
   test('Should return empty string when issuedToOrganisation is null', async () => {

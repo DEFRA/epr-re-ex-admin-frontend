@@ -30,6 +30,9 @@ function mapPrns(data) {
 
 export const prnActivityController = {
   async handler(request, h) {
+    const errorMessage = request.yar.get('error')
+    await request.yar.clear('error')
+
     const data = await fetchJsonFromBackend(
       request,
       '/v1/admin/packaging-recycling-notes?statuses=awaiting_authorisation,awaiting_acceptance,accepted,awaiting_cancellation,cancelled,deleted'
@@ -39,7 +42,8 @@ export const prnActivityController = {
 
     return h.view('routes/prn-activity/index', {
       pageTitle: request.route.settings.app.pageTitle,
-      prns
+      prns,
+      error: errorMessage
     })
   }
 }
