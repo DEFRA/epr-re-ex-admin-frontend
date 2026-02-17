@@ -17,9 +17,9 @@ const mockPrn = {
   material: 'Glass',
   processToBeUsed: 'R3',
   isDecemberWaste: true,
-  notes: 'Test notes',
   issuedAt: '2025-06-15T10:30:00.000Z',
   issuedBy: { name: 'John', position: 'Manager' },
+  accreditationNumber: 'ACC-2025-001',
   accreditationYear: 2025,
   organisationName: 'Reprocessor Ltd',
   wasteProcessingType: 'reprocessor'
@@ -68,7 +68,7 @@ describe('prn-activity download controller', () => {
     const csvContent = mockH.response.mock.calls[0][0]
     const lines = csvContent.split('\n')
     expect(lines[0]).toBe(
-      '"PRN Number","Status","Issued To","Tonnage","Material","Process To Be Used","December Waste","Notes","Issued Date","Issued By","Position","Accreditation Year","Organisation Name","Waste Processing Type"'
+      '"PRN Number","Status","Issued To","Tonnage","Material","Process To Be Used","December Waste","Issued Date","Issued By","Position","Accreditation Number","Accreditation Year","Organisation Name","Waste Processing Type"'
     )
     expect(csvContent).toContain('PRN-001')
     expect(csvContent).toContain('Glass')
@@ -155,9 +155,9 @@ describe('prn-activity download controller', () => {
           prnNumber: undefined,
           material: undefined,
           processToBeUsed: undefined,
-          notes: undefined,
           issuedAt: null,
           issuedBy: null,
+          accreditationNumber: undefined,
           accreditationYear: null,
           organisationName: undefined,
           wasteProcessingType: undefined
@@ -208,7 +208,7 @@ describe('prn-activity download controller', () => {
 
   test('Should prefix fields starting with formula-injection characters', async () => {
     fetchJsonFromBackend.mockResolvedValue({
-      items: [{ ...mockPrn, notes: '=SUM(A1)' }]
+      items: [{ ...mockPrn, accreditationNumber: '=SUM(A1)' }]
     })
 
     await prnActivityDownloadController.handler(mockRequest, mockH)

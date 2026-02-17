@@ -22,10 +22,10 @@ function generateCsv(data) {
       'Material',
       'Process To Be Used',
       'December Waste',
-      'Notes',
       'Issued Date',
       'Issued By',
       'Position',
+      'Accreditation Number',
       'Accreditation Year',
       'Organisation Name',
       'Waste Processing Type'
@@ -41,10 +41,10 @@ function generateCsv(data) {
       sanitizeFormulaInjection(prn.material || ''),
       sanitizeFormulaInjection(prn.processToBeUsed || ''),
       prn.isDecemberWaste ? 'Yes' : 'No',
-      sanitizeFormulaInjection(prn.notes || ''),
       prn.issuedAt ? formatDate(prn.issuedAt, dateFormat) : '',
       sanitizeFormulaInjection(prn.issuedBy?.name || ''),
       sanitizeFormulaInjection(prn.issuedBy?.position || ''),
+      sanitizeFormulaInjection(prn.accreditationNumber || ''),
       prn.accreditationYear ?? '',
       sanitizeFormulaInjection(prn.organisationName || ''),
       sanitizeFormulaInjection(prn.wasteProcessingType || '')

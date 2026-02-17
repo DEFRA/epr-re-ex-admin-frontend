@@ -18,10 +18,10 @@ function mapPrns(data) {
     material: prn.material || '',
     processToBeUsed: prn.processToBeUsed || '',
     isDecemberWaste: prn.isDecemberWaste ? 'Yes' : 'No',
-    notes: prn.notes || '',
     issuedAt: prn.issuedAt ? formatDate(prn.issuedAt, dateFormat) : '',
     issuedByName: prn.issuedBy?.name || '',
     issuedByPosition: prn.issuedBy?.position || '',
+    accreditationNumber: prn.accreditationNumber || '',
     accreditationYear: prn.accreditationYear ?? '',
     organisationName: prn.organisationName || '',
     wasteProcessingType: prn.wasteProcessingType || ''
