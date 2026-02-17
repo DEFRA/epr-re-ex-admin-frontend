@@ -1,5 +1,8 @@
 # Contributing
 
+<!-- prettier-ignore-start -->
+<!-- TOC -->
+
 - [Requirements](#requirements)
   - [Node.js](#nodejs)
   - [Secrets](#secrets)
@@ -27,6 +30,9 @@
   - [Secrets and Environment Variables](#secrets-and-environment-variables)
   - [Development Notes](#development-notes)
 - [Further Documentation](#further-documentation)
+
+<!-- TOC -->
+<!-- prettier-ignore-end -->
 
 ## Requirements
 
