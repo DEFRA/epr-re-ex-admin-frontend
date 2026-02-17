@@ -1,7 +1,7 @@
 # Contributing
 
 <!-- prettier-ignore-start -->
-<!-- TOC -->
+<!--toc:start-->
 
 - [Requirements](#requirements)
   - [Node.js](#nodejs)
@@ -31,7 +31,7 @@
   - [Development Notes](#development-notes)
 - [Further Documentation](#further-documentation)
 
-<!-- TOC -->
+<!--toc:end-->
 <!-- prettier-ignore-end -->
 
 ## Requirements
