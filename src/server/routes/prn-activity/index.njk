@@ -1,0 +1,89 @@
+{% extends 'layout.njk' %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/tag/macro.njk" import govukTag %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/pagination/macro.njk" import govukPagination %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <h1 class="govuk-heading-xl">PRN activity</h1>
+
+      {% if error %}
+        {{ govukErrorSummary({
+          titleText: "There is a problem",
+          errorList: [
+            {
+              text: error
+            }
+          ]
+        }) }}
+      {% endif %}
+
+      {% if prns and prns.length %}
+        <p class="govuk-body">Showing page {{ page }} — {{ prns.length }} PRN{% if prns.length != 1 %}s{% endif %} on this page</p>
+
+        <a href="/prn-activity/download" class="govuk-button" data-module="govuk-button">
+          Download all as CSV
+        </a>
+
+        {% set tableRows = [] %}
+        {% for prn in prns %}
+          {% set statusCell = { html: govukTag({ text: prn.status | replace("_", " ") }) } %}
+
+          {% set row = [
+            { text: prn.prnNumber },
+            statusCell,
+            { text: prn.issuedTo },
+            { text: prn.tonnage },
+            { text: prn.material },
+            { text: prn.processToBeUsed },
+            { text: prn.isDecemberWaste },
+            { text: prn.notes },
+            { text: prn.issuedAt },
+            { text: prn.issuedByName },
+            { text: prn.issuedByPosition },
+            { text: prn.accreditationYear },
+            { text: prn.organisationName },
+            { text: prn.wasteProcessingType }
+          ] %}
+          {% set tableRows = tableRows.concat([row]) %}
+        {% endfor %}
+
+        {{ govukTable({
+          captionClasses: "govuk-table__caption--m",
+          firstCellIsHeader: true,
+          head: [
+            { text: "PRN Number" },
+            { text: "Status" },
+            { text: "Issued To" },
+            { text: "Tonnage" },
+            { text: "Material" },
+            { text: "Process" },
+            { text: "December Waste" },
+            { text: "Notes" },
+            { text: "Issued Date" },
+            { text: "Issued By" },
+            { text: "Position" },
+            { text: "Accreditation Year" },
+            { text: "Organisation" },
+            { text: "Waste Processing Type" }
+          ],
+          rows: tableRows
+        }) }}
+
+        {% if pagination.previous or pagination.next %}
+          {{ govukPagination({
+            previous: pagination.previous,
+            next: pagination.next
+          }) }}
+        {% endif %}
+
+      {% else %}
+        {{ govukInsetText({ text: "No PRNs found." }) }}
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

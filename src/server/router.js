@@ -9,7 +9,9 @@ import { defraFormsSubmission } from './routes/defra-forms-submission/index.js'
 import { systemLogs } from './routes/system-logs/index.js'
 import { publicRegister } from './routes/public-register/index.js'
 import { tonnageMonitoring } from './routes/tonnage-monitoring/index.js'
+import { wasteBalanceAvailability } from './routes/waste-balance-availability/index.js'
 import { linkedOrganisations } from './routes/linked-organisations/index.js'
+import { prnActivity } from './routes/prn-activity/index.js'
 import { summaryLogUploadsReport } from './routes/summary-log/index.js'
 
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
@@ -33,7 +35,9 @@ export const router = {
         systemLogs,
         publicRegister,
         tonnageMonitoring,
+        wasteBalanceAvailability,
         linkedOrganisations,
+        prnActivity,
         summaryLogUploadsReport
       ])
 
