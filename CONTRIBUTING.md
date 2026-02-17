@@ -1,6 +1,7 @@
 # Contributing
 
 <!-- prettier-ignore-start -->
+
 <!--toc:start-->
 
 - [Requirements](#requirements)
@@ -30,8 +31,8 @@
   - [Secrets and Environment Variables](#secrets-and-environment-variables)
   - [Development Notes](#development-notes)
 - [Further Documentation](#further-documentation)
-
 <!--toc:end-->
+
 <!-- prettier-ignore-end -->
 
 ## Requirements
