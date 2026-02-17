@@ -21,5 +21,5 @@ export function formatMaterialName(material) {
 }
 
 export function formatAmount(amount) {
-  return amount.toFixed(2)
+  return (amount ?? 0).toFixed(2)
 }

@@ -111,6 +111,24 @@ describe('waste-balance-availability GET controller', () => {
     )
   })
 
+  test('Should treat null availableAmount as zero', async () => {
+    fetchJsonFromBackend.mockResolvedValue({
+      generatedAt: '2026-01-29T12:00:00.000Z',
+      materials: [{ material: 'plastic', availableAmount: null }],
+      total: null
+    })
+
+    await wasteBalanceAvailabilityGetController.handler(mockRequest, mockH)
+
+    expect(mockH.view).toHaveBeenCalledWith(
+      'routes/waste-balance-availability/index',
+      expect.objectContaining({
+        materials: [{ material: 'Plastic', availableAmount: '0.00' }],
+        total: '0.00'
+      })
+    )
+  })
+
   test('Should throw for unknown material names', async () => {
     fetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-01-29T12:00:00.000Z',
