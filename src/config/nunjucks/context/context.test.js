@@ -85,6 +85,11 @@ describe('context and cache', () => {
             },
             {
               current: false,
+              text: 'Waste balance availability',
+              href: '/waste-balance-availability'
+            },
+            {
+              current: false,
               text: 'Summary log uploads',
               href: '/summary-log'
             },
@@ -247,6 +252,11 @@ describe('context and cache', () => {
               current: false,
               text: 'Tonnage monitoring',
               href: '/tonnage-monitoring'
+            },
+            {
+              current: false,
+              text: 'Waste balance availability',
+              href: '/waste-balance-availability'
             },
             {
               current: false,
