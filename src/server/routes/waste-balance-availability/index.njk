@@ -1,0 +1,73 @@
+{% extends 'layout.njk' %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <div class="govuk-body" data-testid="app-page-body">
+
+        {% if error %}
+          {{ govukErrorSummary({
+            titleText: "There is a problem",
+            errorList: [
+              {
+                text: error
+              }
+            ]
+          }) }}
+        {% endif %}
+
+        <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
+
+        <p class="govuk-body">
+          Available waste balance by material, after PRN and sent-on deductions.
+        </p>
+
+        <p class="govuk-body">
+          Data generated at: <strong>{{ generatedAt | formatDate("d MMMM yyyy 'at' h:mmaaa") }}</strong>
+        </p>
+
+        {% if materials and materials.length %}
+          {% set tableRows = [] %}
+          {% for item in materials %}
+            {% set materialCell = { text: item.material } %}
+            {% set amountCell = { text: item.availableAmount, format: "numeric" } %}
+            {% set row = [ materialCell, amountCell ] %}
+            {% set tableRows = tableRows.concat([row]) %}
+          {% endfor %}
+
+          {% set totalRow = [
+            { text: "Total", classes: "govuk-!-font-weight-bold" },
+            { text: total, format: "numeric", classes: "govuk-!-font-weight-bold" }
+          ] %}
+          {% set tableRows = tableRows.concat([totalRow]) %}
+
+          {{ govukTable({
+            caption: "Available balance by material",
+            captionClasses: "govuk-table__caption--m",
+            firstCellIsHeader: true,
+            head: [
+              { text: "Material" },
+              { text: "Available amount", format: "numeric" }
+            ],
+            rows: tableRows
+          }) }}
+
+          <form method="POST">
+            <input type="hidden" name="crumb" value="{{ crumb }}" />
+            {{ govukButton({
+              text: "Download CSV"
+            }) }}
+          </form>
+
+        {% else %}
+          {{ govukInsetText({ text: "No waste balance data available." }) }}
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+{% endblock %}
