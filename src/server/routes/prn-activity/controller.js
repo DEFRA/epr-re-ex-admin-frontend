@@ -2,6 +2,8 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
 import { formatDate } from '#config/nunjucks/filters/format-date.js'
 
 const dateFormat = "d MMMM yyyy 'at' h:mmaaa"
+const statuses =
+  'awaiting_authorisation,awaiting_acceptance,accepted,awaiting_cancellation,cancelled,deleted'
 
 function getDisplayName(org) {
   if (!org) return ''
@@ -28,21 +30,43 @@ function mapPrns(data) {
   }))
 }
 
+export function buildPrnApiUrl(cursor) {
+  let url = `/v1/admin/packaging-recycling-notes?statuses=${statuses}`
+  if (cursor) {
+    url += `&cursor=${encodeURIComponent(cursor)}`
+  }
+  return url
+}
+
 export const prnActivityController = {
   async handler(request, h) {
     const errorMessage = request.yar.get('error')
     await request.yar.clear('error')
 
-    const data = await fetchJsonFromBackend(
-      request,
-      '/v1/admin/packaging-recycling-notes?statuses=awaiting_authorisation,awaiting_acceptance,accepted,awaiting_cancellation,cancelled,deleted'
-    )
+    const cursor = request.query.cursor || null
+    const page = Number(request.query.page) || 1
+    const url = buildPrnApiUrl(cursor)
+    const data = await fetchJsonFromBackend(request, url)
 
     const prns = mapPrns(data)
+
+    const pagination = {}
+    if (data?.hasMore && data?.nextCursor) {
+      pagination.next = {
+        href: `/prn-activity?cursor=${encodeURIComponent(data.nextCursor)}&page=${page + 1}`
+      }
+    }
+    if (cursor && page > 1) {
+      pagination.previous = {
+        href: '/prn-activity'
+      }
+    }
 
     return h.view('routes/prn-activity/index', {
       pageTitle: request.route.settings.app.pageTitle,
       prns,
+      pagination,
+      page,
       error: errorMessage
     })
   }
