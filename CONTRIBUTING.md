@@ -4,37 +4,33 @@
 
 <!--toc:start-->
 
-- [Contributing](#contributing)
-
-  - [Requirements](#requirements)
-    - [Node.js](#nodejs)
-    - [Secrets](#secrets)
-  - [Documentation](#documentation)
-    - [Architecture Decision Records (ADRs)](#architecture-decision-records-adrs)
-  - [Local development](#local-development)
-
-    - [Setup](#setup)
-    - [Testing](#testing)
-    - [Development](#development)
-    - [Production](#production)
-    - [Npm scripts](#npm-scripts)
-    - [Update dependencies](#update-dependencies)
-    - [Formatting](#formatting)
-      - [Windows prettier issue](#windows-prettier-issue)
-
-  - [Docker](#docker)
-    - [Development image](#development-image)
-    - [Production image](#production-image)
-    - [Docker Compose](#docker-compose)
-    - [Logging and Auditing](#logging-and-auditing)
-  - [Repository](#repository)
-    - [Pull Requests](#pull-requests)
-    - [Dependabot](#dependabot)
-    - [SonarCloud](#sonarcloud)
-  - [Deployments](#deployments)
-    - [Secrets and Environment Variables](#secrets-and-environment-variables)
-    - [Development Notes](#development-notes)
-  - [Further Documentation](#further-documentation)
+- [Requirements](#requirements)
+  - [Node.js](#nodejs)
+  - [Secrets](#secrets)
+- [Documentation](#documentation)
+  - [Architecture Decision Records (ADRs)](#architecture-decision-records-adrs)
+- [Local development](#local-development)
+  - [Setup](#setup)
+  - [Testing](#testing)
+  - [Development](#development)
+  - [Production](#production)
+  - [Npm scripts](#npm-scripts)
+  - [Update dependencies](#update-dependencies)
+  - [Formatting](#formatting)
+    - [Windows prettier issue](#windows-prettier-issue)
+- [Docker](#docker)
+  - [Development image](#development-image)
+  - [Production image](#production-image)
+  - [Docker Compose](#docker-compose)
+- [Logging and Auditing](#logging-and-auditing)
+- [Repository](#repository)
+  - [Pull Requests](#pull-requests)
+  - [Dependabot](#dependabot)
+  - [SonarCloud](#sonarcloud)
+- [Deployments](#deployments)
+  - [Secrets and Environment Variables](#secrets-and-environment-variables)
+  - [Development Notes](#development-notes)
+- [Further Documentation](#further-documentation)
 <!--toc:end-->
 
 <!-- prettier-ignore-end -->
@@ -173,28 +169,9 @@ docker run -e PORT=3002 -p 3002:3002 epr-re-ex-admin-frontend
 
 ### Docker Compose
 
-> [!IMPORTANT]
->
-> Please ensure you have at least version 2.22.0 of Docker Compose installed.
+Use the compose setup in our [service repo](https://github.com/DEFRA/epr-re-ex-service/blob/main/CONTRIBUTING.md#docker-compose)
 
-A local environment with:
-
-- Localstack for AWS services (S3, SQS)
-- Redis
-- This service.
-- A commented out backend example.
-
-```bash
-docker compose up --build -d --watch
-```
-
-See the running services with:
-
-```bash
-docker compose ps
-```
-
-### Logging and Auditing
+## Logging and Auditing
 
 Logging and auditing must follow EPR's backend logging standards. See [the logging section](https://github.com/DEFRA/epr-backend/blob/main/CONTRIBUTING.md#logging)
 
