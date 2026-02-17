@@ -68,7 +68,7 @@ describe('prn-activity download controller', () => {
     const csvContent = mockH.response.mock.calls[0][0]
     const lines = csvContent.split('\n')
     expect(lines[0]).toBe(
-      '"PRN Number","Status","Issued To","Tonnage","Material","Process To Be Used","December Waste","Issued Date","Issued By","Position","Accreditation Number","Accreditation Year","Organisation Name","Waste Processing Type"'
+      '"PRN Number","Status","Issued To","Tonnage","Material","Process To Be Used","December Waste","Issued Date","Issued By","Position","Accreditation Number","Accreditation Year","Submitted To Regulator","Organisation Name","Waste Processing Type"'
     )
     expect(csvContent).toContain('PRN-001')
     expect(csvContent).toContain('Glass')
@@ -159,6 +159,7 @@ describe('prn-activity download controller', () => {
           issuedBy: null,
           accreditationNumber: undefined,
           accreditationYear: null,
+          submittedToRegulator: undefined,
           organisationName: undefined,
           wasteProcessingType: undefined
         }

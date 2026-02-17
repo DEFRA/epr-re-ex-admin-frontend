@@ -27,6 +27,7 @@ function generateCsv(data) {
       'Position',
       'Accreditation Number',
       'Accreditation Year',
+      'Submitted To Regulator',
       'Organisation Name',
       'Waste Processing Type'
     ]
@@ -46,6 +47,7 @@ function generateCsv(data) {
       sanitizeFormulaInjection(prn.issuedBy?.position || ''),
       sanitizeFormulaInjection(prn.accreditationNumber || ''),
       prn.accreditationYear ?? '',
+      sanitizeFormulaInjection(prn.submittedToRegulator || ''),
       sanitizeFormulaInjection(prn.organisationName || ''),
       sanitizeFormulaInjection(prn.wasteProcessingType || '')
     ])

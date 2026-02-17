@@ -120,6 +120,7 @@ describe('prn-activity controller', () => {
     expect(viewArgs.prns[0].material).toBe('')
     expect(viewArgs.prns[0].issuedAt).toBe('')
     expect(viewArgs.prns[0].accreditationNumber).toBe('')
+    expect(viewArgs.prns[0].submittedToRegulator).toBe('')
     expect(viewArgs.prns[0].issuedByName).toBe('')
     expect(viewArgs.prns[0].issuedByPosition).toBe('')
     expect(viewArgs.prns[0].organisationName).toBe('')

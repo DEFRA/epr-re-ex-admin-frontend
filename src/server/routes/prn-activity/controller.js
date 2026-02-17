@@ -23,6 +23,7 @@ function mapPrns(data) {
     issuedByPosition: prn.issuedBy?.position || '',
     accreditationNumber: prn.accreditationNumber || '',
     accreditationYear: prn.accreditationYear ?? '',
+    submittedToRegulator: prn.submittedToRegulator || '',
     organisationName: prn.organisationName || '',
     wasteProcessingType: prn.wasteProcessingType || ''
   }))
