@@ -1,7 +1,7 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { formatDate } from '#config/nunjucks/filters/format-date.js'
 
-const dateFormat = "d MMMM yyyy 'at' h:mmaaa"
+const dateFormat = 'dd/MM/yyyy'
 
 function getDisplayName(org) {
   if (!org) return ''

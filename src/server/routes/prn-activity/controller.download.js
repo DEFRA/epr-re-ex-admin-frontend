@@ -3,7 +3,7 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
 import { formatDate } from '#config/nunjucks/filters/format-date.js'
 import { sanitizeFormulaInjection } from '#server/common/helpers/sanitize-formula-injection.js'
 
-const dateFormat = "d MMMM yyyy 'at' h:mmaaa"
+const dateFormat = 'dd/MM/yyyy'
 
 function getDisplayName(org) {
   if (!org) return ''
