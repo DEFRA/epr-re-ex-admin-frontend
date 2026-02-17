@@ -44,6 +44,7 @@ export const prnActivityController = {
     await request.yar.clear('error')
 
     const cursor = request.query.cursor || null
+    const page = Number(request.query.page) || 1
     const url = buildPrnApiUrl(cursor)
     const data = await fetchJsonFromBackend(request, url)
 
@@ -52,10 +53,10 @@ export const prnActivityController = {
     const pagination = {}
     if (data?.hasMore && data?.nextCursor) {
       pagination.next = {
-        href: `/prn-activity?cursor=${encodeURIComponent(data.nextCursor)}`
+        href: `/prn-activity?cursor=${encodeURIComponent(data.nextCursor)}&page=${page + 1}`
       }
     }
-    if (cursor) {
+    if (cursor && page > 1) {
       pagination.previous = {
         href: '/prn-activity'
       }
@@ -65,6 +66,7 @@ export const prnActivityController = {
       pageTitle: request.route.settings.app.pageTitle,
       prns,
       pagination,
+      page,
       error: errorMessage
     })
   }

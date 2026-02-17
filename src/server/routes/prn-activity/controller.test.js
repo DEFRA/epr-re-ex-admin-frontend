@@ -85,6 +85,7 @@ describe('prn-activity controller', () => {
         })
       ],
       pagination: {},
+      page: 1,
       error: null
     })
   })
@@ -140,6 +141,7 @@ describe('prn-activity controller', () => {
       pageTitle: 'PRN activity',
       prns: [],
       pagination: {},
+      page: 1,
       error: null
     })
   })
@@ -281,12 +283,13 @@ describe('prn-activity controller', () => {
 
     const viewArgs = mockH.view.mock.calls[0][1]
     expect(viewArgs.pagination.next).toEqual({
-      href: '/prn-activity?cursor=cursor-xyz'
+      href: '/prn-activity?cursor=cursor-xyz&page=2'
     })
   })
 
   test('Should include previous pagination link when cursor is provided', async () => {
     mockRequest.query.cursor = 'abc123'
+    mockRequest.query.page = '2'
     fetchJsonFromBackend.mockResolvedValue({
       items: [{ status: 'accepted', tonnage: 10 }],
       hasMore: false

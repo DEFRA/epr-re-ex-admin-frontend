@@ -23,7 +23,7 @@
       {% endif %}
 
       {% if prns and prns.length %}
-        <p class="govuk-body">{{ prns.length }} PRN{% if prns.length != 1 %}s{% endif %} found on this page</p>
+        <p class="govuk-body">Showing page {{ page }} — {{ prns.length }} PRN{% if prns.length != 1 %}s{% endif %} on this page</p>
 
         <a href="/prn-activity/download" class="govuk-button" data-module="govuk-button">
           Download all as CSV
