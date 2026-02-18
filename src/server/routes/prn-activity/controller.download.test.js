@@ -220,7 +220,7 @@ describe('prn-activity download controller', () => {
 
   test('Should prefix fields starting with formula-injection characters', async () => {
     fetchJsonFromBackend.mockResolvedValue({
-      items: [{ ...mockPrn, accreditationNumber: '=SUM(A1)' }]
+      items: [{ ...mockPrn, accreditationNumber: '=SUM(A1)' }],
       hasMore: false
     })
 
