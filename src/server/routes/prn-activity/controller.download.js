@@ -2,6 +2,7 @@ import { writeToString } from '@fast-csv/format'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { formatDate } from '#config/nunjucks/filters/format-date.js'
 import { sanitizeFormulaInjection } from '#server/common/helpers/sanitize-formula-injection.js'
+import { buildPrnApiUrl } from './controller.js'
 
 const dateFormat = 'dd/MM/yyyy'
 
@@ -10,9 +11,23 @@ function getDisplayName(org) {
   return org.tradingName || org.name || ''
 }
 
-function generateCsv(data) {
-  const items = data?.items || []
+async function fetchAllPrns(request) {
+  const allItems = []
+  let cursor = null
 
+  do {
+    const url = buildPrnApiUrl(cursor)
+    const data = await fetchJsonFromBackend(request, url)
+    const items = data?.items || []
+    allItems.push(...items)
+
+    cursor = data?.hasMore ? data.nextCursor : null
+  } while (cursor)
+
+  return allItems
+}
+
+function generateCsv(items) {
   const rows = [
     [
       'PRN Number',
@@ -59,11 +74,8 @@ function generateCsv(data) {
 export const prnActivityDownloadController = {
   async handler(request, h) {
     try {
-      const data = await fetchJsonFromBackend(
-        request,
-        '/v1/admin/packaging-recycling-notes?statuses=awaiting_authorisation,awaiting_acceptance,accepted,awaiting_cancellation,cancelled,deleted'
-      )
-      const csv = await generateCsv(data)
+      const items = await fetchAllPrns(request)
+      const csv = await generateCsv(items)
 
       return h
         .response(csv)

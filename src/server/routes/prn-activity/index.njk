@@ -4,6 +4,7 @@
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/pagination/macro.njk" import govukPagination %}
 
 {% block content %}
   <div class="govuk-grid-row">
@@ -22,10 +23,10 @@
       {% endif %}
 
       {% if prns and prns.length %}
-        <p class="govuk-body">{{ prns.length }} PRN{% if prns.length != 1 %}s{% endif %} found</p>
+        <p class="govuk-body">Showing page {{ page }} — {{ prns.length }} PRN{% if prns.length != 1 %}s{% endif %} on this page</p>
 
         <a href="/prn-activity/download" class="govuk-button" data-module="govuk-button">
-          Download as CSV
+          Download all as CSV
         </a>
 
         {% set tableRows = [] %}
@@ -74,6 +75,13 @@
           ],
           rows: tableRows
         }) }}
+
+        {% if pagination.previous or pagination.next %}
+          {{ govukPagination({
+            previous: pagination.previous,
+            next: pagination.next
+          }) }}
+        {% endif %}
 
       {% else %}
         {{ govukInsetText({ text: "No PRNs found." }) }}

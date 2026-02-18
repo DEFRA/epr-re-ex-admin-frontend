@@ -1,5 +1,5 @@
 import { vi } from 'vitest'
-import { prnActivityController } from './controller.js'
+import { prnActivityController, buildPrnApiUrl } from './controller.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
 vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
@@ -17,6 +17,7 @@ describe('prn-activity controller', () => {
     vi.clearAllMocks()
 
     mockRequest = {
+      query: {},
       route: {
         settings: {
           app: { pageTitle: 'PRN activity' }
@@ -81,6 +82,8 @@ describe('prn-activity controller', () => {
           wasteProcessingType: 'reprocessor'
         })
       ],
+      pagination: {},
+      page: 1,
       error: null
     })
   })
@@ -136,6 +139,8 @@ describe('prn-activity controller', () => {
     expect(mockH.view).toHaveBeenCalledWith('routes/prn-activity/index', {
       pageTitle: 'PRN activity',
       prns: [],
+      pagination: {},
+      page: 1,
       error: null
     })
   })
@@ -252,5 +257,82 @@ describe('prn-activity controller', () => {
 
     const viewArgs = mockH.view.mock.calls[0][1]
     expect(viewArgs.prns[0].issuedTo).toBe('')
+  })
+
+  test('Should pass cursor to backend when provided in query', async () => {
+    mockRequest.query.cursor = 'abc123'
+    fetchJsonFromBackend.mockResolvedValue({ items: [] })
+
+    await prnActivityController.handler(mockRequest, mockH)
+
+    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
+      mockRequest,
+      `/v1/admin/packaging-recycling-notes?statuses=${expectedStatuses}&cursor=abc123`
+    )
+  })
+
+  test('Should include next pagination link when hasMore is true', async () => {
+    fetchJsonFromBackend.mockResolvedValue({
+      items: [{ status: 'accepted', tonnage: 10 }],
+      hasMore: true,
+      nextCursor: 'cursor-xyz'
+    })
+
+    await prnActivityController.handler(mockRequest, mockH)
+
+    const viewArgs = mockH.view.mock.calls[0][1]
+    expect(viewArgs.pagination.next).toEqual({
+      href: '/prn-activity?cursor=cursor-xyz&page=2'
+    })
+  })
+
+  test('Should include previous pagination link when cursor is provided', async () => {
+    mockRequest.query.cursor = 'abc123'
+    mockRequest.query.page = '2'
+    fetchJsonFromBackend.mockResolvedValue({
+      items: [{ status: 'accepted', tonnage: 10 }],
+      hasMore: false
+    })
+
+    await prnActivityController.handler(mockRequest, mockH)
+
+    const viewArgs = mockH.view.mock.calls[0][1]
+    expect(viewArgs.pagination.previous).toEqual({
+      href: '/prn-activity'
+    })
+    expect(viewArgs.pagination.next).toBeUndefined()
+  })
+
+  test('Should not include pagination links on first page with no more results', async () => {
+    fetchJsonFromBackend.mockResolvedValue({
+      items: [{ status: 'accepted', tonnage: 10 }],
+      hasMore: false
+    })
+
+    await prnActivityController.handler(mockRequest, mockH)
+
+    const viewArgs = mockH.view.mock.calls[0][1]
+    expect(viewArgs.pagination).toEqual({})
+  })
+})
+
+describe('buildPrnApiUrl', () => {
+  test('Should build URL without cursor when not provided', () => {
+    const url = buildPrnApiUrl(null)
+    expect(url).toBe(
+      `/v1/admin/packaging-recycling-notes?statuses=${expectedStatuses}`
+    )
+  })
+
+  test('Should build URL with cursor when provided', () => {
+    const url = buildPrnApiUrl('abc123')
+    expect(url).toBe(
+      `/v1/admin/packaging-recycling-notes?statuses=${expectedStatuses}&cursor=abc123`
+    )
+  })
+
+  test('Should encode cursor value', () => {
+    const url = buildPrnApiUrl('abc 123')
+    expect(url).toContain('cursor=abc%20123')
   })
 })

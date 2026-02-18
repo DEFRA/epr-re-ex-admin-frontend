@@ -50,7 +50,7 @@ describe('prn-activity download controller', () => {
   })
 
   test('Should fetch PRNs with correct statuses', async () => {
-    fetchJsonFromBackend.mockResolvedValue({ items: [] })
+    fetchJsonFromBackend.mockResolvedValue({ items: [], hasMore: false })
 
     await prnActivityDownloadController.handler(mockRequest, mockH)
 
@@ -61,7 +61,10 @@ describe('prn-activity download controller', () => {
   })
 
   test('Should generate CSV with correct headers and data', async () => {
-    fetchJsonFromBackend.mockResolvedValue({ items: [mockPrn] })
+    fetchJsonFromBackend.mockResolvedValue({
+      items: [mockPrn],
+      hasMore: false
+    })
 
     await prnActivityDownloadController.handler(mockRequest, mockH)
 
@@ -76,7 +79,10 @@ describe('prn-activity download controller', () => {
   })
 
   test('Should set correct Content-Type and Content-Disposition headers', async () => {
-    fetchJsonFromBackend.mockResolvedValue({ items: [mockPrn] })
+    fetchJsonFromBackend.mockResolvedValue({
+      items: [mockPrn],
+      hasMore: false
+    })
 
     await prnActivityDownloadController.handler(mockRequest, mockH)
 
@@ -88,7 +94,7 @@ describe('prn-activity download controller', () => {
   })
 
   test('Should handle empty items', async () => {
-    fetchJsonFromBackend.mockResolvedValue({ items: [] })
+    fetchJsonFromBackend.mockResolvedValue({ items: [], hasMore: false })
 
     await prnActivityDownloadController.handler(mockRequest, mockH)
 
@@ -113,7 +119,8 @@ describe('prn-activity download controller', () => {
       items: [
         { ...mockPrn, isDecemberWaste: true },
         { ...mockPrn, prnNumber: 'PRN-002', isDecemberWaste: false }
-      ]
+      ],
+      hasMore: false
     })
 
     await prnActivityDownloadController.handler(mockRequest, mockH)
@@ -134,7 +141,8 @@ describe('prn-activity download controller', () => {
             tradingName: 'Trading Name'
           }
         }
-      ]
+      ],
+      hasMore: false
     })
 
     await prnActivityDownloadController.handler(mockRequest, mockH)
@@ -163,7 +171,8 @@ describe('prn-activity download controller', () => {
           organisationName: undefined,
           wasteProcessingType: undefined
         }
-      ]
+      ],
+      hasMore: false
     })
 
     await prnActivityDownloadController.handler(mockRequest, mockH)
@@ -182,7 +191,8 @@ describe('prn-activity download controller', () => {
           issuedToOrganisation: {},
           status: undefined
         }
-      ]
+      ],
+      hasMore: false
     })
 
     await prnActivityDownloadController.handler(mockRequest, mockH)
@@ -198,7 +208,8 @@ describe('prn-activity download controller', () => {
           ...mockPrn,
           issuedToOrganisation: { name: 'Legal Name', tradingName: '' }
         }
-      ]
+      ],
+      hasMore: false
     })
 
     await prnActivityDownloadController.handler(mockRequest, mockH)
@@ -210,6 +221,7 @@ describe('prn-activity download controller', () => {
   test('Should prefix fields starting with formula-injection characters', async () => {
     fetchJsonFromBackend.mockResolvedValue({
       items: [{ ...mockPrn, accreditationNumber: '=SUM(A1)' }]
+      hasMore: false
     })
 
     await prnActivityDownloadController.handler(mockRequest, mockH)
@@ -245,5 +257,42 @@ describe('prn-activity download controller', () => {
       'error',
       'Custom backend error message'
     )
+  })
+
+  test('Should fetch all pages when hasMore is true', async () => {
+    fetchJsonFromBackend
+      .mockResolvedValueOnce({
+        items: [{ ...mockPrn, prnNumber: 'PRN-001' }],
+        hasMore: true,
+        nextCursor: 'cursor-1'
+      })
+      .mockResolvedValueOnce({
+        items: [{ ...mockPrn, prnNumber: 'PRN-002' }],
+        hasMore: true,
+        nextCursor: 'cursor-2'
+      })
+      .mockResolvedValueOnce({
+        items: [{ ...mockPrn, prnNumber: 'PRN-003' }],
+        hasMore: false
+      })
+
+    await prnActivityDownloadController.handler(mockRequest, mockH)
+
+    expect(fetchJsonFromBackend).toHaveBeenCalledTimes(3)
+    expect(fetchJsonFromBackend).toHaveBeenNthCalledWith(
+      2,
+      mockRequest,
+      expect.stringContaining('cursor=cursor-1')
+    )
+    expect(fetchJsonFromBackend).toHaveBeenNthCalledWith(
+      3,
+      mockRequest,
+      expect.stringContaining('cursor=cursor-2')
+    )
+
+    const csvContent = mockH.response.mock.calls[0][0]
+    expect(csvContent).toContain('PRN-001')
+    expect(csvContent).toContain('PRN-002')
+    expect(csvContent).toContain('PRN-003')
   })
 })

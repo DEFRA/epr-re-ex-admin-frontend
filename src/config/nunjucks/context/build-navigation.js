@@ -26,6 +26,11 @@ export function buildNavigation(request) {
       current: request?.path === '/tonnage-monitoring'
     },
     {
+      text: 'Waste balance availability',
+      href: '/waste-balance-availability',
+      current: request?.path === '/waste-balance-availability'
+    },
+    {
       text: 'Summary log uploads',
       href: '/summary-log',
       current: request?.path === '/summary-log'
