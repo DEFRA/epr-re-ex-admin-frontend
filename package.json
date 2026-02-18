@@ -118,14 +118,10 @@
     "webpack-cli": "6.0.1"
   },
   "overrides": {
-    "ajv": "8.18.0",
     "@isaacs/brace-expansion": "5.0.1",
     "tmp": "0.2.5",
     "jsoneditor": {
-      "ajv": "6.12.6"
-    },
-    "eslint": {
-      "ajv": "6.12.6"
+      "ajv": "8.18.0"
     },
     "ajv-cli": {
       "fast-json-patch": "3.1.1"
