@@ -1,7 +1,7 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { formatDate } from '#config/nunjucks/filters/format-date.js'
 
-const dateFormat = "d MMMM yyyy 'at' h:mmaaa"
+const dateFormat = 'dd/MM/yyyy'
 const statuses =
   'awaiting_authorisation,awaiting_acceptance,accepted,awaiting_cancellation,cancelled,deleted'
 
@@ -20,11 +20,12 @@ function mapPrns(data) {
     material: prn.material || '',
     processToBeUsed: prn.processToBeUsed || '',
     isDecemberWaste: prn.isDecemberWaste ? 'Yes' : 'No',
-    notes: prn.notes || '',
     issuedAt: prn.issuedAt ? formatDate(prn.issuedAt, dateFormat) : '',
     issuedByName: prn.issuedBy?.name || '',
     issuedByPosition: prn.issuedBy?.position || '',
+    accreditationNumber: prn.accreditationNumber || '',
     accreditationYear: prn.accreditationYear ?? '',
+    submittedToRegulator: prn.submittedToRegulator || '',
     organisationName: prn.organisationName || '',
     wasteProcessingType: prn.wasteProcessingType || ''
   }))

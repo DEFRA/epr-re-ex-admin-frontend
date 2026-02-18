@@ -56,7 +56,6 @@ describe('prn-activity controller', () => {
           material: 'Glass',
           processToBeUsed: 'R3',
           isDecemberWaste: true,
-          notes: 'Test notes',
           issuedAt: '2025-06-15T10:30:00.000Z',
           issuedBy: { name: 'John', position: 'Manager' },
           accreditationYear: 2025,
@@ -79,7 +78,6 @@ describe('prn-activity controller', () => {
           material: 'Glass',
           processToBeUsed: 'R3',
           isDecemberWaste: 'Yes',
-          notes: 'Test notes',
           organisationName: 'Reprocessor Ltd',
           wasteProcessingType: 'reprocessor'
         })
@@ -123,8 +121,9 @@ describe('prn-activity controller', () => {
     const viewArgs = mockH.view.mock.calls[0][1]
     expect(viewArgs.prns[0].prnNumber).toBe('')
     expect(viewArgs.prns[0].material).toBe('')
-    expect(viewArgs.prns[0].notes).toBe('')
     expect(viewArgs.prns[0].issuedAt).toBe('')
+    expect(viewArgs.prns[0].accreditationNumber).toBe('')
+    expect(viewArgs.prns[0].submittedToRegulator).toBe('')
     expect(viewArgs.prns[0].issuedByName).toBe('')
     expect(viewArgs.prns[0].issuedByPosition).toBe('')
     expect(viewArgs.prns[0].organisationName).toBe('')

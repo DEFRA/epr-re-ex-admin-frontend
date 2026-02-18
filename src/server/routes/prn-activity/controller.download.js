@@ -4,7 +4,7 @@ import { formatDate } from '#config/nunjucks/filters/format-date.js'
 import { sanitizeFormulaInjection } from '#server/common/helpers/sanitize-formula-injection.js'
 import { buildPrnApiUrl } from './controller.js'
 
-const dateFormat = "d MMMM yyyy 'at' h:mmaaa"
+const dateFormat = 'dd/MM/yyyy'
 
 function getDisplayName(org) {
   if (!org) return ''
@@ -37,11 +37,12 @@ function generateCsv(items) {
       'Material',
       'Process To Be Used',
       'December Waste',
-      'Notes',
       'Issued Date',
       'Issued By',
       'Position',
+      'Accreditation Number',
       'Accreditation Year',
+      'Submitted To Regulator',
       'Organisation Name',
       'Waste Processing Type'
     ]
@@ -56,11 +57,12 @@ function generateCsv(items) {
       sanitizeFormulaInjection(prn.material || ''),
       sanitizeFormulaInjection(prn.processToBeUsed || ''),
       prn.isDecemberWaste ? 'Yes' : 'No',
-      sanitizeFormulaInjection(prn.notes || ''),
       prn.issuedAt ? formatDate(prn.issuedAt, dateFormat) : '',
       sanitizeFormulaInjection(prn.issuedBy?.name || ''),
       sanitizeFormulaInjection(prn.issuedBy?.position || ''),
+      sanitizeFormulaInjection(prn.accreditationNumber || ''),
       prn.accreditationYear ?? '',
+      sanitizeFormulaInjection(prn.submittedToRegulator || ''),
       sanitizeFormulaInjection(prn.organisationName || ''),
       sanitizeFormulaInjection(prn.wasteProcessingType || '')
     ])
