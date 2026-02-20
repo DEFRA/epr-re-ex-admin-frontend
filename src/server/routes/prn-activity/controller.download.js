@@ -1,0 +1,97 @@
+import { writeToString } from '@fast-csv/format'
+import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { formatDate } from '#config/nunjucks/filters/format-date.js'
+import { sanitizeFormulaInjection } from '#server/common/helpers/sanitize-formula-injection.js'
+import { buildPrnApiUrl } from './controller.js'
+
+const dateFormat = 'dd/MM/yyyy'
+
+function getDisplayName(org) {
+  if (!org) return ''
+  return org.tradingName || org.name || ''
+}
+
+async function fetchAllPrns(request) {
+  const allItems = []
+  let cursor = null
+
+  do {
+    const url = buildPrnApiUrl(cursor)
+    const data = await fetchJsonFromBackend(request, url)
+    const items = data?.items || []
+    allItems.push(...items)
+
+    cursor = data?.hasMore ? data.nextCursor : null
+  } while (cursor)
+
+  return allItems
+}
+
+function generateCsv(items) {
+  const rows = [
+    [
+      'PRN Number',
+      'Status',
+      'Issued To',
+      'Tonnage',
+      'Material',
+      'Process To Be Used',
+      'December Waste',
+      'Issued Date',
+      'Issued By',
+      'Position',
+      'Accreditation Number',
+      'Accreditation Year',
+      'Submitted To Regulator',
+      'Organisation Name',
+      'Waste Processing Type'
+    ]
+  ]
+
+  for (const prn of items) {
+    rows.push([
+      sanitizeFormulaInjection(prn.prnNumber || ''),
+      sanitizeFormulaInjection(prn.status || ''),
+      sanitizeFormulaInjection(getDisplayName(prn.issuedToOrganisation)),
+      prn.tonnage,
+      sanitizeFormulaInjection(prn.material || ''),
+      sanitizeFormulaInjection(prn.processToBeUsed || ''),
+      prn.isDecemberWaste ? 'Yes' : 'No',
+      prn.issuedAt ? formatDate(prn.issuedAt, dateFormat) : '',
+      sanitizeFormulaInjection(prn.issuedBy?.name || ''),
+      sanitizeFormulaInjection(prn.issuedBy?.position || ''),
+      sanitizeFormulaInjection(prn.accreditationNumber || ''),
+      prn.accreditationYear ?? '',
+      sanitizeFormulaInjection(prn.submittedToRegulator || ''),
+      sanitizeFormulaInjection(prn.organisationName || ''),
+      sanitizeFormulaInjection(prn.wasteProcessingType || '')
+    ])
+  }
+
+  return writeToString(rows, { headers: false, quoteColumns: true })
+}
+
+export const prnActivityDownloadController = {
+  async handler(request, h) {
+    try {
+      const items = await fetchAllPrns(request)
+      const csv = await generateCsv(items)
+
+      return h
+        .response(csv)
+        .header('Content-Type', 'text/csv')
+        .header(
+          'Content-Disposition',
+          'attachment; filename="prn-activity.csv"'
+        )
+    } catch (error) {
+      const errorMessage =
+        error.output?.payload?.message ||
+        'There was a problem downloading the PRN activity data. Please try again.'
+
+      request.yar.set('error', errorMessage)
+
+      return h.redirect('/prn-activity')
+    }
+  }
+}
