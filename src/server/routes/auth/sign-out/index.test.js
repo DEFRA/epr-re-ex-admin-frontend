@@ -16,6 +16,10 @@ describe('#signOut route', () => {
     end_session_endpoint: 'https://example-oidc.test/oauth/logout'
   }
 
+  const mockLogger = {
+    info: vi.fn()
+  }
+
   const mockToolkit = {
     redirect: vi.fn().mockReturnValue('redirect-result'),
     view: vi.fn().mockReturnValue('view-result')
@@ -61,6 +65,7 @@ describe('#signOut route', () => {
 
   test('Should clear session and render sign-out view for authenticated user', async () => {
     const mockRequest = {
+      logger: mockLogger,
       auth: {
         isAuthenticated: true
       }
@@ -84,6 +89,7 @@ describe('#signOut route', () => {
 
   test('Should construct logout URL with correct parameters', async () => {
     const mockRequest = {
+      logger: mockLogger,
       auth: {
         isAuthenticated: true
       }
@@ -117,6 +123,7 @@ describe('#signOut route', () => {
       mockToolkit.view.mockReturnValue('view-result')
 
       const mockRequest = {
+        logger: mockLogger,
         auth: {
           isAuthenticated: true
         }
@@ -156,6 +163,7 @@ describe('#signOut route', () => {
     })
 
     const mockRequest = {
+      logger: mockLogger,
       auth: {
         isAuthenticated: true
       }
@@ -186,6 +194,7 @@ describe('#signOut route', () => {
     })
 
     const mockRequest = {
+      logger: mockLogger,
       auth: {
         isAuthenticated: true
       }
@@ -200,6 +209,7 @@ describe('#signOut route', () => {
     getOidcConfig.mockResolvedValue({})
 
     const mockRequest = {
+      logger: mockLogger,
       auth: {
         isAuthenticated: true
       }
@@ -216,6 +226,25 @@ describe('#signOut route', () => {
         pageTitle: 'Signing out',
         logoutUrl: expectedUrl
       }
+    )
+  })
+
+  test('Should log sign-out with user details', async () => {
+    const mockRequest = {
+      logger: mockLogger,
+      auth: {
+        isAuthenticated: true
+      }
+    }
+
+    await signOutRoute.handler(mockRequest, mockToolkit)
+
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      {
+        userId: mockUserSession.userId,
+        displayName: mockUserSession.displayName
+      },
+      'User signed out'
     )
   })
 })
