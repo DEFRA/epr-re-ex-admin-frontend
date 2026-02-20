@@ -5,15 +5,21 @@ import { config } from '#config/config.js'
 import { clearUserSession } from '#server/common/helpers/auth/clear-user-session.js'
 import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
 import { getOidcConfig } from '#server/common/helpers/auth/get-oidc-config.js'
+import { auditSignOut } from '#server/common/helpers/auditing/index.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 
 vi.mock('#server/common/helpers/auth/clear-user-session.js')
 vi.mock('#server/common/helpers/auth/get-user-session.js')
 vi.mock('#server/common/helpers/auth/get-oidc-config.js')
+vi.mock('#server/common/helpers/auditing/index.js')
 
 describe('#signOut route', () => {
   const mockOidcConfig = {
     end_session_endpoint: 'https://example-oidc.test/oauth/logout'
+  }
+
+  const mockLogger = {
+    info: vi.fn()
   }
 
   const mockToolkit = {
@@ -61,6 +67,7 @@ describe('#signOut route', () => {
 
   test('Should clear session and render sign-out view for authenticated user', async () => {
     const mockRequest = {
+      logger: mockLogger,
       auth: {
         isAuthenticated: true
       }
@@ -84,6 +91,7 @@ describe('#signOut route', () => {
 
   test('Should construct logout URL with correct parameters', async () => {
     const mockRequest = {
+      logger: mockLogger,
       auth: {
         isAuthenticated: true
       }
@@ -117,6 +125,7 @@ describe('#signOut route', () => {
       mockToolkit.view.mockReturnValue('view-result')
 
       const mockRequest = {
+        logger: mockLogger,
         auth: {
           isAuthenticated: true
         }
@@ -156,6 +165,7 @@ describe('#signOut route', () => {
     })
 
     const mockRequest = {
+      logger: mockLogger,
       auth: {
         isAuthenticated: true
       }
@@ -186,6 +196,7 @@ describe('#signOut route', () => {
     })
 
     const mockRequest = {
+      logger: mockLogger,
       auth: {
         isAuthenticated: true
       }
@@ -200,6 +211,7 @@ describe('#signOut route', () => {
     getOidcConfig.mockResolvedValue({})
 
     const mockRequest = {
+      logger: mockLogger,
       auth: {
         isAuthenticated: true
       }
@@ -216,6 +228,46 @@ describe('#signOut route', () => {
         pageTitle: 'Signing out',
         logoutUrl: expectedUrl
       }
+    )
+  })
+
+  test('Should call auditSignOut with user session', async () => {
+    const mockRequest = {
+      logger: mockLogger,
+      auth: {
+        isAuthenticated: true
+      }
+    }
+
+    await signOutRoute.handler(mockRequest, mockToolkit)
+
+    expect(auditSignOut).toHaveBeenCalledWith(mockUserSession)
+  })
+
+  test('Should not call auditSignOut when no user session', async () => {
+    getUserSession.mockResolvedValue(null)
+
+    await signOutRoute.handler({}, mockToolkit)
+
+    expect(auditSignOut).not.toHaveBeenCalled()
+  })
+
+  test('Should log sign-out with user details', async () => {
+    const mockRequest = {
+      logger: mockLogger,
+      auth: {
+        isAuthenticated: true
+      }
+    }
+
+    await signOutRoute.handler(mockRequest, mockToolkit)
+
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      {
+        userId: mockUserSession.userId,
+        displayName: mockUserSession.displayName
+      },
+      'User signed out'
     )
   })
 })

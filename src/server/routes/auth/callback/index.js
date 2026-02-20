@@ -11,6 +11,7 @@ export default {
   },
   handler: async function (request, h) {
     if (request.auth.error) {
+      request.logger.error('Sign-in failed')
       await metrics.signInFailure()
     }
 
@@ -39,8 +40,11 @@ export default {
 
     const safeRedirect = getSafeRedirect(redirect)
 
+    request.logger.info({ userId, displayName }, 'User signed in')
     auditSignIn(userSession)
     await metrics.signInSuccess()
+
+    request.logger.info(`Sign-in complete, redirecting user to ${safeRedirect}`)
     return h.redirect(safeRedirect)
   }
 }
