@@ -5,11 +5,13 @@ import { config } from '#config/config.js'
 import { clearUserSession } from '#server/common/helpers/auth/clear-user-session.js'
 import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
 import { getOidcConfig } from '#server/common/helpers/auth/get-oidc-config.js'
+import { auditSignOut } from '#server/common/helpers/auditing/index.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 
 vi.mock('#server/common/helpers/auth/clear-user-session.js')
 vi.mock('#server/common/helpers/auth/get-user-session.js')
 vi.mock('#server/common/helpers/auth/get-oidc-config.js')
+vi.mock('#server/common/helpers/auditing/index.js')
 
 describe('#signOut route', () => {
   const mockOidcConfig = {
@@ -227,6 +229,27 @@ describe('#signOut route', () => {
         logoutUrl: expectedUrl
       }
     )
+  })
+
+  test('Should call auditSignOut with user session', async () => {
+    const mockRequest = {
+      logger: mockLogger,
+      auth: {
+        isAuthenticated: true
+      }
+    }
+
+    await signOutRoute.handler(mockRequest, mockToolkit)
+
+    expect(auditSignOut).toHaveBeenCalledWith(mockUserSession)
+  })
+
+  test('Should not call auditSignOut when no user session', async () => {
+    getUserSession.mockResolvedValue(null)
+
+    await signOutRoute.handler({}, mockToolkit)
+
+    expect(auditSignOut).not.toHaveBeenCalled()
   })
 
   test('Should log sign-out with user details', async () => {

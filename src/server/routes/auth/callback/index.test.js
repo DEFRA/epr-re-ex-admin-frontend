@@ -4,9 +4,11 @@ import callbackRoute from './index.js'
 import { createUserSession } from '#server/common/helpers/auth/create-user-session.js'
 import { randomUUID } from 'node:crypto'
 import { verifyToken } from '#server/common/helpers/auth/verify-token.js'
+import { auditSignIn } from '#server/common/helpers/auditing/index.js'
 
 vi.mock('#server/common/helpers/auth/create-user-session.js')
 vi.mock('#server/common/helpers/auth/verify-token.js')
+vi.mock('#server/common/helpers/auditing/index.js')
 vi.mock('node:crypto')
 
 describe('#callback route', () => {
@@ -455,6 +457,48 @@ describe('#callback route', () => {
     expect(mockLogger.info).toHaveBeenCalledWith(
       'Sign-in complete, redirecting user to /prn-activity'
     )
+  })
+
+  test('Should call auditSignIn with user session on successful authentication', async () => {
+    const mockRequest = {
+      logger: mockLogger,
+      auth: {
+        isAuthenticated: true,
+        credentials: {
+          profile: mockProfile,
+          token: mockToken,
+          refreshToken: mockRefreshToken
+        }
+      },
+      yar: {
+        flash: vi.fn().mockReturnValue([])
+      }
+    }
+
+    await callbackRoute.handler(mockRequest, mockToolkit)
+
+    expect(auditSignIn).toHaveBeenCalledWith({
+      sessionId: mockSessionId,
+      userId: mockProfile.id,
+      displayName: mockProfile.displayName,
+      email: mockProfile.email,
+      isAuthenticated: true,
+      token: mockToken,
+      refreshToken: mockRefreshToken
+    })
+  })
+
+  test('Should not call auditSignIn when authentication fails', async () => {
+    const mockRequest = {
+      logger: mockLogger,
+      auth: {
+        isAuthenticated: false
+      }
+    }
+
+    await callbackRoute.handler(mockRequest, mockToolkit)
+
+    expect(auditSignIn).not.toHaveBeenCalled()
   })
 
   test('Should log error on sign-in failure', async () => {
