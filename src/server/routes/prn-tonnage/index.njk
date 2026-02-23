@@ -1,6 +1,4 @@
 {% extends 'layout.njk' %}
-{% from "govuk/components/table/macro.njk" import govukTable %}
-{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 
@@ -24,57 +22,14 @@
 
         <p class="govuk-body">
           Tonnage of PRNs per accreditation, broken down by current PRN status.
-          Created includes draft and awaiting authorisation.
-          Issued includes awaiting acceptance.
-          Cancelled includes awaiting cancellation and cancelled.
+          Includes awaiting authorisation, awaiting acceptance,
+          awaiting cancellation, accepted and cancelled.
         </p>
 
-        <p class="govuk-body">
-          Data generated at: <strong>{{ generatedAt | formatDate("d MMMM yyyy 'at' h:mmaaa") }}</strong>
-        </p>
-
-        {% if rows and rows.length %}
-          {% set tableRows = [] %}
-          {% for row in rows %}
-            {% set tableRow = [
-              { text: row.organisationName },
-              { text: row.organisationId },
-              { text: row.accreditationNumber },
-              { text: row.material },
-              { text: row.tonnageBand },
-              { text: row.createdTonnage, format: "numeric" },
-              { text: row.issuedTonnage, format: "numeric" },
-              { text: row.cancelledTonnage, format: "numeric" }
-            ] %}
-            {% set tableRows = tableRows.concat([tableRow]) %}
-          {% endfor %}
-
-          {{ govukTable({
-            caption: "PRN tonnage by accreditation",
-            captionClasses: "govuk-table__caption--m",
-            head: [
-              { text: "Organisation Name" },
-              { text: "Organisation ID" },
-              { text: "Accreditation Number" },
-              { text: "Material" },
-              { text: "Tonnage Band" },
-              { text: "Created", format: "numeric" },
-              { text: "Issued", format: "numeric" },
-              { text: "Cancelled", format: "numeric" }
-            ],
-            rows: tableRows
-          }) }}
-
-          <form method="POST">
-            <input type="hidden" name="crumb" value="{{ crumb }}" />
-            {{ govukButton({
-              text: "Download CSV"
-            }) }}
-          </form>
-
-        {% else %}
-          {{ govukInsetText({ text: "No PRN tonnage data available." }) }}
-        {% endif %}
+        {{ govukButton({
+          text: "Run report",
+          href: "/prn-tonnage/results"
+        }) }}
 
       </div>
     </div>

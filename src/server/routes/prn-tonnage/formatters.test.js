@@ -20,9 +20,9 @@ describe('prn-tonnage formatters', () => {
     expect(formatTonnageBand('')).toBe('')
   })
 
-  test('Should format tonnage values to 2 decimal places', () => {
-    expect(formatTonnage(1)).toBe('1.00')
-    expect(formatTonnage(12.345)).toBe('12.35')
-    expect(formatTonnage(null)).toBe('0.00')
+  test('Should format tonnage values as whole numbers', () => {
+    expect(formatTonnage(1)).toBe('1')
+    expect(formatTonnage(12.345)).toBe('12')
+    expect(formatTonnage(null)).toBe('0')
   })
 })

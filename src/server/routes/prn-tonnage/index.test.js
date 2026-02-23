@@ -25,19 +25,23 @@ describe('#prn-tonnage routes plugin', () => {
     expect(mockServer.route).toHaveBeenCalledWith(expect.any(Array))
   })
 
-  test('Should register GET and POST routes', () => {
+  test('Should register entry and results routes', () => {
     prnTonnage.plugin.register(mockServer)
 
     const registeredRoutes = mockServer.route.mock.calls[0][0]
 
-    expect(registeredRoutes).toHaveLength(2)
+    expect(registeredRoutes).toHaveLength(3)
     expect(registeredRoutes[0]).toMatchObject({
       method: 'GET',
       path: '/prn-tonnage'
     })
     expect(registeredRoutes[1]).toMatchObject({
+      method: 'GET',
+      path: '/prn-tonnage/results'
+    })
+    expect(registeredRoutes[2]).toMatchObject({
       method: 'POST',
-      path: '/prn-tonnage'
+      path: '/prn-tonnage/results'
     })
   })
 
@@ -57,6 +61,7 @@ describe('#prn-tonnage routes plugin', () => {
 
     expect(registeredRoutes[0]).toHaveProperty('handler')
     expect(registeredRoutes[1]).toHaveProperty('handler')
+    expect(registeredRoutes[2]).toHaveProperty('handler')
   })
 
   test('Should maintain plugin structure', () => {

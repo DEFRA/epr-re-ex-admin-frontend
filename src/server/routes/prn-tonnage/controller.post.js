@@ -15,9 +15,7 @@ async function generateCsv(data) {
     [],
     [
       'Tonnage of PRNs per accreditation, broken down by current PRN status. ' +
-        'Created includes draft and awaiting authorisation. ' +
-        'Issued includes awaiting acceptance. ' +
-        'Cancelled includes awaiting cancellation and cancelled.'
+        'Includes awaiting authorisation, awaiting acceptance, awaiting cancellation, accepted and cancelled.'
     ],
     [],
     [`Data generated at: ${formatDate(data.generatedAt, dateFormat)}`],
@@ -28,8 +26,10 @@ async function generateCsv(data) {
       'Accreditation Number',
       'Material',
       'Tonnage Band',
-      'Created',
-      'Issued',
+      'Awaiting authorisation',
+      'Awaiting acceptance',
+      'Awaiting cancellation',
+      'Accepted',
       'Cancelled'
     ]
   ]
@@ -41,8 +41,10 @@ async function generateCsv(data) {
       row.accreditationNumber,
       formatMaterialName(row.material),
       formatTonnageBand(row.tonnageBand),
-      formatTonnage(row.createdTonnage),
-      formatTonnage(row.issuedTonnage),
+      formatTonnage(row.awaitingAuthorisationTonnage),
+      formatTonnage(row.awaitingAcceptanceTonnage),
+      formatTonnage(row.awaitingCancellationTonnage),
+      formatTonnage(row.acceptedTonnage),
       formatTonnage(row.cancelledTonnage)
     ])
   }
@@ -68,7 +70,7 @@ export const prnTonnagePostController = {
 
       request.yar.set('error', errorMessage)
 
-      return h.redirect('/prn-tonnage')
+      return h.redirect('/prn-tonnage/results')
     }
   }
 }

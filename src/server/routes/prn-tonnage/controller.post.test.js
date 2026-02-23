@@ -40,8 +40,10 @@ describe('prn-tonnage POST controller', () => {
           accreditationNumber: 'ACC-100',
           material: 'aluminium',
           tonnageBand: 'up_to_500',
-          createdTonnage: 100,
-          issuedTonnage: 20.5,
+          awaitingAuthorisationTonnage: 100,
+          awaitingAcceptanceTonnage: 20,
+          awaitingCancellationTonnage: 2,
+          acceptedTonnage: 10,
           cancelledTonnage: 1
         }
       ]
@@ -57,12 +59,12 @@ describe('prn-tonnage POST controller', () => {
     const expectedCsv = [
       '"PRN tonnage"',
       '',
-      '"Tonnage of PRNs per accreditation, broken down by current PRN status. Created includes draft and awaiting authorisation. Issued includes awaiting acceptance. Cancelled includes awaiting cancellation and cancelled."',
+      '"Tonnage of PRNs per accreditation, broken down by current PRN status. Includes awaiting authorisation, awaiting acceptance, awaiting cancellation, accepted and cancelled."',
       '',
       '"Data generated at: 20 February 2026 at 2:30pm"',
       '',
-      '"Organisation Name","Organisation ID","Accreditation Number","Material","Tonnage Band","Created","Issued","Cancelled"',
-      '"Acme Recycling","ORG001","ACC-100","Aluminium","Up to 500 tonnes","100.00","20.50","1.00"'
+      '"Organisation Name","Organisation ID","Accreditation Number","Material","Tonnage Band","Awaiting authorisation","Awaiting acceptance","Awaiting cancellation","Accepted","Cancelled"',
+      '"Acme Recycling","ORG001","ACC-100","Aluminium","Up to 500 tonnes","100","20","2","10","1"'
     ].join('\n')
 
     expect(mockH.response).toHaveBeenCalledWith(expectedCsv)
@@ -84,7 +86,7 @@ describe('prn-tonnage POST controller', () => {
     const csvContent = mockH.response.mock.calls[0][0]
     expect(csvContent).toContain('"PRN tonnage"')
     expect(csvContent).toContain(
-      '"Organisation Name","Organisation ID","Accreditation Number","Material","Tonnage Band","Created","Issued","Cancelled"'
+      '"Organisation Name","Organisation ID","Accreditation Number","Material","Tonnage Band","Awaiting authorisation","Awaiting acceptance","Awaiting cancellation","Accepted","Cancelled"'
     )
     expect(csvContent).not.toContain('"Acme Recycling"')
   })
@@ -98,7 +100,7 @@ describe('prn-tonnage POST controller', () => {
       'error',
       'There was a problem downloading the PRN tonnage data. Please try again.'
     )
-    expect(mockH.redirect).toHaveBeenCalledWith('/prn-tonnage')
+    expect(mockH.redirect).toHaveBeenCalledWith('/prn-tonnage/results')
     expect(result).toBe('redirect-response')
   })
 

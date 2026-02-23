@@ -28,5 +28,5 @@ export function formatTonnageBand(tonnageBand) {
 }
 
 export function formatTonnage(tonnage) {
-  return Number(tonnage).toFixed(2)
+  return Number(tonnage).toFixed(0)
 }
