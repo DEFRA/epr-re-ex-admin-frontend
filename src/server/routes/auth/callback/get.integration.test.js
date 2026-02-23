@@ -86,7 +86,7 @@ describe('GET /auth/callback', () => {
   describe('on successful return from Entra ID', () => {
     const accessToken = {
       oid: 'user-id',
-      email: 'user@email.com',
+      preferred_username: 'user@email.com',
       aud: config.get('entraId.clientId'),
       iss: mockOidcResponse.issuer
     }
@@ -123,15 +123,13 @@ describe('GET /auth/callback', () => {
       {
         accessToken: {
           ...accessToken,
-          email: 'a@b.com',
           preferred_username: ''
         },
-        expectedEmailAddress: 'a@b.com'
+        expectedEmailAddress: ''
       },
       {
         accessToken: {
           ...accessToken,
-          email: '',
           preferred_username: 'c@d.com'
         },
         expectedEmailAddress: 'c@d.com'
@@ -139,13 +137,12 @@ describe('GET /auth/callback', () => {
       {
         accessToken: {
           ...accessToken,
-          email: 'a@b.com',
-          preferred_username: 'c@d.com'
+          preferred_username: undefined
         },
-        expectedEmailAddress: 'a@b.com'
+        expectedEmailAddress: undefined
       }
     ])(
-      'pulls the user email address from the token, using the email field and falling back to preferred_username',
+      'pulls the user email address from the token via preferred_username',
       async ({ accessToken, expectedEmailAddress }) => {
         await performSignInFlow(accessToken)
         expect(mock.cdpAuditing).toHaveBeenCalledWith(
