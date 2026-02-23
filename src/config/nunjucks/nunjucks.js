@@ -1,7 +1,7 @@
-import path from 'path'
-import nunjucks from 'nunjucks'
 import hapiVision from '@hapi/vision'
 import { fileURLToPath } from 'node:url'
+import nunjucks from 'nunjucks'
+import path from 'path'
 
 import { config } from '../config.js'
 import { context } from './context/context.js'
@@ -47,6 +47,7 @@ export const nunjucksConfig = {
   }
 }
 
+/* v8 ignore next */
 Object.entries(globals).forEach(([name, global]) => {
   nunjucksEnvironment.addGlobal(name, global)
 })
