@@ -23,7 +23,9 @@ export function formatMaterialName(material) {
 }
 
 export function formatTonnageBand(tonnageBand) {
-  if (!tonnageBand) return ''
+  if (!tonnageBand) {
+    return ''
+  }
   return tonnageBandDisplayNames[tonnageBand] ?? tonnageBand
 }
 
