@@ -7,7 +7,6 @@ vi.mock('govuk-frontend', () => ({
   Button: 'MockButton',
   Checkboxes: 'MockCheckboxes',
   ErrorSummary: 'MockErrorSummary',
-  Header: 'MockHeader',
   Radios: 'MockRadios',
   SkipLink: 'MockSkipLink'
 }))
@@ -21,11 +20,10 @@ describe('#application', () => {
     test('Should call createAll once for each component', async () => {
       await import('./application.js')
 
-      expect(mockCreateAll).toHaveBeenCalledTimes(6)
+      expect(mockCreateAll).toHaveBeenCalledTimes(5)
       expect(mockCreateAll).toHaveBeenCalledWith('MockButton')
       expect(mockCreateAll).toHaveBeenCalledWith('MockCheckboxes')
       expect(mockCreateAll).toHaveBeenCalledWith('MockErrorSummary')
-      expect(mockCreateAll).toHaveBeenCalledWith('MockHeader')
       expect(mockCreateAll).toHaveBeenCalledWith('MockRadios')
       expect(mockCreateAll).toHaveBeenCalledWith('MockSkipLink')
     })
