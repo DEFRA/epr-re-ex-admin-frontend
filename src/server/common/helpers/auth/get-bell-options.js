@@ -17,7 +17,7 @@ export function getBellOptions(oidcConfig) {
         const tokenPayload = await verifyToken(credentials.token)
         const { oid: id } = tokenPayload
         const name = tokenPayload.name?.trim() || ''
-        const email = tokenPayload.email || tokenPayload.preferred_username
+        const email = tokenPayload.preferred_username
 
         credentials.profile = {
           id,
