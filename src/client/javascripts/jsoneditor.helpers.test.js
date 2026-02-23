@@ -8,7 +8,8 @@ import {
   LocalStorageManager,
   getAutocompleteOptions,
   validateJSON,
-  initJSONEditor
+  initJSONEditor,
+  schemaTypeIncludes
 } from './jsoneditor.helpers.js'
 
 // Use vi.hoisted to ensure these are available when mocks are set up
@@ -132,6 +133,52 @@ describe('JSONEditor Helpers', () => {
       // This will make node null on the second iteration
       expect(findSchemaNode(schema, ['nullProp', 'nonexistent'])).toBe(null)
     })
+
+    it('should find property inside union-typed object', () => {
+      const unionSchema = {
+        type: 'object',
+        properties: {
+          noticeAddress: {
+            type: ['object', 'null'],
+            properties: {
+              line1: { type: ['string', 'null'] },
+              postcode: { type: ['string', 'null'] }
+            }
+          }
+        }
+      }
+      const result = findSchemaNode(unionSchema, ['noticeAddress', 'line1'])
+      expect(result).toEqual({ type: ['string', 'null'] })
+    })
+
+    it('should find items schema inside union-typed array', () => {
+      const unionSchema = {
+        type: 'object',
+        properties: {
+          registrations: {
+            type: ['array', 'null'],
+            items: {
+              type: ['object', 'null'],
+              properties: {
+                status: {
+                  type: ['string', 'null'],
+                  enum: ['created', 'approved', null]
+                }
+              }
+            }
+          }
+        }
+      }
+      const result = findSchemaNode(unionSchema, [
+        'registrations',
+        '0',
+        'status'
+      ])
+      expect(result).toEqual({
+        type: ['string', 'null'],
+        enum: ['created', 'approved', null]
+      })
+    })
   })
 
   describe('getValueAtPath', () => {
@@ -167,6 +214,48 @@ describe('JSONEditor Helpers', () => {
       expect(getValueAtPath(null, ['name'])).toBe(undefined)
       expect(getValueAtPath(testObj, null)).toBe(undefined)
       expect(getValueAtPath(testObj, [])).toEqual(testObj)
+    })
+  })
+
+  describe('schemaTypeIncludes', () => {
+    it('should return true for exact string type match', () => {
+      expect(schemaTypeIncludes({ type: 'object' }, 'object')).toBe(true)
+      expect(schemaTypeIncludes({ type: 'array' }, 'array')).toBe(true)
+      expect(schemaTypeIncludes({ type: 'string' }, 'string')).toBe(true)
+    })
+
+    it('should return true when type array includes the target', () => {
+      expect(schemaTypeIncludes({ type: ['object', 'null'] }, 'object')).toBe(
+        true
+      )
+      expect(schemaTypeIncludes({ type: ['array', 'null'] }, 'array')).toBe(
+        true
+      )
+      expect(schemaTypeIncludes({ type: ['string', 'null'] }, 'string')).toBe(
+        true
+      )
+    })
+
+    it('should return false when type does not match', () => {
+      expect(schemaTypeIncludes({ type: 'string' }, 'object')).toBe(false)
+      expect(schemaTypeIncludes({ type: ['string', 'null'] }, 'object')).toBe(
+        false
+      )
+    })
+
+    it('should return false for null or undefined schema', () => {
+      expect(schemaTypeIncludes(null, 'object')).toBe(false)
+      expect(schemaTypeIncludes(undefined, 'object')).toBe(false)
+    })
+
+    it('should return false for schema with no type', () => {
+      expect(schemaTypeIncludes({}, 'object')).toBe(false)
+      expect(schemaTypeIncludes({ properties: {} }, 'object')).toBe(false)
+    })
+
+    it('should return false for schema with non-string non-array type', () => {
+      expect(schemaTypeIncludes({ type: 42 }, 'object')).toBe(false)
+      expect(schemaTypeIncludes({ type: true }, 'object')).toBe(false)
     })
   })
 
@@ -372,6 +461,119 @@ describe('JSONEditor Helpers', () => {
       expect(errors).toHaveLength(2)
       expect(errors[0].path).toEqual([0])
       expect(errors[1].path).toEqual([1])
+    })
+
+    it('should recurse into objects with union type ["object", "null"]', () => {
+      const unionSchema = {
+        type: ['object', 'null'],
+        properties: {
+          id: { type: ['string', 'null'], readOnly: true },
+          name: { type: ['string', 'null'] }
+        }
+      }
+      const original = { id: 'abc', name: 'Old' }
+      const current = { id: 'changed', name: 'New' }
+      const errors = []
+
+      checkReadOnlyChanges(current, original, unionSchema, [], errors)
+
+      expect(errors).toHaveLength(1)
+      expect(errors[0]).toEqual({
+        path: ['id'],
+        message: 'This read-only field cannot be changed.'
+      })
+    })
+
+    it('should recurse into arrays with union type ["array", "null"]', () => {
+      const unionSchema = {
+        type: ['array', 'null'],
+        items: { type: 'string', readOnly: true }
+      }
+      const original = ['item1', 'item2']
+      const current = ['item1', 'changed']
+      const errors = []
+
+      checkReadOnlyChanges(current, original, unionSchema, [], errors)
+
+      expect(errors).toHaveLength(1)
+      expect(errors[0].path).toEqual([1])
+    })
+
+    it('should detect readOnly changes in nested objects within union-typed arrays', () => {
+      // Mirrors the real registration/accreditation structure
+      const registrationsSchema = {
+        type: 'array',
+        items: {
+          type: ['object', 'null'],
+          properties: {
+            id: { type: ['string', 'null'], readOnly: true },
+            status: { type: ['string', 'null'] },
+            statusHistory: { type: ['array', 'null'], readOnly: true },
+            registrationNumber: { type: ['string', 'null'] }
+          }
+        }
+      }
+
+      const original = [
+        {
+          id: 'reg-1',
+          status: 'created',
+          statusHistory: [{ status: 'created', updatedAt: '2025-01-01' }],
+          registrationNumber: null
+        }
+      ]
+      const current = [
+        {
+          id: 'tampered',
+          status: 'approved',
+          statusHistory: [
+            { status: 'created', updatedAt: '2025-01-01' },
+            { status: 'approved', updatedAt: '2025-02-01' }
+          ],
+          registrationNumber: 'REG-001'
+        }
+      ]
+      const errors = []
+
+      checkReadOnlyChanges(current, original, registrationsSchema, [], errors)
+
+      expect(errors).toHaveLength(2)
+      expect(errors.map((e) => e.path)).toEqual(
+        expect.arrayContaining([
+          [0, 'id'],
+          [0, 'statusHistory']
+        ])
+      )
+    })
+
+    it('should handle parent schema with union type containing nested union-typed objects', () => {
+      // Tests two levels of union types: parent object and nested object
+      const schema = {
+        type: 'object',
+        properties: {
+          registration: {
+            type: ['object', 'null'],
+            properties: {
+              site: {
+                type: ['object', 'null'],
+                properties: {
+                  code: { type: ['string', 'null'], readOnly: true },
+                  name: { type: ['string', 'null'] }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      const original = { registration: { site: { code: 'S1', name: 'Old' } } }
+      const current = { registration: { site: { code: 'S2', name: 'New' } } }
+      const errors = []
+
+      checkReadOnlyChanges(current, original, schema, [], errors)
+
+      expect(errors).toHaveLength(1)
+      expect(errors[0].path).toEqual(['registration', 'site', 'code'])
     })
   })
 

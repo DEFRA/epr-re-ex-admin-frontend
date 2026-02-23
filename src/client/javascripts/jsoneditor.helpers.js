@@ -15,9 +15,9 @@ export function findSchemaNode(schema, path) {
 
   let node = schema
   for (const segment of path) {
-    if (node.type === 'object' && node.properties?.[segment]) {
+    if (schemaTypeIncludes(node, 'object') && node.properties?.[segment]) {
       node = node.properties[segment]
-    } else if (node.type === 'array' && node.items) {
+    } else if (schemaTypeIncludes(node, 'array') && node.items) {
       node = node.items
     } else {
       return null
@@ -37,6 +37,26 @@ export function getValueAtPath(obj, path) {
     return undefined
   }
   return path.reduce((acc, key) => acc?.[key] || undefined, obj)
+}
+
+/**
+ * Checks if a schema's type includes a specific type name.
+ * Handles both string types (e.g. "object") and union types (e.g. ["object", "null"]).
+ * @param {Object} schema - The JSON schema node
+ * @param {string} typeName - The type to check for (e.g. 'object', 'array')
+ * @returns {boolean} True if the schema type includes the given type name
+ */
+export function schemaTypeIncludes(schema, typeName) {
+  if (!schema || !schema.type) {
+    return false
+  }
+  if (typeof schema.type === 'string') {
+    return schema.type === typeName
+  }
+  if (Array.isArray(schema.type)) {
+    return schema.type.includes(typeName)
+  }
+  return false
 }
 
 /**
@@ -133,11 +153,15 @@ export function checkReadOnlyChanges(
 
   addReadOnlyErrorIfChanged(data, original, schema, path, errors)
 
-  if (schema.type === 'object' && schema.properties) {
+  if (schemaTypeIncludes(schema, 'object') && schema.properties) {
     checkObjectPropertiesReadOnly(data, original, schema, path, errors)
   }
 
-  if (schema.type === 'array' && Array.isArray(data) && schema.items) {
+  if (
+    schemaTypeIncludes(schema, 'array') &&
+    Array.isArray(data) &&
+    schema.items
+  ) {
     checkArrayItemsReadOnly(data, original, schema, path, errors)
   }
 
