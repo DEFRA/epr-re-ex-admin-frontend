@@ -55,9 +55,9 @@ describe('organisation GET controller - Unit Tests - Flash message handling', ()
       {}
     )
 
-    expect(mockRequest.yar.get).toHaveBeenCalledWith('error')
+    expect(mockRequest.yar.get).toHaveBeenCalledWith('errors')
     expect(mockRequest.yar.get).toHaveBeenCalledWith('success')
-    expect(mockRequest.yar.clear).toHaveBeenCalledWith('error')
+    expect(mockRequest.yar.clear).toHaveBeenCalledWith('errors')
     expect(mockRequest.yar.clear).toHaveBeenCalledWith('success')
 
     expect(mockH.view).toHaveBeenCalledWith('routes/organisation/index', {
@@ -67,17 +67,17 @@ describe('organisation GET controller - Unit Tests - Flash message handling', ()
     })
   })
 
-  test('Should include error messages from session', async () => {
+  test('Should include single error as errorList from session', async () => {
     const mockOrgData = {
       id: 'test-org-id',
       companyDetails: { name: 'Test Org' }
     }
 
-    const mockError = 'Validation Error: Field is required'
-
     fetchJsonFromBackend.mockResolvedValue(mockOrgData)
     mockRequest.yar.get.mockImplementation((key) => {
-      if (key === 'error') return mockError
+      if (key === 'errors') {
+        return [{ message: 'Validation Error: Field is required' }]
+      }
       return null
     })
 
@@ -86,7 +86,47 @@ describe('organisation GET controller - Unit Tests - Flash message handling', ()
     expect(mockH.view).toHaveBeenCalledWith(
       'routes/organisation/index',
       expect.objectContaining({
-        error: mockError
+        errorList: [{ text: 'Validation Error: Field is required' }]
+      })
+    )
+  })
+
+  test('Should include structured validation errors as errorList from session', async () => {
+    const mockOrgData = {
+      id: 'test-org-id',
+      companyDetails: { name: 'Test Org' }
+    }
+
+    const mockValidationErrors = [
+      {
+        path: 'registrations.0.registrationNumber',
+        message: '"registrationNumber" is required when status is approved'
+      },
+      {
+        path: 'registrations.0.validFrom',
+        message: '"validFrom" is required when status is approved or suspended'
+      }
+    ]
+
+    fetchJsonFromBackend.mockResolvedValue(mockOrgData)
+    mockRequest.yar.get.mockImplementation((key) => {
+      if (key === 'errors') return mockValidationErrors
+      return null
+    })
+
+    await organisationsGETController.handler(mockRequest, mockH)
+
+    expect(mockH.view).toHaveBeenCalledWith(
+      'routes/organisation/index',
+      expect.objectContaining({
+        errorList: [
+          {
+            text: '"registrationNumber" is required when status is approved'
+          },
+          {
+            text: '"validFrom" is required when status is approved or suspended'
+          }
+        ]
       })
     )
   })
@@ -113,17 +153,15 @@ describe('organisation GET controller - Unit Tests - Flash message handling', ()
     )
   })
 
-  test('Should include both error and success messages if both exist', async () => {
+  test('Should include both errorList and success message if both exist', async () => {
     const mockOrgData = {
       id: 'test-org-id',
       companyDetails: { name: 'Test Org' }
     }
 
-    const mockError = 'Test Error'
-
     fetchJsonFromBackend.mockResolvedValue(mockOrgData)
     mockRequest.yar.get.mockImplementation((key) => {
-      if (key === 'error') return mockError
+      if (key === 'errors') return [{ message: 'Test Error' }]
       if (key === 'success') return true
       return null
     })
@@ -133,7 +171,7 @@ describe('organisation GET controller - Unit Tests - Flash message handling', ()
     expect(mockH.view).toHaveBeenCalledWith(
       'routes/organisation/index',
       expect.objectContaining({
-        error: mockError,
+        errorList: [{ text: 'Test Error' }],
         message: 'success'
       })
     )
