@@ -1,11 +1,11 @@
+import { CleanWebpackPlugin } from 'clean-webpack-plugin'
+import CopyPlugin from 'copy-webpack-plugin'
+import MiniCssExtractPlugin from 'mini-css-extract-plugin'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'path'
-import CopyPlugin from 'copy-webpack-plugin'
-import { CleanWebpackPlugin } from 'clean-webpack-plugin'
 import TerserPlugin from 'terser-webpack-plugin'
 import { WebpackAssetsManifest } from 'webpack-assets-manifest'
-import MiniCssExtractPlugin from 'mini-css-extract-plugin'
 
 const { NODE_ENV = 'development' } = process.env
 
@@ -186,15 +186,8 @@ export default {
           from: path.join(govukFrontendPath, 'dist/govuk/assets'),
           to: 'assets',
           globOptions: {
-            ignore: [
-              path.join(govukFrontendPath, 'dist/govuk/assets/rebrand'),
-              path.join(govukFrontendPath, 'dist/govuk/assets/images')
-            ]
+            ignore: [path.join(govukFrontendPath, 'dist/govuk/assets/images')]
           }
-        },
-        {
-          from: path.join(govukFrontendPath, 'dist/govuk/assets/rebrand'),
-          to: 'assets'
         }
       ]
     })
