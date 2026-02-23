@@ -23,6 +23,10 @@ export default {
 
     await clearUserSession(request)
 
+    request.logger.info(
+      { userId: userSession.userId, displayName: userSession.displayName },
+      'User signed out'
+    )
     auditSignOut(userSession)
     await metrics.signOutSuccess()
 

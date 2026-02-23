@@ -4,15 +4,22 @@ import callbackRoute from './index.js'
 import { createUserSession } from '#server/common/helpers/auth/create-user-session.js'
 import { randomUUID } from 'node:crypto'
 import { verifyToken } from '#server/common/helpers/auth/verify-token.js'
+import { auditSignIn } from '#server/common/helpers/auditing/index.js'
 
 vi.mock('#server/common/helpers/auth/create-user-session.js')
 vi.mock('#server/common/helpers/auth/verify-token.js')
+vi.mock('#server/common/helpers/auditing/index.js')
 vi.mock('node:crypto')
 
 describe('#callback route', () => {
   const mockToolkit = {
     view: vi.fn().mockReturnValue('unauthorised-view-result'),
     redirect: vi.fn().mockReturnValue('redirect-result')
+  }
+
+  const mockLogger = {
+    info: vi.fn(),
+    error: vi.fn()
   }
 
   const mockProfile = {
@@ -59,6 +66,7 @@ describe('#callback route', () => {
 
   test('Should return unauthorised view if not authenticated', async () => {
     const mockRequest = {
+      logger: mockLogger,
       auth: {
         isAuthenticated: false
       }
@@ -83,6 +91,7 @@ describe('#callback route', () => {
       'Should create session and redirect to either flash referrer (when present and safe) or home',
       async ({ referrer, expectedRedirectUrl }) => {
         const mockRequest = {
+          logger: mockLogger,
           auth: {
             isAuthenticated: true,
             credentials: {
@@ -121,6 +130,7 @@ describe('#callback route', () => {
     }
 
     const mockRequest = {
+      logger: mockLogger,
       auth: {
         isAuthenticated: true,
         credentials: {
@@ -146,6 +156,7 @@ describe('#callback route', () => {
 
   test('Should handle empty profile object', async () => {
     const mockRequest = {
+      logger: mockLogger,
       auth: {
         isAuthenticated: true,
         credentials: {
@@ -175,6 +186,7 @@ describe('#callback route', () => {
       .mockReturnValueOnce(sessionIds[2])
 
     const mockRequest = {
+      logger: mockLogger,
       auth: {
         isAuthenticated: true,
         credentials: {
@@ -205,6 +217,7 @@ describe('#callback route', () => {
     createUserSession.mockRejectedValue(error)
 
     const mockRequest = {
+      logger: mockLogger,
       auth: {
         isAuthenticated: true,
         credentials: {
@@ -230,6 +243,7 @@ describe('#callback route', () => {
     })
 
     const mockRequest = {
+      logger: mockLogger,
       auth: {
         isAuthenticated: true,
         credentials: {
@@ -250,6 +264,7 @@ describe('#callback route', () => {
 
   test('Should include all required fields in user session', async () => {
     const mockRequest = {
+      logger: mockLogger,
       auth: {
         isAuthenticated: true,
         credentials: {
@@ -280,6 +295,7 @@ describe('#callback route', () => {
 
   test('Should handle missing credentials', async () => {
     const mockRequest = {
+      logger: mockLogger,
       auth: {
         isAuthenticated: true,
         credentials: undefined
@@ -293,6 +309,7 @@ describe('#callback route', () => {
 
   test('Should handle missing profile in credentials', async () => {
     const mockRequest = {
+      logger: mockLogger,
       auth: {
         isAuthenticated: true,
         credentials: {
@@ -308,6 +325,7 @@ describe('#callback route', () => {
 
   test('Should handle missing token in credentials', async () => {
     const mockRequest = {
+      logger: mockLogger,
       auth: {
         isAuthenticated: true,
         credentials: {
@@ -335,6 +353,7 @@ describe('#callback route', () => {
     }
 
     const mockRequest = {
+      logger: mockLogger,
       auth: {
         isAuthenticated: true,
         credentials: {
@@ -375,6 +394,7 @@ describe('#callback route', () => {
     })
 
     const mockRequest = {
+      logger: mockLogger,
       auth: {
         isAuthenticated: true,
         credentials: {
@@ -387,5 +407,111 @@ describe('#callback route', () => {
     await callbackRoute.handler(mockRequest, mockToolkit)
 
     expect(callOrder).toEqual(['randomUUID', 'createUserSession', 'redirect'])
+  })
+
+  test('Should log sign-in on successful authentication', async () => {
+    const mockRequest = {
+      logger: mockLogger,
+      auth: {
+        isAuthenticated: true,
+        credentials: {
+          profile: mockProfile,
+          token: mockToken,
+          refreshToken: mockRefreshToken
+        }
+      },
+      yar: {
+        flash: vi.fn().mockReturnValue([])
+      }
+    }
+
+    await callbackRoute.handler(mockRequest, mockToolkit)
+
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      { userId: mockProfile.id, displayName: mockProfile.displayName },
+      'User signed in'
+    )
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      'Sign-in complete, redirecting user to /'
+    )
+  })
+
+  test('Should log redirect to referrer page after sign-in', async () => {
+    const mockRequest = {
+      logger: mockLogger,
+      auth: {
+        isAuthenticated: true,
+        credentials: {
+          profile: mockProfile,
+          token: mockToken,
+          refreshToken: mockRefreshToken
+        }
+      },
+      yar: {
+        flash: vi.fn().mockReturnValue(['/prn-activity'])
+      }
+    }
+
+    await callbackRoute.handler(mockRequest, mockToolkit)
+
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      'Sign-in complete, redirecting user to /prn-activity'
+    )
+  })
+
+  test('Should call auditSignIn with user session on successful authentication', async () => {
+    const mockRequest = {
+      logger: mockLogger,
+      auth: {
+        isAuthenticated: true,
+        credentials: {
+          profile: mockProfile,
+          token: mockToken,
+          refreshToken: mockRefreshToken
+        }
+      },
+      yar: {
+        flash: vi.fn().mockReturnValue([])
+      }
+    }
+
+    await callbackRoute.handler(mockRequest, mockToolkit)
+
+    expect(auditSignIn).toHaveBeenCalledWith({
+      sessionId: mockSessionId,
+      userId: mockProfile.id,
+      displayName: mockProfile.displayName,
+      email: mockProfile.email,
+      isAuthenticated: true,
+      token: mockToken,
+      refreshToken: mockRefreshToken
+    })
+  })
+
+  test('Should not call auditSignIn when authentication fails', async () => {
+    const mockRequest = {
+      logger: mockLogger,
+      auth: {
+        isAuthenticated: false
+      }
+    }
+
+    await callbackRoute.handler(mockRequest, mockToolkit)
+
+    expect(auditSignIn).not.toHaveBeenCalled()
+  })
+
+  test('Should log error on sign-in failure', async () => {
+    const mockRequest = {
+      logger: mockLogger,
+      auth: {
+        isAuthenticated: false,
+        error: new Error('Auth failed')
+      }
+    }
+
+    await callbackRoute.handler(mockRequest, mockToolkit)
+
+    expect(mockLogger.error).toHaveBeenCalledWith('Sign-in failed')
   })
 })
