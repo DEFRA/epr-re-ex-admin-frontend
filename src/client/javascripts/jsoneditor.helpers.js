@@ -476,17 +476,18 @@ function clearDraftIfStale(
 
 /**
  * Creates JSONEditor configuration options
- * @param {Object} schema - JSON schema
- * @param {Function} validate - AJV validation function
- * @param {Object} originalData - Original data for comparison
- * @param {string} hiddenInputId - The ID of the hidden input element
- * @param {string} saveButtonId - The ID of the save button
- * @param {LocalStorageManager} storageManager - Storage manager instance
- * @param {Function} getEditor - Function to get the editor instance
- * @param {Function} onCreateMenu - Callback for customising the context menu
+ * @param {Object} options - Configuration options
+ * @param {Object} options.schema - JSON schema
+ * @param {Function} options.validate - AJV validation function
+ * @param {Object} options.originalData - Original data for comparison
+ * @param {string} options.hiddenInputId - The ID of the hidden input element
+ * @param {string} options.saveButtonId - The ID of the save button
+ * @param {LocalStorageManager} options.storageManager - Storage manager instance
+ * @param {Function} options.getEditor - Function to get the editor instance
+ * @param {Function} options.onCreateMenu - Callback for customising the context menu
  * @returns {Object} JSONEditor configuration object
  */
-function createEditorConfig(
+function createEditorConfig({
   schema,
   validate,
   originalData,
@@ -495,7 +496,7 @@ function createEditorConfig(
   storageManager,
   getEditor,
   onCreateMenu
-) {
+}) {
   return {
     mode: 'tree',
     modes: ['text', 'tree'],
@@ -670,16 +671,16 @@ export function initJSONEditor({
     onAfterAppend
   )
 
-  const editorConfig = createEditorConfig(
+  const editorConfig = createEditorConfig({
     schema,
     validate,
-    inflatedOriginalData,
+    originalData: inflatedOriginalData,
     hiddenInputId,
     saveButtonId,
     storageManager,
-    () => editor,
+    getEditor: () => editor,
     onCreateMenu
-  )
+  })
   const editor = new JSONEditor(container, editorConfig)
 
   // Load data

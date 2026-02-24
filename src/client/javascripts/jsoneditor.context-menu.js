@@ -28,11 +28,11 @@ export function createAppendMenuItems(
       className: 'jsoneditor-append',
       click: () => {
         const editor = getEditor()
-        const data = JSON.parse(JSON.stringify(editor.get()))
+        const data = structuredClone(editor.get())
         const array = matched.path.reduce((obj, key) => obj?.[key], data)
 
         if (Array.isArray(array)) {
-          array.push(JSON.parse(JSON.stringify(matched.template)))
+          array.push(structuredClone(matched.template))
           editor.update(data)
           onAfterAppend?.(data)
         }
