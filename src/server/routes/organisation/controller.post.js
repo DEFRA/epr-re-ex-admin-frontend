@@ -22,7 +22,7 @@ export const organisationsPOSTController = {
       const payload = error.output?.payload
       const errorList = payload?.validationErrors?.length
         ? payload.validationErrors.map((e) => ({
-            text: `${e.path}: ${e.message}`
+            text: e.message
           }))
         : [{ text: payload?.message ?? 'An unknown error occurred' }]
 
