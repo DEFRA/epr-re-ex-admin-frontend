@@ -19,13 +19,7 @@ export const organisationsPOSTController = {
 
       return h.redirect(`/organisations/${id}`)
     } catch (error) {
-      const { validationErrors, message } = error.output.payload
-
-      if (validationErrors?.length) {
-        request.yar.set('errors', validationErrors)
-      } else {
-        request.yar.set('errors', [{ message }])
-      }
+      request.yar.set('error', error.output.payload.message)
 
       return h.redirect(`/organisations/${id}`)
     }
