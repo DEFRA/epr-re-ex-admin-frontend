@@ -82,6 +82,17 @@ describe('parseValidationErrors', () => {
     expect(result).toEqual([{ message: 'blah is required' }])
   })
 
+  test('Should handle complex nested paths with multiple numeric indices', () => {
+    const message =
+      'Invalid organisation data: a.2.b.3.c.4.aProperty: any.invalid'
+
+    const result = parseValidationErrors(message)
+
+    expect(result).toEqual([
+      { message: 'a[2].b[3].c[4].aProperty is required' }
+    ])
+  })
+
   test('Should fall back to raw message when entries have no valid colon-separated format', () => {
     const message =
       'Invalid organisation data: something-without-colon-separator'
