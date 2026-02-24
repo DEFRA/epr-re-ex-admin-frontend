@@ -3,7 +3,6 @@ import JSONEditor from 'jsoneditor'
 import 'jsoneditor/dist/jsoneditor.css'
 import { schemaTypeIncludes } from './jsoneditor.schema-utils.js'
 import { inflateNullObjects } from './jsoneditor.inflate.js'
-export { schemaTypeIncludes, inflateNullObjects }
 
 /**
  * Finds a schema node by following a JSONEditor path
@@ -39,7 +38,7 @@ export function getValueAtPath(obj, path) {
   if (!obj || !Array.isArray(path)) {
     return undefined
   }
-  return path.reduce((acc, key) => acc?.[key] || undefined, obj)
+  return path.reduce((acc, key) => acc?.[key], obj)
 }
 
 /**

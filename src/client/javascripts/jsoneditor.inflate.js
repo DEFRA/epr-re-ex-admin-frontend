@@ -25,6 +25,38 @@ function buildNullTemplate(schema) {
 }
 
 /**
+ * Inflates each item in an array using the schema's items definition.
+ * @param {Array} data - The array data
+ * @param {Object} schema - The JSON schema with items definition
+ * @returns {Array} Array with null objects inflated
+ */
+function inflateArrayItems(data, schema) {
+  return data.map((item) => inflateRecursive(item, schema.items))
+}
+
+/**
+ * Inflates null object properties within an existing object.
+ * @param {Object} data - The object data
+ * @param {Object} schema - The JSON schema with properties
+ * @returns {Object} Object with null sub-objects inflated
+ */
+function inflateObjectProperties(data, schema) {
+  const result = {}
+
+  for (const key of Object.keys(data)) {
+    const propSchema = schema.properties[key]
+
+    if (propSchema) {
+      result[key] = inflateRecursive(data[key], propSchema)
+    } else {
+      result[key] = data[key]
+    }
+  }
+
+  return result
+}
+
+/**
  * Recursively inflates null object values using the schema structure.
  * @param {*} data - The data to process
  * @param {Object} schema - The JSON schema for this data
@@ -44,7 +76,7 @@ function inflateRecursive(data, schema) {
     Array.isArray(data) &&
     schema.items
   ) {
-    return data.map((item) => inflateRecursive(item, schema.items))
+    return inflateArrayItems(data, schema)
   }
 
   if (
@@ -52,18 +84,7 @@ function inflateRecursive(data, schema) {
     schema.properties &&
     typeof data === 'object'
   ) {
-    const result = {}
-
-    for (const key of Object.keys(data)) {
-      const propSchema = schema.properties[key]
-
-      if (propSchema) {
-        result[key] = inflateRecursive(data[key], propSchema)
-      } else {
-        result[key] = data[key]
-      }
-    }
-    return result
+    return inflateObjectProperties(data, schema)
   }
 
   return data

@@ -214,6 +214,20 @@ describe('JSONEditor Helpers', () => {
       expect(getValueAtPath(testObj, null)).toBe(undefined)
       expect(getValueAtPath(testObj, [])).toEqual(testObj)
     })
+
+    it('should return falsy values without coercing them to undefined', () => {
+      const obj = {
+        count: 0,
+        label: '',
+        active: false,
+        data: null
+      }
+
+      expect(getValueAtPath(obj, ['count'])).toBe(0)
+      expect(getValueAtPath(obj, ['label'])).toBe('')
+      expect(getValueAtPath(obj, ['active'])).toBe(false)
+      expect(getValueAtPath(obj, ['data'])).toBe(null)
+    })
   })
 
   describe('isNodeEditable', () => {
