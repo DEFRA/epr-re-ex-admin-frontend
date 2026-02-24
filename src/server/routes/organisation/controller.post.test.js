@@ -11,6 +11,7 @@ import {
   server as mswServer,
   HttpResponse
 } from '../../../../.vite/setup-msw.js'
+
 vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
   getUserSession: vi.fn().mockReturnValue(null)
 }))
@@ -121,62 +122,7 @@ describe('organisation POST controller', () => {
       expect(headers.location).toBe(`/organisations/${orgId}`)
     })
 
-    test('Should handle backend validation error with structured validationErrors and redirect', async () => {
-      const orgId = 'org-1'
-      const mockErrorResponse = {
-        message:
-          'Invalid organisation data: registrations.0.registrationNumber: any.invalid',
-        validationErrors: [
-          {
-            path: 'registrations.0.registrationNumber',
-            message: '"registrationNumber" is required when status is approved'
-          }
-        ]
-      }
-
-      const putOrganisationHandler = http.put(
-        `${backendUrl}/v1/organisations/${orgId}`,
-        () => {
-          return HttpResponse.json(mockErrorResponse, { status: 422 })
-        }
-      )
-
-      mswServer.use(putOrganisationHandler)
-
-      const postData = {
-        version: 1,
-        companyDetails: {
-          name: 'Test Org',
-          registrationNumber: '12345678'
-        }
-      }
-
-      const { cookie, crumb } = await getCsrfToken(
-        server,
-        `/organisations/${orgId}`,
-        { strategy: 'session', credentials: mockUserSession }
-      )
-
-      const { statusCode, headers } = await server.inject({
-        method: 'POST',
-        url: `/organisations/${orgId}`,
-        headers: { cookie },
-        payload: {
-          organisation: JSON.stringify(postData),
-          crumb
-        },
-        auth: {
-          strategy: 'session',
-          credentials: mockUserSession
-        }
-      })
-
-      // Should redirect (302 Found)
-      expect(statusCode).toBe(302)
-      expect(headers.location).toBe(`/organisations/${orgId}`)
-    })
-
-    test('Should handle backend validation error without validationErrors and redirect', async () => {
+    test('Should handle backend validation error and redirect with error messages in session', async () => {
       const orgId = 'org-1'
       const mockErrorResponse = {
         message:
