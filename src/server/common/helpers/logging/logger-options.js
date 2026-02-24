@@ -10,7 +10,8 @@ import { config } from '#config/config.js'
 const logConfig = config.get('log')
 const serviceName = config.get('serviceName')
 const serviceVersion = config.get('serviceVersion')
-const isProduction = config.get('isProduction')
+const cdpEnvironment = config.get('cdpEnvironment')
+const isProductionEnvironment = cdpEnvironment === 'prod'
 
 const formatters = {
   ecs: {
@@ -46,7 +47,7 @@ export const loggerOptions = {
       }
 
       // @ts-ignore - check for Boom error before casting
-      if (!isProduction && err.isBoom && err.output) {
+      if (!isProductionEnvironment && err.isBoom && err.output) {
         /** @type {BoomError} */
         const boomErr = /** @type {BoomError} */ (err)
         errorObj.statusCode = boomErr.output.statusCode

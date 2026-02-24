@@ -170,7 +170,7 @@ describe('#loggerOptions in production environment', () => {
             },
             serviceName: 'test-service',
             serviceVersion: '1.0.0',
-            isProduction: true
+            cdpEnvironment: 'prod'
           }
           return values[key]
         })

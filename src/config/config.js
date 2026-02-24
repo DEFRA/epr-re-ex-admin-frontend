@@ -265,6 +265,21 @@ export const config = convict({
       }
     }
   },
+  cdpEnvironment: {
+    doc: 'The CDP environment the app is running in',
+    format: [
+      'local',
+      'infra-dev',
+      'management',
+      'dev',
+      'test',
+      'perf-test',
+      'ext-test',
+      'prod'
+    ],
+    default: 'local',
+    env: 'ENVIRONMENT'
+  },
   eprBackendUrl: {
     doc: 'EPR Backend API base URL',
     format: String,
