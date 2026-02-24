@@ -57,6 +57,34 @@ function inflateObjectProperties(data, schema) {
 }
 
 /**
+ * Checks if the schema describes an array and the data is an array with items defined.
+ * @param {*} data - The data to check
+ * @param {Object} schema - The JSON schema
+ * @returns {boolean} True if data is an array matching an array schema with items
+ */
+function isInflatableArray(data, schema) {
+  const isArraySchema = schemaTypeIncludes(schema, 'array')
+  const isArray = Array.isArray(data)
+  const hasItemsDefined = !!schema.items
+
+  return isArraySchema && isArray && hasItemsDefined
+}
+
+/**
+ * Checks if the schema describes an object and the data is a non-null object with properties defined.
+ * @param {*} data - The data to check
+ * @param {Object} schema - The JSON schema
+ * @returns {boolean} True if data is an object matching an object schema with properties
+ */
+function isInflatableObject(data, schema) {
+  const isObjectSchema = schemaTypeIncludes(schema, 'object')
+  const isObject = typeof data === 'object'
+  const hasPropertiesDefined = !!schema.properties
+
+  return isObjectSchema && isObject && hasPropertiesDefined
+}
+
+/**
  * Recursively inflates null object values using the schema structure.
  * @param {*} data - The data to process
  * @param {Object} schema - The JSON schema for this data
@@ -71,19 +99,11 @@ function inflateRecursive(data, schema) {
     return data
   }
 
-  if (
-    schemaTypeIncludes(schema, 'array') &&
-    Array.isArray(data) &&
-    schema.items
-  ) {
+  if (isInflatableArray(data, schema)) {
     return inflateArrayItems(data, schema)
   }
 
-  if (
-    schemaTypeIncludes(schema, 'object') &&
-    schema.properties &&
-    typeof data === 'object'
-  ) {
+  if (isInflatableObject(data, schema)) {
     return inflateObjectProperties(data, schema)
   }
 
