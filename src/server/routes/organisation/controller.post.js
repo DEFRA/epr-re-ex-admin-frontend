@@ -19,7 +19,14 @@ export const organisationsPOSTController = {
 
       return h.redirect(`/organisations/${id}`)
     } catch (error) {
-      request.yar.set('error', error.output.payload.message)
+      const payload = error.output?.payload
+      const errorList = payload?.validationErrors?.length
+        ? payload.validationErrors.map((e) => ({
+            text: `${e.path}: ${e.message}`
+          }))
+        : [{ text: payload?.message ?? 'An unknown error occurred' }]
+
+      request.yar.set('errorList', errorList)
 
       return h.redirect(`/organisations/${id}`)
     }
