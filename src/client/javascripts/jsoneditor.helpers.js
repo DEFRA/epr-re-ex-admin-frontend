@@ -1,6 +1,9 @@
 import isEqual from 'lodash/isEqual.js'
 import JSONEditor from 'jsoneditor'
 import 'jsoneditor/dist/jsoneditor.css'
+import { schemaTypeIncludes } from './jsoneditor.schema-utils.js'
+import { inflateNullObjects } from './jsoneditor.inflate.js'
+export { schemaTypeIncludes, inflateNullObjects }
 
 /**
  * Finds a schema node by following a JSONEditor path
@@ -37,26 +40,6 @@ export function getValueAtPath(obj, path) {
     return undefined
   }
   return path.reduce((acc, key) => acc?.[key] || undefined, obj)
-}
-
-/**
- * Checks if a schema's type includes a specific type name.
- * Handles both string types (e.g. "object") and union types (e.g. ["object", "null"]).
- * @param {Object} schema - The JSON schema node
- * @param {string} typeName - The type to check for (e.g. 'object', 'array')
- * @returns {boolean} True if the schema type includes the given type name
- */
-export function schemaTypeIncludes(schema, typeName) {
-  if (!schema || !schema.type) {
-    return false
-  }
-  if (typeof schema.type === 'string') {
-    return schema.type === typeName
-  }
-  if (Array.isArray(schema.type)) {
-    return schema.type.includes(typeName)
-  }
-  return false
 }
 
 /**
@@ -634,13 +617,17 @@ export function initJSONEditor({
     staleDraftWarningPlaceholderId
   )
 
-  // Load draft and validate version
+  const inflatedOriginalData = inflateNullObjects(originalData, schema)
+
   const savedData = storageManager.load()
+  const inflatedSavedData = savedData
+    ? inflateNullObjects(savedData, schema)
+    : null
 
   const editorConfig = createEditorConfig(
     schema,
     validate,
-    originalData,
+    inflatedOriginalData,
     hiddenInputId,
     saveButtonId,
     storageManager,
@@ -649,14 +636,15 @@ export function initJSONEditor({
   const editor = new JSONEditor(container, editorConfig)
 
   // Load data
-  editor.set(savedData || originalData)
-  syncHiddenInput(hiddenInputId, savedData || originalData)
-  highlightChanges(editor, savedData || originalData, originalData)
+  const dataToLoad = inflatedSavedData || inflatedOriginalData
+  editor.set(dataToLoad)
+  syncHiddenInput(hiddenInputId, dataToLoad)
+  highlightChanges(editor, dataToLoad, inflatedOriginalData)
 
   // Initialise save button state
   const initialErrors = validateJSON(
-    savedData || originalData,
-    originalData,
+    dataToLoad,
+    inflatedOriginalData,
     schema,
     validate
   )
@@ -666,7 +654,7 @@ export function initJSONEditor({
     resetButtonId,
     storageManager,
     editor,
-    originalData,
+    inflatedOriginalData,
     hiddenInputId
   )
 }

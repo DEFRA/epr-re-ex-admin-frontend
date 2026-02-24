@@ -8,8 +8,7 @@ import {
   LocalStorageManager,
   getAutocompleteOptions,
   validateJSON,
-  initJSONEditor,
-  schemaTypeIncludes
+  initJSONEditor
 } from './jsoneditor.helpers.js'
 
 // Use vi.hoisted to ensure these are available when mocks are set up
@@ -214,48 +213,6 @@ describe('JSONEditor Helpers', () => {
       expect(getValueAtPath(null, ['name'])).toBe(undefined)
       expect(getValueAtPath(testObj, null)).toBe(undefined)
       expect(getValueAtPath(testObj, [])).toEqual(testObj)
-    })
-  })
-
-  describe('schemaTypeIncludes', () => {
-    it('should return true for exact string type match', () => {
-      expect(schemaTypeIncludes({ type: 'object' }, 'object')).toBe(true)
-      expect(schemaTypeIncludes({ type: 'array' }, 'array')).toBe(true)
-      expect(schemaTypeIncludes({ type: 'string' }, 'string')).toBe(true)
-    })
-
-    it('should return true when type array includes the target', () => {
-      expect(schemaTypeIncludes({ type: ['object', 'null'] }, 'object')).toBe(
-        true
-      )
-      expect(schemaTypeIncludes({ type: ['array', 'null'] }, 'array')).toBe(
-        true
-      )
-      expect(schemaTypeIncludes({ type: ['string', 'null'] }, 'string')).toBe(
-        true
-      )
-    })
-
-    it('should return false when type does not match', () => {
-      expect(schemaTypeIncludes({ type: 'string' }, 'object')).toBe(false)
-      expect(schemaTypeIncludes({ type: ['string', 'null'] }, 'object')).toBe(
-        false
-      )
-    })
-
-    it('should return false for null or undefined schema', () => {
-      expect(schemaTypeIncludes(null, 'object')).toBe(false)
-      expect(schemaTypeIncludes(undefined, 'object')).toBe(false)
-    })
-
-    it('should return false for schema with no type', () => {
-      expect(schemaTypeIncludes({}, 'object')).toBe(false)
-      expect(schemaTypeIncludes({ properties: {} }, 'object')).toBe(false)
-    })
-
-    it('should return false for schema with non-string non-array type', () => {
-      expect(schemaTypeIncludes({ type: 42 }, 'object')).toBe(false)
-      expect(schemaTypeIncludes({ type: true }, 'object')).toBe(false)
     })
   })
 
@@ -1693,6 +1650,44 @@ describe('JSONEditor Helpers', () => {
       })
 
       expect(MockJSONEditorConstructor).toHaveBeenCalled()
+    })
+
+    it('should inflate null object fields before loading data into the editor', () => {
+      const schemaWithNullableObject = {
+        type: 'object',
+        properties: {
+          id: { not: {} },
+          name: { type: 'string' },
+          address: {
+            type: ['object', 'null'],
+            properties: {
+              line1: { type: ['string', 'null'] },
+              postcode: { type: ['string', 'null'] }
+            }
+          }
+        }
+      }
+
+      payloadEl.textContent = JSON.stringify({
+        id: 1,
+        name: 'Acme Ltd',
+        address: null
+      })
+
+      mockValidate.mockReturnValue(true)
+      mockValidate.errors = null
+
+      initJSONEditor({
+        schema: schemaWithNullableObject,
+        validate: mockValidate,
+        storageKey: 'test-storage-key'
+      })
+
+      expect(mockSet).toHaveBeenCalledWith({
+        id: 1,
+        name: 'Acme Ltd',
+        address: { line1: null, postcode: null }
+      })
     })
   })
 })
