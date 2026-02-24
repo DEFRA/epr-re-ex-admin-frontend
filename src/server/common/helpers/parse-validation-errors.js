@@ -40,12 +40,16 @@ export function parseValidationErrors(message) {
   for (const entry of entries) {
     // Format: "registrations.1.registrationNumber: any.invalid"
     const colonIndex = entry.lastIndexOf(': ')
-    if (colonIndex === -1) continue
+    if (colonIndex === -1) {
+      continue
+    }
 
     const path = entry.slice(0, colonIndex).trim()
 
     // Deduplicate by full path (same field can have multiple error types)
-    if (seenFields.has(path)) continue
+    if (seenFields.has(path)) {
+      continue
+    }
     seenFields.add(path)
 
     errors.push({
