@@ -612,6 +612,91 @@ function setupAppendButton(
 }
 
 /**
+ * Wires up append buttons for arrays defined in the schema
+ * @param {Object} schema - The JSON schema
+ * @param {JSONEditor} editor - The JSONEditor instance
+ * @param {LocalStorageManager} storageManager - Storage manager instance
+ * @param {string} hiddenInputId - The ID of the hidden input element
+ * @param {Object} originalData - The inflated original data for highlighting
+ */
+function setupAppendButtons(
+  schema,
+  editor,
+  storageManager,
+  hiddenInputId,
+  originalData
+) {
+  const appendButtons = [
+    { buttonId: 'add-registration-button', arrayKey: 'registrations' },
+    { buttonId: 'add-accreditation-button', arrayKey: 'accreditations' }
+  ]
+
+  for (const { buttonId, arrayKey } of appendButtons) {
+    const arraySchema = findSchemaNode(schema, [arrayKey])
+
+    const itemSchema = arraySchema?.items
+    if (!itemSchema) {
+      continue
+    }
+
+    const template = buildNullTemplate(itemSchema)
+
+    setupAppendButton(
+      buttonId,
+      arrayKey,
+      template,
+      editor,
+      storageManager,
+      hiddenInputId,
+      originalData
+    )
+  }
+}
+
+/**
+ * Loads and prepares data for the editor, handling drafts and inflation
+ * @param {Object} schema - The JSON schema
+ * @param {string} storageKey - The localStorage key for draft storage
+ * @param {string} payloadElementId - The ID of the element containing original JSON data
+ * @param {string} successMessageId - The ID of the success message element
+ * @param {string} staleDraftWarningPlaceholderId - The ID of the stale draft warning placeholder
+ * @returns {Object|null} { storageManager, inflatedOriginalData, inflatedSavedData } or null
+ */
+function loadEditorData(
+  schema,
+  storageKey,
+  payloadElementId,
+  successMessageId,
+  staleDraftWarningPlaceholderId
+) {
+  const originalData = loadOriginalData(payloadElementId)
+
+  if (!originalData) {
+    return null
+  }
+
+  const organisationId = originalData.id || 'unknown'
+  const fullStorageKey = `${storageKey}-${organisationId}`
+  const storageManager = new LocalStorageManager(fullStorageKey)
+
+  clearStorageIfSuccessful(successMessageId, storageManager)
+  clearDraftIfStale(
+    storageManager,
+    originalData,
+    staleDraftWarningPlaceholderId
+  )
+
+  const inflatedOriginalData = inflateNullObjects(originalData, schema)
+
+  const savedData = storageManager.load()
+  const inflatedSavedData = savedData
+    ? inflateNullObjects(savedData, schema)
+    : null
+
+  return { storageManager, inflatedOriginalData, inflatedSavedData }
+}
+
+/**
  * Initialise the JSONEditor for organisation data
  * @param {Object} options - Configuration options
  * @param {Object} options.schema - The JSON schema for validation
@@ -641,28 +726,19 @@ export function initJSONEditor({
     return
   }
 
-  const originalData = loadOriginalData(payloadElementId)
-  if (!originalData) {
-    return
-  }
-
-  const organisationId = originalData.id || 'unknown'
-  const fullStorageKey = `${storageKey}-${organisationId}`
-  const storageManager = new LocalStorageManager(fullStorageKey)
-
-  clearStorageIfSuccessful(successMessageId, storageManager)
-  clearDraftIfStale(
-    storageManager,
-    originalData,
+  const editorData = loadEditorData(
+    schema,
+    storageKey,
+    payloadElementId,
+    successMessageId,
     staleDraftWarningPlaceholderId
   )
 
-  const inflatedOriginalData = inflateNullObjects(originalData, schema)
+  if (!editorData) {
+    return
+  }
 
-  const savedData = storageManager.load()
-  const inflatedSavedData = savedData
-    ? inflateNullObjects(savedData, schema)
-    : null
+  const { storageManager, inflatedOriginalData, inflatedSavedData } = editorData
 
   const editorConfig = createEditorConfig({
     schema,
@@ -688,7 +764,16 @@ export function initJSONEditor({
     schema,
     validate
   )
+
   updateSaveButtonState(saveButtonId, initialErrors)
+
+  setupAppendButtons(
+    schema,
+    editor,
+    storageManager,
+    hiddenInputId,
+    inflatedOriginalData
+  )
 
   setupResetButton(
     resetButtonId,
@@ -697,30 +782,4 @@ export function initJSONEditor({
     inflatedOriginalData,
     hiddenInputId
   )
-
-  const appendButtons = [
-    { buttonId: 'add-registration-button', arrayKey: 'registrations' },
-    { buttonId: 'add-accreditation-button', arrayKey: 'accreditations' }
-  ]
-
-  for (const { buttonId, arrayKey } of appendButtons) {
-    const arraySchema = findSchemaNode(schema, [arrayKey])
-
-    const itemSchema = arraySchema?.items
-    if (!itemSchema) {
-      continue
-    }
-
-    const template = buildNullTemplate(itemSchema)
-
-    setupAppendButton(
-      buttonId,
-      arrayKey,
-      template,
-      editor,
-      storageManager,
-      hiddenInputId,
-      inflatedOriginalData
-    )
-  }
 }

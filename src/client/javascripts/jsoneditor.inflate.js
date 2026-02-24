@@ -78,7 +78,7 @@ function isInflatableArray(data, schema) {
  */
 function isInflatableObject(data, schema) {
   const isObjectSchema = schemaTypeIncludes(schema, 'object')
-  const isObject = typeof data === 'object'
+  const isObject = data !== null && typeof data === 'object'
   const hasPropertiesDefined = !!schema.properties
 
   return isObjectSchema && isObject && hasPropertiesDefined
