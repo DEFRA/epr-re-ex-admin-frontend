@@ -1668,7 +1668,7 @@ describe('JSONEditor Helpers', () => {
       expect(MockJSONEditorConstructor).toHaveBeenCalled()
     })
 
-    it('should pass onCreateMenu to editor config with append menu items', () => {
+    describe('append buttons', () => {
       const schemaWithArrays = {
         type: 'object',
         properties: {
@@ -1696,75 +1696,245 @@ describe('JSONEditor Helpers', () => {
         }
       }
 
-      payloadEl.textContent = JSON.stringify({
-        id: 1,
-        registrations: [],
-        accreditations: []
+      let addRegistrationButton
+      let addAccreditationButton
+
+      beforeEach(() => {
+        addRegistrationButton = {
+          addEventListener: vi.fn()
+        }
+        addAccreditationButton = {
+          addEventListener: vi.fn()
+        }
+
+        payloadEl.textContent = JSON.stringify({
+          id: 1,
+          registrations: [],
+          accreditations: []
+        })
+
+        mockValidate.mockReturnValue(true)
+        mockValidate.errors = null
+
+        const originalGetById = document.getElementById
+        document.getElementById = vi.fn((id) => {
+          if (id === 'add-registration-button') return addRegistrationButton
+          if (id === 'add-accreditation-button') return addAccreditationButton
+          return originalGetById(id)
+        })
       })
 
-      mockValidate.mockReturnValue(true)
-      mockValidate.errors = null
+      it('should wire click handler on the add registration button', () => {
+        initJSONEditor({
+          schema: schemaWithArrays,
+          validate: mockValidate,
+          storageKey: 'test-storage-key'
+        })
 
-      initJSONEditor({
-        schema: schemaWithArrays,
-        validate: mockValidate,
-        storageKey: 'test-storage-key'
+        expect(addRegistrationButton.addEventListener).toHaveBeenCalledWith(
+          'click',
+          expect.any(Function)
+        )
       })
 
-      const editorConfig = MockJSONEditorConstructor.mock.calls[0][1]
-      expect(editorConfig.onCreateMenu).toBeDefined()
-      expect(typeof editorConfig.onCreateMenu).toBe('function')
+      it('should wire click handler on the add accreditation button', () => {
+        initJSONEditor({
+          schema: schemaWithArrays,
+          validate: mockValidate,
+          storageKey: 'test-storage-key'
+        })
 
-      // Should add "Add registration" when path matches registrations
-      const regItems = editorConfig.onCreateMenu([], {
-        path: ['registrations'],
-        type: 'single'
-      })
-      expect(regItems).toHaveLength(1)
-      expect(regItems[0].text).toBe('Add registration')
-
-      // Should add "Add accreditation" when path matches accreditations
-      const accItems = editorConfig.onCreateMenu([], {
-        path: ['accreditations'],
-        type: 'single'
-      })
-      expect(accItems).toHaveLength(1)
-      expect(accItems[0].text).toBe('Add accreditation')
-
-      // Should not add menu items for other paths
-      const otherItems = editorConfig.onCreateMenu([], {
-        path: ['users'],
-        type: 'single'
-      })
-      expect(otherItems).toHaveLength(0)
-
-      // Clicking should append a template and update the editor
-      mockGet.mockReturnValue({
-        id: 1,
-        registrations: [],
-        accreditations: []
+        expect(addAccreditationButton.addEventListener).toHaveBeenCalledWith(
+          'click',
+          expect.any(Function)
+        )
       })
 
-      localStorageMock.setItem.mockClear()
+      it('should append a registration template when add registration is clicked', () => {
+        initJSONEditor({
+          schema: schemaWithArrays,
+          validate: mockValidate,
+          storageKey: 'test-storage-key'
+        })
 
-      regItems[0].click()
+        mockGet.mockReturnValue({
+          id: 1,
+          registrations: [],
+          accreditations: []
+        })
 
-      const editorInstance = MockJSONEditorConstructor.mock.instances[0]
-      expect(editorInstance.update).toHaveBeenCalledTimes(1)
-      const updatedData = editorInstance.update.mock.calls[0][0]
-      expect(updatedData.registrations).toHaveLength(1)
-      expect(updatedData.registrations[0]).toEqual({
-        status: null,
-        registrationNumber: null
+        localStorageMock.setItem.mockClear()
+
+        const clickHandler =
+          addRegistrationButton.addEventListener.mock.calls[0][1]
+        clickHandler()
+
+        const editorInstance = MockJSONEditorConstructor.mock.instances[0]
+        expect(editorInstance.update).toHaveBeenCalledTimes(1)
+
+        const updatedData = editorInstance.update.mock.calls[0][0]
+        expect(updatedData.registrations).toHaveLength(1)
+        expect(updatedData.registrations[0]).toEqual({
+          status: null,
+          registrationNumber: null
+        })
       })
 
-      // Draft must be saved explicitly — editor.update() bypasses onChangeJSON
-      expect(localStorageMock.setItem).toHaveBeenCalledTimes(1)
-      const savedData = JSON.parse(localStorageMock.setItem.mock.calls[0][1])
-      expect(savedData.registrations).toHaveLength(1)
+      it('should append an accreditation template when add accreditation is clicked', () => {
+        initJSONEditor({
+          schema: schemaWithArrays,
+          validate: mockValidate,
+          storageKey: 'test-storage-key'
+        })
 
-      // Hidden input must be synced so form submission includes the appended item
-      expect(hiddenInput.value).toBe(JSON.stringify(updatedData))
+        mockGet.mockReturnValue({
+          id: 1,
+          registrations: [],
+          accreditations: []
+        })
+
+        const clickHandler =
+          addAccreditationButton.addEventListener.mock.calls[0][1]
+        clickHandler()
+
+        const editorInstance = MockJSONEditorConstructor.mock.instances[0]
+        const updatedData = editorInstance.update.mock.calls[0][0]
+        expect(updatedData.accreditations).toHaveLength(1)
+        expect(updatedData.accreditations[0]).toEqual({
+          status: null,
+          accreditationNumber: null
+        })
+      })
+
+      it('should save draft when append button is clicked — editor.update() bypasses onChangeJSON', () => {
+        initJSONEditor({
+          schema: schemaWithArrays,
+          validate: mockValidate,
+          storageKey: 'test-storage-key'
+        })
+
+        mockGet.mockReturnValue({
+          id: 1,
+          registrations: [],
+          accreditations: []
+        })
+
+        localStorageMock.setItem.mockClear()
+
+        const clickHandler =
+          addRegistrationButton.addEventListener.mock.calls[0][1]
+        clickHandler()
+
+        expect(localStorageMock.setItem).toHaveBeenCalledTimes(1)
+        const savedData = JSON.parse(localStorageMock.setItem.mock.calls[0][1])
+        expect(savedData.registrations).toHaveLength(1)
+      })
+
+      it('should sync hidden input when append button is clicked', () => {
+        initJSONEditor({
+          schema: schemaWithArrays,
+          validate: mockValidate,
+          storageKey: 'test-storage-key'
+        })
+
+        mockGet.mockReturnValue({
+          id: 1,
+          registrations: [],
+          accreditations: []
+        })
+
+        const clickHandler =
+          addRegistrationButton.addEventListener.mock.calls[0][1]
+        clickHandler()
+
+        const editorInstance = MockJSONEditorConstructor.mock.instances[0]
+        const updatedData = editorInstance.update.mock.calls[0][0]
+        expect(hiddenInput.value).toBe(JSON.stringify(updatedData))
+      })
+
+      it('should not throw when append button does not exist in DOM', () => {
+        document.getElementById = vi.fn((id) => {
+          if (id === 'jsoneditor') return container
+          if (id === 'organisation-json') return payloadEl
+          if (id === 'jsoneditor-organisation-object') return hiddenInput
+          if (id === 'jsoneditor-reset-button') return resetButton
+          if (id === 'jsoneditor-save-button') return saveButton
+          if (id === 'add-registration-button') return null
+          if (id === 'add-accreditation-button') return null
+          return null
+        })
+
+        expect(() => {
+          initJSONEditor({
+            schema: schemaWithArrays,
+            validate: mockValidate,
+            storageKey: 'test-storage-key'
+          })
+        }).not.toThrow()
+      })
+
+      it('should not wire buttons when schema lacks array items', () => {
+        const schemaWithoutItems = {
+          type: 'object',
+          properties: {
+            id: { not: {} },
+            registrations: { type: 'array' },
+            accreditations: { type: 'array' }
+          }
+        }
+
+        initJSONEditor({
+          schema: schemaWithoutItems,
+          validate: mockValidate,
+          storageKey: 'test-storage-key'
+        })
+
+        expect(addRegistrationButton.addEventListener).not.toHaveBeenCalled()
+        expect(addAccreditationButton.addEventListener).not.toHaveBeenCalled()
+      })
+
+      it('should deep clone data before modifying', () => {
+        initJSONEditor({
+          schema: schemaWithArrays,
+          validate: mockValidate,
+          storageKey: 'test-storage-key'
+        })
+
+        const originalData = {
+          id: 1,
+          registrations: [{ status: 'existing' }],
+          accreditations: []
+        }
+        mockGet.mockReturnValue(originalData)
+
+        const clickHandler =
+          addRegistrationButton.addEventListener.mock.calls[0][1]
+        clickHandler()
+
+        // Original data should not be mutated
+        expect(originalData.registrations).toHaveLength(1)
+      })
+
+      it('should not update editor when array property is not an array', () => {
+        initJSONEditor({
+          schema: schemaWithArrays,
+          validate: mockValidate,
+          storageKey: 'test-storage-key'
+        })
+
+        mockGet.mockReturnValue({
+          id: 1,
+          registrations: null,
+          accreditations: []
+        })
+
+        const clickHandler =
+          addRegistrationButton.addEventListener.mock.calls[0][1]
+        clickHandler()
+
+        const editorInstance = MockJSONEditorConstructor.mock.instances[0]
+        expect(editorInstance.update).not.toHaveBeenCalled()
+      })
     })
 
     it('should inflate null object fields before loading data into the editor', () => {

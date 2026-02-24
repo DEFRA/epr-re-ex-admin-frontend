@@ -3,7 +3,6 @@ import JSONEditor from 'jsoneditor'
 import 'jsoneditor/dist/jsoneditor.css'
 import { schemaTypeIncludes } from './jsoneditor.schema-utils.js'
 import { inflateNullObjects, buildNullTemplate } from './jsoneditor.inflate.js'
-import { createAppendMenuItems } from './jsoneditor.context-menu.js'
 
 /**
  * Finds a schema node by following a JSONEditor path
@@ -484,7 +483,6 @@ function clearDraftIfStale(
  * @param {string} options.saveButtonId - The ID of the save button
  * @param {LocalStorageManager} options.storageManager - Storage manager instance
  * @param {Function} options.getEditor - Function to get the editor instance
- * @param {Function} options.onCreateMenu - Callback for customising the context menu
  * @returns {Object} JSONEditor configuration object
  */
 function createEditorConfig({
@@ -494,8 +492,7 @@ function createEditorConfig({
   hiddenInputId,
   saveButtonId,
   storageManager,
-  getEditor,
-  onCreateMenu
+  getEditor
 }) {
   return {
     mode: 'tree',
@@ -503,7 +500,6 @@ function createEditorConfig({
     enableSort: false,
     enableTransform: false,
     limitDragging: true,
-    onCreateMenu,
     autocomplete: {
       getOptions: (_text, path) => getAutocompleteOptions(schema, path)
     },
@@ -576,33 +572,43 @@ function setupResetButton(
 }
 
 /**
- * Builds the appendable arrays configuration from the schema.
- * Each entry defines an array path where users can add new items
- * via the context menu, along with the template for new items.
- * @param {Object} schema - The JSON schema
- * @returns {Array} Array of { path, label, template } configs
+ * Wires an append button that adds a new item to an array in the editor
+ * @param {string} buttonId - The ID of the button element
+ * @param {string} arrayKey - The top-level property key for the array
+ * @param {Object} template - The null template to append
+ * @param {JSONEditor} editor - The JSONEditor instance
+ * @param {LocalStorageManager} storageManager - Storage manager instance
+ * @param {string} hiddenInputId - The ID of the hidden input element
+ * @param {Object} originalData - The inflated original data for highlighting
  */
-function buildAppendableArrays(schema) {
-  const configs = [
-    { path: ['registrations'], label: 'Add registration' },
-    { path: ['accreditations'], label: 'Add accreditation' }
-  ]
+function setupAppendButton(
+  buttonId,
+  arrayKey,
+  template,
+  editor,
+  storageManager,
+  hiddenInputId,
+  originalData
+) {
+  const button = document.getElementById(buttonId)
 
-  return configs
-    .map((config) => {
-      const arraySchema = findSchemaNode(schema, config.path)
-      const itemSchema = arraySchema?.items
+  if (!button) {
+    return
+  }
 
-      if (!itemSchema) {
-        return null
-      }
+  button.addEventListener('click', () => {
+    const data = structuredClone(editor.get())
 
-      return {
-        ...config,
-        template: buildNullTemplate(itemSchema)
-      }
-    })
-    .filter(Boolean)
+    if (!Array.isArray(data[arrayKey])) {
+      return
+    }
+
+    data[arrayKey].push(structuredClone(template))
+    editor.update(data)
+    storageManager.save(data)
+    syncHiddenInput(hiddenInputId, data)
+    highlightChanges(editor, data, originalData)
+  })
 }
 
 /**
@@ -658,19 +664,6 @@ export function initJSONEditor({
     ? inflateNullObjects(savedData, schema)
     : null
 
-  const appendableArrays = buildAppendableArrays(schema)
-
-  const onAfterAppend = (data) => {
-    storageManager.save(data)
-    syncHiddenInput(hiddenInputId, data)
-    highlightChanges(editor, data, inflatedOriginalData)
-  }
-  const onCreateMenu = createAppendMenuItems(
-    appendableArrays,
-    () => editor,
-    onAfterAppend
-  )
-
   const editorConfig = createEditorConfig({
     schema,
     validate,
@@ -678,8 +671,7 @@ export function initJSONEditor({
     hiddenInputId,
     saveButtonId,
     storageManager,
-    getEditor: () => editor,
-    onCreateMenu
+    getEditor: () => editor
   })
   const editor = new JSONEditor(container, editorConfig)
 
@@ -705,4 +697,30 @@ export function initJSONEditor({
     inflatedOriginalData,
     hiddenInputId
   )
+
+  const appendButtons = [
+    { buttonId: 'add-registration-button', arrayKey: 'registrations' },
+    { buttonId: 'add-accreditation-button', arrayKey: 'accreditations' }
+  ]
+
+  for (const { buttonId, arrayKey } of appendButtons) {
+    const arraySchema = findSchemaNode(schema, [arrayKey])
+
+    const itemSchema = arraySchema?.items
+    if (!itemSchema) {
+      continue
+    }
+
+    const template = buildNullTemplate(itemSchema)
+
+    setupAppendButton(
+      buttonId,
+      arrayKey,
+      template,
+      editor,
+      storageManager,
+      hiddenInputId,
+      inflatedOriginalData
+    )
+  }
 }
