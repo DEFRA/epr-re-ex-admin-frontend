@@ -3,7 +3,7 @@
  * into bracket notation like "registrations[1].registrationNumber"
  */
 function formatPath(path) {
-  return path.replace(/\.(\d+)\./g, '[$1].')
+  return path.replaceAll(/\.(\d+)\./g, '[$1].')
 }
 
 /**
