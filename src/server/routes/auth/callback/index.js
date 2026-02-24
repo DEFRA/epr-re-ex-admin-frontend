@@ -1,4 +1,5 @@
 import { createUserSession } from '#server/common/helpers/auth/create-user-session.js'
+import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { randomUUID } from 'node:crypto'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
@@ -35,6 +36,23 @@ export default {
       refreshToken
     }
     await createUserSession(request, userSession)
+
+    let roles = []
+    try {
+      const rolesResponse = await fetchJsonFromBackend(
+        request,
+        '/v1/me/roles',
+        {}
+      )
+      roles = rolesResponse.roles ?? []
+    } catch (error) {
+      request.logger.error(
+        { error: error.message },
+        'Failed to fetch user roles from backend'
+      )
+    }
+
+    await createUserSession(request, { ...userSession, roles })
 
     const redirect = request.yar?.flash('referrer')?.at(0) ?? '/'
 

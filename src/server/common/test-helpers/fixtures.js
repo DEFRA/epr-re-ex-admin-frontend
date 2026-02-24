@@ -1,4 +1,5 @@
 import { makeToken } from './test-constants.js'
+import { ROLES } from '#server/common/constants/roles.js'
 
 export const mockUserSession = {
   userId: 'user-id',
@@ -7,5 +8,6 @@ export const mockUserSession = {
   displayName: ' John Doe',
   isAuthenticated: true,
   token: makeToken('user-token'),
-  refreshToken: makeToken('refresh-token')
+  refreshToken: makeToken('refresh-token'),
+  roles: [ROLES.serviceMaintainer]
 }

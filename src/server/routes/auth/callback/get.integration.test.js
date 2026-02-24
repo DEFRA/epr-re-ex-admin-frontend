@@ -69,6 +69,9 @@ describe('GET /auth/callback', () => {
             { header: { kid: 'test-key-id' } }
           )
         })
+      }),
+      http.get('*/v1/me/roles', () => {
+        return HttpResponse.json({ roles: ['service_maintainer'] })
       })
     )
 

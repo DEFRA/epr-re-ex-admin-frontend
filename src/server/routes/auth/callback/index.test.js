@@ -2,11 +2,13 @@ import { vi, beforeEach, afterEach, describe, test, expect } from 'vitest'
 
 import callbackRoute from './index.js'
 import { createUserSession } from '#server/common/helpers/auth/create-user-session.js'
+import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { randomUUID } from 'node:crypto'
 import { verifyToken } from '#server/common/helpers/auth/verify-token.js'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
 
 vi.mock('#server/common/helpers/auth/create-user-session.js')
+vi.mock('#server/common/helpers/fetch-json-from-backend.js')
 vi.mock('#server/common/helpers/auth/verify-token.js')
 vi.mock('#server/common/helpers/auditing/index.js')
 vi.mock('node:crypto')
@@ -38,6 +40,7 @@ describe('#callback route', () => {
     mockToolkit.view.mockReturnValue('unauthorised-view-result')
     mockToolkit.redirect.mockReturnValue('redirect-result')
     createUserSession.mockResolvedValue()
+    fetchJsonFromBackend.mockResolvedValue({ roles: ['service_maintainer'] })
     verifyToken.mockResolvedValue()
     randomUUID.mockReturnValue(mockSessionId)
   })
@@ -108,7 +111,7 @@ describe('#callback route', () => {
         const result = await callbackRoute.handler(mockRequest, mockToolkit)
 
         expect(randomUUID).toHaveBeenCalledTimes(1)
-        expect(createUserSession).toHaveBeenCalledWith(mockRequest, {
+        expect(createUserSession).toHaveBeenNthCalledWith(1, mockRequest, {
           userId: mockProfile.id,
           email: mockProfile.email,
           sessionId: mockSessionId,
@@ -116,6 +119,21 @@ describe('#callback route', () => {
           isAuthenticated: true,
           token: mockToken,
           refreshToken: mockRefreshToken
+        })
+        expect(fetchJsonFromBackend).toHaveBeenCalledWith(
+          mockRequest,
+          '/v1/me/roles',
+          {}
+        )
+        expect(createUserSession).toHaveBeenNthCalledWith(2, mockRequest, {
+          userId: mockProfile.id,
+          email: mockProfile.email,
+          sessionId: mockSessionId,
+          displayName: mockProfile.displayName,
+          isAuthenticated: true,
+          token: mockToken,
+          refreshToken: mockRefreshToken,
+          roles: ['service_maintainer']
         })
         expect(mockToolkit.redirect).toHaveBeenCalledWith(expectedRedirectUrl)
         expect(result).toBe('redirect-result')
@@ -143,7 +161,7 @@ describe('#callback route', () => {
 
     await callbackRoute.handler(mockRequest, mockToolkit)
 
-    expect(createUserSession).toHaveBeenCalledWith(mockRequest, {
+    expect(createUserSession).toHaveBeenNthCalledWith(1, mockRequest, {
       userId: profileWithoutDisplayName.id,
       email: profileWithoutDisplayName.email,
       sessionId: mockSessionId,
@@ -169,7 +187,7 @@ describe('#callback route', () => {
 
     await callbackRoute.handler(mockRequest, mockToolkit)
 
-    expect(createUserSession).toHaveBeenCalledWith(mockRequest, {
+    expect(createUserSession).toHaveBeenNthCalledWith(1, mockRequest, {
       sessionId: mockSessionId,
       displayName: '',
       isAuthenticated: true,
@@ -200,8 +218,10 @@ describe('#callback route', () => {
     for (let i = 0; i < 3; i++) {
       await callbackRoute.handler(mockRequest, mockToolkit)
 
+      // Each handler call makes 2 createUserSession calls (without roles, then with roles)
+      const firstCallIndex = i * 2 + 1
       expect(createUserSession).toHaveBeenNthCalledWith(
-        i + 1,
+        firstCallIndex,
         mockRequest,
         expect.objectContaining({
           sessionId: sessionIds[i]
@@ -287,7 +307,8 @@ describe('#callback route', () => {
       refreshToken: mockRefreshToken
     }
 
-    expect(createUserSession).toHaveBeenCalledWith(
+    expect(createUserSession).toHaveBeenNthCalledWith(
+      1,
       mockRequest,
       expectedUserSession
     )
@@ -336,7 +357,8 @@ describe('#callback route', () => {
 
     await callbackRoute.handler(mockRequest, mockToolkit)
 
-    expect(createUserSession).toHaveBeenCalledWith(
+    expect(createUserSession).toHaveBeenNthCalledWith(
+      1,
       mockRequest,
       expect.objectContaining({
         token: undefined
@@ -365,7 +387,7 @@ describe('#callback route', () => {
 
     await callbackRoute.handler(mockRequest, mockToolkit)
 
-    expect(createUserSession).toHaveBeenCalledWith(mockRequest, {
+    expect(createUserSession).toHaveBeenNthCalledWith(1, mockRequest, {
       userId: complexProfile.id,
       email: complexProfile.email,
       sessionId: mockSessionId,
@@ -406,7 +428,12 @@ describe('#callback route', () => {
 
     await callbackRoute.handler(mockRequest, mockToolkit)
 
-    expect(callOrder).toEqual(['randomUUID', 'createUserSession', 'redirect'])
+    expect(callOrder).toEqual([
+      'randomUUID',
+      'createUserSession',
+      'createUserSession',
+      'redirect'
+    ])
   })
 
   test('Should log sign-in on successful authentication', async () => {
@@ -513,5 +540,69 @@ describe('#callback route', () => {
     await callbackRoute.handler(mockRequest, mockToolkit)
 
     expect(mockLogger.error).toHaveBeenCalledWith('Sign-in failed')
+  })
+
+  test('Should store roles in session after successful login', async () => {
+    fetchJsonFromBackend.mockResolvedValue({
+      roles: ['service_maintainer']
+    })
+
+    const mockRequest = {
+      logger: mockLogger,
+      auth: {
+        isAuthenticated: true,
+        credentials: {
+          profile: mockProfile,
+          token: mockToken,
+          refreshToken: mockRefreshToken
+        }
+      },
+      yar: {
+        flash: vi.fn().mockReturnValue([])
+      }
+    }
+
+    await callbackRoute.handler(mockRequest, mockToolkit)
+
+    expect(createUserSession).toHaveBeenNthCalledWith(
+      2,
+      mockRequest,
+      expect.objectContaining({
+        roles: ['service_maintainer']
+      })
+    )
+  })
+
+  test('Should default to empty roles when roles fetch fails', async () => {
+    fetchJsonFromBackend.mockRejectedValue(new Error('Network error'))
+
+    const mockRequest = {
+      logger: mockLogger,
+      auth: {
+        isAuthenticated: true,
+        credentials: {
+          profile: mockProfile,
+          token: mockToken,
+          refreshToken: mockRefreshToken
+        }
+      },
+      yar: {
+        flash: vi.fn().mockReturnValue([])
+      }
+    }
+
+    await callbackRoute.handler(mockRequest, mockToolkit)
+
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      { error: 'Network error' },
+      'Failed to fetch user roles from backend'
+    )
+    expect(createUserSession).toHaveBeenNthCalledWith(
+      2,
+      mockRequest,
+      expect.objectContaining({
+        roles: []
+      })
+    )
   })
 })
