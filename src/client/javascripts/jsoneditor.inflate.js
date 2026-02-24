@@ -6,7 +6,7 @@ import { schemaTypeIncludes } from './jsoneditor.schema-utils.js'
  * @param {Object} schema - The JSON schema node with properties
  * @returns {Object} A template object with null values
  */
-function buildNullTemplate(schema) {
+export function buildNullTemplate(schema) {
   if (!schema.properties) {
     return {}
   }

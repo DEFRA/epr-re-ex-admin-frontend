@@ -32,6 +32,8 @@ const { mockSet, mockGet, MockJSONEditorConstructor } = vi.hoisted(() => {
     return mockGet()
   }
 
+  MockJSONEditorConstructor.prototype.update = vi.fn()
+
   return { mockSet, mockGet, mockNode, MockJSONEditorConstructor }
 })
 
@@ -1664,6 +1666,105 @@ describe('JSONEditor Helpers', () => {
       })
 
       expect(MockJSONEditorConstructor).toHaveBeenCalled()
+    })
+
+    it('should pass onCreateMenu to editor config with append menu items', () => {
+      const schemaWithArrays = {
+        type: 'object',
+        properties: {
+          id: { not: {} },
+          registrations: {
+            type: 'array',
+            items: {
+              type: ['object', 'null'],
+              properties: {
+                status: { type: ['string', 'null'] },
+                registrationNumber: { type: ['string', 'null'] }
+              }
+            }
+          },
+          accreditations: {
+            type: 'array',
+            items: {
+              type: ['object', 'null'],
+              properties: {
+                status: { type: ['string', 'null'] },
+                accreditationNumber: { type: ['string', 'null'] }
+              }
+            }
+          }
+        }
+      }
+
+      payloadEl.textContent = JSON.stringify({
+        id: 1,
+        registrations: [],
+        accreditations: []
+      })
+
+      mockValidate.mockReturnValue(true)
+      mockValidate.errors = null
+
+      initJSONEditor({
+        schema: schemaWithArrays,
+        validate: mockValidate,
+        storageKey: 'test-storage-key'
+      })
+
+      const editorConfig = MockJSONEditorConstructor.mock.calls[0][1]
+      expect(editorConfig.onCreateMenu).toBeDefined()
+      expect(typeof editorConfig.onCreateMenu).toBe('function')
+
+      // Should add "Add registration" when path matches registrations
+      const regItems = editorConfig.onCreateMenu([], {
+        path: ['registrations'],
+        type: 'single'
+      })
+      expect(regItems).toHaveLength(1)
+      expect(regItems[0].text).toBe('Add registration')
+
+      // Should add "Add accreditation" when path matches accreditations
+      const accItems = editorConfig.onCreateMenu([], {
+        path: ['accreditations'],
+        type: 'single'
+      })
+      expect(accItems).toHaveLength(1)
+      expect(accItems[0].text).toBe('Add accreditation')
+
+      // Should not add menu items for other paths
+      const otherItems = editorConfig.onCreateMenu([], {
+        path: ['users'],
+        type: 'single'
+      })
+      expect(otherItems).toHaveLength(0)
+
+      // Clicking should append a template and update the editor
+      mockGet.mockReturnValue({
+        id: 1,
+        registrations: [],
+        accreditations: []
+      })
+
+      localStorageMock.setItem.mockClear()
+
+      regItems[0].click()
+
+      const editorInstance = MockJSONEditorConstructor.mock.instances[0]
+      expect(editorInstance.update).toHaveBeenCalledTimes(1)
+      const updatedData = editorInstance.update.mock.calls[0][0]
+      expect(updatedData.registrations).toHaveLength(1)
+      expect(updatedData.registrations[0]).toEqual({
+        status: null,
+        registrationNumber: null
+      })
+
+      // Draft must be saved explicitly — editor.update() bypasses onChangeJSON
+      expect(localStorageMock.setItem).toHaveBeenCalledTimes(1)
+      const savedData = JSON.parse(localStorageMock.setItem.mock.calls[0][1])
+      expect(savedData.registrations).toHaveLength(1)
+
+      // Hidden input must be synced so form submission includes the appended item
+      expect(hiddenInput.value).toBe(JSON.stringify(updatedData))
     })
 
     it('should inflate null object fields before loading data into the editor', () => {

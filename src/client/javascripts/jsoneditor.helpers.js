@@ -2,7 +2,8 @@ import isEqual from 'lodash/isEqual.js'
 import JSONEditor from 'jsoneditor'
 import 'jsoneditor/dist/jsoneditor.css'
 import { schemaTypeIncludes } from './jsoneditor.schema-utils.js'
-import { inflateNullObjects } from './jsoneditor.inflate.js'
+import { inflateNullObjects, buildNullTemplate } from './jsoneditor.inflate.js'
+import { createAppendMenuItems } from './jsoneditor.context-menu.js'
 
 /**
  * Finds a schema node by following a JSONEditor path
@@ -482,6 +483,7 @@ function clearDraftIfStale(
  * @param {string} saveButtonId - The ID of the save button
  * @param {LocalStorageManager} storageManager - Storage manager instance
  * @param {Function} getEditor - Function to get the editor instance
+ * @param {Function} onCreateMenu - Callback for customising the context menu
  * @returns {Object} JSONEditor configuration object
  */
 function createEditorConfig(
@@ -491,7 +493,8 @@ function createEditorConfig(
   hiddenInputId,
   saveButtonId,
   storageManager,
-  getEditor
+  getEditor,
+  onCreateMenu
 ) {
   return {
     mode: 'tree',
@@ -499,6 +502,7 @@ function createEditorConfig(
     enableSort: false,
     enableTransform: false,
     limitDragging: true,
+    onCreateMenu,
     autocomplete: {
       getOptions: (_text, path) => getAutocompleteOptions(schema, path)
     },
@@ -571,6 +575,36 @@ function setupResetButton(
 }
 
 /**
+ * Builds the appendable arrays configuration from the schema.
+ * Each entry defines an array path where users can add new items
+ * via the context menu, along with the template for new items.
+ * @param {Object} schema - The JSON schema
+ * @returns {Array} Array of { path, label, template } configs
+ */
+function buildAppendableArrays(schema) {
+  const configs = [
+    { path: ['registrations'], label: 'Add registration' },
+    { path: ['accreditations'], label: 'Add accreditation' }
+  ]
+
+  return configs
+    .map((config) => {
+      const arraySchema = findSchemaNode(schema, config.path)
+      const itemSchema = arraySchema?.items
+
+      if (!itemSchema) {
+        return null
+      }
+
+      return {
+        ...config,
+        template: buildNullTemplate(itemSchema)
+      }
+    })
+    .filter(Boolean)
+}
+
+/**
  * Initialise the JSONEditor for organisation data
  * @param {Object} options - Configuration options
  * @param {Object} options.schema - The JSON schema for validation
@@ -623,6 +657,19 @@ export function initJSONEditor({
     ? inflateNullObjects(savedData, schema)
     : null
 
+  const appendableArrays = buildAppendableArrays(schema)
+
+  const onAfterAppend = (data) => {
+    storageManager.save(data)
+    syncHiddenInput(hiddenInputId, data)
+    highlightChanges(editor, data, inflatedOriginalData)
+  }
+  const onCreateMenu = createAppendMenuItems(
+    appendableArrays,
+    () => editor,
+    onAfterAppend
+  )
+
   const editorConfig = createEditorConfig(
     schema,
     validate,
@@ -630,7 +677,8 @@ export function initJSONEditor({
     hiddenInputId,
     saveButtonId,
     storageManager,
-    () => editor
+    () => editor,
+    onCreateMenu
   )
   const editor = new JSONEditor(container, editorConfig)
 
