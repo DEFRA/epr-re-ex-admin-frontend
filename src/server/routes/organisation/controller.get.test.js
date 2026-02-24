@@ -91,26 +91,24 @@ describe('organisation GET controller - Unit Tests - Flash message handling', ()
     )
   })
 
-  test('Should include structured validation errors as errorList from session', async () => {
+  test('Should include parsed validation errors as errorList from session', async () => {
     const mockOrgData = {
       id: 'test-org-id',
       companyDetails: { name: 'Test Org' }
     }
 
-    const mockValidationErrors = [
+    const mockParsedErrors = [
       {
-        path: 'registrations.0.registrationNumber',
-        message: '"registrationNumber" is required when status is approved'
+        message: 'registrations[1].registrationNumber is required'
       },
       {
-        path: 'registrations.0.validFrom',
-        message: '"validFrom" is required when status is approved or suspended'
+        message: 'registrations[1].validFrom is required'
       }
     ]
 
     fetchJsonFromBackend.mockResolvedValue(mockOrgData)
     mockRequest.yar.get.mockImplementation((key) => {
-      if (key === 'errors') return mockValidationErrors
+      if (key === 'errors') return mockParsedErrors
       return null
     })
 
@@ -121,10 +119,10 @@ describe('organisation GET controller - Unit Tests - Flash message handling', ()
       expect.objectContaining({
         errorList: [
           {
-            text: '"registrationNumber" is required when status is approved'
+            text: 'registrations[1].registrationNumber is required'
           },
           {
-            text: '"validFrom" is required when status is approved or suspended'
+            text: 'registrations[1].validFrom is required'
           }
         ]
       })

@@ -1,4 +1,5 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { parseValidationErrors } from '#server/common/helpers/parse-validation-errors.js'
 
 export const organisationsPOSTController = {
   async handler(request, h) {
@@ -19,13 +20,10 @@ export const organisationsPOSTController = {
 
       return h.redirect(`/organisations/${id}`)
     } catch (error) {
-      const { validationErrors, message } = error.output.payload
+      const { message } = error.output.payload
+      const errors = parseValidationErrors(message)
 
-      if (validationErrors?.length) {
-        request.yar.set('errors', validationErrors)
-      } else {
-        request.yar.set('errors', [{ message }])
-      }
+      request.yar.set('errors', errors)
 
       return h.redirect(`/organisations/${id}`)
     }
