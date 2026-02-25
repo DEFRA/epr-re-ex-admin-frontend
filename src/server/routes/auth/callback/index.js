@@ -21,7 +21,7 @@ export default {
 
     const { profile, token, refreshToken } = request.auth.credentials
 
-    const { displayName = '', id: userId, email } = profile
+    const { displayName = '', id: userId, email, loginHint } = profile
 
     const sessionId = randomUUID()
 
@@ -30,6 +30,7 @@ export default {
       userId,
       displayName,
       email,
+      loginHint,
       isAuthenticated: true,
       token,
       refreshToken
