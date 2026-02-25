@@ -25,10 +25,9 @@ export function catchAll(request, h) {
   }
 
   if (statusCode >= statusCodes.internalServerError) {
-    request.log(['error'], {
-      statusCode,
-      message: response.message,
-      stack: response.data?.stack
+    request.logger.error({
+      err: response,
+      message: response.message
     })
   }
 
