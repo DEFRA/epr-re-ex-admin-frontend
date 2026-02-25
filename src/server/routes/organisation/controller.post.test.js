@@ -171,17 +171,11 @@ describe('organisation POST controller', () => {
       expect(headers.location).toBe(`/organisations/${orgId}`)
     })
 
-    test('Should store validationErrors in session when backend returns them', async () => {
+    test('Should split semicolon-separated validation errors into error list', async () => {
       const orgId = 'org-validation'
       const mockErrorResponse = {
         message:
-          'Invalid organisation data: wasteProcessingTypes: At least one waste processing type is required',
-        validationErrors: [
-          {
-            path: 'wasteProcessingTypes',
-            message: 'At least one waste processing type is required'
-          }
-        ]
+          'Invalid organisation data: wasteProcessingTypes: At least one waste processing type is required; site: is required'
       }
 
       const putOrganisationHandler = http.put(
