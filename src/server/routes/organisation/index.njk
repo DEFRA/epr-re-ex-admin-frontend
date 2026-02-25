@@ -50,6 +50,22 @@
 
         <input  id="jsoneditor-organisation-object" type="hidden" name="organisation" />
 
+        <div class="govuk-button-group govuk-!-margin-bottom-4">
+          {{ govukButton({
+            text: "Add registration",
+            type: "button",
+            classes: "govuk-button--secondary",
+            id: "add-registration-button"
+          }) }}
+
+          {{ govukButton({
+            text: "Add accreditation",
+            type: "button",
+            classes: "govuk-button--secondary",
+            id: "add-accreditation-button"
+          }) }}
+        </div>
+
         {{ govukButton({
           text: "Reset",
           type: "button",

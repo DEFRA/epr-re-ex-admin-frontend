@@ -30,20 +30,23 @@ describe('#errors integration', () => {
 })
 
 describe('#catchAll unit tests', () => {
-  const mockLog = vi.fn()
+  const mockLoggerError = vi.fn()
   const mockStack = 'Mock error stack'
   const mockMessage = 'Mock error message'
 
-  const mockRequest = (statusCode, headers = {}) => ({
-    response: {
+  const mockRequest = (statusCode, headers = {}) => {
+    const response = {
       isBoom: true,
       message: mockMessage,
       data: { stack: mockStack },
       output: { statusCode, headers },
       headers
-    },
-    log: mockLog
-  })
+    }
+    return {
+      response,
+      logger: { error: mockLoggerError }
+    }
+  }
 
   const mockToolkitView = vi.fn()
   const mockToolkitCode = vi.fn()
@@ -74,7 +77,7 @@ describe('#catchAll unit tests', () => {
 
     expect(result).toEqual(mockContinue)
     expect(mockToolkitView).not.toHaveBeenCalled()
-    expect(mockLog).not.toHaveBeenCalled()
+    expect(mockLoggerError).not.toHaveBeenCalled()
   })
 
   test('Should render 403 template for forbidden status', () => {
@@ -84,7 +87,7 @@ describe('#catchAll unit tests', () => {
       pageTitle: undefined
     })
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.forbidden)
-    expect(mockLog).not.toHaveBeenCalled()
+    expect(mockLoggerError).not.toHaveBeenCalled()
   })
 
   test('Should render 404 template for not found status', () => {
@@ -94,7 +97,7 @@ describe('#catchAll unit tests', () => {
       pageTitle: undefined
     })
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.notFound)
-    expect(mockLog).not.toHaveBeenCalled()
+    expect(mockLoggerError).not.toHaveBeenCalled()
   })
 
   test('Should render unauthorised template for unauthorised status', () => {
@@ -104,7 +107,7 @@ describe('#catchAll unit tests', () => {
       pageTitle: undefined
     })
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.unauthorised)
-    expect(mockLog).not.toHaveBeenCalled()
+    expect(mockLoggerError).not.toHaveBeenCalled()
   })
 
   test('Should render 500 template for bad request status (uncategorised)', () => {
@@ -114,11 +117,12 @@ describe('#catchAll unit tests', () => {
       pageTitle: undefined
     })
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.badRequest)
-    expect(mockLog).not.toHaveBeenCalled()
+    expect(mockLoggerError).not.toHaveBeenCalled()
   })
 
   test('Should render 500 template and log error for internal server error', () => {
-    catchAll(mockRequest(statusCodes.internalServerError), mockToolkit)
+    const request = mockRequest(statusCodes.internalServerError)
+    catchAll(request, mockToolkit)
 
     expect(mockToolkitView).toHaveBeenCalledWith('500', {
       pageTitle: undefined
@@ -126,25 +130,24 @@ describe('#catchAll unit tests', () => {
     expect(mockToolkitCode).toHaveBeenCalledWith(
       statusCodes.internalServerError
     )
-    expect(mockLog).toHaveBeenCalledWith(['error'], {
-      statusCode: statusCodes.internalServerError,
-      message: mockMessage,
-      stack: mockStack
+    expect(mockLoggerError).toHaveBeenCalledWith({
+      err: request.response,
+      message: mockMessage
     })
   })
 
   test('Should log error for any status >= 500', () => {
     const customServerErrorCode = 503
-    catchAll(mockRequest(customServerErrorCode), mockToolkit)
+    const request = mockRequest(customServerErrorCode)
+    catchAll(request, mockToolkit)
 
     expect(mockToolkitView).toHaveBeenCalledWith('500', {
       pageTitle: undefined
     })
     expect(mockToolkitCode).toHaveBeenCalledWith(customServerErrorCode)
-    expect(mockLog).toHaveBeenCalledWith(['error'], {
-      statusCode: customServerErrorCode,
-      message: mockMessage,
-      stack: mockStack
+    expect(mockLoggerError).toHaveBeenCalledWith({
+      err: request.response,
+      message: mockMessage
     })
   })
 
@@ -179,7 +182,7 @@ describe('#catchAll unit tests', () => {
           headers: { 'x-output-header': 'output-value' }
         }
       },
-      log: mockLog
+      logger: { error: mockLoggerError }
     }
 
     catchAll(request, mockToolkit)
@@ -198,7 +201,7 @@ describe('#catchAll unit tests', () => {
         data: { stack: mockStack },
         output: { statusCode: statusCodes.notFound }
       },
-      log: mockLog
+      logger: { error: mockLoggerError }
     }
 
     catchAll(request, mockToolkit)
@@ -222,7 +225,7 @@ describe('#catchAll unit tests', () => {
           app: { pageTitle: 'Demo Page' }
         }
       },
-      log: mockLog
+      logger: { error: mockLoggerError }
     }
 
     catchAll(request, mockToolkit)

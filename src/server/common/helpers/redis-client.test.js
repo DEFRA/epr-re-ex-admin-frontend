@@ -70,9 +70,10 @@ describe('#buildRedisClient', () => {
       const mockError = new Error('Connection failed')
       errorHandler(mockError)
 
-      expect(mockLoggerError).toHaveBeenCalledWith(
-        `Redis connection error ${mockError}`
-      )
+      expect(mockLoggerError).toHaveBeenCalledWith({
+        err: mockError,
+        message: 'Redis connection error'
+      })
     })
   })
 
@@ -126,9 +127,10 @@ describe('#buildRedisClient', () => {
       const mockError = new Error('Cluster connection failed')
       errorHandler(mockError)
 
-      expect(mockLoggerError).toHaveBeenCalledWith(
-        `Redis connection error ${mockError}`
-      )
+      expect(mockLoggerError).toHaveBeenCalledWith({
+        err: mockError,
+        message: 'Redis connection error'
+      })
     })
   })
 })

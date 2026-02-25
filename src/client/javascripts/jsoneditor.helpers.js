@@ -1,6 +1,8 @@
 import isEqual from 'lodash/isEqual.js'
 import JSONEditor from 'jsoneditor'
 import 'jsoneditor/dist/jsoneditor.css'
+import { schemaTypeIncludes } from './jsoneditor.schema-utils.js'
+import { inflateNullObjects, buildNullTemplate } from './jsoneditor.inflate.js'
 
 /**
  * Finds a schema node by following a JSONEditor path
@@ -15,9 +17,9 @@ export function findSchemaNode(schema, path) {
 
   let node = schema
   for (const segment of path) {
-    if (node.type === 'object' && node.properties?.[segment]) {
+    if (schemaTypeIncludes(node, 'object') && node.properties?.[segment]) {
       node = node.properties[segment]
-    } else if (node.type === 'array' && node.items) {
+    } else if (schemaTypeIncludes(node, 'array') && node.items) {
       node = node.items
     } else {
       return null
@@ -36,7 +38,7 @@ export function getValueAtPath(obj, path) {
   if (!obj || !Array.isArray(path)) {
     return undefined
   }
-  return path.reduce((acc, key) => acc?.[key] || undefined, obj)
+  return path.reduce((acc, key) => acc?.[key], obj)
 }
 
 /**
@@ -133,11 +135,15 @@ export function checkReadOnlyChanges(
 
   addReadOnlyErrorIfChanged(data, original, schema, path, errors)
 
-  if (schema.type === 'object' && schema.properties) {
+  if (schemaTypeIncludes(schema, 'object') && schema.properties) {
     checkObjectPropertiesReadOnly(data, original, schema, path, errors)
   }
 
-  if (schema.type === 'array' && Array.isArray(data) && schema.items) {
+  if (
+    schemaTypeIncludes(schema, 'array') &&
+    Array.isArray(data) &&
+    schema.items
+  ) {
     checkArrayItemsReadOnly(data, original, schema, path, errors)
   }
 
@@ -469,16 +475,17 @@ function clearDraftIfStale(
 
 /**
  * Creates JSONEditor configuration options
- * @param {Object} schema - JSON schema
- * @param {Function} validate - AJV validation function
- * @param {Object} originalData - Original data for comparison
- * @param {string} hiddenInputId - The ID of the hidden input element
- * @param {string} saveButtonId - The ID of the save button
- * @param {LocalStorageManager} storageManager - Storage manager instance
- * @param {Function} getEditor - Function to get the editor instance
+ * @param {Object} options - Configuration options
+ * @param {Object} options.schema - JSON schema
+ * @param {Function} options.validate - AJV validation function
+ * @param {Object} options.originalData - Original data for comparison
+ * @param {string} options.hiddenInputId - The ID of the hidden input element
+ * @param {string} options.saveButtonId - The ID of the save button
+ * @param {LocalStorageManager} options.storageManager - Storage manager instance
+ * @param {Function} options.getEditor - Function to get the editor instance
  * @returns {Object} JSONEditor configuration object
  */
-function createEditorConfig(
+function createEditorConfig({
   schema,
   validate,
   originalData,
@@ -486,7 +493,7 @@ function createEditorConfig(
   saveButtonId,
   storageManager,
   getEditor
-) {
+}) {
   return {
     mode: 'tree',
     modes: ['text', 'tree'],
@@ -565,6 +572,131 @@ function setupResetButton(
 }
 
 /**
+ * Wires an append button that adds a new item to an array in the editor
+ * @param {string} buttonId - The ID of the button element
+ * @param {string} arrayKey - The top-level property key for the array
+ * @param {Object} template - The null template to append
+ * @param {JSONEditor} editor - The JSONEditor instance
+ * @param {LocalStorageManager} storageManager - Storage manager instance
+ * @param {string} hiddenInputId - The ID of the hidden input element
+ * @param {Object} originalData - The inflated original data for highlighting
+ */
+function setupAppendButton(
+  buttonId,
+  arrayKey,
+  template,
+  editor,
+  storageManager,
+  hiddenInputId,
+  originalData
+) {
+  const button = document.getElementById(buttonId)
+
+  if (!button) {
+    return
+  }
+
+  button.addEventListener('click', () => {
+    const data = structuredClone(editor.get())
+
+    if (!Array.isArray(data[arrayKey])) {
+      return
+    }
+
+    data[arrayKey].push(structuredClone(template))
+    editor.update(data)
+    storageManager.save(data)
+    syncHiddenInput(hiddenInputId, data)
+    highlightChanges(editor, data, originalData)
+  })
+}
+
+/**
+ * Wires up append buttons for arrays defined in the schema
+ * @param {Object} schema - The JSON schema
+ * @param {JSONEditor} editor - The JSONEditor instance
+ * @param {LocalStorageManager} storageManager - Storage manager instance
+ * @param {string} hiddenInputId - The ID of the hidden input element
+ * @param {Object} originalData - The inflated original data for highlighting
+ */
+function setupAppendButtons(
+  schema,
+  editor,
+  storageManager,
+  hiddenInputId,
+  originalData
+) {
+  const appendButtons = [
+    { buttonId: 'add-registration-button', arrayKey: 'registrations' },
+    { buttonId: 'add-accreditation-button', arrayKey: 'accreditations' }
+  ]
+
+  for (const { buttonId, arrayKey } of appendButtons) {
+    const arraySchema = findSchemaNode(schema, [arrayKey])
+
+    const itemSchema = arraySchema?.items
+    if (!itemSchema) {
+      continue
+    }
+
+    const template = buildNullTemplate(itemSchema)
+
+    setupAppendButton(
+      buttonId,
+      arrayKey,
+      template,
+      editor,
+      storageManager,
+      hiddenInputId,
+      originalData
+    )
+  }
+}
+
+/**
+ * Loads and prepares data for the editor, handling drafts and inflation
+ * @param {Object} schema - The JSON schema
+ * @param {string} storageKey - The localStorage key for draft storage
+ * @param {string} payloadElementId - The ID of the element containing original JSON data
+ * @param {string} successMessageId - The ID of the success message element
+ * @param {string} staleDraftWarningPlaceholderId - The ID of the stale draft warning placeholder
+ * @returns {Object|null} { storageManager, inflatedOriginalData, inflatedSavedData } or null
+ */
+function loadEditorData(
+  schema,
+  storageKey,
+  payloadElementId,
+  successMessageId,
+  staleDraftWarningPlaceholderId
+) {
+  const originalData = loadOriginalData(payloadElementId)
+
+  if (!originalData) {
+    return null
+  }
+
+  const organisationId = originalData.id || 'unknown'
+  const fullStorageKey = `${storageKey}-${organisationId}`
+  const storageManager = new LocalStorageManager(fullStorageKey)
+
+  clearStorageIfSuccessful(successMessageId, storageManager)
+  clearDraftIfStale(
+    storageManager,
+    originalData,
+    staleDraftWarningPlaceholderId
+  )
+
+  const inflatedOriginalData = inflateNullObjects(originalData, schema)
+
+  const savedData = storageManager.load()
+  const inflatedSavedData = savedData
+    ? inflateNullObjects(savedData, schema)
+    : null
+
+  return { storageManager, inflatedOriginalData, inflatedSavedData }
+}
+
+/**
  * Initialise the JSONEditor for organisation data
  * @param {Object} options - Configuration options
  * @param {Object} options.schema - The JSON schema for validation
@@ -594,55 +726,60 @@ export function initJSONEditor({
     return
   }
 
-  const originalData = loadOriginalData(payloadElementId)
-  if (!originalData) {
-    return
-  }
-
-  const organisationId = originalData.id || 'unknown'
-  const fullStorageKey = `${storageKey}-${organisationId}`
-  const storageManager = new LocalStorageManager(fullStorageKey)
-
-  clearStorageIfSuccessful(successMessageId, storageManager)
-  clearDraftIfStale(
-    storageManager,
-    originalData,
+  const editorData = loadEditorData(
+    schema,
+    storageKey,
+    payloadElementId,
+    successMessageId,
     staleDraftWarningPlaceholderId
   )
 
-  // Load draft and validate version
-  const savedData = storageManager.load()
+  if (!editorData) {
+    return
+  }
 
-  const editorConfig = createEditorConfig(
+  const { storageManager, inflatedOriginalData, inflatedSavedData } = editorData
+
+  const editorConfig = createEditorConfig({
     schema,
     validate,
-    originalData,
+    originalData: inflatedOriginalData,
     hiddenInputId,
     saveButtonId,
     storageManager,
-    () => editor
-  )
+    getEditor: () => editor
+  })
   const editor = new JSONEditor(container, editorConfig)
 
   // Load data
-  editor.set(savedData || originalData)
-  syncHiddenInput(hiddenInputId, savedData || originalData)
-  highlightChanges(editor, savedData || originalData, originalData)
+  const dataToLoad = inflatedSavedData || inflatedOriginalData
+  editor.set(dataToLoad)
+  syncHiddenInput(hiddenInputId, dataToLoad)
+  highlightChanges(editor, dataToLoad, inflatedOriginalData)
 
   // Initialise save button state
   const initialErrors = validateJSON(
-    savedData || originalData,
-    originalData,
+    dataToLoad,
+    inflatedOriginalData,
     schema,
     validate
   )
+
   updateSaveButtonState(saveButtonId, initialErrors)
+
+  setupAppendButtons(
+    schema,
+    editor,
+    storageManager,
+    hiddenInputId,
+    inflatedOriginalData
+  )
 
   setupResetButton(
     resetButtonId,
     storageManager,
     editor,
-    originalData,
+    inflatedOriginalData,
     hiddenInputId
   )
 }
