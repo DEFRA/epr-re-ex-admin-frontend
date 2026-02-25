@@ -11,11 +11,11 @@ export const organisationsGETController = {
     )
 
     // Get flash messages from session
-    const errorMessage = request.yar.get('error')
+    const errorList = request.yar.get('errorList')
     const successMessage = request.yar.get('success')
 
     // Clear flash messages after reading
-    await request.yar.clear('error')
+    await request.yar.clear('errorList')
     await request.yar.clear('success')
 
     const pageTitle = request.route.settings.app.pageTitle
@@ -26,8 +26,8 @@ export const organisationsGETController = {
       organisationJson: JSON.stringify(data)
     }
 
-    if (errorMessage) {
-      viewContext.error = errorMessage
+    if (errorList?.length) {
+      viewContext.errorList = errorList
     }
 
     if (successMessage) {
