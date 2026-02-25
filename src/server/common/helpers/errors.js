@@ -14,6 +14,11 @@ export function catchAll(request, h) {
 
   if (statusCode === statusCodes.unauthorised) {
     template = 'unauthorised'
+
+    if (request.yar && request.path) {
+      const redirectPath = request.path + (request.url?.search ?? '')
+      request.yar.flash('referrer', redirectPath)
+    }
   }
 
   if (statusCode === statusCodes.forbidden) {
