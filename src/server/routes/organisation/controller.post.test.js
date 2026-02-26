@@ -11,6 +11,7 @@ import {
   server as mswServer,
   HttpResponse
 } from '../../../../.vite/setup-msw.js'
+
 vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
   getUserSession: vi.fn().mockReturnValue(null)
 }))
@@ -121,11 +122,11 @@ describe('organisation POST controller', () => {
       expect(headers.location).toBe(`/organisations/${orgId}`)
     })
 
-    test('Should handle backend validation error and redirect', async () => {
+    test('Should handle backend validation error and redirect with error messages in session', async () => {
       const orgId = 'org-1'
       const mockErrorResponse = {
         message:
-          'Invalid organisation data: registrations.0.registrationNumber: any.invalid; registrations.0.validFrom: string.base'
+          'Validation Error: Field "companyDetails.name" is required; Field "version" must be a number'
       }
 
       const putOrganisationHandler = http.put(
@@ -166,6 +167,54 @@ describe('organisation POST controller', () => {
       })
 
       // Should redirect (302 Found)
+      expect(statusCode).toBe(302)
+      expect(headers.location).toBe(`/organisations/${orgId}`)
+    })
+
+    test('Should split semicolon-separated validation errors into error list', async () => {
+      const orgId = 'org-validation'
+      const mockErrorResponse = {
+        message:
+          'Invalid organisation data: wasteProcessingTypes: At least one waste processing type is required; site: is required'
+      }
+
+      const putOrganisationHandler = http.put(
+        `${backendUrl}/v1/organisations/${orgId}`,
+        () => {
+          return HttpResponse.json(mockErrorResponse, { status: 422 })
+        }
+      )
+
+      mswServer.use(putOrganisationHandler)
+
+      const postData = {
+        version: 1,
+        companyDetails: {
+          name: 'Test Org',
+          registrationNumber: '12345678'
+        }
+      }
+
+      const { cookie, crumb } = await getCsrfToken(
+        server,
+        `/organisations/${orgId}`,
+        { strategy: 'session', credentials: mockUserSession }
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/organisations/${orgId}`,
+        headers: { cookie },
+        payload: {
+          organisation: JSON.stringify(postData),
+          crumb
+        },
+        auth: {
+          strategy: 'session',
+          credentials: mockUserSession
+        }
+      })
+
       expect(statusCode).toBe(302)
       expect(headers.location).toBe(`/organisations/${orgId}`)
     })
@@ -262,6 +311,50 @@ describe('organisation POST controller', () => {
       })
 
       // Should redirect (302 Found)
+      expect(statusCode).toBe(302)
+      expect(headers.location).toBe(`/organisations/${orgId}`)
+    })
+
+    test('Should fallback to default error message when response has no message', async () => {
+      const orgId = 'org-no-message'
+
+      const putOrganisationHandler = http.put(
+        `${backendUrl}/v1/organisations/${orgId}`,
+        () => {
+          return HttpResponse.json({}, { status: 500 })
+        }
+      )
+
+      mswServer.use(putOrganisationHandler)
+
+      const postData = {
+        version: 1,
+        companyDetails: {
+          name: 'Test Org',
+          registrationNumber: '12345678'
+        }
+      }
+
+      const { cookie, crumb } = await getCsrfToken(
+        server,
+        `/organisations/${orgId}`,
+        { strategy: 'session', credentials: mockUserSession }
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/organisations/${orgId}`,
+        headers: { cookie },
+        payload: {
+          organisation: JSON.stringify(postData),
+          crumb
+        },
+        auth: {
+          strategy: 'session',
+          credentials: mockUserSession
+        }
+      })
+
       expect(statusCode).toBe(302)
       expect(headers.location).toBe(`/organisations/${orgId}`)
     })

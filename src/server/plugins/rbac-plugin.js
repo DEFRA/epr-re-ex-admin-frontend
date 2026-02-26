@@ -1,42 +1,25 @@
 import Boom from '@hapi/boom'
-import { ROLES } from '#server/common/constants/roles.js'
 import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
 
-const DEFAULT_REQUIRED_ROLES = [ROLES.serviceMaintainer]
+const REQUIRED_ROLE = 'service_maintainer'
 
 export const rbacPlugin = {
   plugin: {
     name: 'rbac-plugin',
     register: (server) => {
-      server.ext('onPostAuth', async (request, h) => {
-        const authSettings = request.route.settings.auth
-
-        if (authSettings === false || authSettings?.mode === 'try') {
+      server.ext('onPreHandler', async (request, h) => {
+        const routeAuth = request.route.settings.auth
+        if (routeAuth === false) {
           return h.continue
         }
 
-        if (!request.auth.isAuthenticated) {
-          return h.continue
-        }
-
-        const requiredRoles =
-          request.route.settings.app?.requiredRoles ?? DEFAULT_REQUIRED_ROLES
-
-        if (requiredRoles.length === 0) {
+        if (request.path.startsWith('/auth')) {
           return h.continue
         }
 
         const userSession = await getUserSession(request)
-        const userRoles = userSession?.roles ?? []
-
-        const hasRequiredRole = requiredRoles.some((role) =>
-          userRoles.includes(role)
-        )
-
-        if (!hasRequiredRole) {
-          throw Boom.forbidden(
-            'You do not have the required role to access this page'
-          )
+        if (!userSession?.roles?.includes(REQUIRED_ROLE)) {
+          throw Boom.forbidden()
         }
 
         return h.continue

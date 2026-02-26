@@ -1,142 +1,162 @@
-import { vi, describe, test, expect, beforeEach } from 'vitest'
-import { ROLES } from '#server/common/constants/roles.js'
+import { vi, beforeEach, afterEach, describe, test, expect } from 'vitest'
+import Boom from '@hapi/boom'
 
-vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
-  getUserSession: vi.fn()
-}))
+import { rbacPlugin } from './rbac-plugin.js'
+import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
 
-describe('rbac-plugin', () => {
-  let getUserSession
-  let rbacPlugin
-  let registeredExtHandler
+vi.mock('#server/common/helpers/auth/get-user-session.js')
 
-  beforeEach(async () => {
+describe('#rbacPlugin', () => {
+  let onPreHandler
+  const mockH = { continue: Symbol('continue') }
+
+  const mockServer = {
+    ext: vi.fn((event, handler) => {
+      if (event === 'onPreHandler') {
+        onPreHandler = handler
+      }
+    })
+  }
+
+  beforeEach(() => {
     vi.clearAllMocks()
-
-    const sessionModule =
-      await import('#server/common/helpers/auth/get-user-session.js')
-    getUserSession = sessionModule.getUserSession
-
-    const pluginModule = await import('./rbac-plugin.js')
-    rbacPlugin = pluginModule.rbacPlugin
-
-    const mockServer = {
-      ext: vi.fn((eventName, handler) => {
-        registeredExtHandler = handler
-      })
-    }
-
     rbacPlugin.plugin.register(mockServer)
+  })
 
+  afterEach(() => {
+    vi.resetAllMocks()
+  })
+
+  test('Should have correct plugin name', () => {
+    expect(rbacPlugin.plugin.name).toBe('rbac-plugin')
+  })
+
+  test('Should register an onPreHandler extension', () => {
     expect(mockServer.ext).toHaveBeenCalledWith(
-      'onPostAuth',
+      'onPreHandler',
       expect.any(Function)
     )
   })
 
-  function createMockRequest(overrides = {}) {
-    return {
-      route: {
-        settings: {
-          auth: overrides.auth ?? {},
-          app: overrides.app ?? {}
-        }
-      },
-      auth: {
-        isAuthenticated: overrides.isAuthenticated ?? true
-      },
-      ...overrides
+  test('Should skip routes with auth set to false', async () => {
+    const request = {
+      route: { settings: { auth: false } },
+      path: '/health'
     }
-  }
 
-  const mockH = { continue: Symbol('continue') }
+    const result = await onPreHandler(request, mockH)
 
-  test('Should allow access for user with service_maintainer role', async () => {
+    expect(result).toBe(mockH.continue)
+    expect(getUserSession).not.toHaveBeenCalled()
+  })
+
+  test('Should skip auth routes', async () => {
+    const request = {
+      route: { settings: { auth: { strategy: 'entra-id' } } },
+      path: '/auth/callback'
+    }
+
+    const result = await onPreHandler(request, mockH)
+
+    expect(result).toBe(mockH.continue)
+    expect(getUserSession).not.toHaveBeenCalled()
+  })
+
+  test('Should skip auth sign-out route', async () => {
+    const request = {
+      route: { settings: { auth: { strategy: 'session' } } },
+      path: '/auth/sign-out'
+    }
+
+    const result = await onPreHandler(request, mockH)
+
+    expect(result).toBe(mockH.continue)
+    expect(getUserSession).not.toHaveBeenCalled()
+  })
+
+  test('Should allow users with service_maintainer role', async () => {
     getUserSession.mockResolvedValue({
-      roles: [ROLES.serviceMaintainer]
+      roles: ['service_maintainer']
     })
 
-    const request = createMockRequest()
-    const result = await registeredExtHandler(request, mockH)
+    const request = {
+      route: { settings: { auth: { strategy: 'session' } } },
+      path: '/organisations'
+    }
+
+    const result = await onPreHandler(request, mockH)
 
     expect(result).toBe(mockH.continue)
   })
 
-  test('Should deny access for user with no roles', async () => {
-    getUserSession.mockResolvedValue({ roles: [] })
+  test('Should allow users with service_maintainer among multiple roles', async () => {
+    getUserSession.mockResolvedValue({
+      roles: ['some_other_role', 'service_maintainer']
+    })
 
-    const request = createMockRequest()
+    const request = {
+      route: { settings: { auth: { strategy: 'session' } } },
+      path: '/organisations'
+    }
 
-    await expect(registeredExtHandler(request, mockH)).rejects.toThrow(
-      'You do not have the required role to access this page'
+    const result = await onPreHandler(request, mockH)
+
+    expect(result).toBe(mockH.continue)
+  })
+
+  test('Should throw 403 for users without service_maintainer role', async () => {
+    getUserSession.mockResolvedValue({
+      roles: ['some_other_role']
+    })
+
+    const request = {
+      route: { settings: { auth: { strategy: 'session' } } },
+      path: '/organisations'
+    }
+
+    await expect(onPreHandler(request, mockH)).rejects.toThrow(
+      Boom.forbidden()
     )
   })
 
-  test('Should deny access for user with wrong role', async () => {
-    getUserSession.mockResolvedValue({ roles: ['some_other_role'] })
+  test('Should throw 403 for users with empty roles array', async () => {
+    getUserSession.mockResolvedValue({
+      roles: []
+    })
 
-    const request = createMockRequest()
+    const request = {
+      route: { settings: { auth: { strategy: 'session' } } },
+      path: '/organisations'
+    }
 
-    await expect(registeredExtHandler(request, mockH)).rejects.toThrow(
-      'You do not have the required role to access this page'
+    await expect(onPreHandler(request, mockH)).rejects.toThrow(
+      Boom.forbidden()
     )
   })
 
-  test('Should skip role check for routes with auth: false', async () => {
-    const request = createMockRequest({ auth: false })
-    const result = await registeredExtHandler(request, mockH)
+  test('Should throw 403 for users with no roles property', async () => {
+    getUserSession.mockResolvedValue({})
 
-    expect(result).toBe(mockH.continue)
-    expect(getUserSession).not.toHaveBeenCalled()
+    const request = {
+      route: { settings: { auth: { strategy: 'session' } } },
+      path: '/organisations'
+    }
+
+    await expect(onPreHandler(request, mockH)).rejects.toThrow(
+      Boom.forbidden()
+    )
   })
 
-  test('Should skip role check for routes with auth mode try', async () => {
-    const request = createMockRequest({
-      auth: { mode: 'try' }
-    })
-    const result = await registeredExtHandler(request, mockH)
-
-    expect(result).toBe(mockH.continue)
-    expect(getUserSession).not.toHaveBeenCalled()
-  })
-
-  test('Should skip role check for unauthenticated requests', async () => {
-    const request = createMockRequest({ isAuthenticated: false })
-    const result = await registeredExtHandler(request, mockH)
-
-    expect(result).toBe(mockH.continue)
-    expect(getUserSession).not.toHaveBeenCalled()
-  })
-
-  test('Should respect custom requiredRoles on route', async () => {
-    getUserSession.mockResolvedValue({ roles: ['custom_role'] })
-
-    const request = createMockRequest({
-      app: { requiredRoles: ['custom_role'] }
-    })
-
-    const result = await registeredExtHandler(request, mockH)
-    expect(result).toBe(mockH.continue)
-  })
-
-  test('Should allow any authenticated user when requiredRoles is empty', async () => {
-    getUserSession.mockResolvedValue({ roles: [] })
-
-    const request = createMockRequest({
-      app: { requiredRoles: [] }
-    })
-
-    const result = await registeredExtHandler(request, mockH)
-    expect(result).toBe(mockH.continue)
-  })
-
-  test('Should deny when user has no session', async () => {
+  test('Should throw 403 when session is null', async () => {
     getUserSession.mockResolvedValue(null)
 
-    const request = createMockRequest()
+    const request = {
+      route: { settings: { auth: { strategy: 'session' } } },
+      path: '/organisations'
+    }
 
-    await expect(registeredExtHandler(request, mockH)).rejects.toThrow(
-      'You do not have the required role to access this page'
+    await expect(onPreHandler(request, mockH)).rejects.toThrow(
+      Boom.forbidden()
     )
   })
 })
