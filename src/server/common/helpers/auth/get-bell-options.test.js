@@ -145,6 +145,31 @@ describe('#getBellOptions', () => {
     })
   })
 
+  test('Should extract login_hint from token payload when present', async () => {
+    const payloadWithLoginHint = {
+      ...mockJwtPayload,
+      login_hint: 'john.doe@example-user.test'
+    }
+
+    verifyToken.mockReturnValue(payloadWithLoginHint)
+
+    const result = getBellOptions(mockOidcConfig)
+    const mockCredentials = { token: 'mock-jwt-token' }
+
+    await result.provider.profile(mockCredentials, {}, {})
+
+    expect(mockCredentials.profile.loginHint).toBe('john.doe@example-user.test')
+  })
+
+  test('Should set loginHint to undefined when login_hint not in token payload', async () => {
+    const result = getBellOptions(mockOidcConfig)
+    const mockCredentials = { token: 'mock-jwt-token' }
+
+    await result.provider.profile(mockCredentials, {}, {})
+
+    expect(mockCredentials.profile.loginHint).toBeUndefined()
+  })
+
   test('Should handle different app base URLs', () => {
     const testUrls = [
       'https://example-dev.test',

@@ -78,7 +78,13 @@ describe('#signOut route', () => {
     expect(clearUserSession).toHaveBeenCalledWith(mockRequest)
     expect(getOidcConfig).toHaveBeenCalledTimes(1)
 
-    const expectedLogoutUrl = `${mockOidcConfig.end_session_endpoint}?post_logout_redirect_uri=${config.get('appBaseUrl')}/`
+    const expectedParams = new URLSearchParams()
+    expectedParams.set('logout_hint', mockUserSession.email)
+    expectedParams.set(
+      'post_logout_redirect_uri',
+      `${config.get('appBaseUrl')}/`
+    )
+    const expectedLogoutUrl = `${mockOidcConfig.end_session_endpoint}?${expectedParams.toString()}`
     expect(mockToolkit.view).toHaveBeenCalledWith(
       'routes/auth/sign-out/index',
       {
@@ -99,15 +105,62 @@ describe('#signOut route', () => {
 
     await signOutRoute.handler(mockRequest, mockToolkit)
 
-    const expectedUrl = encodeURI(
-      `${mockOidcConfig.end_session_endpoint}?post_logout_redirect_uri=${config.get('appBaseUrl')}/`
+    const expectedParams = new URLSearchParams()
+    expectedParams.set('logout_hint', mockUserSession.email)
+    expectedParams.set(
+      'post_logout_redirect_uri',
+      `${config.get('appBaseUrl')}/`
     )
+    const expectedUrl = `${mockOidcConfig.end_session_endpoint}?${expectedParams.toString()}`
     expect(mockToolkit.view).toHaveBeenCalledWith(
       'routes/auth/sign-out/index',
       {
         pageTitle: 'Signing out',
         logoutUrl: expectedUrl
       }
+    )
+  })
+
+  test('Should prefer loginHint over email for logout_hint', async () => {
+    getUserSession.mockResolvedValue({
+      ...mockUserSession,
+      loginHint: 'hint@example.test'
+    })
+
+    const mockRequest = {
+      logger: mockLogger,
+      auth: { isAuthenticated: true }
+    }
+
+    await signOutRoute.handler(mockRequest, mockToolkit)
+
+    expect(mockToolkit.view).toHaveBeenCalledWith(
+      'routes/auth/sign-out/index',
+      expect.objectContaining({
+        logoutUrl: expect.stringContaining('logout_hint=hint%40example.test')
+      })
+    )
+  })
+
+  test('Should omit logout_hint when neither loginHint nor email available', async () => {
+    getUserSession.mockResolvedValue({
+      ...mockUserSession,
+      loginHint: undefined,
+      email: undefined
+    })
+
+    const mockRequest = {
+      logger: mockLogger,
+      auth: { isAuthenticated: true }
+    }
+
+    await signOutRoute.handler(mockRequest, mockToolkit)
+
+    expect(mockToolkit.view).toHaveBeenCalledWith(
+      'routes/auth/sign-out/index',
+      expect.objectContaining({
+        logoutUrl: expect.not.stringContaining('logout_hint')
+      })
     )
   })
 
@@ -133,9 +186,13 @@ describe('#signOut route', () => {
 
       await signOutRoute.handler(mockRequest, mockToolkit)
 
-      const expectedUrl = encodeURI(
-        `${endpoint}?post_logout_redirect_uri=${config.get('appBaseUrl')}/`
+      const expectedParams = new URLSearchParams()
+      expectedParams.set('logout_hint', mockUserSession.email)
+      expectedParams.set(
+        'post_logout_redirect_uri',
+        `${config.get('appBaseUrl')}/`
       )
+      const expectedUrl = `${endpoint}?${expectedParams.toString()}`
       expect(mockToolkit.view).toHaveBeenCalledWith(
         'routes/auth/sign-out/index',
         {
@@ -219,9 +276,13 @@ describe('#signOut route', () => {
 
     await signOutRoute.handler(mockRequest, mockToolkit)
 
-    const expectedUrl = encodeURI(
-      `undefined?post_logout_redirect_uri=${config.get('appBaseUrl')}/`
+    const expectedParams = new URLSearchParams()
+    expectedParams.set('logout_hint', mockUserSession.email)
+    expectedParams.set(
+      'post_logout_redirect_uri',
+      `${config.get('appBaseUrl')}/`
     )
+    const expectedUrl = `undefined?${expectedParams.toString()}`
     expect(mockToolkit.view).toHaveBeenCalledWith(
       'routes/auth/sign-out/index',
       {

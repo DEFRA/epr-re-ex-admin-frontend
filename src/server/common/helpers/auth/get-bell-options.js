@@ -23,7 +23,8 @@ export function getBellOptions(oidcConfig) {
           id,
           name,
           email,
-          displayName: name
+          displayName: name,
+          loginHint: tokenPayload.login_hint
         }
       }
     },
