@@ -1,5 +1,6 @@
 import { organisationsGETController } from './controller.get.js'
 import { organisationsPOSTController } from './controller.post.js'
+import { ROLES } from '#server/common/constants/roles.js'
 
 export const organisation = {
   plugin: {
@@ -11,13 +12,17 @@ export const organisation = {
           path: '/organisations/{id}',
           ...organisationsGETController,
           options: {
+            auth: { scope: [ROLES.serviceMaintainer] },
             app: { pageTitle: 'Organisation Details' }
           }
         },
         {
           method: 'POST',
           path: '/organisations/{id}',
-          ...organisationsPOSTController
+          ...organisationsPOSTController,
+          options: {
+            auth: { scope: [ROLES.serviceMaintainer] }
+          }
         }
       ])
     }

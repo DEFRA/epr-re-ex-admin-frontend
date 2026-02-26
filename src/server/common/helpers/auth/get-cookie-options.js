@@ -26,7 +26,13 @@ export function getCookieOptions() {
           request,
           userSession
         )
-        return { isValid: true, credentials: validatedSession }
+        return {
+          isValid: true,
+          credentials: {
+            ...validatedSession,
+            scope: validatedSession.roles ?? []
+          }
+        }
       } catch {
         return { isValid: false }
       }

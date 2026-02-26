@@ -2,6 +2,7 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
 import isEqual from 'lodash/isEqual.js'
 import isArray from 'lodash/isArray.js'
 import isObject from 'lodash/isObject.js'
+import { ROLES } from '#server/common/constants/roles.js'
 
 export const systemLogs = {
   plugin: {
@@ -12,6 +13,7 @@ export const systemLogs = {
           method: 'GET',
           path: '/system-logs',
           options: {
+            auth: { scope: [ROLES.serviceMaintainer] },
             app: { pageTitle: 'System logs' }
           },
           async handler(request, h) {

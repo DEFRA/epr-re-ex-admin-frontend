@@ -1,5 +1,6 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { ROLES } from '#server/common/constants/roles.js'
 
 export const defraFormsSubmission = {
   plugin: {
@@ -10,6 +11,7 @@ export const defraFormsSubmission = {
           method: 'GET',
           path: '/defra-forms-submission/{documentId}',
           options: {
+            auth: { scope: [ROLES.serviceMaintainer] },
             app: { pageTitle: 'Defra Forms submission data' }
           },
           async handler(request, h) {

@@ -1,5 +1,6 @@
 import { publicRegisterGetController } from './controller.get.js'
 import { publicRegisterPostController } from './controller.post.js'
+import { ROLES } from '#server/common/constants/roles.js'
 
 export const publicRegister = {
   plugin: {
@@ -11,13 +12,17 @@ export const publicRegister = {
           path: '/public-register',
           ...publicRegisterGetController,
           options: {
+            auth: { scope: [ROLES.serviceMaintainer] },
             app: { pageTitle: 'Public register' }
           }
         },
         {
           method: 'POST',
           path: '/public-register',
-          ...publicRegisterPostController
+          ...publicRegisterPostController,
+          options: {
+            auth: { scope: [ROLES.serviceMaintainer] }
+          }
         }
       ])
     }

@@ -1,4 +1,5 @@
 import { organisationsController } from './controller.js'
+import { ROLES } from '#server/common/constants/roles.js'
 
 /**
  * Sets up the routes used in the /organisations page.
@@ -14,6 +15,7 @@ export const organisations = {
           path: '/organisations',
           ...organisationsController,
           options: {
+            auth: { scope: [ROLES.serviceMaintainer] },
             app: { pageTitle: 'Organisations' }
           }
         },
@@ -22,6 +24,7 @@ export const organisations = {
           path: '/organisations',
           ...organisationsController,
           options: {
+            auth: { scope: [ROLES.serviceMaintainer] },
             app: { pageTitle: 'Organisations' }
           }
         }

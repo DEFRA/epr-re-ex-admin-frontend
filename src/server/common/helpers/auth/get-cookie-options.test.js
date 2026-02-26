@@ -116,7 +116,7 @@ describe('#getCookieOptions', () => {
       )
       expect(validation).toEqual({
         isValid: true,
-        credentials: mockUserSession
+        credentials: { ...mockUserSession, scope: [] }
       })
     })
 
@@ -183,7 +183,10 @@ describe('#getCookieOptions', () => {
       )
       expect(validation).toEqual({
         isValid: true,
-        credentials: complexUserSession
+        credentials: {
+          ...complexUserSession,
+          scope: complexUserSession.roles
+        }
       })
     })
 
@@ -220,7 +223,7 @@ describe('#getCookieOptions', () => {
 
         expect(validation).toEqual({
           isValid: true,
-          credentials: value
+          credentials: { ...value, scope: value.roles ?? [] }
         })
       }
     })
