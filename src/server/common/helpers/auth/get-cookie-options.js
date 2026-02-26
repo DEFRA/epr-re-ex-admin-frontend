@@ -30,7 +30,7 @@ export function getCookieOptions() {
           isValid: true,
           credentials: {
             ...validatedSession,
-            scope: validatedSession.roles ?? []
+            scope: validatedSession.scope ?? []
           }
         }
       } catch {

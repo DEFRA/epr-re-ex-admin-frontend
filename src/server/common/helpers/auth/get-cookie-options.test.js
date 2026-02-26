@@ -162,7 +162,7 @@ describe('#getCookieOptions', () => {
         sessionId: 'session-789',
         userId: 'user-101',
         email: 'complex@test.com',
-        roles: ['admin', 'user'],
+        scope: ['admin', 'user'],
         metadata: {
           createdAt: '2025-10-14',
           permissions: ['read', 'write']
@@ -185,7 +185,7 @@ describe('#getCookieOptions', () => {
         isValid: true,
         credentials: {
           ...complexUserSession,
-          scope: complexUserSession.roles
+          scope: complexUserSession.scope
         }
       })
     })
@@ -223,7 +223,7 @@ describe('#getCookieOptions', () => {
 
         expect(validation).toEqual({
           isValid: true,
-          credentials: { ...value, scope: value.roles ?? [] }
+          credentials: { ...value, scope: value.scope ?? [] }
         })
       }
     })

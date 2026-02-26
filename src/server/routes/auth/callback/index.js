@@ -35,29 +35,29 @@ export default {
       isAuthenticated: true,
       token,
       refreshToken,
-      roles: []
+      scope: []
     }
     await createUserSession(request, userSession)
 
-    let roles = []
+    let scope = []
     try {
-      const data = await fetchJsonFromBackend(request, '/v1/me/roles')
-      roles = data.roles ?? []
+      const data = await fetchJsonFromBackend(request, '/v1/me/scope')
+      scope = data.scope ?? []
     } catch (error) {
       request.logger.error(
         { error: error.message },
-        'Failed to fetch user roles from backend'
+        'Failed to fetch user scope from backend'
       )
     }
 
-    await createUserSession(request, { ...userSession, roles })
+    await createUserSession(request, { ...userSession, scope })
 
     const redirect = request.yar?.flash('referrer')?.at(0) ?? '/'
 
     const safeRedirect = getSafeRedirect(redirect)
 
     request.logger.info({ userId, displayName }, 'User signed in')
-    auditSignIn({ ...userSession, roles })
+    auditSignIn({ ...userSession, scope })
     await metrics.signInSuccess()
 
     request.logger.info(`Sign-in complete, redirecting user to ${safeRedirect}`)

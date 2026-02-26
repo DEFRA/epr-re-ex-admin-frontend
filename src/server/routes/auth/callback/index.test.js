@@ -33,7 +33,7 @@ describe('#callback route', () => {
   const mockToken = 'mock-jwt-token'
   const mockRefreshToken = 'mock-refresh-token'
   const mockSessionId = 'generated-session-id-456'
-  const mockRoles = ['service_maintainer']
+  const mockScope = ['service_maintainer']
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -43,7 +43,7 @@ describe('#callback route', () => {
     createUserSession.mockResolvedValue()
     verifyToken.mockResolvedValue()
     randomUUID.mockReturnValue(mockSessionId)
-    fetchJsonFromBackend.mockResolvedValue({ roles: mockRoles })
+    fetchJsonFromBackend.mockResolvedValue({ scope: mockScope })
   })
 
   afterEach(() => {
@@ -120,7 +120,7 @@ describe('#callback route', () => {
           isAuthenticated: true,
           token: mockToken,
           refreshToken: mockRefreshToken,
-          roles: mockRoles
+          scope: mockScope
         })
         expect(mockToolkit.redirect).toHaveBeenCalledWith(expectedRedirectUrl)
         expect(result).toBe('redirect-result')
@@ -156,7 +156,7 @@ describe('#callback route', () => {
       isAuthenticated: true,
       token: mockToken,
       refreshToken: mockRefreshToken,
-      roles: mockRoles
+      scope: mockScope
     })
   })
 
@@ -181,7 +181,7 @@ describe('#callback route', () => {
       isAuthenticated: true,
       token: mockToken,
       refreshToken: mockRefreshToken,
-      roles: mockRoles
+      scope: mockScope
     })
   })
 
@@ -292,7 +292,7 @@ describe('#callback route', () => {
       isAuthenticated: true,
       token: mockToken,
       refreshToken: mockRefreshToken,
-      roles: mockRoles
+      scope: mockScope
     }
 
     expect(createUserSession).toHaveBeenLastCalledWith(
@@ -348,7 +348,7 @@ describe('#callback route', () => {
       mockRequest,
       expect.objectContaining({
         token: undefined,
-        roles: mockRoles
+        scope: mockScope
       })
     )
   })
@@ -382,7 +382,7 @@ describe('#callback route', () => {
       isAuthenticated: true,
       token: mockToken,
       refreshToken: undefined,
-      roles: mockRoles
+      scope: mockScope
     })
   })
 
@@ -400,7 +400,7 @@ describe('#callback route', () => {
 
     fetchJsonFromBackend.mockImplementation(async () => {
       callOrder.push('fetchJsonFromBackend')
-      return { roles: mockRoles }
+      return { scope: mockScope }
     })
 
     mockToolkit.redirect.mockImplementation(() => {
@@ -506,7 +506,7 @@ describe('#callback route', () => {
       isAuthenticated: true,
       token: mockToken,
       refreshToken: mockRefreshToken,
-      roles: mockRoles
+      scope: mockScope
     })
   })
 
@@ -564,7 +564,7 @@ describe('#callback route', () => {
   })
 
   describe('Role fetching', () => {
-    test('Should fetch roles from backend using fetchJsonFromBackend', async () => {
+    test('Should fetch scope from backend using fetchJsonFromBackend', async () => {
       const mockRequest = {
         logger: mockLogger,
         auth: {
@@ -581,13 +581,13 @@ describe('#callback route', () => {
 
       expect(fetchJsonFromBackend).toHaveBeenCalledWith(
         mockRequest,
-        '/v1/me/roles'
+        '/v1/me/scope'
       )
     })
 
-    test('Should store roles in user session', async () => {
-      const roles = ['service_maintainer', 'admin']
-      fetchJsonFromBackend.mockResolvedValue({ roles })
+    test('Should store scope in user session', async () => {
+      const scope = ['service_maintainer', 'admin']
+      fetchJsonFromBackend.mockResolvedValue({ scope })
 
       const mockRequest = {
         logger: mockLogger,
@@ -605,11 +605,11 @@ describe('#callback route', () => {
 
       expect(createUserSession).toHaveBeenLastCalledWith(
         mockRequest,
-        expect.objectContaining({ roles })
+        expect.objectContaining({ scope })
       )
     })
 
-    test('Should store empty roles array when response has no roles property', async () => {
+    test('Should store empty scope array when response has no scope property', async () => {
       fetchJsonFromBackend.mockResolvedValue({})
 
       const mockRequest = {
@@ -628,11 +628,11 @@ describe('#callback route', () => {
 
       expect(createUserSession).toHaveBeenLastCalledWith(
         mockRequest,
-        expect.objectContaining({ roles: [] })
+        expect.objectContaining({ scope: [] })
       )
     })
 
-    test('Should store empty roles array when fetchJsonFromBackend throws', async () => {
+    test('Should store empty scope array when fetchJsonFromBackend throws', async () => {
       fetchJsonFromBackend.mockRejectedValue(new Error('Backend error'))
 
       const mockRequest = {
@@ -651,11 +651,11 @@ describe('#callback route', () => {
 
       expect(createUserSession).toHaveBeenLastCalledWith(
         mockRequest,
-        expect.objectContaining({ roles: [] })
+        expect.objectContaining({ scope: [] })
       )
       expect(mockLogger.error).toHaveBeenCalledWith(
         { error: 'Backend error' },
-        'Failed to fetch user roles from backend'
+        'Failed to fetch user scope from backend'
       )
     })
   })

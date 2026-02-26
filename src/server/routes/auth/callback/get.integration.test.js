@@ -66,8 +66,8 @@ describe('GET /auth/callback', () => {
           )
         })
       }),
-      http.get('*/v1/me/roles', () => {
-        return HttpResponse.json({ roles: ['service_maintainer'] })
+      http.get('*/v1/me/scope', () => {
+        return HttpResponse.json({ scope: ['service_maintainer'] })
       })
     )
 
