@@ -63,7 +63,19 @@ describe('GET /auth/sign-out', () => {
 
     it('redirects to home', async () => {
       // sign out implemented via JS
-      const expectedSignOutUrl = `${mockOidcResponse.end_session_endpoint}?post_logout_redirect_uri=${config.get('appBaseUrl')}/`
+      // Build expected URL using URLSearchParams to match production code,
+      // then replace & with &amp; since Nunjucks HTML-escapes attribute values
+      const expectedParams = new URLSearchParams()
+      expectedParams.set('logout_hint', mockUserSession.email)
+      expectedParams.set(
+        'post_logout_redirect_uri',
+        `${config.get('appBaseUrl')}/`
+      )
+      const expectedSignOutUrl =
+        `${mockOidcResponse.end_session_endpoint}?${expectedParams.toString()}`.replace(
+          /&/g,
+          '&amp;'
+        )
       expect(response.statusCode).toBe(statusCodes.ok)
       expect(response.result).toContain(
         `<div data-logout-url="${expectedSignOutUrl}" id="sign-out-data"></div>`
