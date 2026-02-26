@@ -1,5 +1,12 @@
 import { statusCodes } from '../constants/status-codes.js'
 
+function storeRedirectPath(request) {
+  if (request.yar && request.path) {
+    const redirectPath = request.path + (request.url?.search ?? '')
+    request.yar.flash('referrer', redirectPath)
+  }
+}
+
 export function catchAll(request, h) {
   const { response } = request
 
@@ -14,6 +21,7 @@ export function catchAll(request, h) {
 
   if (statusCode === statusCodes.unauthorised) {
     template = 'unauthorised'
+    storeRedirectPath(request)
   }
 
   if (statusCode === statusCodes.forbidden) {

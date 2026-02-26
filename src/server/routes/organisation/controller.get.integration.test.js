@@ -5,11 +5,7 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
-import {
-  http,
-  server as mswServer,
-  HttpResponse
-} from '../../../../.vite/setup-msw.js'
+import { http, server as mswServer, HttpResponse } from '#vite/setup-msw.js'
 
 vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
   getUserSession: vi.fn().mockReturnValue(null)
@@ -38,10 +34,6 @@ describe('organisation GET controller', () => {
 
   afterEach(() => {
     vi.clearAllMocks()
-    // Ensure any stubbed globals are reset after each test
-    if (typeof vi.unstubAllGlobals === 'function') {
-      vi.unstubAllGlobals()
-    }
   })
 
   describe('When user is unauthenticated', () => {
@@ -99,9 +91,11 @@ describe('organisation GET controller', () => {
     })
 
     test('Should show 500 error page when backend fetch throws', async () => {
-      const fetchMock = vi.fn().mockRejectedValue(new Error('Network error'))
-
-      vi.stubGlobal('fetch', fetchMock)
+      mswServer.use(
+        http.get(`${backendUrl}/v1/organisations/org-1`, () => {
+          return HttpResponse.error()
+        })
+      )
 
       const { result } = await server.inject({
         method: 'GET',
@@ -113,7 +107,6 @@ describe('organisation GET controller', () => {
       })
 
       expect(result).toContain('Sorry, there is a problem with the service')
-      expect(fetchMock).toHaveBeenCalledTimes(1)
     })
   })
 })

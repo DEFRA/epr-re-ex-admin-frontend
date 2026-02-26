@@ -1,4 +1,4 @@
-import { http, server, HttpResponse } from '../../../../.vite/setup-msw.js'
+import { http, server, HttpResponse } from '#vite/setup-msw.js'
 import { config } from '#config/config.js'
 import { generateKeyPairSync } from 'crypto'
 
