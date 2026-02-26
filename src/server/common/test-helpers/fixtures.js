@@ -9,6 +9,5 @@ export const mockUserSession = {
   isAuthenticated: true,
   token: makeToken('user-token'),
   refreshToken: makeToken('refresh-token'),
-  roles: [ROLES.serviceMaintainer],
   scope: [ROLES.serviceMaintainer]
 }
