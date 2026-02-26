@@ -1,7 +1,6 @@
 import Boom from '@hapi/boom'
 import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
-
-const REQUIRED_ROLE = 'service_maintainer'
+import { ROLES } from '#server/common/constants/roles.js'
 
 export const rbacPlugin = {
   plugin: {
@@ -18,7 +17,7 @@ export const rbacPlugin = {
         }
 
         const userSession = await getUserSession(request)
-        if (!userSession?.roles?.includes(REQUIRED_ROLE)) {
+        if (!userSession?.roles?.includes(ROLES.serviceMaintainer)) {
           throw Boom.forbidden()
         }
 
