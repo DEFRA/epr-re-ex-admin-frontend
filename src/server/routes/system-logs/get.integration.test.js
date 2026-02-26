@@ -5,11 +5,7 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
-import {
-  http,
-  server as mswServer,
-  HttpResponse
-} from '../../../../.vite/setup-msw.js'
+import { http, server as mswServer, HttpResponse } from '#vite/setup-msw.js'
 import * as cheerio from 'cheerio'
 
 vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
@@ -31,10 +27,6 @@ describe('GET /system-logs', () => {
 
   afterEach(() => {
     vi.clearAllMocks()
-    // Ensure any stubbed globals are reset after each test
-    if (typeof vi.unstubAllGlobals === 'function') {
-      vi.unstubAllGlobals()
-    }
   })
 
   const stubBackendReponse = (response) => {
