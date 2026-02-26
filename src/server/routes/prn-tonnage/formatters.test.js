@@ -23,6 +23,10 @@ describe('prn-tonnage formatters', () => {
   test('Should format tonnage values as whole numbers', () => {
     expect(formatTonnage(1)).toBe('1')
     expect(formatTonnage(12.345)).toBe('12')
+    expect(formatTonnage(12.4)).toBe('12')
+    expect(formatTonnage(12.5)).toBe('13')
+    expect(formatTonnage(12.6)).toBe('13')
+    expect(formatTonnage(-1.5)).toBe('-2')
     expect(formatTonnage(null)).toBe('0')
   })
 })
