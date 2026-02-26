@@ -6,11 +6,7 @@ import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { createServer } from '#server/server.js'
 import { vi } from 'vitest'
-import {
-  http,
-  HttpResponse,
-  server as mswServer
-} from '../../../../.vite/setup-msw.js'
+import { http, HttpResponse, server as mswServer } from '#vite/setup-msw.js'
 import * as cheerio from 'cheerio'
 
 vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({

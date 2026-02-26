@@ -1,10 +1,6 @@
 import { vi } from 'vitest'
 import { publicRegisterPostController } from './controller.post.js'
-import {
-  http,
-  server as mswServer,
-  HttpResponse
-} from '../../../../.vite/setup-msw.js'
+import { http, server as mswServer, HttpResponse } from '#vite/setup-msw.js'
 
 vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
