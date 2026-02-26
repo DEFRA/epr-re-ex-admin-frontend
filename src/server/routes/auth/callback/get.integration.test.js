@@ -41,10 +41,6 @@ describe('GET /auth/callback', () => {
   afterEach(async () => {
     await server.stop({ timeout: 0 })
     vi.clearAllMocks()
-    // Ensure any stubbed globals are reset after each test
-    if (typeof vi.unstubAllGlobals === 'function') {
-      vi.unstubAllGlobals()
-    }
   })
 
   const performSignInFlow = async (accessToken) => {

@@ -35,10 +35,6 @@ describe('organisation POST controller', () => {
 
   afterEach(() => {
     vi.clearAllMocks()
-    // Ensure any stubbed globals are reset after each test
-    if (typeof vi.unstubAllGlobals === 'function') {
-      vi.unstubAllGlobals()
-    }
   })
 
   describe('When user is unauthenticated', () => {
