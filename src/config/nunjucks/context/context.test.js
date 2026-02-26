@@ -100,6 +100,11 @@ describe('context and cache', () => {
             },
             {
               current: false,
+              text: 'PRN tonnage',
+              href: '/prn-tonnage'
+            },
+            {
+              current: false,
               text: 'System logs',
               href: '/system-logs'
             }
@@ -185,9 +190,10 @@ describe('context and cache', () => {
       })
 
       test('Should log that the Webpack Manifest file is not available', () => {
-        expect(mockLoggerError).toHaveBeenCalledWith(
-          'Webpack assets-manifest.json not found'
-        )
+        expect(mockLoggerError).toHaveBeenCalledWith({
+          err: expect.any(Error),
+          message: 'Webpack assets-manifest.json not found'
+        })
       })
     })
   })
@@ -267,6 +273,11 @@ describe('context and cache', () => {
               current: false,
               text: 'PRN activity',
               href: '/prn-activity'
+            },
+            {
+              current: false,
+              text: 'PRN tonnage',
+              href: '/prn-tonnage'
             },
             {
               current: false,

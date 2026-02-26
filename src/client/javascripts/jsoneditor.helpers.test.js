@@ -32,6 +32,8 @@ const { mockSet, mockGet, MockJSONEditorConstructor } = vi.hoisted(() => {
     return mockGet()
   }
 
+  MockJSONEditorConstructor.prototype.update = vi.fn()
+
   return { mockSet, mockGet, mockNode, MockJSONEditorConstructor }
 })
 
@@ -132,6 +134,52 @@ describe('JSONEditor Helpers', () => {
       // This will make node null on the second iteration
       expect(findSchemaNode(schema, ['nullProp', 'nonexistent'])).toBe(null)
     })
+
+    it('should find property inside union-typed object', () => {
+      const unionSchema = {
+        type: 'object',
+        properties: {
+          noticeAddress: {
+            type: ['object', 'null'],
+            properties: {
+              line1: { type: ['string', 'null'] },
+              postcode: { type: ['string', 'null'] }
+            }
+          }
+        }
+      }
+      const result = findSchemaNode(unionSchema, ['noticeAddress', 'line1'])
+      expect(result).toEqual({ type: ['string', 'null'] })
+    })
+
+    it('should find items schema inside union-typed array', () => {
+      const unionSchema = {
+        type: 'object',
+        properties: {
+          registrations: {
+            type: ['array', 'null'],
+            items: {
+              type: ['object', 'null'],
+              properties: {
+                status: {
+                  type: ['string', 'null'],
+                  enum: ['created', 'approved', null]
+                }
+              }
+            }
+          }
+        }
+      }
+      const result = findSchemaNode(unionSchema, [
+        'registrations',
+        '0',
+        'status'
+      ])
+      expect(result).toEqual({
+        type: ['string', 'null'],
+        enum: ['created', 'approved', null]
+      })
+    })
   })
 
   describe('getValueAtPath', () => {
@@ -167,6 +215,20 @@ describe('JSONEditor Helpers', () => {
       expect(getValueAtPath(null, ['name'])).toBe(undefined)
       expect(getValueAtPath(testObj, null)).toBe(undefined)
       expect(getValueAtPath(testObj, [])).toEqual(testObj)
+    })
+
+    it('should return falsy values without coercing them to undefined', () => {
+      const obj = {
+        count: 0,
+        label: '',
+        active: false,
+        data: null
+      }
+
+      expect(getValueAtPath(obj, ['count'])).toBe(0)
+      expect(getValueAtPath(obj, ['label'])).toBe('')
+      expect(getValueAtPath(obj, ['active'])).toBe(false)
+      expect(getValueAtPath(obj, ['data'])).toBe(null)
     })
   })
 
@@ -372,6 +434,119 @@ describe('JSONEditor Helpers', () => {
       expect(errors).toHaveLength(2)
       expect(errors[0].path).toEqual([0])
       expect(errors[1].path).toEqual([1])
+    })
+
+    it('should recurse into objects with union type ["object", "null"]', () => {
+      const unionSchema = {
+        type: ['object', 'null'],
+        properties: {
+          id: { type: ['string', 'null'], readOnly: true },
+          name: { type: ['string', 'null'] }
+        }
+      }
+      const original = { id: 'abc', name: 'Old' }
+      const current = { id: 'changed', name: 'New' }
+      const errors = []
+
+      checkReadOnlyChanges(current, original, unionSchema, [], errors)
+
+      expect(errors).toHaveLength(1)
+      expect(errors[0]).toEqual({
+        path: ['id'],
+        message: 'This read-only field cannot be changed.'
+      })
+    })
+
+    it('should recurse into arrays with union type ["array", "null"]', () => {
+      const unionSchema = {
+        type: ['array', 'null'],
+        items: { type: 'string', readOnly: true }
+      }
+      const original = ['item1', 'item2']
+      const current = ['item1', 'changed']
+      const errors = []
+
+      checkReadOnlyChanges(current, original, unionSchema, [], errors)
+
+      expect(errors).toHaveLength(1)
+      expect(errors[0].path).toEqual([1])
+    })
+
+    it('should detect readOnly changes in nested objects within union-typed arrays', () => {
+      // Mirrors the real registration/accreditation structure
+      const registrationsSchema = {
+        type: 'array',
+        items: {
+          type: ['object', 'null'],
+          properties: {
+            id: { type: ['string', 'null'], readOnly: true },
+            status: { type: ['string', 'null'] },
+            statusHistory: { type: ['array', 'null'], readOnly: true },
+            registrationNumber: { type: ['string', 'null'] }
+          }
+        }
+      }
+
+      const original = [
+        {
+          id: 'reg-1',
+          status: 'created',
+          statusHistory: [{ status: 'created', updatedAt: '2025-01-01' }],
+          registrationNumber: null
+        }
+      ]
+      const current = [
+        {
+          id: 'tampered',
+          status: 'approved',
+          statusHistory: [
+            { status: 'created', updatedAt: '2025-01-01' },
+            { status: 'approved', updatedAt: '2025-02-01' }
+          ],
+          registrationNumber: 'REG-001'
+        }
+      ]
+      const errors = []
+
+      checkReadOnlyChanges(current, original, registrationsSchema, [], errors)
+
+      expect(errors).toHaveLength(2)
+      expect(errors.map((e) => e.path)).toEqual(
+        expect.arrayContaining([
+          [0, 'id'],
+          [0, 'statusHistory']
+        ])
+      )
+    })
+
+    it('should handle parent schema with union type containing nested union-typed objects', () => {
+      // Tests two levels of union types: parent object and nested object
+      const schema = {
+        type: 'object',
+        properties: {
+          registration: {
+            type: ['object', 'null'],
+            properties: {
+              site: {
+                type: ['object', 'null'],
+                properties: {
+                  code: { type: ['string', 'null'], readOnly: true },
+                  name: { type: ['string', 'null'] }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      const original = { registration: { site: { code: 'S1', name: 'Old' } } }
+      const current = { registration: { site: { code: 'S2', name: 'New' } } }
+      const errors = []
+
+      checkReadOnlyChanges(current, original, schema, [], errors)
+
+      expect(errors).toHaveLength(1)
+      expect(errors[0].path).toEqual(['registration', 'site', 'code'])
     })
   })
 
@@ -1491,6 +1666,313 @@ describe('JSONEditor Helpers', () => {
       })
 
       expect(MockJSONEditorConstructor).toHaveBeenCalled()
+    })
+
+    describe('append buttons', () => {
+      const schemaWithArrays = {
+        type: 'object',
+        properties: {
+          id: { not: {} },
+          registrations: {
+            type: 'array',
+            items: {
+              type: ['object', 'null'],
+              properties: {
+                status: { type: ['string', 'null'] },
+                registrationNumber: { type: ['string', 'null'] }
+              }
+            }
+          },
+          accreditations: {
+            type: 'array',
+            items: {
+              type: ['object', 'null'],
+              properties: {
+                status: { type: ['string', 'null'] },
+                accreditationNumber: { type: ['string', 'null'] }
+              }
+            }
+          }
+        }
+      }
+
+      let addRegistrationButton
+      let addAccreditationButton
+
+      beforeEach(() => {
+        addRegistrationButton = {
+          addEventListener: vi.fn()
+        }
+        addAccreditationButton = {
+          addEventListener: vi.fn()
+        }
+
+        payloadEl.textContent = JSON.stringify({
+          id: 1,
+          registrations: [],
+          accreditations: []
+        })
+
+        mockValidate.mockReturnValue(true)
+        mockValidate.errors = null
+
+        const originalGetById = document.getElementById
+        document.getElementById = vi.fn((id) => {
+          if (id === 'add-registration-button') return addRegistrationButton
+          if (id === 'add-accreditation-button') return addAccreditationButton
+          return originalGetById(id)
+        })
+      })
+
+      it('should wire click handler on the add registration button', () => {
+        initJSONEditor({
+          schema: schemaWithArrays,
+          validate: mockValidate,
+          storageKey: 'test-storage-key'
+        })
+
+        expect(addRegistrationButton.addEventListener).toHaveBeenCalledWith(
+          'click',
+          expect.any(Function)
+        )
+      })
+
+      it('should wire click handler on the add accreditation button', () => {
+        initJSONEditor({
+          schema: schemaWithArrays,
+          validate: mockValidate,
+          storageKey: 'test-storage-key'
+        })
+
+        expect(addAccreditationButton.addEventListener).toHaveBeenCalledWith(
+          'click',
+          expect.any(Function)
+        )
+      })
+
+      it('should append a registration template when add registration is clicked', () => {
+        initJSONEditor({
+          schema: schemaWithArrays,
+          validate: mockValidate,
+          storageKey: 'test-storage-key'
+        })
+
+        mockGet.mockReturnValue({
+          id: 1,
+          registrations: [],
+          accreditations: []
+        })
+
+        localStorageMock.setItem.mockClear()
+
+        const clickHandler =
+          addRegistrationButton.addEventListener.mock.calls[0][1]
+        clickHandler()
+
+        const editorInstance = MockJSONEditorConstructor.mock.instances[0]
+        expect(editorInstance.update).toHaveBeenCalledTimes(1)
+
+        const updatedData = editorInstance.update.mock.calls[0][0]
+        expect(updatedData.registrations).toHaveLength(1)
+        expect(updatedData.registrations[0]).toEqual({
+          status: null,
+          registrationNumber: null
+        })
+      })
+
+      it('should append an accreditation template when add accreditation is clicked', () => {
+        initJSONEditor({
+          schema: schemaWithArrays,
+          validate: mockValidate,
+          storageKey: 'test-storage-key'
+        })
+
+        mockGet.mockReturnValue({
+          id: 1,
+          registrations: [],
+          accreditations: []
+        })
+
+        const clickHandler =
+          addAccreditationButton.addEventListener.mock.calls[0][1]
+        clickHandler()
+
+        const editorInstance = MockJSONEditorConstructor.mock.instances[0]
+        const updatedData = editorInstance.update.mock.calls[0][0]
+        expect(updatedData.accreditations).toHaveLength(1)
+        expect(updatedData.accreditations[0]).toEqual({
+          status: null,
+          accreditationNumber: null
+        })
+      })
+
+      it('should save draft when append button is clicked — editor.update() bypasses onChangeJSON', () => {
+        initJSONEditor({
+          schema: schemaWithArrays,
+          validate: mockValidate,
+          storageKey: 'test-storage-key'
+        })
+
+        mockGet.mockReturnValue({
+          id: 1,
+          registrations: [],
+          accreditations: []
+        })
+
+        localStorageMock.setItem.mockClear()
+
+        const clickHandler =
+          addRegistrationButton.addEventListener.mock.calls[0][1]
+        clickHandler()
+
+        expect(localStorageMock.setItem).toHaveBeenCalledTimes(1)
+        const savedData = JSON.parse(localStorageMock.setItem.mock.calls[0][1])
+        expect(savedData.registrations).toHaveLength(1)
+      })
+
+      it('should sync hidden input when append button is clicked', () => {
+        initJSONEditor({
+          schema: schemaWithArrays,
+          validate: mockValidate,
+          storageKey: 'test-storage-key'
+        })
+
+        mockGet.mockReturnValue({
+          id: 1,
+          registrations: [],
+          accreditations: []
+        })
+
+        const clickHandler =
+          addRegistrationButton.addEventListener.mock.calls[0][1]
+        clickHandler()
+
+        const editorInstance = MockJSONEditorConstructor.mock.instances[0]
+        const updatedData = editorInstance.update.mock.calls[0][0]
+        expect(hiddenInput.value).toBe(JSON.stringify(updatedData))
+      })
+
+      it('should not throw when append button does not exist in DOM', () => {
+        document.getElementById = vi.fn((id) => {
+          if (id === 'jsoneditor') return container
+          if (id === 'organisation-json') return payloadEl
+          if (id === 'jsoneditor-organisation-object') return hiddenInput
+          if (id === 'jsoneditor-reset-button') return resetButton
+          if (id === 'jsoneditor-save-button') return saveButton
+          if (id === 'add-registration-button') return null
+          if (id === 'add-accreditation-button') return null
+          return null
+        })
+
+        expect(() => {
+          initJSONEditor({
+            schema: schemaWithArrays,
+            validate: mockValidate,
+            storageKey: 'test-storage-key'
+          })
+        }).not.toThrow()
+      })
+
+      it('should not wire buttons when schema lacks array items', () => {
+        const schemaWithoutItems = {
+          type: 'object',
+          properties: {
+            id: { not: {} },
+            registrations: { type: 'array' },
+            accreditations: { type: 'array' }
+          }
+        }
+
+        initJSONEditor({
+          schema: schemaWithoutItems,
+          validate: mockValidate,
+          storageKey: 'test-storage-key'
+        })
+
+        expect(addRegistrationButton.addEventListener).not.toHaveBeenCalled()
+        expect(addAccreditationButton.addEventListener).not.toHaveBeenCalled()
+      })
+
+      it('should deep clone data before modifying', () => {
+        initJSONEditor({
+          schema: schemaWithArrays,
+          validate: mockValidate,
+          storageKey: 'test-storage-key'
+        })
+
+        const originalData = {
+          id: 1,
+          registrations: [{ status: 'existing' }],
+          accreditations: []
+        }
+        mockGet.mockReturnValue(originalData)
+
+        const clickHandler =
+          addRegistrationButton.addEventListener.mock.calls[0][1]
+        clickHandler()
+
+        // Original data should not be mutated
+        expect(originalData.registrations).toHaveLength(1)
+      })
+
+      it('should not update editor when array property is not an array', () => {
+        initJSONEditor({
+          schema: schemaWithArrays,
+          validate: mockValidate,
+          storageKey: 'test-storage-key'
+        })
+
+        mockGet.mockReturnValue({
+          id: 1,
+          registrations: null,
+          accreditations: []
+        })
+
+        const clickHandler =
+          addRegistrationButton.addEventListener.mock.calls[0][1]
+        clickHandler()
+
+        const editorInstance = MockJSONEditorConstructor.mock.instances[0]
+        expect(editorInstance.update).not.toHaveBeenCalled()
+      })
+    })
+
+    it('should inflate null object fields before loading data into the editor', () => {
+      const schemaWithNullableObject = {
+        type: 'object',
+        properties: {
+          id: { not: {} },
+          name: { type: 'string' },
+          address: {
+            type: ['object', 'null'],
+            properties: {
+              line1: { type: ['string', 'null'] },
+              postcode: { type: ['string', 'null'] }
+            }
+          }
+        }
+      }
+
+      payloadEl.textContent = JSON.stringify({
+        id: 1,
+        name: 'Acme Ltd',
+        address: null
+      })
+
+      mockValidate.mockReturnValue(true)
+      mockValidate.errors = null
+
+      initJSONEditor({
+        schema: schemaWithNullableObject,
+        validate: mockValidate,
+        storageKey: 'test-storage-key'
+      })
+
+      expect(mockSet).toHaveBeenCalledWith({
+        id: 1,
+        name: 'Acme Ltd',
+        address: { line1: null, postcode: null }
+      })
     })
   })
 })
