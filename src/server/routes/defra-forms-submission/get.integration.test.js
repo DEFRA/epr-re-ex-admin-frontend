@@ -5,11 +5,7 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
-import {
-  http,
-  server as mswServer,
-  HttpResponse
-} from '../../../../.vite/setup-msw.js'
+import { http, server as mswServer, HttpResponse } from '#vite/setup-msw.js'
 
 vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
   getUserSession: vi.fn().mockReturnValue(null)
@@ -31,10 +27,6 @@ describe('GET /defra-forms-submission/{documentId}', () => {
 
   afterEach(() => {
     vi.clearAllMocks()
-    // Ensure any stubbed globals are reset after each test
-    if (typeof vi.unstubAllGlobals === 'function') {
-      vi.unstubAllGlobals()
-    }
   })
 
   describe('When user is unauthenticated', () => {
@@ -160,9 +152,11 @@ describe('GET /defra-forms-submission/{documentId}', () => {
     })
 
     test('Should render page with no data when backend fetch throws', async () => {
-      const fetchMock = vi.fn().mockRejectedValue(new Error('Network error'))
-
-      vi.stubGlobal('fetch', fetchMock)
+      mswServer.use(
+        http.get(`${backendUrl}/v1/form-submissions/456`, () => {
+          return HttpResponse.error()
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -175,7 +169,6 @@ describe('GET /defra-forms-submission/{documentId}', () => {
 
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('Sorry, there is a problem with the service')
-      expect(fetchMock).toHaveBeenCalledTimes(1)
     })
   })
 })
