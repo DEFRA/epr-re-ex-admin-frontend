@@ -41,6 +41,11 @@ export function buildNavigation(request) {
       current: request?.path === '/prn-activity'
     },
     {
+      text: 'PRN tonnage',
+      href: '/prn-tonnage',
+      current: request?.path === '/prn-tonnage'
+    },
+    {
       text: 'System logs',
       href: '/system-logs',
       current: request?.path === '/system-logs'
