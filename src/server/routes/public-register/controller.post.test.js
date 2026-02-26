@@ -1,5 +1,10 @@
 import { vi } from 'vitest'
 import { publicRegisterPostController } from './controller.post.js'
+import {
+  http,
+  server as mswServer,
+  HttpResponse
+} from '../../../../.vite/setup-msw.js'
 
 vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
@@ -31,12 +36,6 @@ describe('public-register POST controller', () => {
       redirect: vi.fn().mockReturnValue('redirect-response'),
       response: vi.fn().mockReturnValue(mockResponseChain)
     }
-
-    vi.stubGlobal('fetch', vi.fn())
-  })
-
-  afterEach(() => {
-    vi.unstubAllGlobals()
   })
 
   test('Should call backend API with correct parameters', async () => {
@@ -45,10 +44,9 @@ describe('public-register POST controller', () => {
     const mockCsvContent = 'csv,content'
 
     fetchJsonFromBackend.mockResolvedValue({ downloadUrl: mockDownloadUrl })
-    fetch.mockResolvedValue({
-      ok: true,
-      text: vi.fn().mockResolvedValue(mockCsvContent)
-    })
+    mswServer.use(
+      http.get(mockDownloadUrl, () => new HttpResponse(mockCsvContent))
+    )
 
     await publicRegisterPostController.handler(mockRequest, mockH)
 
@@ -65,14 +63,12 @@ describe('public-register POST controller', () => {
     const mockCsvContent = 'csv,content'
 
     fetchJsonFromBackend.mockResolvedValue({ downloadUrl: mockDownloadUrl })
-    fetch.mockResolvedValue({
-      ok: true,
-      text: vi.fn().mockResolvedValue(mockCsvContent)
-    })
+    mswServer.use(
+      http.get(mockDownloadUrl, () => new HttpResponse(mockCsvContent))
+    )
 
     await publicRegisterPostController.handler(mockRequest, mockH)
 
-    expect(fetch).toHaveBeenCalledWith(mockDownloadUrl)
     expect(mockH.response).toHaveBeenCalledWith(mockCsvContent)
     expect(mockResponseChain.header).toHaveBeenCalledWith(
       'Content-Type',
@@ -89,14 +85,12 @@ describe('public-register POST controller', () => {
     const mockCsvContent = 'csv,content'
 
     fetchJsonFromBackend.mockResolvedValue({ downloadUrl: mockDownloadUrl })
-    fetch.mockResolvedValue({
-      ok: true,
-      text: vi.fn().mockResolvedValue(mockCsvContent)
-    })
+    mswServer.use(
+      http.get(mockDownloadUrl, () => new HttpResponse(mockCsvContent))
+    )
 
     await publicRegisterPostController.handler(mockRequest, mockH)
 
-    expect(fetch).toHaveBeenCalledWith(mockDownloadUrl)
     expect(mockH.response).toHaveBeenCalledWith(mockCsvContent)
   })
 
@@ -106,14 +100,15 @@ describe('public-register POST controller', () => {
     const mockCsvContent = 'csv,content'
 
     fetchJsonFromBackend.mockResolvedValue({ downloadUrl: mockDownloadUrl })
-    fetch.mockResolvedValue({
-      ok: true,
-      text: vi.fn().mockResolvedValue(mockCsvContent)
-    })
+    mswServer.use(
+      http.get(
+        'http://localstack:4566/bucket/public-register.csv',
+        () => new HttpResponse(mockCsvContent)
+      )
+    )
 
     await publicRegisterPostController.handler(mockRequest, mockH)
 
-    expect(fetch).toHaveBeenCalledWith(mockDownloadUrl)
     expect(mockH.response).toHaveBeenCalledWith(mockCsvContent)
   })
 
@@ -124,7 +119,6 @@ describe('public-register POST controller', () => {
 
     await publicRegisterPostController.handler(mockRequest, mockH)
 
-    expect(fetch).not.toHaveBeenCalled()
     expect(mockRequest.yar.set).toHaveBeenCalledWith(
       'error',
       'There was a problem generating the public register. Please try again.'
@@ -137,7 +131,9 @@ describe('public-register POST controller', () => {
       'https://my-bucket.s3.eu-west-2.amazonaws.com/public-register.csv'
 
     fetchJsonFromBackend.mockResolvedValue({ downloadUrl: mockDownloadUrl })
-    fetch.mockResolvedValue({ ok: false, text: vi.fn() })
+    mswServer.use(
+      http.get(mockDownloadUrl, () => new HttpResponse(null, { status: 500 }))
+    )
 
     await publicRegisterPostController.handler(mockRequest, mockH)
 
