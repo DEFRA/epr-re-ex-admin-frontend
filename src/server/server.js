@@ -19,6 +19,7 @@ import { secureContext } from '@defra/hapi-secure-context'
 import { contentSecurityPolicy } from './common/helpers/content-security-policy.js'
 import { userAgentProtection } from './common/helpers/useragent-protection.js'
 import { authPlugin } from './plugins/auth-plugin.js'
+import { rbacPlugin } from './plugins/rbac-plugin.js'
 
 export async function createServer() {
   setupProxy()
@@ -71,6 +72,7 @@ export async function createServer() {
     Bell,
     Cookie,
     authPlugin,
+    rbacPlugin,
     {
       plugin: Crumb,
       options: {

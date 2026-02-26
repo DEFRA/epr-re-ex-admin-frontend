@@ -2,6 +2,7 @@ import { createUserSession } from '#server/common/helpers/auth/create-user-sessi
 import { randomUUID } from 'node:crypto'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
+import { config } from '#config/config.js'
 
 export default {
   method: 'GET',
@@ -25,6 +26,8 @@ export default {
 
     const sessionId = randomUUID()
 
+    const roles = await fetchRoles(token, request.logger)
+
     const userSession = {
       sessionId,
       userId,
@@ -32,7 +35,8 @@ export default {
       email,
       isAuthenticated: true,
       token,
-      refreshToken
+      refreshToken,
+      roles
     }
     await createUserSession(request, userSession)
 
@@ -53,4 +57,31 @@ function getSafeRedirect(redirect) {
   return !redirect?.startsWith('/') || redirect.startsWith('//')
     ? '/'
     : redirect
+}
+
+async function fetchRoles(token, logger) {
+  const eprBackendUrl = config.get('eprBackendUrl')
+  const url = `${eprBackendUrl}/v1/me/roles`
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    })
+
+    if (!response.ok) {
+      logger.error(
+        `Failed to fetch roles: ${response.status} ${response.statusText}`
+      )
+      return []
+    }
+
+    const data = await response.json()
+    return data.roles ?? []
+  } catch (error) {
+    logger.error(`Failed to fetch roles: ${error.message}`)
+    return []
+  }
 }

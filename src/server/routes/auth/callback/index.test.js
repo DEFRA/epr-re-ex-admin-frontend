@@ -31,6 +31,7 @@ describe('#callback route', () => {
   const mockToken = 'mock-jwt-token'
   const mockRefreshToken = 'mock-refresh-token'
   const mockSessionId = 'generated-session-id-456'
+  const mockRoles = ['service_maintainer']
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -40,6 +41,10 @@ describe('#callback route', () => {
     createUserSession.mockResolvedValue()
     verifyToken.mockResolvedValue()
     randomUUID.mockReturnValue(mockSessionId)
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({ roles: mockRoles })
+    })
   })
 
   afterEach(() => {
@@ -115,7 +120,8 @@ describe('#callback route', () => {
           displayName: mockProfile.displayName,
           isAuthenticated: true,
           token: mockToken,
-          refreshToken: mockRefreshToken
+          refreshToken: mockRefreshToken,
+          roles: mockRoles
         })
         expect(mockToolkit.redirect).toHaveBeenCalledWith(expectedRedirectUrl)
         expect(result).toBe('redirect-result')
@@ -150,7 +156,8 @@ describe('#callback route', () => {
       displayName: '',
       isAuthenticated: true,
       token: mockToken,
-      refreshToken: mockRefreshToken
+      refreshToken: mockRefreshToken,
+      roles: mockRoles
     })
   })
 
@@ -174,7 +181,8 @@ describe('#callback route', () => {
       displayName: '',
       isAuthenticated: true,
       token: mockToken,
-      refreshToken: mockRefreshToken
+      refreshToken: mockRefreshToken,
+      roles: mockRoles
     })
   })
 
@@ -284,7 +292,8 @@ describe('#callback route', () => {
       displayName: mockProfile.displayName,
       isAuthenticated: true,
       token: mockToken,
-      refreshToken: mockRefreshToken
+      refreshToken: mockRefreshToken,
+      roles: mockRoles
     }
 
     expect(createUserSession).toHaveBeenCalledWith(
@@ -339,7 +348,8 @@ describe('#callback route', () => {
     expect(createUserSession).toHaveBeenCalledWith(
       mockRequest,
       expect.objectContaining({
-        token: undefined
+        token: undefined,
+        roles: mockRoles
       })
     )
   })
@@ -372,7 +382,8 @@ describe('#callback route', () => {
       displayName: complexProfile.displayName,
       isAuthenticated: true,
       token: mockToken,
-      refreshToken: undefined
+      refreshToken: undefined,
+      roles: mockRoles
     })
   })
 
@@ -484,7 +495,8 @@ describe('#callback route', () => {
       email: mockProfile.email,
       isAuthenticated: true,
       token: mockToken,
-      refreshToken: mockRefreshToken
+      refreshToken: mockRefreshToken,
+      roles: mockRoles
     })
   })
 
@@ -513,5 +525,116 @@ describe('#callback route', () => {
     await callbackRoute.handler(mockRequest, mockToolkit)
 
     expect(mockLogger.error).toHaveBeenCalledWith('Sign-in failed')
+  })
+
+  describe('Role fetching', () => {
+    test('Should fetch roles from backend using the token', async () => {
+      const mockRequest = {
+        logger: mockLogger,
+        auth: {
+          isAuthenticated: true,
+          credentials: {
+            profile: mockProfile,
+            token: mockToken,
+            refreshToken: mockRefreshToken
+          }
+        }
+      }
+
+      await callbackRoute.handler(mockRequest, mockToolkit)
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        'http://localhost:3001/v1/me/roles',
+        {
+          headers: {
+            Authorization: `Bearer ${mockToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      )
+    })
+
+    test('Should store roles in user session', async () => {
+      const roles = ['service_maintainer', 'admin']
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue({ roles })
+      })
+
+      const mockRequest = {
+        logger: mockLogger,
+        auth: {
+          isAuthenticated: true,
+          credentials: {
+            profile: mockProfile,
+            token: mockToken,
+            refreshToken: mockRefreshToken
+          }
+        }
+      }
+
+      await callbackRoute.handler(mockRequest, mockToolkit)
+
+      expect(createUserSession).toHaveBeenCalledWith(
+        mockRequest,
+        expect.objectContaining({ roles })
+      )
+    })
+
+    test('Should store empty roles array when backend returns non-ok response', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error'
+      })
+
+      const mockRequest = {
+        logger: mockLogger,
+        auth: {
+          isAuthenticated: true,
+          credentials: {
+            profile: mockProfile,
+            token: mockToken,
+            refreshToken: mockRefreshToken
+          }
+        }
+      }
+
+      await callbackRoute.handler(mockRequest, mockToolkit)
+
+      expect(createUserSession).toHaveBeenCalledWith(
+        mockRequest,
+        expect.objectContaining({ roles: [] })
+      )
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        'Failed to fetch roles: 500 Internal Server Error'
+      )
+    })
+
+    test('Should store empty roles array when fetch throws a network error', async () => {
+      global.fetch = vi.fn().mockRejectedValue(new Error('Network error'))
+
+      const mockRequest = {
+        logger: mockLogger,
+        auth: {
+          isAuthenticated: true,
+          credentials: {
+            profile: mockProfile,
+            token: mockToken,
+            refreshToken: mockRefreshToken
+          }
+        }
+      }
+
+      await callbackRoute.handler(mockRequest, mockToolkit)
+
+      expect(createUserSession).toHaveBeenCalledWith(
+        mockRequest,
+        expect.objectContaining({ roles: [] })
+      )
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        'Failed to fetch roles: Network error'
+      )
+    })
   })
 })

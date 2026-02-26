@@ -7,5 +7,6 @@ export const mockUserSession = {
   displayName: ' John Doe',
   isAuthenticated: true,
   token: makeToken('user-token'),
-  refreshToken: makeToken('refresh-token')
+  refreshToken: makeToken('refresh-token'),
+  roles: ['service_maintainer']
 }
