@@ -3,7 +3,6 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
 import { randomUUID } from 'node:crypto'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
-import { config } from '#config/config.js'
 
 export default {
   method: 'GET',
@@ -27,8 +26,6 @@ export default {
 
     const sessionId = randomUUID()
 
-    const roles = await fetchRoles(token, request.logger)
-
     const userSession = {
       sessionId,
       userId,
@@ -37,18 +34,14 @@ export default {
       isAuthenticated: true,
       token,
       refreshToken,
-      roles
+      roles: []
     }
     await createUserSession(request, userSession)
 
     let roles = []
     try {
-      const rolesResponse = await fetchJsonFromBackend(
-        request,
-        '/v1/me/roles',
-        {}
-      )
-      roles = rolesResponse.roles ?? []
+      const data = await fetchJsonFromBackend(request, '/v1/me/roles')
+      roles = data.roles ?? []
     } catch (error) {
       request.logger.error(
         { error: error.message },
@@ -63,7 +56,7 @@ export default {
     const safeRedirect = getSafeRedirect(redirect)
 
     request.logger.info({ userId, displayName }, 'User signed in')
-    auditSignIn(userSession)
+    auditSignIn({ ...userSession, roles })
     await metrics.signInSuccess()
 
     request.logger.info(`Sign-in complete, redirecting user to ${safeRedirect}`)
@@ -75,31 +68,4 @@ function getSafeRedirect(redirect) {
   return !redirect?.startsWith('/') || redirect.startsWith('//')
     ? '/'
     : redirect
-}
-
-async function fetchRoles(token, logger) {
-  const eprBackendUrl = config.get('eprBackendUrl')
-  const url = `${eprBackendUrl}/v1/me/roles`
-
-  try {
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    })
-
-    if (!response.ok) {
-      logger.error(
-        `Failed to fetch roles: ${response.status} ${response.statusText}`
-      )
-      return []
-    }
-
-    const data = await response.json()
-    return data.roles ?? []
-  } catch (error) {
-    logger.error(`Failed to fetch roles: ${error.message}`)
-    return []
-  }
 }

@@ -114,9 +114,7 @@ describe('#rbacPlugin', () => {
       path: '/organisations'
     }
 
-    await expect(onPreHandler(request, mockH)).rejects.toThrow(
-      Boom.forbidden()
-    )
+    await expect(onPreHandler(request, mockH)).rejects.toThrow(Boom.forbidden())
   })
 
   test('Should throw 403 for users with empty roles array', async () => {
@@ -129,9 +127,7 @@ describe('#rbacPlugin', () => {
       path: '/organisations'
     }
 
-    await expect(onPreHandler(request, mockH)).rejects.toThrow(
-      Boom.forbidden()
-    )
+    await expect(onPreHandler(request, mockH)).rejects.toThrow(Boom.forbidden())
   })
 
   test('Should throw 403 for users with no roles property', async () => {
@@ -142,9 +138,7 @@ describe('#rbacPlugin', () => {
       path: '/organisations'
     }
 
-    await expect(onPreHandler(request, mockH)).rejects.toThrow(
-      Boom.forbidden()
-    )
+    await expect(onPreHandler(request, mockH)).rejects.toThrow(Boom.forbidden())
   })
 
   test('Should throw 403 when session is null', async () => {
@@ -155,8 +149,6 @@ describe('#rbacPlugin', () => {
       path: '/organisations'
     }
 
-    await expect(onPreHandler(request, mockH)).rejects.toThrow(
-      Boom.forbidden()
-    )
+    await expect(onPreHandler(request, mockH)).rejects.toThrow(Boom.forbidden())
   })
 })
