@@ -501,6 +501,32 @@ describe('#callback route', () => {
     expect(auditSignIn).not.toHaveBeenCalled()
   })
 
+  test('Should include loginHint in user session when present in profile', async () => {
+    const mockRequest = {
+      logger: mockLogger,
+      auth: {
+        isAuthenticated: true,
+        credentials: {
+          profile: { ...mockProfile, loginHint: 'user@example.test' },
+          token: mockToken,
+          refreshToken: mockRefreshToken
+        }
+      },
+      yar: {
+        flash: vi.fn().mockReturnValue([])
+      }
+    }
+
+    await callbackRoute.handler(mockRequest, mockToolkit)
+
+    expect(createUserSession).toHaveBeenCalledWith(
+      mockRequest,
+      expect.objectContaining({
+        loginHint: 'user@example.test'
+      })
+    )
+  })
+
   test('Should log error on sign-in failure', async () => {
     const mockRequest = {
       logger: mockLogger,

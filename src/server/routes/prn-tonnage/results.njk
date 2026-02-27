@@ -1,0 +1,85 @@
+{% extends 'layout.njk' %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <div class="govuk-body" data-testid="app-page-body">
+
+        {% if error %}
+          {{ govukErrorSummary({
+            titleText: "There is a problem",
+            errorList: [
+              {
+                text: error
+              }
+            ]
+          }) }}
+        {% endif %}
+
+        <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
+
+        <p class="govuk-body">
+          Tonnage of PRNs per accreditation, broken down by current PRN status.
+          Includes awaiting authorisation, awaiting acceptance,
+          awaiting cancellation, accepted and cancelled.
+        </p>
+
+        <p class="govuk-body">
+          Data generated at: <strong>{{ generatedAt | formatDate("d MMMM yyyy 'at' h:mmaaa") }}</strong>
+        </p>
+
+        {% if rows and rows.length %}
+          <form method="POST" action="/prn-tonnage/results">
+            <input type="hidden" name="crumb" value="{{ crumb }}" />
+            {{ govukButton({
+              text: "Download CSV"
+            }) }}
+          </form>
+
+          {% set tableRows = [] %}
+          {% for row in rows %}
+            {% set tableRow = [
+              { text: row.organisationName },
+              { text: row.organisationId },
+              { text: row.accreditationNumber },
+              { text: row.material },
+              { text: row.tonnageBand },
+              { text: row.awaitingAuthorisationTonnage, format: "numeric" },
+              { text: row.awaitingAcceptanceTonnage, format: "numeric" },
+              { text: row.awaitingCancellationTonnage, format: "numeric" },
+              { text: row.acceptedTonnage, format: "numeric" },
+              { text: row.cancelledTonnage, format: "numeric" }
+            ] %}
+            {% set tableRows = tableRows.concat([tableRow]) %}
+          {% endfor %}
+
+          {{ govukTable({
+            caption: "PRN tonnage by accreditation",
+            captionClasses: "govuk-table__caption--m",
+            head: [
+              { text: "Organisation Name" },
+              { text: "Organisation ID" },
+              { text: "Accreditation Number" },
+              { text: "Material" },
+              { text: "Tonnage Band" },
+              { text: "Awaiting authorisation", format: "numeric" },
+              { text: "Awaiting acceptance", format: "numeric" },
+              { text: "Awaiting cancellation", format: "numeric" },
+              { text: "Accepted", format: "numeric" },
+              { text: "Cancelled", format: "numeric" }
+            ],
+            rows: tableRows
+          }) }}
+
+        {% else %}
+          {{ govukInsetText({ text: "No PRN tonnage data available." }) }}
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+{% endblock %}

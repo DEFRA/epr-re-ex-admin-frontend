@@ -1,0 +1,37 @@
+{% extends 'layout.njk' %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <div class="govuk-body" data-testid="app-page-body">
+
+        {% if error %}
+          {{ govukErrorSummary({
+            titleText: "There is a problem",
+            errorList: [
+              {
+                text: error
+              }
+            ]
+          }) }}
+        {% endif %}
+
+        <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
+
+        <p class="govuk-body">
+          Tonnage of PRNs per accreditation, broken down by current PRN status.
+          Includes awaiting authorisation, awaiting acceptance,
+          awaiting cancellation, accepted and cancelled.
+        </p>
+
+        {{ govukButton({
+          text: "Run report",
+          href: "/prn-tonnage/results"
+        }) }}
+
+      </div>
+    </div>
+  </div>
+{% endblock %}

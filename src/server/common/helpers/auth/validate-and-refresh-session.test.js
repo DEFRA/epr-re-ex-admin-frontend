@@ -1,10 +1,6 @@
 import { vi, beforeEach, afterEach, describe, test, expect } from 'vitest'
 import Jwt from '@hapi/jwt'
-import {
-  http,
-  server as mswServer,
-  HttpResponse
-} from '../../../../../.vite/setup-msw.js'
+import { http, server as mswServer, HttpResponse } from '#vite/setup-msw.js'
 import { config } from '#config/config.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 

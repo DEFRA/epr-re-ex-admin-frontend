@@ -235,4 +235,85 @@ describe('#catchAll unit tests', () => {
     })
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.unauthorised)
   })
+
+  describe('Redirect after sign-in', () => {
+    const mockRedirectRequest = ({
+      statusCode = statusCodes.unauthorised,
+      ...overrides
+    } = {}) => ({
+      ...mockRequest(statusCode),
+      path: '/organisations',
+      url: { search: '' },
+      yar: { flash: vi.fn() },
+      ...overrides
+    })
+
+    test('Should store request path in referrer flash on 401 error', () => {
+      const request = mockRedirectRequest()
+
+      catchAll(request, mockToolkit)
+
+      expect(request.yar.flash).toHaveBeenCalledWith(
+        'referrer',
+        '/organisations'
+      )
+    })
+
+    test('Should include query string in referrer flash on 401 error', () => {
+      const request = mockRedirectRequest({
+        url: { search: '?page=2&sort=name' }
+      })
+
+      catchAll(request, mockToolkit)
+
+      expect(request.yar.flash).toHaveBeenCalledWith(
+        'referrer',
+        '/organisations?page=2&sort=name'
+      )
+    })
+
+    test.each([
+      { code: statusCodes.forbidden, name: '403 forbidden' },
+      { code: statusCodes.notFound, name: '404 not found' },
+      {
+        code: statusCodes.internalServerError,
+        name: '500 internal server error'
+      }
+    ])('Should not store referrer flash for $name status', ({ code }) => {
+      const request = mockRedirectRequest({ statusCode: code })
+
+      catchAll(request, mockToolkit)
+
+      expect(request.yar.flash).not.toHaveBeenCalled()
+    })
+
+    test('Should handle missing yar on 401 error gracefully', () => {
+      const request = mockRedirectRequest({ yar: undefined })
+
+      expect(() => catchAll(request, mockToolkit)).not.toThrow()
+
+      expect(mockToolkitView).toHaveBeenCalledWith('unauthorised', {
+        pageTitle: undefined
+      })
+    })
+
+    test('Should handle missing url on 401 error by storing path only', () => {
+      const request = mockRedirectRequest({ url: undefined })
+
+      catchAll(request, mockToolkit)
+
+      expect(request.yar.flash).toHaveBeenCalledWith(
+        'referrer',
+        '/organisations'
+      )
+    })
+
+    test('Should handle missing path on 401 error gracefully', () => {
+      const request = mockRedirectRequest({ path: undefined })
+
+      expect(() => catchAll(request, mockToolkit)).not.toThrow()
+
+      expect(request.yar.flash).not.toHaveBeenCalled()
+    })
+  })
 })

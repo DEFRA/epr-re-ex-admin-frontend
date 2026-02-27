@@ -17,9 +17,15 @@ export default {
 
     const { end_session_endpoint: entraLogoutUrl } = await getOidcConfig()
 
-    const logoutUrl = encodeURI(
-      `${entraLogoutUrl}?post_logout_redirect_uri=${config.get('appBaseUrl')}/`
-    )
+    const logoutHint = userSession.loginHint ?? userSession.email
+
+    const params = new URLSearchParams()
+    if (logoutHint) {
+      params.set('logout_hint', logoutHint)
+    }
+    params.set('post_logout_redirect_uri', `${config.get('appBaseUrl')}/`)
+
+    const logoutUrl = `${entraLogoutUrl}?${params.toString()}`
 
     await clearUserSession(request)
 

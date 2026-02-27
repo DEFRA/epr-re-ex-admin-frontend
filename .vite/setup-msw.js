@@ -18,7 +18,7 @@ export const handlers = [
 export const server = setupServer(...handlers)
 
 beforeAll(() => {
-  server.listen({ onUnhandledRequest: 'warn' })
+  server.listen({ onUnhandledRequest: 'error' })
 })
 
 afterEach(() => {

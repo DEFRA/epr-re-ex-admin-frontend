@@ -6,11 +6,7 @@ import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
-import {
-  http,
-  server as mswServer,
-  HttpResponse
-} from '../../../../.vite/setup-msw.js'
+import { http, server as mswServer, HttpResponse } from '#vite/setup-msw.js'
 
 vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
   getUserSession: vi.fn().mockReturnValue(null)
@@ -35,10 +31,6 @@ describe('organisation POST controller', () => {
 
   afterEach(() => {
     vi.clearAllMocks()
-    // Ensure any stubbed globals are reset after each test
-    if (typeof vi.unstubAllGlobals === 'function') {
-      vi.unstubAllGlobals()
-    }
   })
 
   describe('When user is unauthenticated', () => {
