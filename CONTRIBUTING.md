@@ -265,14 +265,16 @@ The stub provides pre-configured test users:
 
 Use the regulator accounts for admin functionality testing. The `customer@test.gov.uk` account lacks admin access and can be used to verify that unauthorised users are handled correctly.
 
+> **Note:** There is currently no SEPA test user in the stub, despite SEPA being a supported regulator across the wider system. See [epr-re-ex-entra-stub](https://github.com/DEFRA/epr-re-ex-entra-stub) if this needs adding.
+
 For more detail, see the [admin local login guide](https://github.com/DEFRA/epr-re-ex-service/blob/main/docs/guides/admin-local-login.md).
 
 ### Further reading
 
 - [ADR-0009: Admin UI approach for authenticating with Azure AD](https://github.com/DEFRA/epr-re-ex-service/blob/main/docs/architecture/decisions/0009-admin-ui-approach-for-authenticating-with-azure-ad.md) — why we chose secrets-based auth
 - [ADR-0016: Admin UI authorisation MVP](https://github.com/DEFRA/epr-re-ex-service/blob/main/docs/architecture/decisions/0016-admin-ui-authorisation-mvp.md) — why authorisation is inferred from API responses
-- [LLD: Admin UI authentication](https://github.com/DEFRA/epr-re-ex-service/blob/main/docs/architecture/discovery/pepr-lld-auth-admin-ui.md) — detailed sign-in/sign-out flow diagrams
-- [LLD: API authentication](https://github.com/DEFRA/epr-re-ex-service/blob/main/docs/architecture/discovery/pepr-lld-auth-api.md) — how the backend validates tokens from both Entra ID and Defra ID
+- [LLD: Admin UI authentication](https://github.com/DEFRA/epr-re-ex-service/blob/main/docs/architecture/defined/pepr-lld-auth-admin-ui.md) — detailed sign-in/sign-out flow diagrams
+- [LLD: API authentication](https://github.com/DEFRA/epr-re-ex-service/blob/main/docs/architecture/defined/pepr-lld-auth-api.md) — how the backend validates tokens from both Entra ID and Defra ID
 
 ## Docker
 
