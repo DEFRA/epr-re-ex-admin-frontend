@@ -485,6 +485,140 @@ describe('GET /system-logs', () => {
       })
     })
 
+    describe('pagination', () => {
+      it('passes cursor to backend when provided in query', async () => {
+        const backendCalls = stubBackendReponse(
+          HttpResponse.json({
+            systemLogs: [],
+            hasMore: false
+          })
+        )
+
+        await loadPage(
+          new URLSearchParams({
+            referenceNumber: '12345',
+            cursor: 'abc123def456abc123def456',
+            page: '2'
+          })
+        )
+
+        expect(backendCalls).toHaveLength(1)
+        expect(backendCalls[0].url.searchParams.get('cursor')).toBe(
+          'abc123def456abc123def456'
+        )
+        expect(backendCalls[0].url.searchParams.get('organisationId')).toBe(
+          '12345'
+        )
+      })
+
+      it('renders Next pagination link when backend returns hasMore and nextCursor', async () => {
+        stubBackendReponse(
+          HttpResponse.json({
+            systemLogs: [
+              {
+                createdBy: {},
+                event: {},
+                context: {}
+              }
+            ],
+            hasMore: true,
+            nextCursor: 'aaa111bbb222ccc333ddd444'
+          })
+        )
+
+        const { $ } = await loadPage(
+          new URLSearchParams({ referenceNumber: '12345' })
+        )
+
+        const nextLink = $('.govuk-pagination__next a')
+        expect(nextLink).toHaveLength(1)
+
+        const href = nextLink.attr('href')
+        expect(href).toContain('cursor=aaa111bbb222ccc333ddd444')
+        expect(href).toContain('page=2')
+        expect(href).toContain('referenceNumber=12345')
+      })
+
+      it('renders Previous pagination link when on page 2 with a cursor', async () => {
+        stubBackendReponse(
+          HttpResponse.json({
+            systemLogs: [
+              {
+                createdBy: {},
+                event: {},
+                context: {}
+              }
+            ],
+            hasMore: false
+          })
+        )
+
+        const { $ } = await loadPage(
+          new URLSearchParams({
+            referenceNumber: '12345',
+            cursor: 'abc123def456abc123def456',
+            page: '2'
+          })
+        )
+
+        const prevLink = $('.govuk-pagination__prev a')
+        expect(prevLink).toHaveLength(1)
+
+        const href = prevLink.attr('href')
+        expect(href).toContain('referenceNumber=12345')
+        // Previous resets to page 1 (no cursor)
+        expect(href).not.toContain('cursor')
+      })
+
+      it('does not render pagination when there is a single page of results', async () => {
+        stubBackendReponse(
+          HttpResponse.json({
+            systemLogs: [
+              {
+                createdBy: {},
+                event: {},
+                context: {}
+              }
+            ],
+            hasMore: false
+          })
+        )
+
+        const { $ } = await loadPage(
+          new URLSearchParams({ referenceNumber: '12345' })
+        )
+
+        expect($('.govuk-pagination')).toHaveLength(0)
+      })
+
+      it('displays the current page number', async () => {
+        stubBackendReponse(
+          HttpResponse.json({
+            systemLogs: [
+              {
+                createdBy: {},
+                event: {},
+                context: {}
+              }
+            ],
+            hasMore: true,
+            nextCursor: 'aaa111bbb222ccc333ddd444'
+          })
+        )
+
+        const { $ } = await loadPage(
+          new URLSearchParams({
+            referenceNumber: '12345',
+            cursor: 'abc123def456abc123def456',
+            page: '3'
+          })
+        )
+
+        const bodyText = $('[data-testid="app-page-body"]').text()
+        expect(bodyText).toContain('page 3')
+      })
+    })
+
     test('Should render not authorised page when backend request is not authorised', async () => {
       stubBackendReponse(
         HttpResponse.json(

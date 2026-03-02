@@ -4,6 +4,7 @@
 {% from "govuk/components/input/macro.njk" import govukInput %}
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/pagination/macro.njk" import govukPagination %}
 
 {% block content %}
   <div class="govuk-grid-row">
@@ -94,6 +95,14 @@
             })
           }}
         {% endfor %}
+
+        {% if pagination.previous or pagination.next %}
+          <p class="govuk-body">Showing page {{ page }}</p>
+          {{ govukPagination({
+            previous: pagination.previous,
+            next: pagination.next
+          }) }}
+        {% endif %}
 
         {% if not systemLogs.length %}
           {{ govukInsetText({ text: "No system logs found" }) }}
