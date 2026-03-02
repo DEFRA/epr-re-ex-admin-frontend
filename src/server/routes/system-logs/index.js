@@ -16,14 +16,28 @@ export const systemLogs = {
           },
           async handler(request, h) {
             const searchTermReferenceNumber = request.query?.referenceNumber
+            const cursor = request.query?.cursor || null
+            const page = Number(request.query?.page) || 1
+
             const params = new URLSearchParams({
               organisationId: searchTermReferenceNumber
             })
+
+            if (cursor) {
+              params.set('cursor', cursor)
+            }
 
             const data = await fetchJsonFromBackend(
               request,
               `/v1/system-logs?${params.toString()}`
             )
+
+            const pagination = buildPagination({
+              data,
+              referenceNumber: searchTermReferenceNumber,
+              cursor,
+              page
+            })
 
             return h.view('routes/system-logs/index', {
               pageTitle: request.route.settings.app.pageTitle,
@@ -35,13 +49,41 @@ export const systemLogs = {
               })),
               searchTerms: {
                 referenceNumber: searchTermReferenceNumber
-              }
+              },
+              pagination,
+              page
             })
           }
         }
       ])
     }
   }
+}
+
+function buildPagination({ data, referenceNumber, cursor, page }) {
+  const pagination = {}
+
+  if (data?.hasMore && data?.nextCursor) {
+    const nextParams = new URLSearchParams({
+      referenceNumber,
+      cursor: data.nextCursor,
+      page: String(page + 1)
+    })
+
+    pagination.next = {
+      href: `/system-logs?${nextParams.toString()}`
+    }
+  }
+
+  if (cursor && page > 1) {
+    const prevParams = new URLSearchParams({ referenceNumber })
+
+    pagination.previous = {
+      href: `/system-logs?${prevParams.toString()}`
+    }
+  }
+
+  return pagination
 }
 
 function contextWithDeltaBetweenPreviousAndNextExtracted({ context }) {
