@@ -15,10 +15,11 @@ export const systemLogs = {
             app: { pageTitle: 'System logs' }
           },
           async handler(request, h) {
-            const hasReferenceNumberQuery = Object.prototype.hasOwnProperty.call(
-              request.query ?? {},
-              'referenceNumber'
-            )
+            const hasReferenceNumberQuery =
+              Object.prototype.hasOwnProperty.call(
+                request.query ?? {},
+                'referenceNumber'
+              )
             const searchTermReferenceNumber =
               request.query?.referenceNumber?.trim?.() ??
               request.query?.referenceNumber
