@@ -17,7 +17,7 @@ export const systemLogs = {
           async handler(request, h) {
             const hasReferenceNumberQuery =
               Object.prototype.hasOwnProperty.call(
-                request.query ?? {},
+                request.query,
                 'referenceNumber'
               )
             const searchTermReferenceNumber =
