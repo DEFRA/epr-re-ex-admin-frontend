@@ -1,5 +1,7 @@
 export function uniqueMonthNames(data) {
-  if (data.materials.length === 0) return []
+  if (data.materials.length === 0) {
+    return []
+  }
 
   return data.materials
     .reduce(

@@ -7,7 +7,7 @@ import { uniqueMonthNames } from '#server/routes/tonnage-monitoring/helper.js'
 const dateFormat = "d MMMM yyyy 'at' h:mmaaa"
 
 async function generateCsv(data) {
-  const years = [...new Set(data.materials.map((item) => item.year))].sort()
+  const years = [...new Set(data.materials.map((item) => item.year))]
   const hasMultipleYears = years.length > 1
 
   const monthNames = uniqueMonthNames(data)
