@@ -21,5 +21,8 @@ export function formatMaterialName(material) {
 }
 
 export function formatTonnage(tonnage) {
+  if (tonnage === undefined || tonnage === null) {
+    return ''
+  }
   return tonnage.toFixed(2)
 }

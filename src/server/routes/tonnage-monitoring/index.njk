@@ -30,29 +30,40 @@
           Data generated at: <strong>{{ generatedAt | formatDate("d MMMM yyyy 'at' h:mmaaa") }}</strong>
         </p>
 
+        <p class="govuk-body">
+                   Grand total (all records): <strong>{{ total }}</strong>
+        </p>
+
         {% if materials and materials.length %}
+          {% set tableHead = [] %}
+          {% set tableHead = tableHead.concat([{ text: "Material" }]) %}
+          {% set tableHead = tableHead.concat([{ text: "Type" }]) %}
+          {% if hasMultipleYears %}
+            {% set tableHead = tableHead.concat([{ text: "Year" }]) %}
+          {% endif %}
+          {% for monthName in monthNames %}
+            {% set tableHead = tableHead.concat([{ text: monthName, format: "numeric" }]) %}
+          {% endfor %}
+
           {% set tableRows = [] %}
           {% for item in materials %}
-            {% set materialCell = { text: item.material } %}
-            {% set tonnageCell = { text: item.totalTonnage, format: "numeric" } %}
-            {% set row = [ materialCell, tonnageCell ] %}
+            {% set row = [] %}
+            {% set row = row.concat([{ text: item.material }]) %}
+            {% set row = row.concat([{ text: item.type }]) %}
+            {% if hasMultipleYears %}
+              {% set row = row.concat([{ text: item.year }]) %}
+            {% endif %}
+            {% for monthName in monthNames %}
+              {% set row = row.concat([{ text: item[monthName], format: "numeric" }]) %}
+            {% endfor %}
             {% set tableRows = tableRows.concat([row]) %}
           {% endfor %}
 
-          {% set totalRow = [
-            { text: "Total", classes: "govuk-!-font-weight-bold" },
-            { text: total, format: "numeric", classes: "govuk-!-font-weight-bold" }
-          ] %}
-          {% set tableRows = tableRows.concat([totalRow]) %}
-
           {{ govukTable({
-            caption: "Tonnage by material",
-            captionClasses: "govuk-table__caption--m",
+            caption: "Tonnage by material and type" + (" per year" if hasMultipleYears else "") + " with monthly breakdown",
+            captionClasses: "govuk-visually-hidden",
             firstCellIsHeader: true,
-            head: [
-              { text: "Material" },
-              { text: "Tonnage", format: "numeric" }
-            ],
+            head: tableHead,
             rows: tableRows
           }) }}
 
