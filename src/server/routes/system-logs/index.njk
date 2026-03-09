@@ -1,6 +1,7 @@
 {% extends 'layout.njk' %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/details/macro.njk" import govukDetails %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 {% from "govuk/components/input/macro.njk" import govukInput %}
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
@@ -10,6 +11,18 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
       <div class="govuk-body" data-testid="app-page-body">
+
+        {% if error %}
+          {{ govukErrorSummary({
+            titleText: "There is a problem",
+            errorList: [
+              {
+                text: error.text,
+                href: error.href
+              }
+            ]
+          }) }}
+        {% endif %}
 
         <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
 
@@ -25,6 +38,7 @@
               name: "referenceNumber",
               type: "search",
               value: searchTerms.referenceNumber,
+              errorMessage: error if error,
               autocomplete: "off",
               classes: "govuk-input--width-20"
             }) }}

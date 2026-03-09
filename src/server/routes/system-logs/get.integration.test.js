@@ -483,6 +483,23 @@ describe('GET /system-logs', () => {
         // reference Number rendered in search form
         expect($('form input[name=referenceNumber]').val()).toEqual('12345')
       })
+
+      it('shows a validation error and does not call backend when referenceNumber is blank', async () => {
+        const backendCalls = stubBackendReponse(
+          HttpResponse.json({
+            systemLogs: []
+          })
+        )
+
+        const { $, statusCode } = await loadPage(
+          new URLSearchParams({ referenceNumber: '' })
+        )
+
+        expect(statusCode).toEqual(statusCodes.ok)
+        expect(backendCalls).toHaveLength(0)
+        expect($.text()).toContain('There is a problem')
+        expect($.text()).toContain('Enter an organisation reference number')
+      })
     })
 
     describe('pagination', () => {
