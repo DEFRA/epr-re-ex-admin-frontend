@@ -14,6 +14,8 @@ import { wasteBalanceAvailability } from './routes/waste-balance-availability/in
 import { linkedOrganisations } from './routes/linked-organisations/index.js'
 import { prnActivity } from './routes/prn-activity/index.js'
 import { summaryLogUploadsReport } from './routes/summary-log/index.js'
+import { overseasSitesUpload } from './routes/overseas-sites-upload/index.js'
+import { overseasSitesImportStatus } from './routes/overseas-sites-import-status/index.js'
 
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
 
@@ -40,7 +42,9 @@ export const router = {
         wasteBalanceAvailability,
         linkedOrganisations,
         prnActivity,
-        summaryLogUploadsReport
+        summaryLogUploadsReport,
+        overseasSitesUpload,
+        overseasSitesImportStatus
       ])
 
       await server.register([serveStaticFiles])
