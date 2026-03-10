@@ -285,6 +285,14 @@ export const config = convict({
     format: String,
     default: 'http://localhost:3001',
     env: 'EPR_BACKEND_URL'
+  },
+  features: {
+    orsEnabled: {
+      doc: 'Enable overseas reprocessing sites upload',
+      format: Boolean,
+      default: false,
+      env: 'FEATURE_FLAG_ORS_ENABLED'
+    }
   }
 })
 
