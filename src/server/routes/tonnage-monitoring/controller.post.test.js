@@ -74,7 +74,10 @@ describe('tonnage-monitoring POST controller', () => {
       '',
       '"Material","Type","Jan","Feb"',
       '"Aluminium","Exporter","1234.56","0.00"',
-      '"Glass re-melt","Reprocessor","0.00","5678.90"'
+      '"","Exporter","1234.56","0.00"',
+      '"Glass re-melt","Reprocessor","0.00","5678.90"',
+      '"","Reprocessor","0.00","5678.90"',
+      '"Total","","1234.56","5678.90"'
     ].join('\n')
 
     expect(mockH.response).toHaveBeenCalledWith(expectedCsv)
@@ -253,6 +256,8 @@ describe('tonnage-monitoring POST controller', () => {
       '"Plastic","Exporter","100.00","150.00","200.00"'
     )
     expect(csvContent).toContain('"Aluminium","Exporter","50.00","",""')
+    expect(csvContent).toContain('"","Exporter","150.00","150.00","200.00"')
+    expect(csvContent).toContain('"Total","","150.00","150.00","200.00"')
   })
 
   test('Should redirect with error message on fetch failure', async () => {

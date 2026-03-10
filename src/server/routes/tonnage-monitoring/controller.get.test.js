@@ -59,7 +59,7 @@ describe('tonnage-monitoring GET controller', () => {
     expect(viewCall[0]).toBe('routes/tonnage-monitoring/index')
     expect(viewCall[1].pageTitle).toBe('Tonnage monitoring')
     expect(viewCall[1].generatedAt).toBe('2026-01-29T12:00:00.000Z')
-    expect(viewCall[1].materials).toHaveLength(20) // All items
+    expect(viewCall[1].materials).toHaveLength(22) // 20 material rows + 1 type total + 1 year total
     expect(viewCall[1].materials[0]).toEqual({
       material: 'Aluminium',
       type: 'Exporter',
@@ -101,21 +101,39 @@ describe('tonnage-monitoring GET controller', () => {
     await tonnageMonitoringGetController.handler(mockRequest, mockH)
 
     const viewCall = mockH.view.mock.calls[0]
+    expect(viewCall[1].materials).toHaveLength(7)
+
     expect(viewCall[1].materials).toEqual([
       {
+        Jan: '100.00',
         material: 'Glass re-melt',
-        type: 'Exporter',
-        Jan: '100.00'
+        type: 'Exporter'
       },
       {
+        Jan: '100.00',
+        type: 'Exporter'
+      },
+      {
+        Jan: '200.00',
         material: 'Glass other',
-        type: 'Reprocessor',
-        Jan: '200.00'
+        type: 'Reprocessor'
       },
       {
+        Jan: '200.00',
+        type: 'Reprocessor'
+      },
+      {
+        Jan: '300.00',
         material: 'Paper and board',
-        type: 'Exporter',
-        Jan: '300.00'
+        type: 'Exporter'
+      },
+      {
+        Jan: '300.00',
+        type: 'Exporter'
+      },
+      {
+        material: 'Total',
+        Jan: '600.00'
       }
     ])
   })
@@ -149,9 +167,13 @@ describe('tonnage-monitoring GET controller', () => {
     await tonnageMonitoringGetController.handler(mockRequest, mockH)
 
     const viewCall = mockH.view.mock.calls[0]
-    expect(viewCall[1].materials[0].Jan).toBe('100.00')
-    expect(viewCall[1].materials[1].Jan).toBe('50.00')
-    expect(viewCall[1].materials[2].Jan).toBe('25.50')
+
+    const materialRows = viewCall[1].materials
+    expect(materialRows[0].Jan).toBe('100.00')
+    expect(materialRows[1].Jan).toBe('100.00')
+    expect(materialRows[2].Jan).toBe('50.00')
+    expect(materialRows[3].Jan).toBe('50.00')
+    expect(materialRows[4].Jan).toBe('25.50')
     expect(viewCall[1].total).toBe('175.50')
   })
 
@@ -237,18 +259,41 @@ describe('tonnage-monitoring GET controller', () => {
 
     const viewCall = mockH.view.mock.calls[0]
     expect(viewCall[1].hasMultipleYears).toBe(true)
-    expect(viewCall[1].materials[0]).toEqual({
-      material: 'Plastic',
-      type: 'Exporter',
-      year: 2025,
-      Dec: '100.00'
-    })
-    expect(viewCall[1].materials[1]).toEqual({
-      material: 'Plastic',
-      type: 'Exporter',
-      year: 2026,
-      Dec: '150.00'
-    })
+    const materialRows = viewCall[1].materials
+    expect(materialRows).toEqual([
+      {
+        material: 'Plastic',
+        type: 'Exporter',
+        year: 2025,
+        Dec: '100.00'
+      },
+      {
+        type: 'Exporter',
+        year: 2025,
+        Dec: '100.00'
+      },
+      {
+        material: 'Total',
+        year: 2025,
+        Dec: '100.00'
+      },
+      {
+        material: 'Plastic',
+        type: 'Exporter',
+        year: 2026,
+        Dec: '150.00'
+      },
+      {
+        type: 'Exporter',
+        year: 2026,
+        Dec: '150.00'
+      },
+      {
+        material: 'Total',
+        year: 2026,
+        Dec: '150.00'
+      }
+    ])
   })
 
   test('Should handle materials with different month counts', async () => {
@@ -279,19 +324,33 @@ describe('tonnage-monitoring GET controller', () => {
 
     const viewCall = mockH.view.mock.calls[0]
     expect(viewCall[1].monthNames).toEqual(['Jan', 'Feb', 'Mar'])
-    expect(viewCall[1].materials[0]).toEqual({
-      material: 'Plastic',
-      type: 'Exporter',
-      Jan: '100.00',
-      Feb: '150.00',
-      Mar: '200.00'
-    })
-    expect(viewCall[1].materials[1]).toEqual({
-      material: 'Aluminium',
-      type: 'Exporter',
-      Jan: '50.00',
-      Feb: '',
-      Mar: ''
-    })
+    expect(viewCall[1].materials).toEqual([
+      {
+        material: 'Plastic',
+        type: 'Exporter',
+        Jan: '100.00',
+        Feb: '150.00',
+        Mar: '200.00'
+      },
+      {
+        material: 'Aluminium',
+        type: 'Exporter',
+        Jan: '50.00',
+        Feb: '',
+        Mar: ''
+      },
+      {
+        type: 'Exporter',
+        Jan: '150.00',
+        Feb: '150.00',
+        Mar: '200.00'
+      },
+      {
+        material: 'Total',
+        Jan: '150.00',
+        Feb: '150.00',
+        Mar: '200.00'
+      }
+    ])
   })
 })

@@ -1,16 +1,17 @@
 import { writeToString } from '@fast-csv/format'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { formatDate } from '#config/nunjucks/filters/format-date.js'
-import { formatMaterialName, formatTonnage } from './formatters.js'
-import { uniqueMonthNames } from '#server/routes/tonnage-monitoring/helper.js'
+import { formatTonnage, materialRowHeading } from './formatters.js'
+import { buildMaterialRowData } from '#server/routes/tonnage-monitoring/helper.js'
 
 const dateFormat = "d MMMM yyyy 'at' h:mmaaa"
 
 async function generateCsv(data) {
-  const years = [...new Set(data.materials.map((item) => item.year))]
-  const hasMultipleYears = years.length > 1
-
-  const monthNames = uniqueMonthNames(data)
+  const {
+    rows: materialRows,
+    monthNames,
+    hasMultipleYears
+  } = buildMaterialRowData(data)
 
   const rows = [
     ['Tonnage by material'],
@@ -32,17 +33,14 @@ async function generateCsv(data) {
   headerRow.push(...monthNames)
   rows.push(headerRow)
 
-  for (const item of data.materials) {
-    const row = [formatMaterialName(item.material), item.type]
+  for (const item of materialRows) {
+    const row = [materialRowHeading(item), item.type]
     if (hasMultipleYears) {
       row.push(item.year)
     }
 
-    const monthTonnageMap = new Map(
-      item.months.map((m) => [m.month, m.tonnage])
-    )
     for (const monthName of monthNames) {
-      row.push(formatTonnage(monthTonnageMap.get(monthName)))
+      row.push(formatTonnage(item.monthValues[monthName]))
     }
     rows.push(row)
   }

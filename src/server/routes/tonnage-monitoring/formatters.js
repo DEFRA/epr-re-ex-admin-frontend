@@ -26,3 +26,13 @@ export function formatTonnage(tonnage) {
   }
   return tonnage.toFixed(2)
 }
+
+export function materialRowHeading(row) {
+  if (row.material) {
+    return formatMaterialName(row.material)
+  }
+
+  if (!row.type) {
+    return 'Total'
+  }
+}
