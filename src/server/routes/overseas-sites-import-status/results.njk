@@ -1,0 +1,58 @@
+{% extends 'layout.njk' %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/panel/macro.njk" import govukPanel %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <div class="govuk-body" data-testid="app-page-body">
+        {{ govukPanel({ titleText: heading }) }}
+
+        {% if files.length > 0 %}
+          <h2 class="govuk-heading-m">File results</h2>
+
+          {% for file in files %}
+            <h3 class="govuk-heading-s">{{ file.fileName }}</h3>
+
+            {% if file.result %}
+              {% set rows = [] %}
+
+              {% if file.result.sitesCreated is defined %}
+                {% set rows = rows.concat([[{ text: "Sites created" }, { text: file.result.sitesCreated }]]) %}
+              {% endif %}
+
+              {% if file.result.mappingsUpdated is defined %}
+                {% set rows = rows.concat([[{ text: "Mappings updated" }, { text: file.result.mappingsUpdated }]]) %}
+              {% endif %}
+
+              {% if rows.length > 0 %}
+                {{ govukTable({ rows: rows }) }}
+              {% endif %}
+
+              {% if file.result.errors and file.result.errors.length > 0 %}
+                <details class="govuk-details">
+                  <summary class="govuk-details__summary">
+                    <span class="govuk-details__summary-text">
+                      {{ file.result.errors.length }} error{{ "s" if file.result.errors.length != 1 }}
+                    </span>
+                  </summary>
+                  <div class="govuk-details__text">
+                    <ul class="govuk-list govuk-list--bullet">
+                      {% for error in file.result.errors %}
+                        <li>{{ error }}</li>
+                      {% endfor %}
+                    </ul>
+                  </div>
+                </details>
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+
+        <p>
+          <a href="/overseas-sites/upload" class="govuk-link">Upload another spreadsheet</a>
+        </p>
+      </div>
+    </div>
+  </div>
+{% endblock %}
