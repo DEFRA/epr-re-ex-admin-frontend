@@ -1,5 +1,7 @@
+import { config } from '#config/config.js'
+
 export function buildNavigation(request) {
-  return [
+  const items = [
     {
       text: 'Home',
       href: '/',
@@ -51,4 +53,14 @@ export function buildNavigation(request) {
       current: request?.path === '/system-logs'
     }
   ]
+
+  if (config.get('features.orsEnabled')) {
+    items.push({
+      text: 'Overseas sites',
+      href: '/overseas-sites/upload',
+      current: request?.path === '/overseas-sites/upload'
+    })
+  }
+
+  return items
 }
