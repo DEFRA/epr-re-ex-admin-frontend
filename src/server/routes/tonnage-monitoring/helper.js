@@ -39,10 +39,12 @@ export function buildMaterialRowData(data) {
 
     if (currentYear && currentYear !== item.year) {
       rows.push(typeTotal, yearTotal)
-      typeTotal = yearTotal = undefined
+      typeTotal = yearTotal = null
     } else if (currentType && currentType !== item.type) {
       rows.push(typeTotal)
-      typeTotal = undefined
+      typeTotal = null
+    } else {
+      // Continue with existing totals
     }
 
     typeTotal ??= initTypeTotal(item, monthNames)
@@ -62,7 +64,9 @@ export function buildMaterialRowData(data) {
     currentType = item.type
   }
 
-  if (typeTotal) rows.push(typeTotal, yearTotal)
+  if (typeTotal) {
+    rows.push(typeTotal, yearTotal)
+  }
 
   return { hasMultipleYears, monthNames, rows }
 }

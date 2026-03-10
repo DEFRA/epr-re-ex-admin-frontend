@@ -30,9 +30,9 @@ export function formatTonnage(tonnage) {
 export function materialRowHeading(row) {
   if (row.material) {
     return formatMaterialName(row.material)
-  }
-
-  if (!row.type) {
+  } else if (row.type === null || row.type === undefined) {
     return 'Total'
+  } else {
+    return row.material
   }
 }
