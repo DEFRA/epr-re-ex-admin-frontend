@@ -1,0 +1,36 @@
+{% extends 'layout.njk' %}
+{% from "govuk/components/file-upload/macro.njk" import govukFileUpload %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <div class="govuk-body" data-testid="app-page-body">
+        <h1 class="govuk-heading-xl">{{ heading }}</h1>
+        <p>Upload an overseas reprocessing sites spreadsheet (.xlsx) to import site data.</p>
+
+        <form
+          class="form"
+          action="{{ uploadUrl }}"
+          method="post"
+          enctype="multipart/form-data"
+        >
+          {{ govukFileUpload({
+            id: "ors-spreadsheet-upload",
+            name: "file",
+            label: {
+              text: "Upload XLSX file",
+              classes: "govuk-!-font-weight-bold govuk-!-margin-bottom-4"
+            },
+            formGroup: { classes: "govuk-!-margin-top-4" },
+            attributes: { accept: ".xlsx", required: true }
+          }) }}
+
+          <div class="govuk-button-group">
+            {{ govukButton({ text: "Upload spreadsheet", preventDoubleClick: true }) }}
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}
