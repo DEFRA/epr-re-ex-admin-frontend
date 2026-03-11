@@ -33,6 +33,6 @@ export function materialRowHeading(row) {
   } else if (row.type === null || row.type === undefined) {
     return 'Total'
   } else {
-    return row.material
+    return ''
   }
 }

@@ -113,7 +113,7 @@ describe('tonnage-monitoring GET controller', () => {
       },
       {
         Jan: '100.00',
-        material: undefined,
+        material: '',
         type: 'Exporter',
         total: '100.00'
       },
@@ -125,7 +125,7 @@ describe('tonnage-monitoring GET controller', () => {
       },
       {
         Jan: '200.00',
-        material: undefined,
+        material: '',
         type: 'Reprocessor',
         total: '200.00'
       },
@@ -137,7 +137,7 @@ describe('tonnage-monitoring GET controller', () => {
       },
       {
         Jan: '300.00',
-        material: undefined,
+        material: '',
         type: 'Exporter',
         total: '300.00'
       },
@@ -261,7 +261,7 @@ describe('tonnage-monitoring GET controller', () => {
           material: 'plastic',
           year: 2026,
           type: 'Exporter',
-          months: [{ month: 'Dec', tonnage: 150 }]
+          months: [{ month: 'Jan', tonnage: 150 }]
         }
       ],
       total: 250
@@ -277,20 +277,22 @@ describe('tonnage-monitoring GET controller', () => {
         material: 'Plastic',
         type: 'Exporter',
         year: 2025,
+        Jan: '',
         Dec: '100.00',
         total: '100.00'
       },
       {
-        material: undefined,
+        material: '',
         type: 'Exporter',
         year: 2025,
+        Jan: '',
         Dec: '100.00',
         total: '100.00'
       },
       {
         material: 'Total',
-        type: undefined,
         year: 2025,
+        Jan: '',
         Dec: '100.00',
         total: '100.00'
       },
@@ -298,21 +300,23 @@ describe('tonnage-monitoring GET controller', () => {
         material: 'Plastic',
         type: 'Exporter',
         year: 2026,
-        Dec: '150.00',
+        Jan: '150.00',
+        Dec: '',
         total: '150.00'
       },
       {
-        material: undefined,
+        material: '',
         type: 'Exporter',
         year: 2026,
-        Dec: '150.00',
+        Jan: '150.00',
+        Dec: '',
         total: '150.00'
       },
       {
         material: 'Total',
-        type: undefined,
         year: 2026,
-        Dec: '150.00',
+        Jan: '150.00',
+        Dec: '',
         total: '150.00'
       }
     ])
@@ -364,7 +368,7 @@ describe('tonnage-monitoring GET controller', () => {
         total: '50.00'
       },
       {
-        material: undefined,
+        material: '',
         type: 'Exporter',
         Jan: '150.00',
         Feb: '150.00',
