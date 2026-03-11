@@ -44,7 +44,7 @@ export function buildMaterialRowData(data) {
       rows.push(typeTotal)
       typeTotal = null
     } else {
-      // Continue with existing totals
+      // No change in year or type, continue accumulating
     }
 
     typeTotal ??= initTypeTotal(item, monthNames)
@@ -54,7 +54,8 @@ export function buildMaterialRowData(data) {
       material: item.material,
       monthValues,
       type: item.type,
-      year: item.year
+      year: item.year,
+      total: calculateTotal(monthValues)
     })
 
     accumulate(typeTotal, monthValues, monthNames)
@@ -75,14 +76,16 @@ function initTypeTotal(item, monthNames) {
   return {
     monthValues: Object.fromEntries(monthNames.map((m) => [m, undefined])),
     type: item.type,
-    year: item.year
+    year: item.year,
+    total: 0
   }
 }
 
 function initYearTotal(item, monthNames) {
   return {
     monthValues: Object.fromEntries(monthNames.map((m) => [m, undefined])),
-    year: item.year
+    year: item.year,
+    total: 0
   }
 }
 
@@ -101,4 +104,12 @@ function accumulate(totalRow, currentValues, names) {
         (totalRow.monthValues[month] ?? 0) + currentVal
     }
   }
+  totalRow.total = calculateTotal(totalRow.monthValues)
+}
+
+function calculateTotal(monthValues) {
+  return Object.values(monthValues).reduce(
+    (sum, value) => (value === undefined ? sum : sum + value),
+    0
+  )
 }

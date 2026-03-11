@@ -30,10 +30,6 @@
           Data generated at: <strong>{{ generatedAt | formatDate("d MMMM yyyy 'at' h:mmaaa") }}</strong>
         </p>
 
-        <p class="govuk-body">
-                   Grand total (all records): <strong>{{ total }}</strong>
-        </p>
-
         {% if materials and materials.length %}
           {% set tableHead = [] %}
           {% set tableHead = tableHead.concat([{ text: "Material" }]) %}
@@ -44,6 +40,7 @@
           {% for monthName in monthNames %}
             {% set tableHead = tableHead.concat([{ text: monthName, format: "numeric" }]) %}
           {% endfor %}
+          {% set tableHead = tableHead.concat([{ text: "Total", format: "numeric" }]) %}
 
           {% set tableRows = [] %}
           {% for item in materials %}
@@ -56,6 +53,7 @@
             {% for monthName in monthNames %}
               {% set row = row.concat([{ text: item[monthName], format: "numeric" }]) %}
             {% endfor %}
+            {% set row = row.concat([{ text: item.total, format: "numeric" }]) %}
             {% set tableRows = tableRows.concat([row]) %}
           {% endfor %}
 
@@ -66,6 +64,10 @@
             head: tableHead,
             rows: tableRows
           }) }}
+
+          <p class="govuk-body-l">
+            <strong>Grand total (all records):</strong>&nbsp;&nbsp;{{ total }}
+          </p>
 
           <form method="POST">
             <input type="hidden" name="crumb" value="{{ crumb }}" />

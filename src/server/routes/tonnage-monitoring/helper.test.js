@@ -75,33 +75,39 @@ describe('buildMaterialRowData', () => {
           material: 'plastic',
           type: 'Reprocessor',
           year: 2026,
-          monthValues: { Jan: 100, Feb: 200 }
+          monthValues: { Jan: 100, Feb: 200 },
+          total: 300
         },
         {
           material: 'aluminium',
           type: 'Reprocessor',
           year: 2026,
-          monthValues: { Jan: 50, Feb: 75 }
+          monthValues: { Jan: 50, Feb: 75 },
+          total: 125
         },
         {
           type: 'Reprocessor',
           year: 2026,
-          monthValues: { Jan: 150, Feb: 275 }
+          monthValues: { Jan: 150, Feb: 275 },
+          total: 425
         },
         {
           material: 'plastic',
           type: 'Exporter',
           year: 2026,
-          monthValues: { Jan: 30, Feb: 40 }
+          monthValues: { Jan: 30, Feb: 40 },
+          total: 70
         },
         {
           type: 'Exporter',
           year: 2026,
-          monthValues: { Jan: 30, Feb: 40 }
+          monthValues: { Jan: 30, Feb: 40 },
+          total: 70
         },
         {
           year: 2026,
-          monthValues: { Jan: 180, Feb: 315 }
+          monthValues: { Jan: 180, Feb: 315 },
+          total: 495
         }
       ]
     })
@@ -146,14 +152,16 @@ describe('buildMaterialRowData', () => {
             Jan: 100
           },
           type: 'Reprocessor',
-          year: 2027
+          year: 2027,
+          total: 100
         },
         {
           monthValues: {
             Jan: 100
           },
           type: 'Reprocessor',
-          year: 2027
+          year: 2027,
+          total: 100
         },
         {
           material: 'plastic',
@@ -161,20 +169,23 @@ describe('buildMaterialRowData', () => {
             Jan: 50
           },
           type: 'Exporter',
-          year: 2027
+          year: 2027,
+          total: 50
         },
         {
           monthValues: {
             Jan: 50
           },
           type: 'Exporter',
-          year: 2027
+          year: 2027,
+          total: 50
         },
         {
           monthValues: {
             Jan: 150
           },
-          year: 2027
+          year: 2027,
+          total: 150
         },
         {
           material: 'aluminium',
@@ -183,7 +194,8 @@ describe('buildMaterialRowData', () => {
             Dec: 25
           },
           type: 'Reprocessor',
-          year: 2026
+          year: 2026,
+          total: 50
         },
         {
           monthValues: {
@@ -191,14 +203,16 @@ describe('buildMaterialRowData', () => {
             Dec: 25
           },
           type: 'Reprocessor',
-          year: 2026
+          year: 2026,
+          total: 50
         },
         {
           monthValues: {
             Nov: 25,
             Dec: 25
           },
-          year: 2026
+          year: 2026,
+          total: 50
         }
       ]
     })

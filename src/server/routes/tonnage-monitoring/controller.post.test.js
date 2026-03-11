@@ -72,12 +72,12 @@ describe('tonnage-monitoring POST controller', () => {
       '',
       '"Total: 6913.46"',
       '',
-      '"Material","Type","Jan","Feb"',
-      '"Aluminium","Exporter","1234.56","0.00"',
-      '"","Exporter","1234.56","0.00"',
-      '"Glass re-melt","Reprocessor","0.00","5678.90"',
-      '"","Reprocessor","0.00","5678.90"',
-      '"Total","","1234.56","5678.90"'
+      '"Material","Type","Jan","Feb","Total"',
+      '"Aluminium","Exporter","1234.56","0.00","1234.56"',
+      '"","Exporter","1234.56","0.00","1234.56"',
+      '"Glass re-melt","Reprocessor","0.00","5678.90","5678.90"',
+      '"","Reprocessor","0.00","5678.90","5678.90"',
+      '"Total","","1234.56","5678.90","6913.46"'
     ].join('\n')
 
     expect(mockH.response).toHaveBeenCalledWith(expectedCsv)
@@ -190,7 +190,7 @@ describe('tonnage-monitoring POST controller', () => {
       '',
       '"Total: 0.00"',
       '',
-      '"Material","Type"'
+      '"Material","Type","Total"'
     ].join('\n')
 
     expect(mockH.response).toHaveBeenCalledWith(expectedCsv)

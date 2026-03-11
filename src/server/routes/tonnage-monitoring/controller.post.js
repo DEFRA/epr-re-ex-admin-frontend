@@ -30,7 +30,7 @@ async function generateCsv(data) {
   if (hasMultipleYears) {
     headerRow.push('Year')
   }
-  headerRow.push(...monthNames)
+  headerRow.push(...monthNames, 'Total')
   rows.push(headerRow)
 
   for (const item of materialRows) {
@@ -42,6 +42,7 @@ async function generateCsv(data) {
     for (const monthName of monthNames) {
       row.push(formatTonnage(item.monthValues[monthName]))
     }
+    row.push(formatTonnage(item.total))
     rows.push(row)
   }
 

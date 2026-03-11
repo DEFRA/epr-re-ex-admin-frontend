@@ -20,7 +20,8 @@ export const tonnageMonitoringGetController = {
           month,
           formatTonnage(value)
         ])
-      )
+      ),
+      total: formatTonnage(row.total)
     }))
 
     return h.view('routes/tonnage-monitoring/index', {

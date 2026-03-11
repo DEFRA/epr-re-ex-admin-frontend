@@ -64,7 +64,8 @@ describe('tonnage-monitoring GET controller', () => {
       material: 'Aluminium',
       type: 'Exporter',
       Jan: '100.00',
-      Feb: '0.00'
+      Feb: '0.00',
+      total: '100.00'
     })
     expect(viewCall[1].monthNames).toEqual(['Jan', 'Feb'])
     expect(viewCall[1].hasMultipleYears).toBe(false)
@@ -107,33 +108,44 @@ describe('tonnage-monitoring GET controller', () => {
       {
         Jan: '100.00',
         material: 'Glass re-melt',
-        type: 'Exporter'
+        type: 'Exporter',
+        total: '100.00'
       },
       {
         Jan: '100.00',
-        type: 'Exporter'
+        material: undefined,
+        type: 'Exporter',
+        total: '100.00'
       },
       {
         Jan: '200.00',
         material: 'Glass other',
-        type: 'Reprocessor'
+        type: 'Reprocessor',
+        total: '200.00'
       },
       {
         Jan: '200.00',
-        type: 'Reprocessor'
+        material: undefined,
+        type: 'Reprocessor',
+        total: '200.00'
       },
       {
         Jan: '300.00',
         material: 'Paper and board',
-        type: 'Exporter'
+        type: 'Exporter',
+        total: '300.00'
       },
       {
         Jan: '300.00',
-        type: 'Exporter'
+        material: undefined,
+        type: 'Exporter',
+        total: '300.00'
       },
       {
         material: 'Total',
-        Jan: '600.00'
+        type: undefined,
+        Jan: '600.00',
+        total: '600.00'
       }
     ])
   })
@@ -265,33 +277,43 @@ describe('tonnage-monitoring GET controller', () => {
         material: 'Plastic',
         type: 'Exporter',
         year: 2025,
-        Dec: '100.00'
+        Dec: '100.00',
+        total: '100.00'
       },
       {
+        material: undefined,
         type: 'Exporter',
         year: 2025,
-        Dec: '100.00'
+        Dec: '100.00',
+        total: '100.00'
       },
       {
         material: 'Total',
+        type: undefined,
         year: 2025,
-        Dec: '100.00'
+        Dec: '100.00',
+        total: '100.00'
       },
       {
         material: 'Plastic',
         type: 'Exporter',
         year: 2026,
-        Dec: '150.00'
+        Dec: '150.00',
+        total: '150.00'
       },
       {
+        material: undefined,
         type: 'Exporter',
         year: 2026,
-        Dec: '150.00'
+        Dec: '150.00',
+        total: '150.00'
       },
       {
         material: 'Total',
+        type: undefined,
         year: 2026,
-        Dec: '150.00'
+        Dec: '150.00',
+        total: '150.00'
       }
     ])
   })
@@ -330,26 +352,32 @@ describe('tonnage-monitoring GET controller', () => {
         type: 'Exporter',
         Jan: '100.00',
         Feb: '150.00',
-        Mar: '200.00'
+        Mar: '200.00',
+        total: '450.00'
       },
       {
         material: 'Aluminium',
         type: 'Exporter',
         Jan: '50.00',
         Feb: '',
-        Mar: ''
+        Mar: '',
+        total: '50.00'
       },
       {
+        material: undefined,
         type: 'Exporter',
         Jan: '150.00',
         Feb: '150.00',
-        Mar: '200.00'
+        Mar: '200.00',
+        total: '500.00'
       },
       {
         material: 'Total',
+        type: undefined,
         Jan: '150.00',
         Feb: '150.00',
-        Mar: '200.00'
+        Mar: '200.00',
+        total: '500.00'
       }
     ])
   })
