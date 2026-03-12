@@ -1,11 +1,18 @@
 import { writeToString } from '@fast-csv/format'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { formatDate } from '#config/nunjucks/filters/format-date.js'
-import { formatMaterialName, formatTonnage } from './formatters.js'
+import { formatTonnage, materialRowHeading } from './formatters.js'
+import { buildMaterialRowData } from '#server/routes/tonnage-monitoring/helper.js'
 
 const dateFormat = "d MMMM yyyy 'at' h:mmaaa"
 
 async function generateCsv(data) {
+  const {
+    rows: materialRows,
+    monthNames,
+    hasMultipleYears
+  } = buildMaterialRowData(data)
+
   const rows = [
     ['Tonnage by material'],
     [],
@@ -15,17 +22,29 @@ async function generateCsv(data) {
     [],
     [`Data generated at: ${formatDate(data.generatedAt, dateFormat)}`],
     [],
-    ['Material', 'Tonnage']
+    [`Total: ${formatTonnage(data.total)}`],
+    []
   ]
 
-  for (const item of data.materials) {
-    rows.push([
-      formatMaterialName(item.material),
-      formatTonnage(item.totalTonnage)
-    ])
+  const headerRow = ['Material', 'Type']
+  if (hasMultipleYears) {
+    headerRow.push('Year')
   }
+  headerRow.push(...monthNames, 'Total')
+  rows.push(headerRow)
 
-  rows.push(['Total', formatTonnage(data.total)])
+  for (const item of materialRows) {
+    const row = [materialRowHeading(item), item.type]
+    if (hasMultipleYears) {
+      row.push(item.year)
+    }
+
+    for (const monthName of monthNames) {
+      row.push(formatTonnage(item.monthValues[monthName]))
+    }
+    row.push(formatTonnage(item.total))
+    rows.push(row)
+  }
 
   return writeToString(rows, { headers: false, quoteColumns: true })
 }
