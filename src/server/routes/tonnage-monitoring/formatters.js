@@ -21,5 +21,18 @@ export function formatMaterialName(material) {
 }
 
 export function formatTonnage(tonnage) {
+  if (tonnage === undefined || tonnage === null) {
+    return ''
+  }
   return tonnage.toFixed(2)
+}
+
+export function materialRowHeading(row) {
+  if (row.material) {
+    return formatMaterialName(row.material)
+  } else if (row.type === null || row.type === undefined) {
+    return 'Total'
+  } else {
+    return ''
+  }
 }

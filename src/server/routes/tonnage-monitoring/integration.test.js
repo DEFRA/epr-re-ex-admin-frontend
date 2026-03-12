@@ -42,8 +42,24 @@ describe('tonnage-monitoring', () => {
   const mockTonnageData = {
     generatedAt: '2026-01-29T14:30:00.000Z',
     materials: [
-      { material: 'aluminium', totalTonnage: 1234.56 },
-      { material: 'glass_re_melt', totalTonnage: 5678.9 }
+      {
+        material: 'aluminium',
+        year: 2026,
+        type: 'Exporter',
+        months: [
+          { month: 'Jan', tonnage: 1234.56 },
+          { month: 'Feb', tonnage: 0 }
+        ]
+      },
+      {
+        material: 'glass_re_melt',
+        year: 2026,
+        type: 'Reprocessor',
+        months: [
+          { month: 'Jan', tonnage: 0 },
+          { month: 'Feb', tonnage: 5678.9 }
+        ]
+      }
     ],
     total: 6913.46
   }
@@ -128,8 +144,6 @@ describe('tonnage-monitoring', () => {
         expect(tableText).toContain('1234.56')
         expect(tableText).toContain('Glass re-melt')
         expect(tableText).toContain('5678.90')
-        expect(tableText).toContain('Total')
-        expect(tableText).toContain('6913.46')
       })
 
       test('Should render generated at timestamp', async () => {
@@ -281,9 +295,12 @@ describe('tonnage-monitoring', () => {
           'attachment; filename="tonnage-monitoring.csv"'
         )
         expect(payload).toContain('Tonnage by material')
-        expect(payload).toContain('"Aluminium","1234.56"')
-        expect(payload).toContain('"Glass re-melt","5678.90"')
-        expect(payload).toContain('"Total","6913.46"')
+        expect(payload).toContain('"Material","Type","Jan","Feb"')
+        expect(payload).toContain('"Aluminium","Exporter","1234.56","0.00"')
+        expect(payload).toContain(
+          '"Glass re-melt","Reprocessor","0.00","5678.90"'
+        )
+        expect(payload).toContain('"Total: 6913.46"')
       })
 
       test('Should include formatted date in CSV', async () => {
