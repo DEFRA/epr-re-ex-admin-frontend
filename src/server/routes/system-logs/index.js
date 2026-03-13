@@ -15,9 +15,31 @@ export const systemLogs = {
             app: { pageTitle: 'System logs' }
           },
           async handler(request, h) {
-            const searchTermReferenceNumber = request.query?.referenceNumber
+            const hasReferenceNumberQuery = Object.hasOwn(
+              request.query,
+              'referenceNumber'
+            )
+            const searchTermReferenceNumber =
+              request.query?.referenceNumber?.trim?.() ??
+              request.query?.referenceNumber
             const cursor = request.query?.cursor || null
             const page = Number(request.query?.page) || 1
+
+            if (hasReferenceNumberQuery && !searchTermReferenceNumber) {
+              return h.view('routes/system-logs/index', {
+                pageTitle: request.route.settings.app.pageTitle,
+                systemLogs: [],
+                searchTerms: {
+                  referenceNumber: ''
+                },
+                error: {
+                  text: 'Enter an organisation reference number',
+                  href: '#referenceNumber'
+                },
+                pagination: {},
+                page: 1
+              })
+            }
 
             const params = new URLSearchParams({
               organisationId: searchTermReferenceNumber
@@ -50,6 +72,7 @@ export const systemLogs = {
               searchTerms: {
                 referenceNumber: searchTermReferenceNumber
               },
+              error: null,
               pagination,
               page
             })
