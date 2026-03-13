@@ -86,7 +86,7 @@
     "ajv-cli": "5.0.0",
     "ajv-formats": "3.0.1",
     "autoprefixer": "10.4.27",
-    "babel-loader": "10.1.0",
+    "babel-loader": "10.1.1",
     "cheerio": "1.2.0",
     "clean-webpack-plugin": "4.0.0",
     "copy-webpack-plugin": "14.0.0",
@@ -113,7 +113,7 @@
     "terser-webpack-plugin": "5.3.17",
     "vitest": "4.0.18",
     "webpack": "5.105.4",
-    "webpack-assets-manifest": "6.5.0",
+    "webpack-assets-manifest": "6.5.1",
     "webpack-cli": "6.0.1"
   },
   "overrides": {
