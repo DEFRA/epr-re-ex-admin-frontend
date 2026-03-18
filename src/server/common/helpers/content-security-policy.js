@@ -8,13 +8,12 @@ export function cspFormAction({
 }) {
   if (!isOverseasSitesFeatureEnabled) return ['self']
 
-  // In production we intentionally restrict form submissions to same-origin.
-  // The backend/infrastructure must provide a same-origin upload URL.
   if (isProduction) return ['self']
 
-  // Non-production allows posting directly to the configured uploader host.
-  const { host } = new URL(cdpUploaderUrl)
-  return ['self', host]
+  // Match epr-frontend behavior for local uploads while also allowing
+  // whichever uploader origin is configured for this environment.
+  const { origin } = new URL(cdpUploaderUrl)
+  return ['self', 'localhost:*', origin]
 }
 
 /**
