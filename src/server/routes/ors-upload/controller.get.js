@@ -1,5 +1,6 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
+import { orsUploadRoutes } from './constants.js'
 
 const logger = createLogger()
 
@@ -20,7 +21,7 @@ function getUploadInitiationErrorMessage(error) {
 
 export const orsUploadGetController = {
   async handler(request, h) {
-    const redirectUrl = '/overseas-sites/imports/{importId}'
+    const redirectUrl = orsUploadRoutes.uploadStatus
 
     try {
       const { uploadUrl } = await fetchJsonFromBackend(

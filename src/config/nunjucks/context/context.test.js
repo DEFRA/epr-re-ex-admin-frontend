@@ -106,11 +106,6 @@ describe('context and cache', () => {
             },
             {
               current: false,
-              text: 'ORS uploads',
-              href: '/overseas-sites/imports'
-            },
-            {
-              current: false,
               text: 'PRN activity',
               href: '/prn-activity'
             },
@@ -307,11 +302,6 @@ describe('context and cache', () => {
               current: false,
               text: 'Summary log uploads',
               href: '/summary-log'
-            },
-            {
-              current: false,
-              text: 'ORS uploads',
-              href: '/overseas-sites/imports'
             },
             {
               current: false,

@@ -149,9 +149,17 @@ describe('#buildNavigation', () => {
   test('Should include ORS uploads when feature flag enabled', () => {
     config.get.mockReturnValue(true)
 
-    expect(
-      buildNavigation(mockRequest({ path: '/non-existent-path' }))
-    ).toEqual(
+    const navigation = buildNavigation(
+      mockRequest({ path: '/non-existent-path' })
+    )
+    const summaryLogIndex = navigation.findIndex(
+      (item) => item.text === 'Summary log uploads'
+    )
+    const orsUploadsIndex = navigation.findIndex(
+      (item) => item.text === 'ORS uploads'
+    )
+
+    expect(navigation).toEqual(
       expect.arrayContaining([
         {
           current: false,
@@ -160,5 +168,6 @@ describe('#buildNavigation', () => {
         }
       ])
     )
+    expect(orsUploadsIndex).toBe(summaryLogIndex + 1)
   })
 })

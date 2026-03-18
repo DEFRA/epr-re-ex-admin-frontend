@@ -7,7 +7,12 @@ export function cspFormAction({
   isOverseasSitesFeatureEnabled
 }) {
   if (!isOverseasSitesFeatureEnabled) return ['self']
+
+  // In production we intentionally restrict form submissions to same-origin.
+  // The backend/infrastructure must provide a same-origin upload URL.
   if (isProduction) return ['self']
+
+  // Non-production allows posting directly to the configured uploader host.
   const { host } = new URL(cdpUploaderUrl)
   return ['self', host]
 }
