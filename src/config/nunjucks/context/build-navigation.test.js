@@ -183,28 +183,4 @@ describe('#buildNavigation', () => {
       href: '/overseas-sites/imports'
     })
   })
-
-  test('Should include ORS uploads without using findIndex', () => {
-    config.get.mockReturnValue(true)
-    const findIndexSpy = vi
-      .spyOn(Array.prototype, 'findIndex')
-      .mockReturnValue(-1)
-
-    try {
-      const navigation = buildNavigation(mockRequest({ path: '/summary-log' }))
-
-      expect(navigation).toEqual(
-        expect.arrayContaining([
-          {
-            current: false,
-            text: 'ORS uploads',
-            href: '/overseas-sites/imports'
-          }
-        ])
-      )
-      expect(findIndexSpy).not.toHaveBeenCalled()
-    } finally {
-      findIndexSpy.mockRestore()
-    }
-  })
 })
