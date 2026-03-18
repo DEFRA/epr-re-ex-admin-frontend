@@ -7,7 +7,6 @@
     <div class="govuk-grid-column-two-thirds">
       <div class="govuk-body" data-testid="app-page-body">
         {% if error %}
-          {# `text` is escaped by the GOV.UK macro and values are controlled server-side strings. #}
           {{ govukErrorSummary({
             titleText: "There is a problem",
             errorList: [

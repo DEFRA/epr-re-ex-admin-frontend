@@ -1,19 +1,17 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
-import { statusCodes } from '#server/common/constants/status-codes.js'
-import { orsUploadRoutes } from './constants.js'
 
 const logger = createLogger()
 
 function getUploadInitiationErrorMessage(error) {
   switch (error?.output?.statusCode) {
-    case statusCodes.notFound:
+    case 404:
       return 'ORS upload is not available yet because the backend initiate-import endpoint is not enabled.'
-    case statusCodes.unauthorised:
+    case 401:
       return 'Your session has expired. Please sign in again and retry.'
-    case statusCodes.forbidden:
+    case 403:
       return 'You do not have permission to start ORS uploads.'
-    case statusCodes.badRequest:
+    case 400:
       return 'ORS upload could not be started due to invalid upload redirect configuration.'
     default:
       return 'There was a problem starting the ORS upload. Please refresh and try again.'
@@ -22,7 +20,7 @@ function getUploadInitiationErrorMessage(error) {
 
 export const orsUploadGetController = {
   async handler(request, h) {
-    const redirectUrl = orsUploadRoutes.uploadStatus
+    const redirectUrl = '/overseas-sites/imports/{importId}'
 
     try {
       const { uploadUrl } = await fetchJsonFromBackend(

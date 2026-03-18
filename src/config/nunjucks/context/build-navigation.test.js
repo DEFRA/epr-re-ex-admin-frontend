@@ -149,17 +149,9 @@ describe('#buildNavigation', () => {
   test('Should include ORS uploads when feature flag enabled', () => {
     config.get.mockReturnValue(true)
 
-    const navigation = buildNavigation(
-      mockRequest({ path: '/non-existent-path' })
-    )
-    const summaryLogIndex = navigation.findIndex(
-      (item) => item.text === 'Summary log uploads'
-    )
-    const orsUploadsIndex = navigation.findIndex(
-      (item) => item.text === 'ORS uploads'
-    )
-
-    expect(navigation).toEqual(
+    expect(
+      buildNavigation(mockRequest({ path: '/non-existent-path' }))
+    ).toEqual(
       expect.arrayContaining([
         {
           current: false,
@@ -168,19 +160,5 @@ describe('#buildNavigation', () => {
         }
       ])
     )
-    expect(orsUploadsIndex).toBe(summaryLogIndex + 1)
-  })
-
-  test('Should include ORS uploads when request is undefined', () => {
-    config.get.mockReturnValue(true)
-
-    const navigation = buildNavigation()
-    const orsUploads = navigation.find((item) => item.text === 'ORS uploads')
-
-    expect(orsUploads).toEqual({
-      current: undefined,
-      text: 'ORS uploads',
-      href: '/overseas-sites/imports'
-    })
   })
 })

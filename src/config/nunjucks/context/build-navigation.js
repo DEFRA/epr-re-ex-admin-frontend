@@ -1,18 +1,6 @@
 import { config } from '#config/config.js'
 
 export function buildNavigation(request) {
-  const orsNavigation = config.get('featureFlags.overseasSites')
-    ? [
-        {
-          text: 'ORS uploads',
-          href: '/overseas-sites/imports',
-          current:
-            request?.path === '/overseas-sites/imports' ||
-            request?.path?.startsWith('/overseas-sites/imports/')
-        }
-      ]
-    : []
-
   const navigation = [
     {
       text: 'Home',
@@ -66,6 +54,16 @@ export function buildNavigation(request) {
       current: request?.path === '/system-logs'
     }
   ]
+
+  if (config.get('featureFlags.overseasSites')) {
+    navigation.splice(7, 0, {
+      text: 'ORS uploads',
+      href: '/overseas-sites/imports',
+      current:
+        request?.path === '/overseas-sites/imports' ||
+        request?.path?.startsWith('/overseas-sites/imports/')
+    })
+  }
 
   return navigation
 }

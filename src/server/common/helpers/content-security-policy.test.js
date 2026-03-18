@@ -12,7 +12,7 @@ describe(cspFormAction, () => {
         cdpUploaderUrl: 'http://localhost:7337',
         isOverseasSitesFeatureEnabled: true
       },
-      ['self', 'localhost:*', 'http://localhost:7337']
+      ['self', 'localhost:7337']
     ],
     [
       'non-production with custom port',
@@ -21,7 +21,7 @@ describe(cspFormAction, () => {
         cdpUploaderUrl: 'http://localhost:9000',
         isOverseasSitesFeatureEnabled: true
       },
-      ['self', 'localhost:*', 'http://localhost:9000']
+      ['self', 'localhost:9000']
     ],
     [
       'production',
@@ -60,31 +60,17 @@ describe('#contentSecurityPolicy', () => {
   })
 
   test('Should set the CSP policy header', async () => {
+    config.set('featureFlags.overseasSites', true)
+
     const resp = await server.inject({
       method: 'GET',
       url: '/'
     })
 
-    const expectedFormAction = cspFormAction({
-      isProduction: config.get('isProduction'),
-      cdpUploaderUrl: config.get('cdpUploaderUrl'),
-      isOverseasSitesFeatureEnabled: config.get('featureFlags.overseasSites')
-    })
-
     const csp = resp.headers['content-security-policy']
     expect(csp).toBeDefined()
-    expect(csp).toContain("form-action 'self'")
+    expect(csp).toContain("form-action 'self' localhost:7337")
 
-    if (expectedFormAction.includes('localhost:*')) {
-      expect(csp).toContain('localhost:*')
-    } else {
-      expect(csp).not.toContain('localhost:*')
-    }
-
-    for (const value of expectedFormAction.filter(
-      (entry) => entry !== 'self'
-    )) {
-      expect(csp).toContain(value)
-    }
+    config.set('featureFlags.overseasSites', false)
   })
 })

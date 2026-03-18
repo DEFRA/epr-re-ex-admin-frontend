@@ -6,18 +6,10 @@ export function cspFormAction({
   cdpUploaderUrl,
   isOverseasSitesFeatureEnabled
 }) {
-  if (!isOverseasSitesFeatureEnabled) {
-    return ['self']
-  }
-
-  if (isProduction) {
-    return ['self']
-  }
-
-  // Match epr-frontend behavior for local uploads while also allowing
-  // whichever uploader origin is configured for this environment.
-  const { origin } = new URL(cdpUploaderUrl)
-  return ['self', 'localhost:*', origin]
+  if (!isOverseasSitesFeatureEnabled) return ['self']
+  if (isProduction) return ['self']
+  const { host } = new URL(cdpUploaderUrl)
+  return ['self', host]
 }
 
 /**
