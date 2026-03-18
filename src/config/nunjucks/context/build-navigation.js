@@ -55,13 +55,19 @@ export function buildNavigation(request) {
   ]
 
   if (config.get('featureFlags.overseasSites')) {
-    navigation.splice(7, 0, {
-      text: 'ORS uploads',
-      href: '/overseas-sites/imports',
-      current:
-        request?.path === '/overseas-sites/imports' ||
-        request?.path?.startsWith('/overseas-sites/imports/')
-    })
+    const summaryLogIndex = navigation.findIndex(
+      (item) => item.text === 'Summary log uploads'
+    )
+
+    if (summaryLogIndex !== -1) {
+      navigation.splice(summaryLogIndex + 1, 0, {
+        text: 'ORS uploads',
+        href: '/overseas-sites/imports',
+        current:
+          request?.path === '/overseas-sites/imports' ||
+          request?.path?.startsWith('/overseas-sites/imports/')
+      })
+    }
   }
 
   return navigation

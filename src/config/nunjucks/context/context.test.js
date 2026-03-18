@@ -1,6 +1,9 @@
 import { vi } from 'vitest'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 
+const originalOverseasSitesFlag = process.env.FEATURE_FLAG_OVERSEAS_SITES
+process.env.FEATURE_FLAG_OVERSEAS_SITES = 'false'
+
 const mockGetUserSession = vi.fn().mockResolvedValue(mockUserSession)
 
 vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
@@ -24,6 +27,14 @@ vi.mock('#server/common/helpers/logging/logger.js', () => ({
 }))
 
 describe('context and cache', () => {
+  afterAll(() => {
+    if (originalOverseasSitesFlag === undefined) {
+      delete process.env.FEATURE_FLAG_OVERSEAS_SITES
+    } else {
+      process.env.FEATURE_FLAG_OVERSEAS_SITES = originalOverseasSitesFlag
+    }
+  })
+
   beforeEach(() => {
     mockReadFileSync.mockReset()
     mockLoggerError.mockReset()
@@ -95,11 +106,6 @@ describe('context and cache', () => {
             },
             {
               current: false,
-              text: 'ORS uploads',
-              href: '/overseas-sites/imports'
-            },
-            {
-              current: false,
               text: 'PRN activity',
               href: '/prn-activity'
             },
@@ -127,6 +133,29 @@ describe('context and cache', () => {
             '/public/javascripts/application.js'
           )
         })
+      })
+
+      test('Should include ORS uploads when feature flag is enabled', async () => {
+        process.env.FEATURE_FLAG_OVERSEAS_SITES = 'true'
+        vi.resetModules()
+
+        const contextImportWithFlag = await import('./context.js')
+        const contextWithFlag = await contextImportWithFlag.context({
+          path: '/overseas-sites/imports'
+        })
+
+        expect(contextWithFlag.navigation).toEqual(
+          expect.arrayContaining([
+            {
+              current: true,
+              text: 'ORS uploads',
+              href: '/overseas-sites/imports'
+            }
+          ])
+        )
+
+        process.env.FEATURE_FLAG_OVERSEAS_SITES = 'false'
+        vi.resetModules()
       })
 
       describe('With invalid asset path', () => {
@@ -273,11 +302,6 @@ describe('context and cache', () => {
               current: false,
               text: 'Summary log uploads',
               href: '/summary-log'
-            },
-            {
-              current: false,
-              text: 'ORS uploads',
-              href: '/overseas-sites/imports'
             },
             {
               current: false,
