@@ -81,7 +81,9 @@ describe('#contentSecurityPolicy', () => {
       expect(csp).not.toContain('localhost:*')
     }
 
-    for (const value of expectedFormAction.filter((entry) => entry !== 'self')) {
+    for (const value of expectedFormAction.filter(
+      (entry) => entry !== 'self'
+    )) {
       expect(csp).toContain(value)
     }
   })
