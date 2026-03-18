@@ -1,0 +1,42 @@
+{% extends 'layout.njk' %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "ors-upload/macro.njk" import orsUpload %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <div class="govuk-body" data-testid="app-page-body">
+        {% if error %}
+          {{ govukErrorSummary({
+            titleText: "There is a problem",
+            errorList: [
+              {
+                text: error
+              }
+            ]
+          }) }}
+        {% endif %}
+
+        <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
+
+        <p class="govuk-body">
+          Upload one or more ORS Excel workbooks to import overseas reprocessing sites.
+        </p>
+
+        <p class="govuk-body">
+          Keep this page open after selecting files. You will be taken to a progress page while import is running.
+        </p>
+
+        {% if uploadUrl %}
+          {{ orsUpload({
+            uploadUrl: uploadUrl,
+            fileUploadLabel: "Choose one or more Excel workbooks",
+            buttonText: "Start upload"
+          }) }}
+        {% else %}
+          <a class="govuk-link" href="/overseas-sites/imports">Try again</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

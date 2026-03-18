@@ -1,0 +1,73 @@
+{% extends 'layout.njk' %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+
+{% block head %}
+  {{ super() }}
+  {% if shouldPoll %}
+    <meta http-equiv="refresh" content="3; url={{ pollUrl }}">
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <div class="govuk-body" data-testid="app-page-body">
+        {% if status == "preprocessing" or status == "processing" %}
+          <h1 class="govuk-heading-xl">Import in progress</h1>
+          <p class="govuk-body">Your ORS workbook upload is being processed.</p>
+          <p class="govuk-body">This page refreshes automatically every 3 seconds.</p>
+        {% elseif status == "completed" %}
+          <h1 class="govuk-heading-xl">Import completed</h1>
+          <p class="govuk-body">The ORS workbook upload has completed.</p>
+
+          <p class="govuk-body">
+            Files processed: <strong>{{ totalFiles }}</strong><br>
+            Successful: <strong>{{ successfulUploads }}</strong><br>
+            Failed: <strong>{{ failedUploads }}</strong>
+          </p>
+
+          {% if files and files.length > 0 %}
+            {% set rows = [] %}
+            {% for file in files %}
+              {% set resultStatus = file.result.status if file.result else "pending" %}
+              {% set details = "-" %}
+              {% if file.result and file.result.status == "failure" %}
+                {% if file.result.errors and file.result.errors.length > 0 %}
+                  {% set details = file.result.errors[0].message %}
+                {% else %}
+                  {% set details = "The file failed to import." %}
+                {% endif %}
+              {% endif %}
+
+              {% set row = [
+                { text: file.fileName },
+                { text: resultStatus },
+                { text: details }
+              ] %}
+              {% set rows = rows.concat([row]) %}
+            {% endfor %}
+
+            {{ govukTable({
+              head: [
+                { text: "File" },
+                { text: "Result" },
+                { text: "Details" }
+              ],
+              rows: rows
+            }) }}
+          {% endif %}
+
+          <a class="govuk-link" href="/overseas-sites/imports">Upload more workbooks</a>
+        {% else %}
+          <h1 class="govuk-heading-xl">Import failed</h1>
+          <p class="govuk-body">
+            {{ error or "This ORS upload could not be completed." }}
+          </p>
+          {{ govukInsetText({ text: "You can retry the upload from the ORS uploads page." }) }}
+          <a class="govuk-link" href="/overseas-sites/imports">Return to ORS uploads</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

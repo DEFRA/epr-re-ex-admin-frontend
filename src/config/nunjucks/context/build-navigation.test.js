@@ -1,10 +1,21 @@
 import { buildNavigation } from './build-navigation.js'
+import { config } from '#config/config.js'
+
+vi.mock('#config/config.js', () => ({
+  config: {
+    get: vi.fn()
+  }
+}))
 
 function mockRequest(options) {
   return { ...options }
 }
 
 describe('#buildNavigation', () => {
+  beforeEach(() => {
+    config.get.mockReturnValue(false)
+  })
+
   test('Should provide expected navigation details', () => {
     expect(
       buildNavigation(mockRequest({ path: '/non-existent-path' }))
@@ -115,5 +126,39 @@ describe('#buildNavigation', () => {
         href: '/system-logs'
       }
     ])
+  })
+
+  test('Should highlight ORS uploads for status pages', () => {
+    config.get.mockReturnValue(true)
+
+    expect(
+      buildNavigation(
+        mockRequest({ path: '/overseas-sites/imports/import-123' })
+      )
+    ).toEqual(
+      expect.arrayContaining([
+        {
+          current: true,
+          text: 'ORS uploads',
+          href: '/overseas-sites/imports'
+        }
+      ])
+    )
+  })
+
+  test('Should include ORS uploads when feature flag enabled', () => {
+    config.get.mockReturnValue(true)
+
+    expect(
+      buildNavigation(mockRequest({ path: '/non-existent-path' }))
+    ).toEqual(
+      expect.arrayContaining([
+        {
+          current: false,
+          text: 'ORS uploads',
+          href: '/overseas-sites/imports'
+        }
+      ])
+    )
   })
 })
