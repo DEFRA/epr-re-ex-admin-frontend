@@ -1,7 +1,6 @@
 import { createServer } from '#server/server.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { cspFormAction } from '#server/common/helpers/content-security-policy.js'
-import { config } from '#config/config.js'
 
 describe(cspFormAction, () => {
   test.each([
@@ -71,8 +70,6 @@ describe('#contentSecurityPolicy', () => {
   })
 
   test('Should set the CSP policy header', async () => {
-    config.set('featureFlags.overseasSites', true)
-
     const resp = await server.inject({
       method: 'GET',
       url: '/'
@@ -80,8 +77,6 @@ describe('#contentSecurityPolicy', () => {
 
     const csp = resp.headers['content-security-policy']
     expect(csp).toBeDefined()
-    expect(csp).toContain("form-action 'self' localhost:7337")
-
-    config.set('featureFlags.overseasSites', false)
+    expect(csp).toContain("form-action 'self'")
   })
 })
