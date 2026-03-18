@@ -1,6 +1,18 @@
 import { config } from '#config/config.js'
 
 export function buildNavigation(request) {
+  const orsNavigation = config.get('featureFlags.overseasSites')
+    ? [
+        {
+          text: 'ORS uploads',
+          href: '/overseas-sites/imports',
+          current:
+            request?.path === '/overseas-sites/imports' ||
+            request?.path?.startsWith('/overseas-sites/imports/')
+        }
+      ]
+    : []
+
   const navigation = [
     {
       text: 'Home',
@@ -37,6 +49,7 @@ export function buildNavigation(request) {
       href: '/summary-log',
       current: request?.path === '/summary-log'
     },
+    ...orsNavigation,
     {
       text: 'PRN activity',
       href: '/prn-activity',
@@ -53,22 +66,6 @@ export function buildNavigation(request) {
       current: request?.path === '/system-logs'
     }
   ]
-
-  if (config.get('featureFlags.overseasSites')) {
-    const summaryLogIndex = navigation.findIndex(
-      (item) => item.text === 'Summary log uploads'
-    )
-
-    if (summaryLogIndex !== -1) {
-      navigation.splice(summaryLogIndex + 1, 0, {
-        text: 'ORS uploads',
-        href: '/overseas-sites/imports',
-        current:
-          request?.path === '/overseas-sites/imports' ||
-          request?.path?.startsWith('/overseas-sites/imports/')
-      })
-    }
-  }
 
   return navigation
 }

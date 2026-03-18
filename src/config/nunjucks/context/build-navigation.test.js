@@ -184,7 +184,7 @@ describe('#buildNavigation', () => {
     })
   })
 
-  test('Should not include ORS uploads when Summary log uploads is missing', () => {
+  test('Should include ORS uploads without using findIndex', () => {
     config.get.mockReturnValue(true)
     const findIndexSpy = vi
       .spyOn(Array.prototype, 'findIndex')
@@ -193,9 +193,16 @@ describe('#buildNavigation', () => {
     try {
       const navigation = buildNavigation(mockRequest({ path: '/summary-log' }))
 
-      expect(
-        navigation.find((item) => item.text === 'ORS uploads')
-      ).toBeUndefined()
+      expect(navigation).toEqual(
+        expect.arrayContaining([
+          {
+            current: false,
+            text: 'ORS uploads',
+            href: '/overseas-sites/imports'
+          }
+        ])
+      )
+      expect(findIndexSpy).not.toHaveBeenCalled()
     } finally {
       findIndexSpy.mockRestore()
     }
