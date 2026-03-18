@@ -1,5 +1,50 @@
 import { createServer } from '#server/server.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
+import { cspFormAction } from '#server/common/helpers/content-security-policy.js'
+import { config } from '#config/config.js'
+
+describe(cspFormAction, () => {
+  test.each([
+    [
+      'non-production',
+      {
+        isProduction: false,
+        cdpUploaderUrl: 'http://localhost:7337',
+        isOverseasSitesFeatureEnabled: true
+      },
+      ['self', 'localhost:*', 'http://localhost:7337']
+    ],
+    [
+      'non-production with custom port',
+      {
+        isProduction: false,
+        cdpUploaderUrl: 'http://localhost:9000',
+        isOverseasSitesFeatureEnabled: true
+      },
+      ['self', 'localhost:*', 'http://localhost:9000']
+    ],
+    [
+      'production',
+      {
+        isProduction: true,
+        cdpUploaderUrl: 'https://cdp-uploader.prod.example.gov.uk',
+        isOverseasSitesFeatureEnabled: true
+      },
+      ['self']
+    ],
+    [
+      'feature disabled',
+      {
+        isProduction: false,
+        cdpUploaderUrl: 'http://localhost:7337',
+        isOverseasSitesFeatureEnabled: false
+      },
+      ['self']
+    ]
+  ])('should use %s values', (_, cfg, expected) => {
+    expect(cspFormAction(cfg)).toStrictEqual(expected)
+  })
+})
 
 describe('#contentSecurityPolicy', () => {
   let server
@@ -20,6 +65,26 @@ describe('#contentSecurityPolicy', () => {
       url: '/'
     })
 
-    expect(resp.headers['content-security-policy']).toBeDefined()
+    const expectedFormAction = cspFormAction({
+      isProduction: config.get('isProduction'),
+      cdpUploaderUrl: config.get('cdpUploaderUrl'),
+      isOverseasSitesFeatureEnabled: config.get('featureFlags.overseasSites')
+    })
+
+    const csp = resp.headers['content-security-policy']
+    expect(csp).toBeDefined()
+    expect(csp).toContain("form-action 'self'")
+
+    if (expectedFormAction.includes('localhost:*')) {
+      expect(csp).toContain('localhost:*')
+    } else {
+      expect(csp).not.toContain('localhost:*')
+    }
+
+    for (const value of expectedFormAction.filter(
+      (entry) => entry !== 'self'
+    )) {
+      expect(csp).toContain(value)
+    }
   })
 })

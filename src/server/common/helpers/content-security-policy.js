@@ -1,4 +1,24 @@
 import Blankie from 'blankie'
+import { config } from '#config/config.js'
+
+export function cspFormAction({
+  isProduction,
+  cdpUploaderUrl,
+  isOverseasSitesFeatureEnabled
+}) {
+  if (!isOverseasSitesFeatureEnabled) {
+    return ['self']
+  }
+
+  if (isProduction) {
+    return ['self']
+  }
+
+  // Match epr-frontend behavior for local uploads while also allowing
+  // whichever uploader origin is configured for this environment.
+  const { origin } = new URL(cdpUploaderUrl)
+  return ['self', 'localhost:*', origin]
+}
 
 /**
  * Manage content security policies.
@@ -22,7 +42,11 @@ const contentSecurityPolicy = {
     frameSrc: ['self', 'data:'],
     objectSrc: ['none'],
     frameAncestors: ['none'],
-    formAction: ['self'],
+    formAction: cspFormAction({
+      isProduction: config.get('isProduction'),
+      cdpUploaderUrl: config.get('cdpUploaderUrl'),
+      isOverseasSitesFeatureEnabled: config.get('featureFlags.overseasSites')
+    }),
     manifestSrc: ['self'],
     generateNonces: false
   }

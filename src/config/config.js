@@ -285,6 +285,20 @@ export const config = convict({
     format: String,
     default: 'http://localhost:3001',
     env: 'EPR_BACKEND_URL'
+  },
+  featureFlags: {
+    overseasSites: {
+      doc: 'Enable overseas sites (ORS uploads) feature',
+      format: Boolean,
+      default: false,
+      env: 'FEATURE_FLAG_OVERSEAS_SITES'
+    }
+  },
+  cdpUploaderUrl: {
+    doc: 'CDP Uploader service URL (browser-visible, used in CSP form-action)',
+    format: String,
+    default: 'http://localhost:7337',
+    env: 'CDP_UPLOADER_URL'
   }
 })
 

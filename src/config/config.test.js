@@ -41,6 +41,8 @@ describe('#config', () => {
 
     test('Should generate oidcWellKnownConfigurationUrl default from tenantId', async () => {
       vi.stubEnv('NODE_ENV', 'test')
+      const originalWellKnown = process.env.OIDC_WELL_KNOWN_CONFIGURATION_URL
+      delete process.env.OIDC_WELL_KNOWN_CONFIGURATION_URL
       const configModule = await import('./config.js')
       const config = configModule.config
 
@@ -48,6 +50,12 @@ describe('#config', () => {
       expect(url).toBe(
         'https://login.microsoftonline.com/6f504113-6b64-43f2-ade9-242e05780007/v2.0/.well-known/openid-configuration'
       )
+
+      if (originalWellKnown === undefined) {
+        delete process.env.OIDC_WELL_KNOWN_CONFIGURATION_URL
+      } else {
+        process.env.OIDC_WELL_KNOWN_CONFIGURATION_URL = originalWellKnown
+      }
     })
   })
 })

@@ -1,5 +1,19 @@
+import { config } from '#config/config.js'
+
 export function buildNavigation(request) {
-  return [
+  const orsNavigation = config.get('featureFlags.overseasSites')
+    ? [
+        {
+          text: 'ORS uploads',
+          href: '/overseas-sites/imports',
+          current:
+            request?.path === '/overseas-sites/imports' ||
+            request?.path?.startsWith('/overseas-sites/imports/')
+        }
+      ]
+    : []
+
+  const navigation = [
     {
       text: 'Home',
       href: '/',
@@ -35,6 +49,7 @@ export function buildNavigation(request) {
       href: '/summary-log',
       current: request?.path === '/summary-log'
     },
+    ...orsNavigation,
     {
       text: 'PRN activity',
       href: '/prn-activity',
@@ -51,4 +66,6 @@ export function buildNavigation(request) {
       current: request?.path === '/system-logs'
     }
   ]
+
+  return navigation
 }
