@@ -170,4 +170,34 @@ describe('#buildNavigation', () => {
     )
     expect(orsUploadsIndex).toBe(summaryLogIndex + 1)
   })
+
+  test('Should include ORS uploads when request is undefined', () => {
+    config.get.mockReturnValue(true)
+
+    const navigation = buildNavigation()
+    const orsUploads = navigation.find((item) => item.text === 'ORS uploads')
+
+    expect(orsUploads).toEqual({
+      current: undefined,
+      text: 'ORS uploads',
+      href: '/overseas-sites/imports'
+    })
+  })
+
+  test('Should not include ORS uploads when Summary log uploads is missing', () => {
+    config.get.mockReturnValue(true)
+    const findIndexSpy = vi
+      .spyOn(Array.prototype, 'findIndex')
+      .mockReturnValue(-1)
+
+    try {
+      const navigation = buildNavigation(mockRequest({ path: '/summary-log' }))
+
+      expect(
+        navigation.find((item) => item.text === 'ORS uploads')
+      ).toBeUndefined()
+    } finally {
+      findIndexSpy.mockRestore()
+    }
+  })
 })
