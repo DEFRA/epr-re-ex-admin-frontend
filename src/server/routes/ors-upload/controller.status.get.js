@@ -1,9 +1,5 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
-import {
-  auditOrsStatusCheckSucceeded,
-  auditOrsStatusCheckFailed
-} from '#server/common/helpers/auditing/index.js'
 
 const logger = createLogger()
 const processingStatuses = new Set(['preprocessing', 'processing'])
@@ -68,12 +64,6 @@ export const orsUploadStatusGetController = {
         }
       })
 
-      auditOrsStatusCheckSucceeded({
-        userSession: request.auth.credentials,
-        importId,
-        status: normalizedStatus
-      })
-
       return h.view('routes/ors-upload/status', {
         pageTitle: request.route.settings.app.pageTitle,
         status: normalizedStatus,
@@ -100,13 +90,6 @@ export const orsUploadStatusGetController = {
             status_code: errorStatusCode
           }
         }
-      })
-
-      auditOrsStatusCheckFailed({
-        userSession: request.auth.credentials,
-        importId,
-        errorStatusCode,
-        errorMessage
       })
 
       return h.view('routes/ors-upload/status', {
