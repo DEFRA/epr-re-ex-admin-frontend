@@ -1,6 +1,11 @@
 import { vi, describe, test, expect, beforeEach } from 'vitest'
 import { audit } from '@defra/cdp-auditing'
-import { auditSignIn, auditSignOut } from './index.js'
+import {
+  auditSignIn,
+  auditSignOut,
+  auditOrsStatusCheckSucceeded,
+  auditOrsStatusCheckFailed
+} from './index.js'
 
 vi.mock('@defra/cdp-auditing', () => ({
   audit: vi.fn(),
@@ -86,6 +91,58 @@ describe('#auditing', () => {
         user: {
           id: undefined,
           email: undefined
+        }
+      })
+    })
+  })
+
+  describe('ORS upload status auditing', () => {
+    test('Should audit ORS status check success', () => {
+      auditOrsStatusCheckSucceeded({
+        userSession: mockUserSession,
+        importId: 'import-123',
+        status: 'completed'
+      })
+
+      expect(audit).toHaveBeenCalledWith({
+        event: {
+          category: 'data',
+          subCategory: 'ors-upload',
+          action: 'status-check-succeeded'
+        },
+        context: {
+          importId: 'import-123',
+          status: 'completed'
+        },
+        user: {
+          id: 'user-123',
+          email: 'test@example.com'
+        }
+      })
+    })
+
+    test('Should audit ORS status check failure with error details', () => {
+      auditOrsStatusCheckFailed({
+        userSession: mockUserSession,
+        importId: 'import-123',
+        errorStatusCode: 404,
+        errorMessage: 'Import not found'
+      })
+
+      expect(audit).toHaveBeenCalledWith({
+        event: {
+          category: 'data',
+          subCategory: 'ors-upload',
+          action: 'status-check-failed'
+        },
+        context: {
+          importId: 'import-123',
+          errorStatusCode: 404,
+          errorMessage: 'Import not found'
+        },
+        user: {
+          id: 'user-123',
+          email: 'test@example.com'
         }
       })
     })
