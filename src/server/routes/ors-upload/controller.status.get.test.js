@@ -2,18 +2,9 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { orsUploadStatusGetController } from './controller.status.get.js'
-import {
-  auditOrsStatusCheckFailed,
-  auditOrsStatusCheckSucceeded
-} from '#server/common/helpers/auditing/index.js'
 
 vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
-}))
-
-vi.mock('#server/common/helpers/auditing/index.js', () => ({
-  auditOrsStatusCheckFailed: vi.fn(),
-  auditOrsStatusCheckSucceeded: vi.fn()
 }))
 
 const mockLoggerError = vi.hoisted(() => vi.fn())
@@ -82,13 +73,18 @@ describe('orsUploadStatusGetController', () => {
       totalFiles: 0
     })
 
-    expect(auditOrsStatusCheckSucceeded).toHaveBeenCalledWith({
-      userSession: {
-        userId: 'user-123',
-        email: 'test@example.com'
+    expect(mockLoggerInfo).toHaveBeenCalledWith({
+      message: 'Loaded ORS import status: import-123',
+      event: {
+        category: 'data',
+        action: 'status-check-succeeded',
+        reference: 'import-123'
       },
-      importId: 'import-123',
-      status: 'processing'
+      http: {
+        response: {
+          status_code: 200
+        }
+      }
     })
   })
 
@@ -145,15 +141,6 @@ describe('orsUploadStatusGetController', () => {
       failedUploads: 1,
       totalFiles: 2
     })
-
-    expect(auditOrsStatusCheckSucceeded).toHaveBeenCalledWith({
-      userSession: {
-        userId: 'user-123',
-        email: 'test@example.com'
-      },
-      importId: 'import-123',
-      status: 'completed'
-    })
   })
 
   test('renders status with empty files when backend response has no files array', async () => {
@@ -173,15 +160,6 @@ describe('orsUploadStatusGetController', () => {
       successfulUploads: 0,
       failedUploads: 0,
       totalFiles: 0
-    })
-
-    expect(auditOrsStatusCheckSucceeded).toHaveBeenCalledWith({
-      userSession: {
-        userId: 'user-123',
-        email: 'test@example.com'
-      },
-      importId: 'import-123',
-      status: 'completed'
     })
   })
 
@@ -204,15 +182,6 @@ describe('orsUploadStatusGetController', () => {
       failedUploads: 0,
       totalFiles: 0
     })
-
-    expect(auditOrsStatusCheckSucceeded).toHaveBeenCalledWith({
-      userSession: {
-        userId: 'user-123',
-        email: 'test@example.com'
-      },
-      importId: 'import-123',
-      status: 'completed'
-    })
   })
 
   test('normalises legacy pending status to preprocessing and enables polling', async () => {
@@ -234,15 +203,6 @@ describe('orsUploadStatusGetController', () => {
       failedUploads: 0,
       totalFiles: 0
     })
-
-    expect(auditOrsStatusCheckSucceeded).toHaveBeenCalledWith({
-      userSession: {
-        userId: 'user-123',
-        email: 'test@example.com'
-      },
-      importId: 'import-123',
-      status: 'preprocessing'
-    })
   })
 
   test('handles status fetch failure and renders failed view model', async () => {
@@ -253,16 +213,6 @@ describe('orsUploadStatusGetController', () => {
     fetchJsonFromBackend.mockRejectedValue(error)
 
     await orsUploadStatusGetController.handler(mockRequest, mockH)
-
-    expect(auditOrsStatusCheckFailed).toHaveBeenCalledWith({
-      userSession: {
-        userId: 'user-123',
-        email: 'test@example.com'
-      },
-      importId: 'import-123',
-      errorStatusCode: 500,
-      errorMessage: 'Request failed'
-    })
 
     expect(mockLoggerError).toHaveBeenCalledWith({
       err: error,
@@ -299,16 +249,6 @@ describe('orsUploadStatusGetController', () => {
     fetchJsonFromBackend.mockRejectedValue(error)
 
     await orsUploadStatusGetController.handler(mockRequest, mockH)
-
-    expect(auditOrsStatusCheckFailed).toHaveBeenCalledWith({
-      userSession: {
-        userId: 'user-123',
-        email: 'test@example.com'
-      },
-      importId: 'import-123',
-      errorStatusCode: undefined,
-      errorMessage: 'Unknown error while loading ORS import status'
-    })
 
     expect(mockLoggerError).toHaveBeenCalledWith({
       err: error,

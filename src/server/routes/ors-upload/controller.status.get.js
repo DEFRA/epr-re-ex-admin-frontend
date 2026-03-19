@@ -1,8 +1,4 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
-import {
-  auditOrsStatusCheckFailed,
-  auditOrsStatusCheckSucceeded
-} from '#server/common/helpers/auditing/index.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
 
 const logger = createLogger()
@@ -48,13 +44,7 @@ function buildStatusViewModel(request, importId, data) {
   }
 }
 
-function auditAndLogStatusSuccess(request, importId, status) {
-  auditOrsStatusCheckSucceeded({
-    userSession: request.auth?.credentials,
-    importId,
-    status
-  })
-
+function logStatusSuccess(importId, status) {
   logger.info({
     message: `Loaded ORS import status: ${importId}`,
     event: {
@@ -78,20 +68,7 @@ function getErrorDetails(error) {
   }
 }
 
-function auditAndLogStatusFailure(
-  request,
-  importId,
-  errorStatusCode,
-  errorMessage,
-  error
-) {
-  auditOrsStatusCheckFailed({
-    userSession: request.auth?.credentials,
-    importId,
-    errorStatusCode,
-    errorMessage
-  })
-
+function logStatusFailure(importId, errorStatusCode, errorMessage, error) {
   logger.error({
     err: error,
     message: `Failed to load ORS import status: ${importId}`,
@@ -135,19 +112,13 @@ export const orsUploadStatusGetController = {
       )
       const viewModel = buildStatusViewModel(request, importId, data)
 
-      auditAndLogStatusSuccess(request, importId, viewModel.status)
+      logStatusSuccess(importId, viewModel.status)
 
       return h.view('routes/ors-upload/status', viewModel)
     } catch (error) {
       const { errorStatusCode, errorMessage } = getErrorDetails(error)
 
-      auditAndLogStatusFailure(
-        request,
-        importId,
-        errorStatusCode,
-        errorMessage,
-        error
-      )
+      logStatusFailure(importId, errorStatusCode, errorMessage, error)
 
       return h.view(
         'routes/ors-upload/status',

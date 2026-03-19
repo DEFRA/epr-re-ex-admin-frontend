@@ -8,42 +8,6 @@ function auditSignOut(userSession) {
   auditSSO('sign-out', userSession)
 }
 
-function auditOrsStatusCheckSucceeded({ userSession, importId, status }) {
-  audit({
-    event: {
-      category: 'data',
-      subCategory: 'ors-upload',
-      action: 'status-check-succeeded'
-    },
-    context: {
-      importId,
-      status
-    },
-    user: extractUserDetails(userSession)
-  })
-}
-
-function auditOrsStatusCheckFailed({
-  userSession,
-  importId,
-  errorStatusCode,
-  errorMessage
-}) {
-  audit({
-    event: {
-      category: 'data',
-      subCategory: 'ors-upload',
-      action: 'status-check-failed'
-    },
-    context: {
-      importId,
-      errorStatusCode,
-      errorMessage
-    },
-    user: extractUserDetails(userSession)
-  })
-}
-
 function auditSSO(action, userSession) {
   const payload = {
     event: {
@@ -74,9 +38,4 @@ function extractUserDetails(userSession) {
   }
 }
 
-export {
-  auditSignIn,
-  auditSignOut,
-  auditOrsStatusCheckSucceeded,
-  auditOrsStatusCheckFailed
-}
+export { auditSignIn, auditSignOut }
