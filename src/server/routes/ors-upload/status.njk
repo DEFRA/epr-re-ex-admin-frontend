@@ -17,9 +17,14 @@
           <h1 class="govuk-heading-xl">Import in progress</h1>
           <p class="govuk-body">Your ORS workbook upload is being processed.</p>
           <p class="govuk-body">This page refreshes automatically every 3 seconds.</p>
-        {% elseif status == "completed" %}
-          <h1 class="govuk-heading-xl">Import completed</h1>
-          <p class="govuk-body">The ORS workbook upload has completed.</p>
+        {% elseif status == "completed" or status == "failed" %}
+          {% if status == "completed" %}
+            <h1 class="govuk-heading-xl">Import completed</h1>
+            <p class="govuk-body">The ORS workbook upload has completed.</p>
+          {% else %}
+            <h1 class="govuk-heading-xl">Import failed</h1>
+            <p class="govuk-body">The ORS workbook upload failed. See details below.</p>
+          {% endif %}
 
           <p class="govuk-body">
             Files processed: <strong>{{ totalFiles }}</strong><br>
@@ -58,7 +63,7 @@
             }) }}
           {% endif %}
 
-          <a class="govuk-link" href="/overseas-sites/imports">Upload more workbooks</a>
+          <a class="govuk-link" href="/overseas-sites/imports">{% if status == "completed" %}Upload more workbooks{% else %}Return to ORS uploads{% endif %}</a>
         {% else %}
           <h1 class="govuk-heading-xl">Import failed</h1>
           <p class="govuk-body">
