@@ -25,12 +25,6 @@ describe('orsUploadStatusGetController', () => {
     vi.clearAllMocks()
 
     mockRequest = {
-      auth: {
-        credentials: {
-          userId: 'user-123',
-          email: 'test@example.com'
-        }
-      },
       params: {
         importId: 'import-123'
       },
@@ -78,7 +72,8 @@ describe('orsUploadStatusGetController', () => {
       event: {
         category: 'data',
         action: 'status-check-succeeded',
-        reference: 'import-123'
+        reference: 'import-123',
+        status: 'processing'
       },
       http: {
         response: {
@@ -156,48 +151,6 @@ describe('orsUploadStatusGetController', () => {
       importId: 'import-123',
       pollUrl: '/overseas-sites/imports/import-123',
       shouldPoll: false,
-      files: [],
-      successfulUploads: 0,
-      failedUploads: 0,
-      totalFiles: 0
-    })
-  })
-
-  test('normalises legacy complete status to completed', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
-      status: 'complete',
-      files: []
-    })
-
-    await orsUploadStatusGetController.handler(mockRequest, mockH)
-
-    expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/status', {
-      pageTitle: 'ORS upload status',
-      status: 'completed',
-      importId: 'import-123',
-      pollUrl: '/overseas-sites/imports/import-123',
-      shouldPoll: false,
-      files: [],
-      successfulUploads: 0,
-      failedUploads: 0,
-      totalFiles: 0
-    })
-  })
-
-  test('normalises legacy pending status to preprocessing and enables polling', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
-      status: 'pending',
-      files: []
-    })
-
-    await orsUploadStatusGetController.handler(mockRequest, mockH)
-
-    expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/status', {
-      pageTitle: 'ORS upload status',
-      status: 'preprocessing',
-      importId: 'import-123',
-      pollUrl: '/overseas-sites/imports/import-123',
-      shouldPoll: true,
       files: [],
       successfulUploads: 0,
       failedUploads: 0,

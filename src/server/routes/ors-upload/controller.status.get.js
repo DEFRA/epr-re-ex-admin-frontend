@@ -4,14 +4,6 @@ import { createLogger } from '#server/common/helpers/logging/logger.js'
 const logger = createLogger()
 const processingStatuses = new Set(['preprocessing', 'processing'])
 
-const legacyStatusMap = new Map([
-  ['pending', 'preprocessing'],
-  ['complete', 'completed']
-])
-
-function normaliseStatus(status) {
-  return legacyStatusMap.get(status) ?? status
-}
 function getResultSummary(files = []) {
   const successfulUploads = files.filter(
     (file) => file.result?.status === 'success'
@@ -27,76 +19,11 @@ function getResultSummary(files = []) {
   }
 }
 
-function buildStatusViewModel(request, importId, data) {
-  const status = normaliseStatus(data.status)
-  const shouldPoll = processingStatuses.has(status)
-  const resultSummary = getResultSummary(data.files)
-
-  return {
-    pageTitle: request.route.settings.app.pageTitle,
-    status,
-    importId,
-    pollUrl: `/overseas-sites/imports/${importId}`,
-    shouldPoll,
-    files: data.files ?? [],
-    ...resultSummary
-  }
-}
-
-function logStatusSuccess(importId, status) {
-  logger.info({
-    message: `Loaded ORS import status: ${importId}`,
-    event: {
-      category: 'data',
-      action: 'status-check-succeeded',
-      reference: importId
-    },
-    http: {
-      response: {
-        status_code: 200
-      }
-    }
-  })
-}
-
 function getErrorDetails(error) {
   return {
     errorStatusCode: error?.output?.statusCode,
     errorMessage:
       error?.message ?? 'Unknown error while loading ORS import status'
-  }
-}
-
-function logStatusFailure(importId, errorStatusCode, errorMessage, error) {
-  logger.error({
-    err: error,
-    message: `Failed to load ORS import status: ${importId}`,
-    event: {
-      category: 'data',
-      action: 'status-check-failed',
-      reference: importId,
-      reason: errorMessage
-    },
-    http: {
-      response: {
-        status_code: errorStatusCode
-      }
-    }
-  })
-}
-
-function buildFailureViewModel(request, importId) {
-  return {
-    pageTitle: request.route.settings.app.pageTitle,
-    status: 'failed',
-    importId,
-    pollUrl: `/overseas-sites/imports/${importId}`,
-    shouldPoll: false,
-    files: [],
-    successfulUploads: 0,
-    failedUploads: 0,
-    totalFiles: 0,
-    error: 'There was a problem loading this upload status. Please try again.'
   }
 }
 
@@ -109,20 +36,65 @@ export const orsUploadStatusGetController = {
         request,
         `/v1/overseas-sites/imports/${importId}`
       )
-      const viewModel = buildStatusViewModel(request, importId, data)
+      const shouldPoll = processingStatuses.has(data.status)
+      const resultSummary = getResultSummary(data.files)
 
-      logStatusSuccess(importId, viewModel.status)
+      logger.info({
+        message: `Loaded ORS import status: ${importId}`,
+        event: {
+          category: 'data',
+          action: 'status-check-succeeded',
+          reference: importId,
+          status: data.status
+        },
+        http: {
+          response: {
+            status_code: 200
+          }
+        }
+      })
 
-      return h.view('routes/ors-upload/status', viewModel)
+      return h.view('routes/ors-upload/status', {
+        pageTitle: request.route.settings.app.pageTitle,
+        status: data.status,
+        importId,
+        pollUrl: `/overseas-sites/imports/${importId}`,
+        shouldPoll,
+        files: data.files ?? [],
+        ...resultSummary
+      })
     } catch (error) {
       const { errorStatusCode, errorMessage } = getErrorDetails(error)
 
-      logStatusFailure(importId, errorStatusCode, errorMessage, error)
+      logger.error({
+        err: error,
+        message: `Failed to load ORS import status: ${importId}`,
+        event: {
+          category: 'data',
+          action: 'status-check-failed',
+          reference: importId,
+          reason: errorMessage
+        },
+        http: {
+          response: {
+            status_code: errorStatusCode
+          }
+        }
+      })
 
-      return h.view(
-        'routes/ors-upload/status',
-        buildFailureViewModel(request, importId)
-      )
+      return h.view('routes/ors-upload/status', {
+        pageTitle: request.route.settings.app.pageTitle,
+        status: 'failed',
+        importId,
+        pollUrl: `/overseas-sites/imports/${importId}`,
+        shouldPoll: false,
+        files: [],
+        successfulUploads: 0,
+        failedUploads: 0,
+        totalFiles: 0,
+        error:
+          'There was a problem loading this upload status. Please try again.'
+      })
     }
   }
 }
