@@ -1,8 +1,21 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
+import {
+  auditOrsStatusCheckSucceeded,
+  auditOrsStatusCheckFailed
+} from '#server/common/helpers/auditing/index.js'
 
 const logger = createLogger()
 const processingStatuses = new Set(['preprocessing', 'processing'])
+
+function normalizeStatus(status) {
+  // Map legacy status values to current valid ones
+  const statusMap = {
+    complete: 'completed',
+    pending: 'preprocessing'
+  }
+  return statusMap[status] ?? status
+}
 
 function getResultSummary(files = []) {
   const successfulUploads = files.filter(
@@ -36,7 +49,8 @@ export const orsUploadStatusGetController = {
         request,
         `/v1/overseas-sites/imports/${importId}`
       )
-      const shouldPoll = processingStatuses.has(data.status)
+      const normalizedStatus = normalizeStatus(data.status)
+      const shouldPoll = processingStatuses.has(normalizedStatus)
       const resultSummary = getResultSummary(data.files)
 
       logger.info({
@@ -45,7 +59,7 @@ export const orsUploadStatusGetController = {
           category: 'data',
           action: 'status-check-succeeded',
           reference: importId,
-          status: data.status
+          status: normalizedStatus
         },
         http: {
           response: {
@@ -54,9 +68,15 @@ export const orsUploadStatusGetController = {
         }
       })
 
+      auditOrsStatusCheckSucceeded({
+        userSession: request.auth.credentials,
+        importId,
+        status: normalizedStatus
+      })
+
       return h.view('routes/ors-upload/status', {
         pageTitle: request.route.settings.app.pageTitle,
-        status: data.status,
+        status: normalizedStatus,
         importId,
         pollUrl: `/overseas-sites/imports/${importId}`,
         shouldPoll,
@@ -80,6 +100,13 @@ export const orsUploadStatusGetController = {
             status_code: errorStatusCode
           }
         }
+      })
+
+      auditOrsStatusCheckFailed({
+        userSession: request.auth.credentials,
+        importId,
+        errorStatusCode,
+        errorMessage
       })
 
       return h.view('routes/ors-upload/status', {
