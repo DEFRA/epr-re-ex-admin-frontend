@@ -16,7 +16,6 @@ const legacyStatusMap = new Map([
 function normaliseStatus(status) {
   return legacyStatusMap.get(status) ?? status
 }
-
 function getResultSummary(files = []) {
   const successfulUploads = files.filter(
     (file) => file.result?.status === 'success'
