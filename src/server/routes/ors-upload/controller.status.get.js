@@ -19,6 +19,14 @@ function getResultSummary(files = []) {
   }
 }
 
+function getErrorDetails(error) {
+  return {
+    errorStatusCode: error?.output?.statusCode,
+    errorMessage:
+      error?.message ?? 'Unknown error while loading ORS import status'
+  }
+}
+
 export const orsUploadStatusGetController = {
   async handler(request, h) {
     const { importId } = request.params
@@ -28,9 +36,23 @@ export const orsUploadStatusGetController = {
         request,
         `/v1/overseas-sites/imports/${importId}`
       )
-
       const shouldPoll = processingStatuses.has(data.status)
       const resultSummary = getResultSummary(data.files)
+
+      logger.info({
+        message: `Loaded ORS import status: ${importId}`,
+        event: {
+          category: 'data',
+          action: 'status-check-succeeded',
+          reference: importId,
+          status: data.status
+        },
+        http: {
+          response: {
+            status_code: 200
+          }
+        }
+      })
 
       return h.view('routes/ors-upload/status', {
         pageTitle: request.route.settings.app.pageTitle,
@@ -42,9 +64,22 @@ export const orsUploadStatusGetController = {
         ...resultSummary
       })
     } catch (error) {
+      const { errorStatusCode, errorMessage } = getErrorDetails(error)
+
       logger.error({
         err: error,
-        message: `Failed to load ORS import status: ${importId}`
+        message: `Failed to load ORS import status: ${importId}`,
+        event: {
+          category: 'data',
+          action: 'status-check-failed',
+          reference: importId,
+          reason: errorMessage
+        },
+        http: {
+          response: {
+            status_code: errorStatusCode
+          }
+        }
       })
 
       return h.view('routes/ors-upload/status', {
