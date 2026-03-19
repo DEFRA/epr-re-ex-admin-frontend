@@ -149,7 +149,10 @@ export const orsUploadStatusGetController = {
         error
       )
 
-      return h.view('routes/ors-upload/status', buildFailureViewModel(request, importId))
+      return h.view(
+        'routes/ors-upload/status',
+        buildFailureViewModel(request, importId)
+      )
     }
   }
 }
