@@ -2,12 +2,18 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
 import isEqual from 'lodash/isEqual.js'
 import isArray from 'lodash/isArray.js'
 import isObject from 'lodash/isObject.js'
+import { systemLogDownloadController } from './controller.download.js'
 
 export const systemLogs = {
   plugin: {
     name: 'system-logs',
     register(server) {
       server.route([
+        {
+          method: 'GET',
+          path: '/system-logs/download/{organisationId}/{registrationId}/{summaryLogId}',
+          ...systemLogDownloadController
+        },
         {
           method: 'GET',
           path: '/system-logs',

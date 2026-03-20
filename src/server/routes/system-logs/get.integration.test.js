@@ -131,6 +131,59 @@ describe('GET /system-logs', () => {
       expect(rendered.systemLogs[1]).toContain('user2@email.com')
     })
 
+    describe('download link rendering', () => {
+      it('renders a download link when context has summaryLogId', async () => {
+        stubBackendReponse(
+          HttpResponse.json({
+            systemLogs: [
+              {
+                createdBy: {},
+                event: {},
+                context: {
+                  summaryLogId: 'sl-789',
+                  organisationId: 'org-123',
+                  registrationId: 'reg-456'
+                }
+              }
+            ]
+          })
+        )
+
+        const { $, statusCode } = await loadPage()
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const downloadLink = $(
+          'a[href="/system-logs/download/org-123/reg-456/sl-789"]'
+        )
+        expect(downloadLink).toHaveLength(1)
+        expect(downloadLink.text().trim()).toBe('Download file')
+      })
+
+      it('does not render a download link when context has no summaryLogId', async () => {
+        stubBackendReponse(
+          HttpResponse.json({
+            systemLogs: [
+              {
+                createdBy: {},
+                event: {},
+                context: {
+                  someOtherField: 'value'
+                }
+              }
+            ]
+          })
+        )
+
+        const { $, statusCode } = await loadPage()
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const downloadLink = $('a[href*="/system-logs/download/"]')
+        expect(downloadLink).toHaveLength(0)
+      })
+    })
+
     describe('generic system-log rendering', () => {
       it('displays the context data', async () => {
         const contextData = {
