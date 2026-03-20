@@ -57,6 +57,14 @@ describe('orsListGetController', () => {
         overseasReprocessorName: 'Beta Reprocessor',
         addressLine1: '2 Teststrasse',
         cityOrTown: 'Berlin'
+      },
+      {
+        orsId: '003',
+        destinationCountry: 'Spain',
+        overseasReprocessorName: 'Gamma Reprocessor',
+        addressLine1: '3 Calle Test',
+        cityOrTown: 'Madrid',
+        validFrom: 'not-a-date'
       }
     ])
 
@@ -80,7 +88,7 @@ describe('orsListGetController', () => {
           stateProvinceOrRegion: '-',
           postcode: '-',
           coordinates: '-',
-          validFrom: '2025-04-01T00:00:00.000Z'
+          validFromDisplay: '1 April 2025'
         },
         {
           orsId: '002',
@@ -92,7 +100,19 @@ describe('orsListGetController', () => {
           stateProvinceOrRegion: '-',
           postcode: '-',
           coordinates: '-',
-          validFrom: null
+          validFromDisplay: '-'
+        },
+        {
+          orsId: '003',
+          destinationCountry: 'Spain',
+          overseasReprocessorName: 'Gamma Reprocessor',
+          addressLine1: '3 Calle Test',
+          addressLine2: '-',
+          cityOrTown: 'Madrid',
+          stateProvinceOrRegion: '-',
+          postcode: '-',
+          coordinates: '-',
+          validFromDisplay: '-'
         }
       ],
       error: null

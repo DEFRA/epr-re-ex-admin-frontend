@@ -23,7 +23,6 @@
         {% if rows.length %}
           {% set tableRows = [] %}
           {% for row in rows %}
-            {% set displayValidFrom = row.validFrom | formatDate("d MMMM yyyy") if row.validFrom else "-" %}
             {% set tableRows = tableRows.concat([[
               { text: row.orsId },
               { text: row.destinationCountry },
@@ -34,12 +33,14 @@
               { text: row.stateProvinceOrRegion },
               { text: row.postcode },
               { text: row.coordinates },
-              { text: displayValidFrom }
+              { text: row.validFromDisplay }
             ]]) %}
           {% endfor %}
 
           {{ govukTable({
             firstCellIsHeader: false,
+            captionText: "Overseas reprocessing site data",
+            captionClasses: "govuk-visually-hidden",
             head: [
               { text: "ORS ID" },
               { text: "Destination country" },

@@ -1,10 +1,23 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { formatDate } from '#config/nunjucks/filters/format-date.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
 
 const logger = createLogger()
 
 function toDisplayValue(value) {
   return value === null || value === undefined || value === '' ? '-' : value
+}
+
+function toValidFromDisplayValue(value) {
+  if (value === null || value === undefined || value === '') {
+    return '-'
+  }
+
+  try {
+    return formatDate(value, 'd MMMM yyyy')
+  } catch {
+    return '-'
+  }
 }
 
 function mapSiteRows(rows = []) {
@@ -18,7 +31,7 @@ function mapSiteRows(rows = []) {
     stateProvinceOrRegion: toDisplayValue(row.stateProvinceOrRegion),
     postcode: toDisplayValue(row.postcode),
     coordinates: toDisplayValue(row.coordinates),
-    validFrom: row.validFrom ?? null
+    validFromDisplay: toValidFromDisplayValue(row.validFrom)
   }))
 }
 
