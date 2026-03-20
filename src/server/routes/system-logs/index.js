@@ -2,7 +2,12 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
 import isEqual from 'lodash/isEqual.js'
 import isArray from 'lodash/isArray.js'
 import isObject from 'lodash/isObject.js'
+import Joi from 'joi'
 import { systemLogDownloadController } from './controller.download.js'
+
+const idParam = Joi.string()
+  .pattern(/^[\w-]+$/)
+  .required()
 
 export const systemLogs = {
   plugin: {
@@ -12,7 +17,16 @@ export const systemLogs = {
         {
           method: 'GET',
           path: '/system-logs/download/{organisationId}/{registrationId}/{summaryLogId}',
-          ...systemLogDownloadController
+          ...systemLogDownloadController,
+          options: {
+            validate: {
+              params: Joi.object({
+                organisationId: idParam,
+                registrationId: idParam,
+                summaryLogId: idParam
+              })
+            }
+          }
         },
         {
           method: 'GET',
