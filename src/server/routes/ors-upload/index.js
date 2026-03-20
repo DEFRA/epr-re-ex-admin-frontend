@@ -1,4 +1,5 @@
 import { orsUploadGetController } from './controller.get.js'
+import { orsListGetController } from './controller.list.get.js'
 import { orsUploadStatusGetController } from './controller.status.get.js'
 import { orsUploadRoutes } from './constants.js'
 import Joi from 'joi'
@@ -8,6 +9,14 @@ export const orsUpload = {
     name: 'ors-upload',
     register(server) {
       server.route([
+        {
+          method: 'GET',
+          path: orsUploadRoutes.list,
+          ...orsListGetController,
+          options: {
+            app: { pageTitle: 'Overseas reprocessing sites' }
+          }
+        },
         {
           method: 'GET',
           path: orsUploadRoutes.uploads,

@@ -1,0 +1,67 @@
+{% extends 'layout.njk' %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <div class="govuk-body" data-testid="app-page-body">
+        {% if error %}
+          {{ govukErrorSummary({
+            titleText: "There is a problem",
+            errorList: [
+              {
+                text: error
+              }
+            ]
+          }) }}
+        {% endif %}
+
+        <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
+
+        {% if rows.length %}
+          {% set tableRows = [] %}
+          {% for row in rows %}
+            {% set displayValidFrom = row.validFrom | formatDate("d MMMM yyyy") if row.validFrom else "-" %}
+            {% set tableRows = tableRows.concat([[
+              { text: row.orsId },
+              { text: row.destinationCountry },
+              { text: row.overseasReprocessorName },
+              { text: row.addressLine1 },
+              { text: row.addressLine2 },
+              { text: row.cityOrTown },
+              { text: row.stateProvinceOrRegion },
+              { text: row.postcode },
+              { text: row.coordinates },
+              { text: displayValidFrom }
+            ]]) %}
+          {% endfor %}
+
+          {{ govukTable({
+            firstCellIsHeader: false,
+            head: [
+              { text: "ORS ID" },
+              { text: "Destination country" },
+              { text: "Overseas reprocessor name" },
+              { text: "Address line 1" },
+              { text: "Address line 2" },
+              { text: "City or town" },
+              { text: "State, province or region" },
+              { text: "Postcode or similar" },
+              { text: "Coordinates" },
+              { text: "Valid from" }
+            ],
+            rows: tableRows
+          }) }}
+        {% else %}
+          {{ govukInsetText({
+            text: "No overseas reprocessing site data found."
+          }) }}
+        {% endif %}
+
+        <a class="govuk-link" href="/overseas-sites/imports">Upload ORS workbooks</a>
+      </div>
+    </div>
+  </div>
+{% endblock %}
