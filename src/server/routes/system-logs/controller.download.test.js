@@ -45,7 +45,7 @@ describe('system-log download controller', () => {
 
     expect(fetchRedirectFromBackend).toHaveBeenCalledWith(
       mockRequest,
-      '/v1/organisations/org-123/registrations/reg-456/summary-logs/sl-789/download'
+      '/v1/organisations/org-123/registrations/reg-456/summary-logs/sl-789/file'
     )
   })
 

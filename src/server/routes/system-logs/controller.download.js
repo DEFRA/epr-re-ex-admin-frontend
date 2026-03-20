@@ -18,7 +18,7 @@ export const systemLogDownloadController = {
 
     const downloadUrl = await fetchRedirectFromBackend(
       request,
-      `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/download`
+      `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/file`
     )
 
     if (!isAllowedDownloadUrl(downloadUrl)) {

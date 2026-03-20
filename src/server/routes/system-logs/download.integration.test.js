@@ -30,7 +30,7 @@ describe('GET /system-logs/download/{organisationId}/{registrationId}/{summaryLo
 
   const downloadUrl = '/system-logs/download/org-123/reg-456/sl-789'
 
-  const backendDownloadPath = `${config.get('eprBackendUrl')}/v1/organisations/org-123/registrations/reg-456/summary-logs/sl-789/download`
+  const backendDownloadPath = `${config.get('eprBackendUrl')}/v1/organisations/org-123/registrations/reg-456/summary-logs/sl-789/file`
 
   describe('when user is unauthenticated', () => {
     test('returns unauthorised status code', async () => {
