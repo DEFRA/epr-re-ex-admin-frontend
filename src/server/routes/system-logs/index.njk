@@ -82,7 +82,7 @@
             {% set rows = rows.concat([ { key: { text: "Context" }, value: { html: contextHtml } } ]) %}
           {% endif %}
 
-          {% if systemLog.context.summaryLogId %}
+          {% if showFileDownload and systemLog.context.summaryLogId %}
             {% set downloadHref = '/system-logs/download/' ~ (systemLog.context.organisationId | urlencode) ~ '/' ~ (systemLog.context.registrationId | urlencode) ~ '/' ~ (systemLog.context.summaryLogId | urlencode) %}
             {% set downloadHtml = '<a href="' ~ downloadHref ~ '" class="govuk-link">Download file</a>' %}
             {% set rows = rows.concat([ { key: { text: "File" }, value: { html: downloadHtml } } ]) %}
