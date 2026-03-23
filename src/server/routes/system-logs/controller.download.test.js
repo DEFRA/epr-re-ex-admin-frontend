@@ -38,7 +38,10 @@ describe('system-log download controller', () => {
 
     fetchRedirectFromBackend.mockResolvedValue(presignedUrl)
     mswServer.use(
-      http.get(presignedUrl, () => new HttpResponse('file-content'))
+      http.get(
+        presignedUrl,
+        () => new HttpResponse(new Uint8Array([0x50, 0x4b]))
+      )
     )
 
     await systemLogDownloadController.handler(mockRequest, mockH)
@@ -49,17 +52,21 @@ describe('system-log download controller', () => {
     )
   })
 
-  test('streams file content from S3 to the browser', async () => {
+  test('streams binary file content from S3 to the browser', async () => {
     const presignedUrl =
       'https://my-bucket.s3.eu-west-2.amazonaws.com/file.xlsx'
-    const fileContent = 'spreadsheet-binary-content'
+    const binaryContent = new Uint8Array([
+      0x50, 0x4b, 0x03, 0x04, 0xff, 0xfe, 0x00, 0x80
+    ])
 
     fetchRedirectFromBackend.mockResolvedValue(presignedUrl)
-    mswServer.use(http.get(presignedUrl, () => new HttpResponse(fileContent)))
+    mswServer.use(http.get(presignedUrl, () => new HttpResponse(binaryContent)))
 
     await systemLogDownloadController.handler(mockRequest, mockH)
 
-    expect(mockH.response).toHaveBeenCalledWith(fileContent)
+    const responseArg = mockH.response.mock.calls[0][0]
+    expect(Buffer.isBuffer(responseArg)).toBe(true)
+    expect([...responseArg]).toEqual([...binaryContent])
     expect(mockResponseChain.header).toHaveBeenCalledWith(
       'Content-Type',
       'application/octet-stream'
@@ -72,15 +79,16 @@ describe('system-log download controller', () => {
 
   test('accepts LocalStack URLs', async () => {
     const presignedUrl = 'http://localhost:4566/bucket/file.xlsx'
+    const binaryContent = new Uint8Array([0x50, 0x4b, 0x03, 0x04])
 
     fetchRedirectFromBackend.mockResolvedValue(presignedUrl)
-    mswServer.use(
-      http.get(presignedUrl, () => new HttpResponse('file-content'))
-    )
+    mswServer.use(http.get(presignedUrl, () => new HttpResponse(binaryContent)))
 
     await systemLogDownloadController.handler(mockRequest, mockH)
 
-    expect(mockH.response).toHaveBeenCalledWith('file-content')
+    const responseArg = mockH.response.mock.calls[0][0]
+    expect(Buffer.isBuffer(responseArg)).toBe(true)
+    expect([...responseArg]).toEqual([...binaryContent])
   })
 
   test('rejects invalid download URLs to prevent SSRF', async () => {

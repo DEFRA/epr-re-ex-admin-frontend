@@ -31,7 +31,7 @@ export const systemLogDownloadController = {
       throw new Error('Failed to fetch file from storage')
     }
 
-    const fileContent = await fileResponse.text()
+    const fileContent = Buffer.from(await fileResponse.arrayBuffer())
 
     return h
       .response(fileContent)
