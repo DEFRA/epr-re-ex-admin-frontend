@@ -30,11 +30,11 @@
           {% set tableRows = [] %}
           {% for row in rows %}
             {% set tableRows = tableRows.concat([[
-              { text: row.orsId },
-              { text: row.packagingWasteCategory },
               { text: row.orgId },
               { text: row.registrationNumber },
               { text: row.accreditationNumber },
+              { text: row.orsId },
+              { text: row.packagingWasteCategory },
               { text: row.destinationCountry },
               { text: row.overseasReprocessorName },
               { text: row.addressLine1 },
@@ -52,11 +52,11 @@
             caption: "Overseas reprocessing site data",
             captionClasses: "govuk-visually-hidden",
             head: [
-              { text: "ORS ID" },
-              { text: "Packaging waste category" },
               { text: "Org ID" },
               { text: "Registration Number" },
               { text: "Accreditation Number" },
+              { text: "ORS ID" },
+              { text: "Packaging waste category" },
               { text: "Destination country" },
               { text: "Overseas reprocessor name" },
               { text: "Address line 1" },
