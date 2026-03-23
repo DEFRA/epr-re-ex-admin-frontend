@@ -21,7 +21,7 @@ describe('fetchRedirectFromBackend', () => {
 
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(null, {
-        status: 307,
+        status: 302,
         headers: { Location: expectedUrl }
       })
     )
@@ -37,7 +37,7 @@ describe('fetchRedirectFromBackend', () => {
   test('sends the Authorization header with the user token', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(null, {
-        status: 307,
+        status: 302,
         headers: { Location: 'https://example.com' }
       })
     )
@@ -51,7 +51,7 @@ describe('fetchRedirectFromBackend', () => {
   test('uses redirect manual to prevent following the redirect', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(null, {
-        status: 307,
+        status: 302,
         headers: { Location: 'https://example.com' }
       })
     )
