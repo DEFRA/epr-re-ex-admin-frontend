@@ -41,6 +41,10 @@ describe('orsListGetController', () => {
     fetchJsonFromBackend.mockResolvedValue([
       {
         orsId: '001',
+        packagingWasteCategory: 'paper',
+        orgId: 500001,
+        registrationNumber: 'R25SR5000010001PA',
+        accreditationNumber: 'ACC5000010001',
         destinationCountry: 'France',
         overseasReprocessorName: 'Alpha Reprocessor',
         addressLine1: '1 Rue de Test',
@@ -53,6 +57,10 @@ describe('orsListGetController', () => {
       },
       {
         orsId: '002',
+        packagingWasteCategory: null,
+        orgId: undefined,
+        registrationNumber: '',
+        accreditationNumber: null,
         destinationCountry: undefined,
         overseasReprocessorName: 'Beta Reprocessor',
         addressLine1: '2 Teststrasse',
@@ -60,6 +68,10 @@ describe('orsListGetController', () => {
       },
       {
         orsId: '003',
+        packagingWasteCategory: 'plastic',
+        orgId: 500003,
+        registrationNumber: 'R25SR5000030003PL',
+        accreditationNumber: undefined,
         destinationCountry: 'Spain',
         overseasReprocessorName: 'Gamma Reprocessor',
         addressLine1: '3 Calle Test',
@@ -80,6 +92,10 @@ describe('orsListGetController', () => {
       rows: [
         {
           orsId: '001',
+          packagingWasteCategory: 'paper',
+          orgId: 500001,
+          registrationNumber: 'R25SR5000010001PA',
+          accreditationNumber: 'ACC5000010001',
           destinationCountry: 'France',
           overseasReprocessorName: 'Alpha Reprocessor',
           addressLine1: '1 Rue de Test',
@@ -92,6 +108,10 @@ describe('orsListGetController', () => {
         },
         {
           orsId: '002',
+          packagingWasteCategory: '-',
+          orgId: '-',
+          registrationNumber: '-',
+          accreditationNumber: '-',
           destinationCountry: '-',
           overseasReprocessorName: 'Beta Reprocessor',
           addressLine1: '2 Teststrasse',
@@ -104,6 +124,10 @@ describe('orsListGetController', () => {
         },
         {
           orsId: '003',
+          packagingWasteCategory: 'plastic',
+          orgId: 500003,
+          registrationNumber: 'R25SR5000030003PL',
+          accreditationNumber: '-',
           destinationCountry: 'Spain',
           overseasReprocessorName: 'Gamma Reprocessor',
           addressLine1: '3 Calle Test',

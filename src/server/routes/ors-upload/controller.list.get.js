@@ -23,6 +23,10 @@ function toValidFromDisplayValue(value) {
 function mapSiteRows(rows = []) {
   return rows.map((row) => ({
     orsId: toDisplayValue(row.orsId),
+    packagingWasteCategory: toDisplayValue(row.packagingWasteCategory),
+    orgId: toDisplayValue(row.orgId),
+    registrationNumber: toDisplayValue(row.registrationNumber),
+    accreditationNumber: toDisplayValue(row.accreditationNumber),
     destinationCountry: toDisplayValue(row.destinationCountry),
     overseasReprocessorName: toDisplayValue(row.overseasReprocessorName),
     addressLine1: toDisplayValue(row.addressLine1),

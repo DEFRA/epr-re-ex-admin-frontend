@@ -140,7 +140,7 @@ describe('#buildNavigation', () => {
         {
           current: true,
           text: 'ORS uploads',
-          href: '/overseas-sites/imports'
+          href: '/overseas-sites'
         }
       ])
     )
@@ -164,7 +164,7 @@ describe('#buildNavigation', () => {
         {
           current: false,
           text: 'ORS uploads',
-          href: '/overseas-sites/imports'
+          href: '/overseas-sites'
         }
       ])
     )
@@ -180,7 +180,7 @@ describe('#buildNavigation', () => {
     expect(orsUploads).toEqual({
       current: undefined,
       text: 'ORS uploads',
-      href: '/overseas-sites/imports'
+      href: '/overseas-sites'
     })
   })
 })

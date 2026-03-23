@@ -5,10 +5,10 @@ export function buildNavigation(request) {
     ? [
         {
           text: 'ORS uploads',
-          href: '/overseas-sites/imports',
+          href: '/overseas-sites',
           current:
-            request?.path === '/overseas-sites/imports' ||
-            request?.path?.startsWith('/overseas-sites/imports/')
+            request?.path === '/overseas-sites' ||
+            request?.path?.startsWith('/overseas-sites/')
         }
       ]
     : []
