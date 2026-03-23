@@ -4,7 +4,7 @@ export function buildNavigation(request) {
   const orsNavigation = config.get('featureFlags.overseasSites')
     ? [
         {
-          text: 'ORS uploads',
+          text: 'Overseas sites',
           href: '/overseas-sites',
           current:
             request?.path === '/overseas-sites' ||

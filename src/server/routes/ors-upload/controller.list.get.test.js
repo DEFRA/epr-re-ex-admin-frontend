@@ -155,6 +155,18 @@ describe('orsListGetController', () => {
     })
   })
 
+  test('returns empty rows when backend returns non-array payload', async () => {
+    fetchJsonFromBackend.mockResolvedValue(null)
+
+    await orsListGetController.handler(mockRequest, mockH)
+
+    expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/list', {
+      pageTitle: 'Overseas reprocessing sites',
+      rows: [],
+      error: null
+    })
+  })
+
   test('handles backend failure and renders error message', async () => {
     const error = new Error('Backend unavailable')
     fetchJsonFromBackend.mockRejectedValue(error)

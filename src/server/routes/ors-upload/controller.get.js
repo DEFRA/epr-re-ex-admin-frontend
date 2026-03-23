@@ -16,7 +16,6 @@ function getUploadInitiationErrorMessage(error) {
     case statusCodes.badRequest:
       return 'ORS upload could not be started due to invalid upload redirect configuration.'
     default:
-      console.log(error)
       return 'There was a problem starting the ORS upload. Please refresh and try again.'
   }
 }

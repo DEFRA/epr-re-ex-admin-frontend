@@ -21,7 +21,9 @@ function toValidFromDisplayValue(value) {
 }
 
 function mapSiteRows(rows = []) {
-  return rows.map((row) => ({
+  const safeRows = Array.isArray(rows) ? rows : []
+
+  return safeRows.map((row) => ({
     orsId: toDisplayValue(row.orsId),
     packagingWasteCategory: toDisplayValue(row.packagingWasteCategory),
     orgId: toDisplayValue(row.orgId),
