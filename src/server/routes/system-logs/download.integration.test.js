@@ -48,27 +48,29 @@ describe('GET /system-logs/download/{organisationId}/{registrationId}/{summaryLo
       getUserSession.mockReturnValue(mockUserSession)
     })
 
-    test('streams file content from S3 via the backend pre-signed URL', async () => {
+    test('streams binary file content from S3 via the backend pre-signed URL', async () => {
       const presignedUrl =
         'https://my-bucket.s3.eu-west-2.amazonaws.com/file.xlsx?X-Amz-Signature=abc123'
-      const fileContent = 'spreadsheet-binary-content'
+      const binaryContent = new Uint8Array([
+        0x50, 0x4b, 0x03, 0x04, 0xff, 0xfe, 0x00, 0x80
+      ])
 
       mswServer.use(
         http.get(
           backendDownloadPath,
           () =>
             new HttpResponse(null, {
-              status: 307,
+              status: 302,
               headers: { Location: presignedUrl }
             })
         ),
         http.get(
           'https://my-bucket.s3.eu-west-2.amazonaws.com/file.xlsx',
-          () => new HttpResponse(fileContent)
+          () => new HttpResponse(binaryContent)
         )
       )
 
-      const { statusCode, headers, payload } = await server.inject({
+      const { statusCode, headers, rawPayload } = await server.inject({
         method: 'GET',
         url: downloadUrl,
         auth: {
@@ -82,7 +84,7 @@ describe('GET /system-logs/download/{organisationId}/{registrationId}/{summaryLo
       expect(headers['content-disposition']).toBe(
         'attachment; filename="sl-789.xlsx"'
       )
-      expect(payload).toBe(fileContent)
+      expect([...rawPayload]).toEqual([...binaryContent])
     })
   })
 })
