@@ -135,7 +135,7 @@ describe('context and cache', () => {
         })
       })
 
-      test('Should include ORS uploads when feature flag is enabled', async () => {
+      test('Should include overseas sites when feature flag is enabled', async () => {
         process.env.FEATURE_FLAG_OVERSEAS_SITES = 'true'
         vi.resetModules()
 
@@ -148,8 +148,8 @@ describe('context and cache', () => {
           expect.arrayContaining([
             {
               current: true,
-              text: 'ORS uploads',
-              href: '/overseas-sites/imports'
+              text: 'Overseas sites',
+              href: '/overseas-sites'
             }
           ])
         )

@@ -1,0 +1,80 @@
+{% extends 'layout.njk' %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <div class="govuk-body" data-testid="app-page-body">
+        {% if error %}
+          {{ govukErrorSummary({
+            titleText: "There is a problem",
+            errorList: [
+              {
+                text: error
+              }
+            ]
+          }) }}
+        {% endif %}
+
+        <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
+
+        {{ govukButton({
+          text: "Upload ORS workbooks",
+          href: "/overseas-sites/imports"
+        }) }}
+
+        {% if rows.length %}
+          {% set tableRows = [] %}
+          {% for row in rows %}
+            {% set tableRows = tableRows.concat([[
+              { text: row.orgId },
+              { text: row.registrationNumber },
+              { text: row.accreditationNumber },
+              { text: row.orsId },
+              { text: row.packagingWasteCategory },
+              { text: row.destinationCountry },
+              { text: row.overseasReprocessorName },
+              { text: row.addressLine1 },
+              { text: row.addressLine2 },
+              { text: row.cityOrTown },
+              { text: row.stateProvinceOrRegion },
+              { text: row.postcode },
+              { text: row.coordinates },
+              { text: row.validFromDisplay }
+            ]]) %}
+          {% endfor %}
+
+          {{ govukTable({
+            firstCellIsHeader: false,
+            caption: "Overseas reprocessing site data",
+            captionClasses: "govuk-visually-hidden",
+            head: [
+              { text: "Org ID" },
+              { text: "Registration Number" },
+              { text: "Accreditation Number" },
+              { text: "ORS ID" },
+              { text: "Packaging waste category" },
+              { text: "Destination country" },
+              { text: "Overseas reprocessor name" },
+              { text: "Address line 1" },
+              { text: "Address line 2" },
+              { text: "City or town" },
+              { text: "State, province or region" },
+              { text: "Postcode or similar" },
+              { text: "Coordinates" },
+              { text: "Valid from" }
+            ],
+            rows: tableRows
+          }) }}
+        {% else %}
+          {{ govukInsetText({
+            text: "No overseas reprocessing site data found."
+          }) }}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

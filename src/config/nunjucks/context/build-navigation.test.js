@@ -128,7 +128,7 @@ describe('#buildNavigation', () => {
     ])
   })
 
-  test('Should highlight ORS uploads for status pages', () => {
+  test('Should highlight overseas sites for status pages', () => {
     config.get.mockReturnValue(true)
 
     expect(
@@ -139,14 +139,14 @@ describe('#buildNavigation', () => {
       expect.arrayContaining([
         {
           current: true,
-          text: 'ORS uploads',
-          href: '/overseas-sites/imports'
+          text: 'Overseas sites',
+          href: '/overseas-sites'
         }
       ])
     )
   })
 
-  test('Should include ORS uploads when feature flag enabled', () => {
+  test('Should include overseas sites when feature flag enabled', () => {
     config.get.mockReturnValue(true)
 
     const navigation = buildNavigation(
@@ -155,32 +155,34 @@ describe('#buildNavigation', () => {
     const summaryLogIndex = navigation.findIndex(
       (item) => item.text === 'Summary log uploads'
     )
-    const orsUploadsIndex = navigation.findIndex(
-      (item) => item.text === 'ORS uploads'
+    const overseasSitesIndex = navigation.findIndex(
+      (item) => item.text === 'Overseas sites'
     )
 
     expect(navigation).toEqual(
       expect.arrayContaining([
         {
           current: false,
-          text: 'ORS uploads',
-          href: '/overseas-sites/imports'
+          text: 'Overseas sites',
+          href: '/overseas-sites'
         }
       ])
     )
-    expect(orsUploadsIndex).toBe(summaryLogIndex + 1)
+    expect(overseasSitesIndex).toBe(summaryLogIndex + 1)
   })
 
-  test('Should include ORS uploads when request is undefined', () => {
+  test('Should include overseas sites when request is undefined', () => {
     config.get.mockReturnValue(true)
 
     const navigation = buildNavigation()
-    const orsUploads = navigation.find((item) => item.text === 'ORS uploads')
+    const overseasSites = navigation.find(
+      (item) => item.text === 'Overseas sites'
+    )
 
-    expect(orsUploads).toEqual({
+    expect(overseasSites).toEqual({
       current: undefined,
-      text: 'ORS uploads',
-      href: '/overseas-sites/imports'
+      text: 'Overseas sites',
+      href: '/overseas-sites'
     })
   })
 })
