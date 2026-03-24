@@ -3,6 +3,11 @@ import { formatDate } from '#config/nunjucks/filters/format-date.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
 
 const logger = createLogger()
+const defaultPageSize = 50
+
+function buildPageHref(page, pageSize) {
+  return `/overseas-sites?page=${page}&pageSize=${pageSize}`
+}
 
 function toDisplayValue(value) {
   return value === null || value === undefined || value === '' ? '-' : value
@@ -46,24 +51,53 @@ function toPositiveInteger(value, fallback) {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback
 }
 
+function buildPaginationItems({ page, totalPages, pageSize }) {
+  const visiblePages = new Set([1, totalPages, page - 1, page, page + 1])
+  const pageNumbers = Array.from(visiblePages)
+    .filter((pageNumber) => pageNumber >= 1 && pageNumber <= totalPages)
+    .sort((left, right) => left - right)
+
+  const items = []
+
+  for (const [index, pageNumber] of pageNumbers.entries()) {
+    if (index > 0 && pageNumber - pageNumbers[index - 1] > 1) {
+      items.push({ ellipsis: true })
+    }
+
+    items.push({
+      number: pageNumber,
+      href: buildPageHref(pageNumber, pageSize),
+      current: pageNumber === page
+    })
+  }
+
+  return items
+}
+
 function buildPagination({ pagination, pageSize }) {
   const controls = {}
 
-  if (!pagination) {
+  if (!pagination || !pagination.totalPages || pagination.totalPages <= 1) {
     return controls
   }
 
   if (pagination.hasPreviousPage) {
     controls.previous = {
-      href: `/overseas-sites?page=${pagination.page - 1}&pageSize=${pageSize}`
+      href: buildPageHref(pagination.page - 1, pageSize)
     }
   }
 
   if (pagination.hasNextPage) {
     controls.next = {
-      href: `/overseas-sites?page=${pagination.page + 1}&pageSize=${pageSize}`
+      href: buildPageHref(pagination.page + 1, pageSize)
     }
   }
+
+  controls.items = buildPaginationItems({
+    page: pagination.page,
+    totalPages: pagination.totalPages,
+    pageSize
+  })
 
   return controls
 }
@@ -71,7 +105,7 @@ function buildPagination({ pagination, pageSize }) {
 export const orsListGetController = {
   async handler(request, h) {
     const page = toPositiveInteger(request.query?.page, 1)
-    const pageSize = toPositiveInteger(request.query?.pageSize, 50)
+    const pageSize = toPositiveInteger(request.query?.pageSize, defaultPageSize)
 
     try {
       const data = await fetchJsonFromBackend(

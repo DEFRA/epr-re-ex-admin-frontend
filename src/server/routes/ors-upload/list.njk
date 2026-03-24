@@ -71,9 +71,10 @@
             rows: tableRows
           }) }}
 
-          {% if pagination.previous or pagination.next %}
+          {% if pagination.items or pagination.previous or pagination.next %}
             <p class="govuk-body">Showing page {{ page }} of {{ totalPages }}</p>
             {{ govukPagination({
+              items: pagination.items,
               previous: pagination.previous,
               next: pagination.next
             }) }}
