@@ -76,8 +76,9 @@ function buildPaginationItems({ page, totalPages, pageSize }) {
 
 function buildPagination({ pagination, pageSize }) {
   const controls = {}
+  const totalPages = pagination?.totalPages ?? 0
 
-  if (!pagination || !pagination.totalPages || pagination.totalPages <= 1) {
+  if (totalPages <= 1) {
     return controls
   }
 
@@ -95,7 +96,7 @@ function buildPagination({ pagination, pageSize }) {
 
   controls.items = buildPaginationItems({
     page: pagination.page,
-    totalPages: pagination.totalPages,
+    totalPages,
     pageSize
   })
 
