@@ -41,17 +41,63 @@ function mapSiteRows(rows = []) {
   }))
 }
 
+function toPositiveInteger(value, fallback) {
+  const parsed = Number.parseInt(String(value), 10)
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback
+}
+
+function buildPagination({ pagination, pageSize }) {
+  const controls = {}
+
+  if (!pagination) {
+    return controls
+  }
+
+  if (pagination.hasPreviousPage) {
+    controls.previous = {
+      href: `/overseas-sites?page=${pagination.page - 1}&pageSize=${pageSize}`
+    }
+  }
+
+  if (pagination.hasNextPage) {
+    controls.next = {
+      href: `/overseas-sites?page=${pagination.page + 1}&pageSize=${pageSize}`
+    }
+  }
+
+  return controls
+}
+
 export const orsListGetController = {
   async handler(request, h) {
+    const page = toPositiveInteger(request.query?.page, 1)
+    const pageSize = toPositiveInteger(request.query?.pageSize, 50)
+
     try {
-      const rows = await fetchJsonFromBackend(
+      const data = await fetchJsonFromBackend(
         request,
-        '/v1/admin/overseas-sites'
+        `/v1/admin/overseas-sites?page=${page}&pageSize=${pageSize}`
       )
+
+      const rowsPayload = Array.isArray(data) ? data : data?.rows
+      const mappedRows = mapSiteRows(rowsPayload)
+      const paginationData = Array.isArray(data)
+        ? {
+            page,
+            pageSize,
+            totalItems: mappedRows.length,
+            totalPages: mappedRows.length ? 1 : 0,
+            hasNextPage: false,
+            hasPreviousPage: false
+          }
+        : data?.pagination
 
       return h.view('routes/ors-upload/list', {
         pageTitle: request.route.settings.app.pageTitle,
-        rows: mapSiteRows(rows),
+        rows: mappedRows,
+        pagination: buildPagination({ pagination: paginationData, pageSize }),
+        page: paginationData?.page ?? page,
+        totalPages: paginationData?.totalPages ?? 0,
         error: null
       })
     } catch (error) {
@@ -63,6 +109,9 @@ export const orsListGetController = {
       return h.view('routes/ors-upload/list', {
         pageTitle: request.route.settings.app.pageTitle,
         rows: [],
+        pagination: {},
+        page: 1,
+        totalPages: 0,
         error:
           'There was a problem loading overseas reprocessing site data. Please try again.'
       })
