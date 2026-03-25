@@ -1,3 +1,4 @@
+import Wreck from '@hapi/wreck'
 import { config } from '#config/config.js'
 
 const ONE_HOUR_MS = 60 * 60 * 1000
@@ -26,18 +27,23 @@ async function getOidcConfig() {
   }
 }
 
+// Uses Wreck deliberately — this shares the same proxy code path as
+// @hapi/bell's OAuth token exchange (Wreck → private https.Agent →
+// global-agent). Fetching at startup makes this a canary: if the proxy
+// is misconfigured, the server fails to start rather than starting in a
+// silently broken state where users cannot log in.
 async function fetchOidcConfig() {
-  const url = config.get('entraId.oidcWellKnownConfigurationUrl')
-  const res = await fetch(url)
+  const { payload } = await Wreck.get(
+    config.get('entraId.oidcWellKnownConfigurationUrl'),
+    {
+      json: true
+    }
+  )
 
-  if (!res.ok) {
-    throw new Error(`OIDC config fetch failed: ${res.status} ${res.statusText}`)
-  }
-
-  cachedConfig = await res.json()
+  cachedConfig = payload
   cachedAt = Date.now()
 
-  return cachedConfig
+  return payload
 }
 
 export { getOidcConfig }
