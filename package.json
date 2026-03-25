@@ -80,7 +80,7 @@
     "undici": "7.24.5"
   },
   "devDependencies": {
-    "@babel/preset-env": "7.29.0",
+    "@babel/preset-env": "7.29.2",
     "@vitest/coverage-istanbul": "4.1.0",
     "@vitest/coverage-v8": "4.1.0",
     "ajv-cli": "5.0.0",
@@ -93,9 +93,9 @@
     "css-loader": "7.1.4",
     "eslint": "9.39.2",
     "husky": "9.1.7",
-    "lint-staged": "16.3.3",
+    "lint-staged": "16.4.0",
     "mini-css-extract-plugin": "2.10.1",
-    "msw": "2.12.10",
+    "msw": "2.12.14",
     "neostandard": "0.13.0",
     "nodemon": "3.1.14",
     "npm-run-all": "4.1.5",
