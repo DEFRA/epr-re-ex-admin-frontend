@@ -3,6 +3,11 @@ import { formatDate } from '#config/nunjucks/filters/format-date.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
 
 const logger = createLogger()
+const defaultPageSize = 50
+
+function buildPageHref(page, pageSize) {
+  return `/overseas-sites?page=${page}&pageSize=${pageSize}`
+}
 
 function toDisplayValue(value) {
   return value === null || value === undefined || value === '' ? '-' : value
@@ -41,17 +46,93 @@ function mapSiteRows(rows = []) {
   }))
 }
 
+function toPositiveInteger(value, fallback) {
+  const parsed = Number.parseInt(String(value), 10)
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback
+}
+
+function buildPaginationItems({ page, totalPages, pageSize }) {
+  const visiblePages = new Set([1, totalPages, page - 1, page, page + 1])
+  const pageNumbers = Array.from(visiblePages)
+    .filter((pageNumber) => pageNumber >= 1 && pageNumber <= totalPages)
+    .sort((left, right) => left - right)
+
+  const items = []
+
+  for (const [index, pageNumber] of pageNumbers.entries()) {
+    if (index > 0 && pageNumber - pageNumbers[index - 1] > 1) {
+      items.push({ ellipsis: true })
+    }
+
+    items.push({
+      number: pageNumber,
+      href: buildPageHref(pageNumber, pageSize),
+      current: pageNumber === page
+    })
+  }
+
+  return items
+}
+
+function buildPagination({ pagination, pageSize }) {
+  const controls = {}
+  const totalPages = pagination?.totalPages ?? 0
+
+  if (totalPages <= 1) {
+    return controls
+  }
+
+  if (pagination.hasPreviousPage) {
+    controls.previous = {
+      href: buildPageHref(pagination.page - 1, pageSize)
+    }
+  }
+
+  if (pagination.hasNextPage) {
+    controls.next = {
+      href: buildPageHref(pagination.page + 1, pageSize)
+    }
+  }
+
+  controls.items = buildPaginationItems({
+    page: pagination.page,
+    totalPages,
+    pageSize
+  })
+
+  return controls
+}
+
 export const orsListGetController = {
   async handler(request, h) {
+    const page = toPositiveInteger(request.query?.page, 1)
+    const pageSize = toPositiveInteger(request.query?.pageSize, defaultPageSize)
+
     try {
-      const rows = await fetchJsonFromBackend(
+      const data = await fetchJsonFromBackend(
         request,
-        '/v1/admin/overseas-sites'
+        `/v1/admin/overseas-sites?page=${page}&pageSize=${pageSize}`
       )
+
+      const rowsPayload = Array.isArray(data) ? data : data?.rows
+      const mappedRows = mapSiteRows(rowsPayload)
+      const paginationData = Array.isArray(data)
+        ? {
+            page,
+            pageSize,
+            totalItems: mappedRows.length,
+            totalPages: mappedRows.length ? 1 : 0,
+            hasNextPage: false,
+            hasPreviousPage: false
+          }
+        : data?.pagination
 
       return h.view('routes/ors-upload/list', {
         pageTitle: request.route.settings.app.pageTitle,
-        rows: mapSiteRows(rows),
+        rows: mappedRows,
+        pagination: buildPagination({ pagination: paginationData, pageSize }),
+        page: paginationData?.page ?? page,
+        totalPages: paginationData?.totalPages ?? 0,
         error: null
       })
     } catch (error) {
@@ -63,6 +144,9 @@ export const orsListGetController = {
       return h.view('routes/ors-upload/list', {
         pageTitle: request.route.settings.app.pageTitle,
         rows: [],
+        pagination: {},
+        page: 1,
+        totalPages: 0,
         error:
           'There was a problem loading overseas reprocessing site data. Please try again.'
       })
