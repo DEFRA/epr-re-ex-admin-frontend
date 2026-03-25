@@ -54,7 +54,6 @@
     "@hapi/jwt": "3.2.3",
     "@hapi/scooter": "7.0.0",
     "@hapi/vision": "7.0.3",
-    "@hapi/wreck": "18.1.0",
     "@hapi/yar": "11.0.3",
     "ajv": "8.18.0",
     "aws-embedded-metrics": "4.2.1",
