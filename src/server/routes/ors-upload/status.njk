@@ -63,7 +63,7 @@
             }) }}
           {% endif %}
 
-          <a class="govuk-link" href="/overseas-sites/imports">{% if status == "completed" %}Upload more workbooks{% else %}Return to ORS uploads{% endif %}</a>
+          <a class="govuk-link" href="{% if status == "completed" %}{{ recordsUrl | escape }}{% else %}/overseas-sites/imports{% endif %}">{% if status == "completed" %}View ORS records{% else %}Return to ORS uploads{% endif %}</a>
         {% else %}
           <h1 class="govuk-heading-xl">Import failed</h1>
           <p class="govuk-body">

@@ -23,6 +23,7 @@ describe('orsListGetController', () => {
     vi.clearAllMocks()
 
     mockRequest = {
+      query: {},
       route: {
         settings: {
           app: {
@@ -38,53 +39,63 @@ describe('orsListGetController', () => {
   })
 
   test('loads ORS data and maps null values for display', async () => {
-    fetchJsonFromBackend.mockResolvedValue([
-      {
-        orsId: '001',
-        packagingWasteCategory: 'paper',
-        orgId: 500001,
-        registrationNumber: 'R25SR5000010001PA',
-        accreditationNumber: 'ACC5000010001',
-        destinationCountry: 'France',
-        overseasReprocessorName: 'Alpha Reprocessor',
-        addressLine1: '1 Rue de Test',
-        addressLine2: null,
-        cityOrTown: 'Paris',
-        stateProvinceOrRegion: null,
-        postcode: '',
-        coordinates: null,
-        validFrom: '2025-04-01T00:00:00.000Z'
-      },
-      {
-        orsId: '002',
-        packagingWasteCategory: null,
-        orgId: undefined,
-        registrationNumber: '',
-        accreditationNumber: null,
-        destinationCountry: undefined,
-        overseasReprocessorName: 'Beta Reprocessor',
-        addressLine1: '2 Teststrasse',
-        cityOrTown: 'Berlin'
-      },
-      {
-        orsId: '003',
-        packagingWasteCategory: 'plastic',
-        orgId: 500003,
-        registrationNumber: 'R25SR5000030003PL',
-        accreditationNumber: undefined,
-        destinationCountry: 'Spain',
-        overseasReprocessorName: 'Gamma Reprocessor',
-        addressLine1: '3 Calle Test',
-        cityOrTown: 'Madrid',
-        validFrom: 'not-a-date'
+    fetchJsonFromBackend.mockResolvedValue({
+      rows: [
+        {
+          orsId: '001',
+          packagingWasteCategory: 'paper',
+          orgId: 500001,
+          registrationNumber: 'R25SR5000010001PA',
+          accreditationNumber: 'ACC5000010001',
+          destinationCountry: 'France',
+          overseasReprocessorName: 'Alpha Reprocessor',
+          addressLine1: '1 Rue de Test',
+          addressLine2: null,
+          cityOrTown: 'Paris',
+          stateProvinceOrRegion: null,
+          postcode: '',
+          coordinates: null,
+          validFrom: '2025-04-01T00:00:00.000Z'
+        },
+        {
+          orsId: '002',
+          packagingWasteCategory: null,
+          orgId: undefined,
+          registrationNumber: '',
+          accreditationNumber: null,
+          destinationCountry: undefined,
+          overseasReprocessorName: 'Beta Reprocessor',
+          addressLine1: '2 Teststrasse',
+          cityOrTown: 'Berlin'
+        },
+        {
+          orsId: '003',
+          packagingWasteCategory: 'plastic',
+          orgId: 500003,
+          registrationNumber: 'R25SR5000030003PL',
+          accreditationNumber: undefined,
+          destinationCountry: 'Spain',
+          overseasReprocessorName: 'Gamma Reprocessor',
+          addressLine1: '3 Calle Test',
+          cityOrTown: 'Madrid',
+          validFrom: 'not-a-date'
+        }
+      ],
+      pagination: {
+        page: 1,
+        pageSize: 5,
+        totalItems: 3,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPreviousPage: false
       }
-    ])
+    })
 
     await orsListGetController.handler(mockRequest, mockH)
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
       mockRequest,
-      '/v1/admin/overseas-sites'
+      '/v1/admin/overseas-sites?page=1&pageSize=50'
     )
 
     expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/list', {
@@ -139,6 +150,9 @@ describe('orsListGetController', () => {
           validFromDisplay: '-'
         }
       ],
+      pagination: {},
+      page: 1,
+      totalPages: 1,
       error: null
     })
   })
@@ -151,6 +165,9 @@ describe('orsListGetController', () => {
     expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/list', {
       pageTitle: 'Overseas reprocessing sites',
       rows: [],
+      pagination: {},
+      page: 1,
+      totalPages: 0,
       error: null
     })
   })
@@ -163,6 +180,389 @@ describe('orsListGetController', () => {
     expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/list', {
       pageTitle: 'Overseas reprocessing sites',
       rows: [],
+      pagination: {},
+      page: 1,
+      totalPages: 0,
+      error: null
+    })
+  })
+
+  test('supports legacy array payloads with pagination fallback metadata', async () => {
+    mockRequest.query = {
+      page: 'invalid',
+      pageSize: 'invalid'
+    }
+
+    fetchJsonFromBackend.mockResolvedValue([
+      {
+        orsId: '010'
+      }
+    ])
+
+    await orsListGetController.handler(mockRequest, mockH)
+
+    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
+      mockRequest,
+      '/v1/admin/overseas-sites?page=1&pageSize=50'
+    )
+
+    expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/list', {
+      pageTitle: 'Overseas reprocessing sites',
+      rows: [
+        {
+          orsId: '010',
+          packagingWasteCategory: '-',
+          orgId: '-',
+          registrationNumber: '-',
+          accreditationNumber: '-',
+          destinationCountry: '-',
+          overseasReprocessorName: '-',
+          addressLine1: '-',
+          addressLine2: '-',
+          cityOrTown: '-',
+          stateProvinceOrRegion: '-',
+          postcode: '-',
+          coordinates: '-',
+          validFromDisplay: '-'
+        }
+      ],
+      pagination: {},
+      page: 1,
+      totalPages: 1,
+      error: null
+    })
+  })
+
+  test('returns empty rows for non-array rows payload in object response', async () => {
+    fetchJsonFromBackend.mockResolvedValue({
+      rows: {},
+      pagination: {
+        page: 1,
+        pageSize: 50,
+        totalItems: 0,
+        totalPages: 0,
+        hasNextPage: false,
+        hasPreviousPage: false
+      }
+    })
+
+    await orsListGetController.handler(mockRequest, mockH)
+
+    expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/list', {
+      pageTitle: 'Overseas reprocessing sites',
+      rows: [],
+      pagination: {},
+      page: 1,
+      totalPages: 0,
+      error: null
+    })
+  })
+
+  test('supports legacy empty array payloads with zero total pages', async () => {
+    fetchJsonFromBackend.mockResolvedValue([])
+
+    await orsListGetController.handler(mockRequest, mockH)
+
+    expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/list', {
+      pageTitle: 'Overseas reprocessing sites',
+      rows: [],
+      pagination: {},
+      page: 1,
+      totalPages: 0,
+      error: null
+    })
+  })
+
+  test('builds previous and next pagination links from backend metadata', async () => {
+    mockRequest.query = {
+      page: '2',
+      pageSize: '2'
+    }
+
+    fetchJsonFromBackend.mockResolvedValue({
+      rows: [{ orsId: '002' }],
+      pagination: {
+        page: 2,
+        pageSize: 2,
+        totalItems: 5,
+        totalPages: 3,
+        hasNextPage: true,
+        hasPreviousPage: true
+      }
+    })
+
+    await orsListGetController.handler(mockRequest, mockH)
+
+    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
+      mockRequest,
+      '/v1/admin/overseas-sites?page=2&pageSize=2'
+    )
+
+    expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/list', {
+      pageTitle: 'Overseas reprocessing sites',
+      rows: [
+        {
+          orsId: '002',
+          packagingWasteCategory: '-',
+          orgId: '-',
+          registrationNumber: '-',
+          accreditationNumber: '-',
+          destinationCountry: '-',
+          overseasReprocessorName: '-',
+          addressLine1: '-',
+          addressLine2: '-',
+          cityOrTown: '-',
+          stateProvinceOrRegion: '-',
+          postcode: '-',
+          coordinates: '-',
+          validFromDisplay: '-'
+        }
+      ],
+      pagination: {
+        previous: {
+          href: '/overseas-sites?page=1&pageSize=2'
+        },
+        items: [
+          {
+            number: 1,
+            href: '/overseas-sites?page=1&pageSize=2',
+            current: false
+          },
+          {
+            number: 2,
+            href: '/overseas-sites?page=2&pageSize=2',
+            current: true
+          },
+          {
+            number: 3,
+            href: '/overseas-sites?page=3&pageSize=2',
+            current: false
+          }
+        ],
+        next: {
+          href: '/overseas-sites?page=3&pageSize=2'
+        }
+      },
+      page: 2,
+      totalPages: 3,
+      error: null
+    })
+  })
+
+  test('builds numbered pagination items for each page', async () => {
+    fetchJsonFromBackend.mockResolvedValue({
+      rows: [{ orsId: '001' }],
+      pagination: {
+        page: 1,
+        pageSize: 2,
+        totalItems: 5,
+        totalPages: 3,
+        hasNextPage: true,
+        hasPreviousPage: false
+      }
+    })
+
+    await orsListGetController.handler(mockRequest, mockH)
+
+    expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/list', {
+      pageTitle: 'Overseas reprocessing sites',
+      rows: [
+        {
+          orsId: '001',
+          packagingWasteCategory: '-',
+          orgId: '-',
+          registrationNumber: '-',
+          accreditationNumber: '-',
+          destinationCountry: '-',
+          overseasReprocessorName: '-',
+          addressLine1: '-',
+          addressLine2: '-',
+          cityOrTown: '-',
+          stateProvinceOrRegion: '-',
+          postcode: '-',
+          coordinates: '-',
+          validFromDisplay: '-'
+        }
+      ],
+      pagination: {
+        items: [
+          {
+            number: 1,
+            href: '/overseas-sites?page=1&pageSize=50',
+            current: true
+          },
+          {
+            number: 2,
+            href: '/overseas-sites?page=2&pageSize=50',
+            current: false
+          },
+          {
+            number: 3,
+            href: '/overseas-sites?page=3&pageSize=50',
+            current: false
+          }
+        ],
+        next: {
+          href: '/overseas-sites?page=2&pageSize=50'
+        }
+      },
+      page: 1,
+      totalPages: 3,
+      error: null
+    })
+  })
+
+  test('builds compact pagination items with ellipses for larger page ranges', async () => {
+    mockRequest.query = {
+      page: '6',
+      pageSize: '10'
+    }
+
+    fetchJsonFromBackend.mockResolvedValue({
+      rows: [{ orsId: '006' }],
+      pagination: {
+        page: 6,
+        pageSize: 10,
+        totalItems: 100,
+        totalPages: 10,
+        hasNextPage: true,
+        hasPreviousPage: true
+      }
+    })
+
+    await orsListGetController.handler(mockRequest, mockH)
+
+    expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/list', {
+      pageTitle: 'Overseas reprocessing sites',
+      rows: [
+        {
+          orsId: '006',
+          packagingWasteCategory: '-',
+          orgId: '-',
+          registrationNumber: '-',
+          accreditationNumber: '-',
+          destinationCountry: '-',
+          overseasReprocessorName: '-',
+          addressLine1: '-',
+          addressLine2: '-',
+          cityOrTown: '-',
+          stateProvinceOrRegion: '-',
+          postcode: '-',
+          coordinates: '-',
+          validFromDisplay: '-'
+        }
+      ],
+      pagination: {
+        previous: {
+          href: '/overseas-sites?page=5&pageSize=10'
+        },
+        items: [
+          {
+            number: 1,
+            href: '/overseas-sites?page=1&pageSize=10',
+            current: false
+          },
+          {
+            ellipsis: true
+          },
+          {
+            number: 5,
+            href: '/overseas-sites?page=5&pageSize=10',
+            current: false
+          },
+          {
+            number: 6,
+            href: '/overseas-sites?page=6&pageSize=10',
+            current: true
+          },
+          {
+            number: 7,
+            href: '/overseas-sites?page=7&pageSize=10',
+            current: false
+          },
+          {
+            ellipsis: true
+          },
+          {
+            number: 10,
+            href: '/overseas-sites?page=10&pageSize=10',
+            current: false
+          }
+        ],
+        next: {
+          href: '/overseas-sites?page=7&pageSize=10'
+        }
+      },
+      page: 6,
+      totalPages: 10,
+      error: null
+    })
+  })
+
+  test('builds previous link and numbered items on the last page', async () => {
+    mockRequest.query = {
+      page: '3',
+      pageSize: '2'
+    }
+
+    fetchJsonFromBackend.mockResolvedValue({
+      rows: [{ orsId: '003' }],
+      pagination: {
+        page: 3,
+        pageSize: 2,
+        totalItems: 5,
+        totalPages: 3,
+        hasNextPage: false,
+        hasPreviousPage: true
+      }
+    })
+
+    await orsListGetController.handler(mockRequest, mockH)
+
+    expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/list', {
+      pageTitle: 'Overseas reprocessing sites',
+      rows: [
+        {
+          orsId: '003',
+          packagingWasteCategory: '-',
+          orgId: '-',
+          registrationNumber: '-',
+          accreditationNumber: '-',
+          destinationCountry: '-',
+          overseasReprocessorName: '-',
+          addressLine1: '-',
+          addressLine2: '-',
+          cityOrTown: '-',
+          stateProvinceOrRegion: '-',
+          postcode: '-',
+          coordinates: '-',
+          validFromDisplay: '-'
+        }
+      ],
+      pagination: {
+        previous: {
+          href: '/overseas-sites?page=2&pageSize=2'
+        },
+        items: [
+          {
+            number: 1,
+            href: '/overseas-sites?page=1&pageSize=2',
+            current: false
+          },
+          {
+            number: 2,
+            href: '/overseas-sites?page=2&pageSize=2',
+            current: false
+          },
+          {
+            number: 3,
+            href: '/overseas-sites?page=3&pageSize=2',
+            current: true
+          }
+        ]
+      },
+      page: 3,
+      totalPages: 3,
       error: null
     })
   })
@@ -181,6 +581,9 @@ describe('orsListGetController', () => {
     expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/list', {
       pageTitle: 'Overseas reprocessing sites',
       rows: [],
+      pagination: {},
+      page: 1,
+      totalPages: 0,
       error:
         'There was a problem loading overseas reprocessing site data. Please try again.'
     })

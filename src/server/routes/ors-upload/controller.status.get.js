@@ -59,6 +59,7 @@ export const orsUploadStatusGetController = {
         status: data.status,
         importId,
         pollUrl: `/overseas-sites/imports/${importId}`,
+        recordsUrl: '/overseas-sites',
         shouldPoll,
         files: data.files ?? [],
         ...resultSummary
@@ -87,6 +88,7 @@ export const orsUploadStatusGetController = {
         status: 'failed',
         importId,
         pollUrl: `/overseas-sites/imports/${importId}`,
+        recordsUrl: '/overseas-sites',
         shouldPoll: false,
         files: [],
         successfulUploads: 0,
