@@ -1,4 +1,3 @@
-import Wreck from '@hapi/wreck'
 import { config } from '#config/config.js'
 
 const ONE_HOUR_MS = 60 * 60 * 1000
@@ -28,17 +27,17 @@ async function getOidcConfig() {
 }
 
 async function fetchOidcConfig() {
-  const { payload } = await Wreck.get(
-    config.get('entraId.oidcWellKnownConfigurationUrl'),
-    {
-      json: true
-    }
-  )
+  const url = config.get('entraId.oidcWellKnownConfigurationUrl')
+  const res = await fetch(url)
 
-  cachedConfig = payload
+  if (!res.ok) {
+    throw new Error(`OIDC config fetch failed: ${res.status} ${res.statusText}`)
+  }
+
+  cachedConfig = await res.json()
   cachedAt = Date.now()
 
-  return payload
+  return cachedConfig
 }
 
 export { getOidcConfig }
