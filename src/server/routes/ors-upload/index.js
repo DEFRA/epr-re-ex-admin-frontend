@@ -1,4 +1,5 @@
 import { orsUploadGetController } from './controller.get.js'
+import { orsDownloadController } from './controller.download.js'
 import { orsListGetController } from './controller.list.get.js'
 import { orsUploadStatusGetController } from './controller.status.get.js'
 import { orsUploadRoutes } from './constants.js'
@@ -21,6 +22,11 @@ export const orsUpload = {
           options: {
             app: { pageTitle: 'Overseas reprocessing sites' }
           }
+        },
+        {
+          method: 'POST',
+          path: orsUploadRoutes.download,
+          ...orsDownloadController
         },
         {
           method: 'GET',
