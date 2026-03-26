@@ -17,9 +17,19 @@ vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
 describe('ors-upload download integration', () => {
   const backendUrl = config.get('eprBackendUrl')
   const pagePath = '/overseas-sites'
+  const originalConfigGet = config.get.bind(config)
+  let configGetSpy
   let server
 
   beforeAll(async () => {
+    configGetSpy = vi.spyOn(config, 'get').mockImplementation((key) => {
+      if (key === 'featureFlags.overseasSites') {
+        return true
+      }
+
+      return originalConfigGet(key)
+    })
+
     createMockOidcServer()
     server = await createServer()
     await server.initialize()
@@ -27,6 +37,7 @@ describe('ors-upload download integration', () => {
 
   afterAll(async () => {
     await server.stop({ timeout: 0 })
+    configGetSpy.mockRestore()
   })
 
   afterEach(() => {
