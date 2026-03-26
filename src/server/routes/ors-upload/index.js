@@ -25,7 +25,7 @@ export const orsUpload = {
         },
         {
           method: 'POST',
-          path: orsUploadRoutes.download,
+          path: orsUploadRoutes.list,
           ...orsDownloadController
         },
         {

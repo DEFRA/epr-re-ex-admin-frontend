@@ -27,16 +27,6 @@
             text: "Upload ORS workbooks",
             href: "/overseas-sites/imports"
           }) }}
-
-          {% if rows.length %}
-            <form method="POST" action="/overseas-sites/download">
-              <input type="hidden" name="crumb" value="{{ crumb }}" />
-              {{ govukButton({
-                text: "Download CSV"
-              }) }}
-            </form>
-          {% endif %}
-
         </div>
 
         {% if rows.length %}
@@ -91,6 +81,13 @@
               next: pagination.next
             }) }}
           {% endif %}
+
+          <form method="POST">
+            <input type="hidden" name="crumb" value="{{ crumb }}" />
+            {{ govukButton({
+              text: "Download CSV"
+            }) }}
+          </form>
         {% else %}
           {{ govukInsetText({
             text: "No overseas reprocessing site data found."

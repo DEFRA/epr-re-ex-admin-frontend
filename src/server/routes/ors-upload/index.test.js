@@ -70,7 +70,7 @@ describe('#ors-upload routes plugin', () => {
 
     expect(registeredRoutes[1]).toMatchObject({
       method: 'POST',
-      path: orsUploadRoutes.download
+      path: orsUploadRoutes.list
     })
 
     expect(registeredRoutes[2]).toMatchObject({

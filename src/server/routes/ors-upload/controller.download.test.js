@@ -70,11 +70,31 @@ describe('orsDownloadController', () => {
     const lines = csvContent.split('\n')
 
     expect(lines[0]).toBe(
-      '"Org ID","Registration Number","Accreditation Number","ORS ID","Packaging waste category","Destination country","Overseas reprocessor name","Address line 1","Address line 2","City or town","State, province or region","Postcode or similar","Coordinates","Valid from"'
+      '\uFEFF"Org ID","Registration Number","Accreditation Number","ORS ID","Packaging waste category","Destination country","Overseas reprocessor name","Address line 1","Address line 2","City or town","State, province or region","Postcode or similar","Coordinates","Valid from"'
     )
     expect(csvContent).toContain('500001')
     expect(csvContent).toContain('Alpha Reprocessor')
     expect(csvContent).toContain('1 April 2025')
+  })
+
+  test('Should preserve UTF-8 coordinate symbols in the CSV payload', async () => {
+    fetchJsonFromBackend.mockResolvedValue({
+      rows: [
+        {
+          orgId: 500001,
+          orsId: '001',
+          coordinates: '22°48\'00.0"N 86°11\'00.0"E'
+        }
+      ]
+    })
+
+    await orsDownloadController.handler(mockRequest, mockH)
+
+    const csvContent = mockH.response.mock.calls[0][0]
+
+    expect(csvContent.startsWith('\uFEFF')).toBe(true)
+    expect(csvContent).toContain('22°48\'00.0""N 86°11\'00.0""E')
+    expect(csvContent).not.toContain('Â°')
   })
 
   test('Should handle legacy array payloads', async () => {
@@ -168,7 +188,10 @@ describe('orsDownloadController', () => {
 
     await orsDownloadController.handler(mockRequest, mockH)
 
-    expect(mockResponse.header).toHaveBeenCalledWith('Content-Type', 'text/csv')
+    expect(mockResponse.header).toHaveBeenCalledWith(
+      'Content-Type',
+      'text/csv; charset=utf-8'
+    )
     expect(mockResponse.header).toHaveBeenCalledWith(
       'Content-Disposition',
       'attachment; filename="overseas-reprocessing-sites.csv"'

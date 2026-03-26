@@ -4,6 +4,7 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
 import { sanitizeFormulaInjection } from '#server/common/helpers/sanitize-formula-injection.js'
 
 const dateFormat = 'd MMMM yyyy'
+const utf8Bom = '\uFEFF'
 
 function toCsvValue(value) {
   if (value === null || value === undefined || value === '') {
@@ -72,7 +73,7 @@ async function generateCsv(data) {
     ])
   }
 
-  return writeToString(rows, { headers: false, quoteColumns: true })
+  return `${utf8Bom}${await writeToString(rows, { headers: false, quoteColumns: true })}`
 }
 
 export const orsDownloadController = {
@@ -86,7 +87,7 @@ export const orsDownloadController = {
 
       return h
         .response(csv)
-        .header('Content-Type', 'text/csv')
+        .header('Content-Type', 'text/csv; charset=utf-8')
         .header(
           'Content-Disposition',
           'attachment; filename="overseas-reprocessing-sites.csv"'

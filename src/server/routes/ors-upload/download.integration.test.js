@@ -119,7 +119,7 @@ describe('ors-upload download integration', () => {
         getUserSession.mockReturnValue(mockUserSession)
       })
 
-      test('Should render upload and download actions at the top of the page', async () => {
+      test('Should render upload at the top and download below the table', async () => {
         stubListResponse(mockRows)
 
         const { result, statusCode } = await server.inject({
@@ -135,17 +135,24 @@ describe('ors-upload download integration', () => {
 
         const $ = cheerio.load(result)
         const buttonGroup = $('.govuk-button-group').first()
+        const table = $('table').first()
+        const downloadForm = $('form[method="POST"]').first()
 
         expect(buttonGroup.text()).toContain('Upload ORS workbooks')
-        expect(buttonGroup.text()).toContain('Download CSV')
+        expect(buttonGroup.text()).not.toContain('Download CSV')
         expect(
           buttonGroup.find('a[href="/overseas-sites/imports"]').length
         ).toBe(1)
-        expect(
-          buttonGroup.find('form[action="/overseas-sites/download"]').length
-        ).toBe(1)
-        expect(buttonGroup.find('button.govuk-button--secondary').length).toBe(
+        expect(buttonGroup.find('form[method="POST"]').length).toBe(0)
+
+        expect(table.length).toBe(1)
+        expect(downloadForm.length).toBe(1)
+        expect(downloadForm.text()).toContain('Download CSV')
+        expect(downloadForm.find('button.govuk-button--secondary').length).toBe(
           0
+        )
+        expect(result.indexOf('</table>')).toBeLessThan(
+          result.indexOf('<form method="POST">')
         )
       })
 
@@ -168,14 +175,12 @@ describe('ors-upload download integration', () => {
 
         expect(buttonGroup.text()).toContain('Upload ORS workbooks')
         expect(buttonGroup.text()).not.toContain('Download CSV')
-        expect(
-          buttonGroup.find('form[action="/overseas-sites/download"]').length
-        ).toBe(0)
+        expect(buttonGroup.find('form[method="POST"]').length).toBe(0)
       })
     })
   })
 
-  describe('POST /overseas-sites/download', () => {
+  describe('POST /overseas-sites', () => {
     describe('When user is unauthenticated', () => {
       beforeEach(() => {
         getUserSession.mockReturnValue(null)
@@ -184,7 +189,7 @@ describe('ors-upload download integration', () => {
       test('Should return unauthorised status code', async () => {
         const { statusCode } = await server.inject({
           method: 'POST',
-          url: '/overseas-sites/download',
+          url: pagePath,
           payload: {}
         })
 
@@ -207,7 +212,7 @@ describe('ors-upload download integration', () => {
 
         const { statusCode, headers, payload } = await server.inject({
           method: 'POST',
-          url: '/overseas-sites/download',
+          url: pagePath,
           headers: { cookie },
           payload: { crumb },
           auth: {
@@ -259,7 +264,7 @@ describe('ors-upload download integration', () => {
 
         const { statusCode, headers } = await server.inject({
           method: 'POST',
-          url: '/overseas-sites/download',
+          url: pagePath,
           headers: { cookie },
           payload: { crumb },
           auth: {
@@ -277,7 +282,7 @@ describe('ors-upload download integration', () => {
 
         const { statusCode } = await server.inject({
           method: 'POST',
-          url: '/overseas-sites/download',
+          url: pagePath,
           payload: {},
           auth: {
             strategy: 'session',
