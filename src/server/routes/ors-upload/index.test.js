@@ -59,7 +59,7 @@ describe('#ors-upload routes plugin', () => {
 
     const registeredRoutes = mockServer.route.mock.calls[0][0]
 
-    expect(registeredRoutes).toHaveLength(3)
+    expect(registeredRoutes).toHaveLength(4)
     expect(registeredRoutes[0]).toMatchObject({
       method: 'GET',
       path: orsUploadRoutes.list,
@@ -69,6 +69,11 @@ describe('#ors-upload routes plugin', () => {
     })
 
     expect(registeredRoutes[1]).toMatchObject({
+      method: 'POST',
+      path: orsUploadRoutes.list
+    })
+
+    expect(registeredRoutes[2]).toMatchObject({
       method: 'GET',
       path: orsUploadRoutes.uploads,
       options: {
@@ -76,7 +81,7 @@ describe('#ors-upload routes plugin', () => {
       }
     })
 
-    expect(registeredRoutes[2]).toMatchObject({
+    expect(registeredRoutes[3]).toMatchObject({
       method: 'GET',
       path: orsUploadRoutes.uploadStatus,
       options: {
@@ -89,7 +94,7 @@ describe('#ors-upload routes plugin', () => {
     orsUpload.plugin.register(mockServer)
 
     const registeredRoutes = mockServer.route.mock.calls[0][0]
-    const statusRoute = registeredRoutes[2]
+    const statusRoute = registeredRoutes[3]
     const schema = statusRoute.options.validate.params
 
     await expect(
@@ -110,6 +115,7 @@ describe('#ors-upload routes plugin', () => {
     expect(registeredRoutes[0]).toHaveProperty('handler')
     expect(registeredRoutes[1]).toHaveProperty('handler')
     expect(registeredRoutes[2]).toHaveProperty('handler')
+    expect(registeredRoutes[3]).toHaveProperty('handler')
   })
 
   test('Should maintain plugin structure', () => {

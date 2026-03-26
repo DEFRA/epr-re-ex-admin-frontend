@@ -22,10 +22,12 @@
 
         <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
 
-        {{ govukButton({
-          text: "Upload ORS workbooks",
-          href: "/overseas-sites/imports"
-        }) }}
+        <div class="govuk-button-group">
+          {{ govukButton({
+            text: "Upload ORS workbooks",
+            href: "/overseas-sites/imports"
+          }) }}
+        </div>
 
         {% if rows.length %}
           {% set tableRows = [] %}
@@ -79,6 +81,13 @@
               next: pagination.next
             }) }}
           {% endif %}
+
+          <form method="POST">
+            <input type="hidden" name="crumb" value="{{ crumb }}" />
+            {{ govukButton({
+              text: "Download CSV"
+            }) }}
+          </form>
         {% else %}
           {{ govukInsetText({
             text: "No overseas reprocessing site data found."
