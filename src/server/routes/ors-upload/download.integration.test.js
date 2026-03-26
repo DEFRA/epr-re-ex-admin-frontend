@@ -144,6 +144,33 @@ describe('ors-upload download integration', () => {
         expect(
           buttonGroup.find('form[action="/overseas-sites/download"]').length
         ).toBe(1)
+        expect(buttonGroup.find('button.govuk-button--secondary').length).toBe(
+          0
+        )
+      })
+
+      test('Should hide download action when there are no overseas sites', async () => {
+        stubListResponse([])
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: pagePath,
+          auth: {
+            strategy: 'session',
+            credentials: mockUserSession
+          }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const $ = cheerio.load(result)
+        const buttonGroup = $('.govuk-button-group').first()
+
+        expect(buttonGroup.text()).toContain('Upload ORS workbooks')
+        expect(buttonGroup.text()).not.toContain('Download CSV')
+        expect(
+          buttonGroup.find('form[action="/overseas-sites/download"]').length
+        ).toBe(0)
       })
     })
   })

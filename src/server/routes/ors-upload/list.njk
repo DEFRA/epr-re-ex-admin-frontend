@@ -23,19 +23,19 @@
         <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
 
         <div class="govuk-button-group">
-          <form method="POST" action="/overseas-sites/download">
-            <input type="hidden" name="crumb" value="{{ crumb }}" />
-            {{ govukButton({
-              text: "Download CSV",
-              classes: "govuk-button--secondary"
-            }) }}
-          </form>
-
           {{ govukButton({
             text: "Upload ORS workbooks",
             href: "/overseas-sites/imports"
           }) }}
 
+          {% if rows.length %}
+            <form method="POST" action="/overseas-sites/download">
+              <input type="hidden" name="crumb" value="{{ crumb }}" />
+              {{ govukButton({
+                text: "Download CSV"
+              }) }}
+            </form>
+          {% endif %}
 
         </div>
 
