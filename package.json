@@ -80,8 +80,8 @@
   },
   "devDependencies": {
     "@babel/preset-env": "7.29.2",
-    "@vitest/coverage-istanbul": "4.1.0",
-    "@vitest/coverage-v8": "4.1.0",
+    "@vitest/coverage-istanbul": "4.1.1",
+    "@vitest/coverage-v8": "4.1.1",
     "ajv-cli": "5.0.0",
     "ajv-formats": "3.0.1",
     "autoprefixer": "10.4.27",
@@ -110,7 +110,7 @@
     "stylelint": "16.26.1",
     "stylelint-config-gds": "2.0.0",
     "terser-webpack-plugin": "5.4.0",
-    "vitest": "4.1.0",
+    "vitest": "4.1.1",
     "webpack": "5.105.4",
     "webpack-assets-manifest": "6.5.1",
     "webpack-cli": "7.0.2"
