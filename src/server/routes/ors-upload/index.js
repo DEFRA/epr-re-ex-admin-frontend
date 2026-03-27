@@ -22,10 +22,8 @@ export const orsUpload = {
           options: {
             validate: {
               query: Joi.object({
-                page: Joi.number().integer().min(1).optional(),
-                pageSize: Joi.number().integer().min(1).optional(),
                 registrationNumber: Joi.string().trim().allow('').optional()
-              })
+              }).unknown(true)
             },
             app: { pageTitle: 'Overseas reprocessing sites' }
           }

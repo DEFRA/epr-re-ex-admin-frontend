@@ -114,17 +114,18 @@ describe('#ors-upload routes plugin', () => {
     const listRoute = registeredRoutes[0]
     const schema = listRoute.options.validate.query
 
-    await expect(schema.validateAsync({ page: 0 })).rejects.toThrow()
     await expect(
       schema.validateAsync({
-        page: 2,
-        pageSize: 10,
-        registrationNumber: ' REG-123 '
+        page: 0,
+        pageSize: 'invalid',
+        registrationNumber: ' REG-123 ',
+        extra: 'keep-me'
       })
     ).resolves.toMatchObject({
-      page: 2,
-      pageSize: 10,
-      registrationNumber: 'REG-123'
+      page: 0,
+      pageSize: 'invalid',
+      registrationNumber: 'REG-123',
+      extra: 'keep-me'
     })
   })
 
