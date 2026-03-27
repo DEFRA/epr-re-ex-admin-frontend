@@ -1,13 +1,14 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { formatDate } from '#config/nunjucks/filters/format-date.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
+import {
+  buildBackendPath,
+  buildPageHref,
+  defaultPageSize,
+  normaliseRegistrationNumber
+} from './helpers.js'
 
 const logger = createLogger()
-const defaultPageSize = 50
-
-function buildPageHref(page, pageSize) {
-  return `/overseas-sites?page=${page}&pageSize=${pageSize}`
-}
 
 function toDisplayValue(value) {
   return value === null || value === undefined || value === '' ? '-' : value
@@ -51,7 +52,12 @@ function toPositiveInteger(value, fallback) {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback
 }
 
-function buildPaginationItems({ page, totalPages, pageSize }) {
+function buildPaginationItems({
+  page,
+  totalPages,
+  pageSize,
+  registrationNumber
+}) {
   const visiblePages = new Set([1, totalPages, page - 1, page, page + 1])
   const pageNumbers = Array.from(visiblePages)
     .filter((pageNumber) => pageNumber >= 1 && pageNumber <= totalPages)
@@ -66,7 +72,11 @@ function buildPaginationItems({ page, totalPages, pageSize }) {
 
     items.push({
       number: pageNumber,
-      href: buildPageHref(pageNumber, pageSize),
+      href: buildPageHref({
+        page: pageNumber,
+        pageSize,
+        registrationNumber
+      }),
       current: pageNumber === page
     })
   }
@@ -74,7 +84,7 @@ function buildPaginationItems({ page, totalPages, pageSize }) {
   return items
 }
 
-function buildPagination({ pagination, pageSize }) {
+function buildPagination({ pagination, pageSize, registrationNumber }) {
   const controls = {}
   const totalPages = pagination?.totalPages ?? 0
 
@@ -84,20 +94,29 @@ function buildPagination({ pagination, pageSize }) {
 
   if (pagination.hasPreviousPage) {
     controls.previous = {
-      href: buildPageHref(pagination.page - 1, pageSize)
+      href: buildPageHref({
+        page: pagination.page - 1,
+        pageSize,
+        registrationNumber
+      })
     }
   }
 
   if (pagination.hasNextPage) {
     controls.next = {
-      href: buildPageHref(pagination.page + 1, pageSize)
+      href: buildPageHref({
+        page: pagination.page + 1,
+        pageSize,
+        registrationNumber
+      })
     }
   }
 
   controls.items = buildPaginationItems({
     page: pagination.page,
     totalPages,
-    pageSize
+    pageSize,
+    registrationNumber
   })
 
   return controls
@@ -107,11 +126,14 @@ export const orsListGetController = {
   async handler(request, h) {
     const page = toPositiveInteger(request.query?.page, 1)
     const pageSize = toPositiveInteger(request.query?.pageSize, defaultPageSize)
+    const registrationNumber = normaliseRegistrationNumber(
+      request.query?.registrationNumber
+    )
 
     try {
       const data = await fetchJsonFromBackend(
         request,
-        `/v1/admin/overseas-sites?page=${page}&pageSize=${pageSize}`
+        buildBackendPath({ page, pageSize, registrationNumber })
       )
 
       const rowsPayload = Array.isArray(data) ? data : data?.rows
@@ -130,9 +152,14 @@ export const orsListGetController = {
       return h.view('routes/ors-upload/list', {
         pageTitle: request.route.settings.app.pageTitle,
         rows: mappedRows,
-        pagination: buildPagination({ pagination: paginationData, pageSize }),
+        pagination: buildPagination({
+          pagination: paginationData,
+          pageSize,
+          registrationNumber
+        }),
         page: paginationData?.page ?? page,
         totalPages: paginationData?.totalPages ?? 0,
+        registrationNumber,
         error: null
       })
     } catch (error) {
@@ -147,6 +174,7 @@ export const orsListGetController = {
         pagination: {},
         page: 1,
         totalPages: 0,
+        registrationNumber,
         error:
           'There was a problem loading overseas reprocessing site data. Please try again.'
       })

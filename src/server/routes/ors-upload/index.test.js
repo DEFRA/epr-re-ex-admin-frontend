@@ -107,6 +107,27 @@ describe('#ors-upload routes plugin', () => {
     })
   })
 
+  test('Should validate overseas sites list query parameters', async () => {
+    orsUpload.plugin.register(mockServer)
+
+    const registeredRoutes = mockServer.route.mock.calls[0][0]
+    const listRoute = registeredRoutes[0]
+    const schema = listRoute.options.validate.query
+
+    await expect(schema.validateAsync({ page: 0 })).rejects.toThrow()
+    await expect(
+      schema.validateAsync({
+        page: 2,
+        pageSize: 10,
+        registrationNumber: ' REG-123 '
+      })
+    ).resolves.toMatchObject({
+      page: 2,
+      pageSize: 10,
+      registrationNumber: 'REG-123'
+    })
+  })
+
   test('Should register route objects with handlers', () => {
     orsUpload.plugin.register(mockServer)
 

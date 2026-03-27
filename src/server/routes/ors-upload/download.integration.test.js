@@ -45,9 +45,12 @@ describe('ors-upload download integration', () => {
   })
 
   const stubListResponse = (rows = []) => {
+    const backendCalls = []
+
     mswServer.use(
       http.get(`${backendUrl}/v1/admin/overseas-sites`, ({ request }) => {
         const url = new URL(request.url)
+        backendCalls.push(url)
         const isAllRequest = url.searchParams.get('all') === 'true'
 
         if (isAllRequest) {
@@ -77,6 +80,8 @@ describe('ors-upload download integration', () => {
         })
       })
     )
+
+    return backendCalls
   }
 
   const mockRows = [
@@ -156,6 +161,28 @@ describe('ors-upload download integration', () => {
         )
       })
 
+      test('Should render registration number search form and preserve the current value', async () => {
+        stubListResponse(mockRows)
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: '/overseas-sites?registrationNumber=REG-123',
+          auth: {
+            strategy: 'session',
+            credentials: mockUserSession
+          }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const $ = cheerio.load(result)
+        expect($('form.app-filters').attr('method')).toBe('get')
+        expect($('input[name="registrationNumber"]').val()).toBe('REG-123')
+        expect($('a.govuk-button--inverse').attr('href')).toBe(
+          '/overseas-sites'
+        )
+      })
+
       test('Should hide download action when there are no overseas sites', async () => {
         stubListResponse([])
 
@@ -231,6 +258,35 @@ describe('ors-upload download integration', () => {
         expect(payload).toContain('1 April 2025')
       })
 
+      test('Should forward registrationNumber when downloading a filtered CSV', async () => {
+        const backendCalls = stubListResponse(mockRows)
+
+        const { cookie, crumb } = await getCsrfToken(
+          server,
+          '/overseas-sites?registrationNumber=REG-123',
+          {
+            strategy: 'session',
+            credentials: mockUserSession
+          }
+        )
+
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url: pagePath,
+          headers: { cookie },
+          payload: { crumb, registrationNumber: 'REG-123' },
+          auth: {
+            strategy: 'session',
+            credentials: mockUserSession
+          }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(backendCalls.at(-1)?.search).toBe(
+          '?all=true&registrationNumber=REG-123'
+        )
+      })
+
       test('Should redirect back to the list page on backend failure', async () => {
         mswServer.use(
           http.get(`${backendUrl}/v1/admin/overseas-sites`, ({ request }) => {
@@ -275,6 +331,58 @@ describe('ors-upload download integration', () => {
 
         expect(statusCode).toBe(302)
         expect(headers.location).toBe('/overseas-sites')
+      })
+
+      test('Should preserve registrationNumber on redirect after filtered download failure', async () => {
+        mswServer.use(
+          http.get(`${backendUrl}/v1/admin/overseas-sites`, ({ request }) => {
+            const url = new URL(request.url)
+
+            if (url.searchParams.get('all') === 'true') {
+              return HttpResponse.json(
+                { message: 'Backend download failure' },
+                { status: statusCodes.internalServerError }
+              )
+            }
+
+            return HttpResponse.json({
+              rows: mockRows,
+              pagination: {
+                page: 1,
+                pageSize: 50,
+                totalItems: mockRows.length,
+                totalPages: 1,
+                hasNextPage: false,
+                hasPreviousPage: false
+              }
+            })
+          })
+        )
+
+        const { cookie, crumb } = await getCsrfToken(
+          server,
+          '/overseas-sites?registrationNumber=REG-123',
+          {
+            strategy: 'session',
+            credentials: mockUserSession
+          }
+        )
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: pagePath,
+          headers: { cookie },
+          payload: { crumb, registrationNumber: 'REG-123' },
+          auth: {
+            strategy: 'session',
+            credentials: mockUserSession
+          }
+        })
+
+        expect(statusCode).toBe(302)
+        expect(headers.location).toBe(
+          '/overseas-sites?registrationNumber=REG-123'
+        )
       })
 
       test('Should reject request without CSRF token', async () => {

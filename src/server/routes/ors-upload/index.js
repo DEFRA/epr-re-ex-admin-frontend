@@ -20,6 +20,13 @@ export const orsUpload = {
           path: orsUploadRoutes.list,
           ...orsListGetController,
           options: {
+            validate: {
+              query: Joi.object({
+                page: Joi.number().integer().min(1).optional(),
+                pageSize: Joi.number().integer().min(1).optional(),
+                registrationNumber: Joi.string().trim().allow('').optional()
+              })
+            },
             app: { pageTitle: 'Overseas reprocessing sites' }
           }
         },
