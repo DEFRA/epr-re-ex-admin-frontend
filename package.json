@@ -117,6 +117,7 @@
   },
   "overrides": {
     "@isaacs/brace-expansion": "5.0.1",
+    "brace-expansion": "5.0.5",
     "tmp": "0.2.5",
     "rollup": ">=4.59.0",
     "jsoneditor": {
