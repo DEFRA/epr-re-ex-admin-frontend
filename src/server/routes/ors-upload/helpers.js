@@ -43,12 +43,4 @@ export function buildPageHref({ page, pageSize, registrationNumber = '' }) {
   return `/overseas-sites?${params.toString()}`
 }
 
-export function buildListHref({ registrationNumber = '' } = {}) {
-  if (!registrationNumber) {
-    return '/overseas-sites'
-  }
-
-  return `/overseas-sites?${new URLSearchParams({ registrationNumber }).toString()}`
-}
-
 export { defaultPageSize }

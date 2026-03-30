@@ -42,20 +42,6 @@ describe('orsDownloadController', () => {
     )
   })
 
-  test('Should preserve registrationNumber filter when downloading CSV', async () => {
-    mockRequest.payload = {
-      registrationNumber: ' REG-123 '
-    }
-    fetchJsonFromBackend.mockResolvedValue({ rows: [] })
-
-    await orsDownloadController.handler(mockRequest, mockH)
-
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      mockRequest,
-      '/v1/admin/overseas-sites?all=true&registrationNumber=REG-123'
-    )
-  })
-
   test('Should generate CSV with correct headers and row data', async () => {
     fetchJsonFromBackend.mockResolvedValue({
       rows: [
@@ -223,19 +209,6 @@ describe('orsDownloadController', () => {
     )
     expect(mockH.redirect).toHaveBeenCalledWith('/overseas-sites')
     expect(result).toBe('redirect-response')
-  })
-
-  test('Should preserve registrationNumber on redirect after download failure', async () => {
-    mockRequest.payload = {
-      registrationNumber: 'REG-123'
-    }
-    fetchJsonFromBackend.mockRejectedValue(new Error('Network error'))
-
-    await orsDownloadController.handler(mockRequest, mockH)
-
-    expect(mockH.redirect).toHaveBeenCalledWith(
-      '/overseas-sites?registrationNumber=REG-123'
-    )
   })
 
   test('Should use backend error message when available', async () => {

@@ -112,9 +112,6 @@
 
           <form method="POST">
             <input type="hidden" name="crumb" value="{{ crumb }}" />
-            {% if registrationNumber %}
-              <input type="hidden" name="registrationNumber" value="{{ registrationNumber }}" />
-            {% endif %}
             {{ govukButton({
               text: "Download CSV"
             }) }}

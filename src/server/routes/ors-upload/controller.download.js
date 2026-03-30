@@ -2,11 +2,7 @@ import { writeToString } from '@fast-csv/format'
 import { formatDate } from '#config/nunjucks/filters/format-date.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { sanitizeFormulaInjection } from '#server/common/helpers/sanitize-formula-injection.js'
-import {
-  buildBackendPath,
-  buildListHref,
-  normaliseRegistrationNumber
-} from './helpers.js'
+import { buildBackendPath } from './helpers.js'
 
 const dateFormat = 'd MMMM yyyy'
 const utf8Bom = '\uFEFF'
@@ -83,14 +79,10 @@ async function generateCsv(data) {
 
 export const orsDownloadController = {
   async handler(request, h) {
-    const registrationNumber = normaliseRegistrationNumber(
-      request.payload?.registrationNumber
-    )
-
     try {
       const data = await fetchJsonFromBackend(
         request,
-        buildBackendPath({ all: true, registrationNumber })
+        buildBackendPath({ all: true })
       )
       const csv = await generateCsv(data)
 
@@ -108,7 +100,7 @@ export const orsDownloadController = {
 
       request.yar.set('error', errorMessage)
 
-      return h.redirect(buildListHref({ registrationNumber }))
+      return h.redirect('/overseas-sites')
     }
   }
 }

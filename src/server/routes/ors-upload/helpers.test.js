@@ -1,6 +1,5 @@
 import {
   buildBackendPath,
-  buildListHref,
   buildPageHref,
   defaultPageSize,
   normaliseRegistrationNumber
@@ -54,18 +53,6 @@ describe('ors-upload helpers', () => {
       expect(
         buildPageHref({ page: 2, pageSize: 10, registrationNumber: 'REG-123' })
       ).toBe('/overseas-sites?page=2&pageSize=10&registrationNumber=REG-123')
-    })
-  })
-
-  describe('buildListHref', () => {
-    test('Should return base list href without registrationNumber', () => {
-      expect(buildListHref()).toBe('/overseas-sites')
-    })
-
-    test('Should return filtered list href when registrationNumber provided', () => {
-      expect(buildListHref({ registrationNumber: 'REG-123' })).toBe(
-        '/overseas-sites?registrationNumber=REG-123'
-      )
     })
   })
 })
