@@ -1,21 +1,10 @@
 import { buildNavigation } from './build-navigation.js'
-import { config } from '#config/config.js'
-
-vi.mock('#config/config.js', () => ({
-  config: {
-    get: vi.fn()
-  }
-}))
 
 function mockRequest(options) {
   return { ...options }
 }
 
 describe('#buildNavigation', () => {
-  beforeEach(() => {
-    config.get.mockReturnValue(false)
-  })
-
   test('Should provide expected navigation details', () => {
     expect(
       buildNavigation(mockRequest({ path: '/non-existent-path' }))
@@ -54,6 +43,11 @@ describe('#buildNavigation', () => {
         current: false,
         text: 'Summary log uploads',
         href: '/summary-log'
+      },
+      {
+        current: false,
+        text: 'Overseas sites',
+        href: '/overseas-sites'
       },
       {
         current: false,
@@ -112,6 +106,11 @@ describe('#buildNavigation', () => {
       },
       {
         current: false,
+        text: 'Overseas sites',
+        href: '/overseas-sites'
+      },
+      {
+        current: false,
         text: 'PRN activity',
         href: '/prn-activity'
       },
@@ -129,8 +128,6 @@ describe('#buildNavigation', () => {
   })
 
   test('Should highlight overseas sites for status pages', () => {
-    config.get.mockReturnValue(true)
-
     expect(
       buildNavigation(
         mockRequest({ path: '/overseas-sites/imports/import-123' })
@@ -146,9 +143,7 @@ describe('#buildNavigation', () => {
     )
   })
 
-  test('Should include overseas sites when feature flag enabled', () => {
-    config.get.mockReturnValue(true)
-
+  test('Should include overseas sites after summary log uploads', () => {
     const navigation = buildNavigation(
       mockRequest({ path: '/non-existent-path' })
     )
@@ -172,8 +167,6 @@ describe('#buildNavigation', () => {
   })
 
   test('Should include overseas sites when request is undefined', () => {
-    config.get.mockReturnValue(true)
-
     const navigation = buildNavigation()
     const overseasSites = navigation.find(
       (item) => item.text === 'Overseas sites'

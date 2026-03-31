@@ -287,12 +287,6 @@ export const config = convict({
     env: 'EPR_BACKEND_URL'
   },
   featureFlags: {
-    overseasSites: {
-      doc: 'Enable overseas sites (ORS uploads) feature',
-      format: Boolean,
-      default: false,
-      env: 'FEATURE_FLAG_OVERSEAS_SITES'
-    },
     summaryLogFileDownload: {
       doc: 'Enable summary log file download from system logs',
       format: Boolean,

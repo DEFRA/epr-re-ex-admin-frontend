@@ -1,9 +1,6 @@
 import { vi } from 'vitest'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 
-const originalOverseasSitesFlag = process.env.FEATURE_FLAG_OVERSEAS_SITES
-process.env.FEATURE_FLAG_OVERSEAS_SITES = 'false'
-
 const mockGetUserSession = vi.fn().mockResolvedValue(mockUserSession)
 
 vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
@@ -27,14 +24,6 @@ vi.mock('#server/common/helpers/logging/logger.js', () => ({
 }))
 
 describe('context and cache', () => {
-  afterAll(() => {
-    if (originalOverseasSitesFlag === undefined) {
-      delete process.env.FEATURE_FLAG_OVERSEAS_SITES
-    } else {
-      process.env.FEATURE_FLAG_OVERSEAS_SITES = originalOverseasSitesFlag
-    }
-  })
-
   beforeEach(() => {
     mockReadFileSync.mockReset()
     mockLoggerError.mockReset()
@@ -106,6 +95,11 @@ describe('context and cache', () => {
             },
             {
               current: false,
+              text: 'Overseas sites',
+              href: '/overseas-sites'
+            },
+            {
+              current: false,
               text: 'PRN activity',
               href: '/prn-activity'
             },
@@ -135,16 +129,15 @@ describe('context and cache', () => {
         })
       })
 
-      test('Should include overseas sites when feature flag is enabled', async () => {
-        process.env.FEATURE_FLAG_OVERSEAS_SITES = 'true'
+      test('Should include overseas sites in navigation', async () => {
         vi.resetModules()
 
-        const contextImportWithFlag = await import('./context.js')
-        const contextWithFlag = await contextImportWithFlag.context({
+        const contextImportFresh = await import('./context.js')
+        const contextFresh = await contextImportFresh.context({
           path: '/overseas-sites/imports'
         })
 
-        expect(contextWithFlag.navigation).toEqual(
+        expect(contextFresh.navigation).toEqual(
           expect.arrayContaining([
             {
               current: true,
@@ -153,9 +146,6 @@ describe('context and cache', () => {
             }
           ])
         )
-
-        process.env.FEATURE_FLAG_OVERSEAS_SITES = 'false'
-        vi.resetModules()
       })
 
       describe('With invalid asset path', () => {
@@ -302,6 +292,11 @@ describe('context and cache', () => {
               current: false,
               text: 'Summary log uploads',
               href: '/summary-log'
+            },
+            {
+              current: false,
+              text: 'Overseas sites',
+              href: '/overseas-sites'
             },
             {
               current: false,

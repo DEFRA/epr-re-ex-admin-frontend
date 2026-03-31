@@ -15,7 +15,6 @@ import { linkedOrganisations } from './routes/linked-organisations/index.js'
 import { prnActivity } from './routes/prn-activity/index.js'
 import { summaryLogUploadsReport } from './routes/summary-log/index.js'
 import { orsUpload } from './routes/ors-upload/index.js'
-import { config } from '#config/config.js'
 
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
 
@@ -42,12 +41,9 @@ export const router = {
         wasteBalanceAvailability,
         linkedOrganisations,
         prnActivity,
-        summaryLogUploadsReport
+        summaryLogUploadsReport,
+        orsUpload
       ])
-
-      if (config.get('featureFlags.overseasSites')) {
-        await server.register([orsUpload])
-      }
 
       await server.register([serveStaticFiles])
     }
