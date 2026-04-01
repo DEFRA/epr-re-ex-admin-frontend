@@ -4,6 +4,7 @@
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/pagination/macro.njk" import govukPagination %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
 
 {% block content %}
   <div class="govuk-grid-row">
@@ -28,6 +29,33 @@
             href: "/overseas-sites/imports"
           }) }}
         </div>
+
+        <form method="get" action="/overseas-sites" class="app-filters">
+          <h2 class="govuk-heading-m">Search overseas reprocessing sites by</h2>
+          <div class="govuk-form-group">
+            {{ govukInput({
+              label: {
+                text: "Registration number",
+                classes: "govuk-label--s"
+              },
+              id: "registrationNumber",
+              name: "registrationNumber",
+              type: "search",
+              value: registrationNumber,
+              autocomplete: "off",
+              classes: "govuk-input--width-20"
+            }) }}
+          </div>
+
+          <div class="govuk-button-group">
+            {{ govukButton({
+              text: "Search"
+            }) }}
+            {% if registrationNumber %}
+              <a href="/overseas-sites" class="govuk-button govuk-button--inverse">Clear search and view all overseas reprocessing sites</a>
+            {% endif %}
+          </div>
+        </form>
 
         {% if rows.length %}
           {% set tableRows = [] %}
@@ -89,9 +117,16 @@
             }) }}
           </form>
         {% else %}
-          {{ govukInsetText({
-            text: "No overseas reprocessing site data found."
-          }) }}
+          {% if registrationNumber %}
+            <h2 class="govuk-heading-l">0 results found</h2>
+            {{ govukInsetText({
+              text: "No overseas reprocessing site data found matching '" + registrationNumber + "'. Try searching with a different registration number or check your spelling."
+            }) }}
+          {% else %}
+            {{ govukInsetText({
+              text: "No overseas reprocessing site data found."
+            }) }}
+          {% endif %}
         {% endif %}
       </div>
     </div>

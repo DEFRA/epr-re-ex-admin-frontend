@@ -2,6 +2,7 @@ import { writeToString } from '@fast-csv/format'
 import { formatDate } from '#config/nunjucks/filters/format-date.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { sanitizeFormulaInjection } from '#server/common/helpers/sanitize-formula-injection.js'
+import { buildBackendPath } from './helpers.js'
 
 const dateFormat = 'd MMMM yyyy'
 const utf8Bom = '\uFEFF'
@@ -81,7 +82,7 @@ export const orsDownloadController = {
     try {
       const data = await fetchJsonFromBackend(
         request,
-        '/v1/admin/overseas-sites?all=true'
+        buildBackendPath({ all: true })
       )
       const csv = await generateCsv(data)
 
