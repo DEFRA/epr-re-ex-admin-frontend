@@ -107,6 +107,15 @@ describe('#ors-upload routes plugin', () => {
     })
   })
 
+  test('Should not apply route-level validation to overseas sites list query parameters', () => {
+    orsUpload.plugin.register(mockServer)
+
+    const registeredRoutes = mockServer.route.mock.calls[0][0]
+    const listRoute = registeredRoutes[0]
+
+    expect(listRoute.options).not.toHaveProperty('validate.query')
+  })
+
   test('Should register route objects with handlers', () => {
     orsUpload.plugin.register(mockServer)
 

@@ -153,8 +153,60 @@ describe('orsListGetController', () => {
       pagination: {},
       page: 1,
       totalPages: 1,
+      registrationNumber: '',
       error: null
     })
+  })
+
+  test('passes registrationNumber to the backend and preserves it in pagination links', async () => {
+    mockRequest.query = {
+      page: '2',
+      pageSize: '2',
+      registrationNumber: ' REG-123 '
+    }
+
+    fetchJsonFromBackend.mockResolvedValue({
+      rows: [{ orsId: '003', registrationNumber: 'REG-123' }],
+      pagination: {
+        page: 2,
+        pageSize: 2,
+        totalItems: 3,
+        totalPages: 2,
+        hasNextPage: false,
+        hasPreviousPage: true
+      }
+    })
+
+    await orsListGetController.handler(mockRequest, mockH)
+
+    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
+      mockRequest,
+      '/v1/admin/overseas-sites?page=2&pageSize=2&registrationNumber=REG-123'
+    )
+
+    expect(mockH.view).toHaveBeenCalledWith(
+      'routes/ors-upload/list',
+      expect.objectContaining({
+        registrationNumber: 'REG-123',
+        pagination: {
+          previous: {
+            href: '/overseas-sites?page=1&pageSize=2&registrationNumber=REG-123'
+          },
+          items: [
+            {
+              number: 1,
+              href: '/overseas-sites?page=1&pageSize=2&registrationNumber=REG-123',
+              current: false
+            },
+            {
+              number: 2,
+              href: '/overseas-sites?page=2&pageSize=2&registrationNumber=REG-123',
+              current: true
+            }
+          ]
+        }
+      })
+    )
   })
 
   test('returns empty rows when backend returns no values', async () => {
@@ -168,6 +220,7 @@ describe('orsListGetController', () => {
       pagination: {},
       page: 1,
       totalPages: 0,
+      registrationNumber: '',
       error: null
     })
   })
@@ -183,6 +236,7 @@ describe('orsListGetController', () => {
       pagination: {},
       page: 1,
       totalPages: 0,
+      registrationNumber: '',
       error: null
     })
   })
@@ -229,6 +283,7 @@ describe('orsListGetController', () => {
       pagination: {},
       page: 1,
       totalPages: 1,
+      registrationNumber: '',
       error: null
     })
   })
@@ -254,6 +309,7 @@ describe('orsListGetController', () => {
       pagination: {},
       page: 1,
       totalPages: 0,
+      registrationNumber: '',
       error: null
     })
   })
@@ -269,6 +325,7 @@ describe('orsListGetController', () => {
       pagination: {},
       page: 1,
       totalPages: 0,
+      registrationNumber: '',
       error: null
     })
   })
@@ -345,6 +402,7 @@ describe('orsListGetController', () => {
       },
       page: 2,
       totalPages: 3,
+      registrationNumber: '',
       error: null
     })
   })
@@ -408,6 +466,7 @@ describe('orsListGetController', () => {
       },
       page: 1,
       totalPages: 3,
+      registrationNumber: '',
       error: null
     })
   })
@@ -495,6 +554,7 @@ describe('orsListGetController', () => {
       },
       page: 6,
       totalPages: 10,
+      registrationNumber: '',
       error: null
     })
   })
@@ -563,6 +623,7 @@ describe('orsListGetController', () => {
       },
       page: 3,
       totalPages: 3,
+      registrationNumber: '',
       error: null
     })
   })
@@ -584,6 +645,7 @@ describe('orsListGetController', () => {
       pagination: {},
       page: 1,
       totalPages: 0,
+      registrationNumber: '',
       error:
         'There was a problem loading overseas reprocessing site data. Please try again.'
     })
