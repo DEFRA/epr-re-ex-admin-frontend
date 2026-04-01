@@ -52,7 +52,7 @@ function toPositiveInteger(value, fallback) {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback
 }
 
-function buildPaginationItems({
+function buildUrlQueryItems({
   page,
   totalPages,
   pageSize,
@@ -84,7 +84,7 @@ function buildPaginationItems({
   return items
 }
 
-function buildPagination({ pagination, pageSize, registrationNumber }) {
+function buildUrlQuery({ pagination, pageSize, registrationNumber }) {
   const controls = {}
   const totalPages = pagination?.totalPages ?? 0
 
@@ -112,7 +112,7 @@ function buildPagination({ pagination, pageSize, registrationNumber }) {
     }
   }
 
-  controls.items = buildPaginationItems({
+  controls.items = buildUrlQueryItems({
     page: pagination.page,
     totalPages,
     pageSize,
@@ -152,7 +152,7 @@ export const orsListGetController = {
       return h.view('routes/ors-upload/list', {
         pageTitle: request.route.settings.app.pageTitle,
         rows: mappedRows,
-        pagination: buildPagination({
+        pagination: buildUrlQuery({
           pagination: paginationData,
           pageSize,
           registrationNumber
