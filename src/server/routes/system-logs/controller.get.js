@@ -10,8 +10,9 @@ export const systemLogGetController = {
       request.query,
       'referenceNumber'
     )
+    const rawRef = request.query?.referenceNumber
     const searchTermReferenceNumber =
-      request.query?.referenceNumber?.trim?.() ?? request.query?.referenceNumber
+      typeof rawRef === 'string' ? rawRef.trim() : ''
     const cursor = request.query?.cursor || null
     const page = Number(request.query?.page) || 1
 
