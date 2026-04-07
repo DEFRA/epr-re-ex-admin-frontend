@@ -45,9 +45,12 @@ describe('ors-upload download integration', () => {
   })
 
   const stubListResponse = (rows = []) => {
+    const backendCalls = []
+
     mswServer.use(
       http.get(`${backendUrl}/v1/admin/overseas-sites`, ({ request }) => {
         const url = new URL(request.url)
+        backendCalls.push(url)
         const isAllRequest = url.searchParams.get('all') === 'true'
 
         if (isAllRequest) {
@@ -77,6 +80,8 @@ describe('ors-upload download integration', () => {
         })
       })
     )
+
+    return backendCalls
   }
 
   const mockRows = [
@@ -153,6 +158,28 @@ describe('ors-upload download integration', () => {
         )
         expect(result.indexOf('</table>')).toBeLessThan(
           result.indexOf('<form method="POST">')
+        )
+      })
+
+      test('Should render registration number search form and preserve the current value', async () => {
+        stubListResponse(mockRows)
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: '/overseas-sites?registrationNumber=REG-123',
+          auth: {
+            strategy: 'session',
+            credentials: mockUserSession
+          }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const $ = cheerio.load(result)
+        expect($('form.app-filters').attr('method')).toBe('get')
+        expect($('input[name="registrationNumber"]').val()).toBe('REG-123')
+        expect($('a.govuk-button--inverse').attr('href')).toBe(
+          '/overseas-sites'
         )
       })
 
