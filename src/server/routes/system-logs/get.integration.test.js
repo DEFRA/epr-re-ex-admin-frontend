@@ -77,6 +77,14 @@ describe('GET /system-logs', () => {
       return { $: cheerio.load(result), statusCode }
     }
 
+    test('Should return OK and render initial empty state when no search term is provided', async () => {
+      const { $, statusCode } = await loadPage()
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect($('h1').text()).toEqual('System logs')
+      expect($('.govuk-summary-card')).toHaveLength(0)
+    })
+
     test('Should return OK and render system logs', async () => {
       stubBackendReponse(
         HttpResponse.json({
@@ -105,7 +113,9 @@ describe('GET /system-logs', () => {
         })
       )
 
-      const { $, statusCode } = await loadPage()
+      const { $, statusCode } = await loadPage(
+        new URLSearchParams({ referenceNumber: 'ORG-123' })
+      )
 
       expect(statusCode).toBe(statusCodes.ok)
 
@@ -149,7 +159,9 @@ describe('GET /system-logs', () => {
           })
         )
 
-        const { $, statusCode } = await loadPage()
+        const { $, statusCode } = await loadPage(
+          new URLSearchParams({ referenceNumber: 'ORG-123' })
+        )
 
         expect(statusCode).toBe(statusCodes.ok)
 
@@ -173,7 +185,9 @@ describe('GET /system-logs', () => {
             })
           )
 
-          const { $, statusCode } = await loadPage()
+          const { $, statusCode } = await loadPage(
+            new URLSearchParams({ referenceNumber: 'ORG-123' })
+          )
 
           expect(statusCode).toBe(statusCodes.ok)
 
@@ -199,7 +213,9 @@ describe('GET /system-logs', () => {
             })
           )
 
-          const { $, statusCode } = await loadPage()
+          const { $, statusCode } = await loadPage(
+            new URLSearchParams({ referenceNumber: 'ORG-123' })
+          )
 
           expect(statusCode).toBe(statusCodes.ok)
 
@@ -227,7 +243,9 @@ describe('GET /system-logs', () => {
           })
         )
 
-        const { $, statusCode } = await loadPage()
+        const { $, statusCode } = await loadPage(
+          new URLSearchParams({ referenceNumber: 'ORG-123' })
+        )
 
         expect(statusCode).toBe(statusCodes.ok)
 
@@ -261,7 +279,9 @@ describe('GET /system-logs', () => {
           })
         )
 
-        const { $, statusCode } = await loadPage()
+        const { $, statusCode } = await loadPage(
+          new URLSearchParams({ referenceNumber: 'ORG-123' })
+        )
 
         expect(statusCode).toBe(statusCodes.ok)
 
@@ -514,7 +534,9 @@ describe('GET /system-logs', () => {
             })
           )
 
-          const { $, statusCode } = await loadPage()
+          const { $, statusCode } = await loadPage(
+            new URLSearchParams({ referenceNumber: 'ORG-123' })
+          )
 
           expect(statusCode).toBe(statusCodes.ok)
 
@@ -722,7 +744,9 @@ describe('GET /system-logs', () => {
         )
       )
 
-      const { $, statusCode } = await loadPage()
+      const { $, statusCode } = await loadPage(
+        new URLSearchParams({ referenceNumber: 'ORG-123' })
+      )
 
       expect(statusCode).toBe(statusCodes.unauthorised)
       expect($('h1').text().trim()).toEqual('Unauthorised')
@@ -736,7 +760,9 @@ describe('GET /system-logs', () => {
         )
       )
 
-      const { $, statusCode } = await loadPage()
+      const { $, statusCode } = await loadPage(
+        new URLSearchParams({ referenceNumber: 'ORG-123' })
+      )
 
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect($.text()).toContain('Sorry, there is a problem with the service')

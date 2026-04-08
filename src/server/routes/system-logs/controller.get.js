@@ -16,17 +16,19 @@ export const systemLogGetController = {
     const cursor = request.query?.cursor || null
     const page = Number(request.query?.page) || 1
 
-    if (hasReferenceNumberQuery && !searchTermReferenceNumber) {
+    if (!searchTermReferenceNumber) {
       return h.view('routes/system-logs/index', {
         pageTitle: request.route.settings.app.pageTitle,
         systemLogs: [],
         searchTerms: {
           referenceNumber: ''
         },
-        error: {
-          text: 'Enter an organisation reference number',
-          href: '#referenceNumber'
-        },
+        error: hasReferenceNumberQuery
+          ? {
+              text: 'Enter an organisation reference number',
+              href: '#referenceNumber'
+            }
+          : null,
         pagination: {},
         page: 1,
         showFileDownload: config.get('featureFlags.summaryLogFileDownload')
