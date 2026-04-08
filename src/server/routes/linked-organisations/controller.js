@@ -3,7 +3,8 @@ import { buildBackendPath, mapLinkedOrganisations } from './helpers.js'
 
 export const linkedOrganisationsController = {
   async handler(request, h) {
-    const searchTerm = request.query.search?.trim() || ''
+    const rawSearch = request.query.search
+    const searchTerm = typeof rawSearch === 'string' ? rawSearch.trim() : ''
     const errorMessage = request.yar.get('error')
     await request.yar.clear('error')
 

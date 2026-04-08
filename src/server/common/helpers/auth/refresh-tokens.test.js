@@ -27,9 +27,11 @@ describe('#refreshTokens', () => {
   const mockOpenIdConfig = {
     serverMetadata: () => ({ issuer: 'https://test' })
   }
+  const mockAccessToken = 'STUB'
+  const mockRefreshToken = 'STUB'
   const mockTokenResponse = {
-    access_token: 'new-access-token',
-    refresh_token: 'new-refresh-token'
+    access_token: mockAccessToken,
+    refresh_token: mockRefreshToken
   }
 
   beforeEach(async () => {
