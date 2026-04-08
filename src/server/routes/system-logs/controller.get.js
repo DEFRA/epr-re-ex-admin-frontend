@@ -102,12 +102,17 @@ function buildPagination({ data, referenceNumber, cursor, page }) {
 
 function contextWithDeltaBetweenPreviousAndNextExtracted({ context }) {
   const { previous, next, ...remainingContext } = context
-  if ('previous' in context && 'next' in context) {
+  const hasPrevious = 'previous' in context
+  const hasNext = 'next' in context
+  if (hasPrevious || hasNext) {
     return {
       renderDelta: {
         previous,
-        next,
-        difference: difference(previous, next) || 'no differences'
+        ...(hasPrevious ? { previous } : {}),
+        ...(hasNext ? { next } : {}),
+        ...(hasPrevious && hasNext
+          ? { difference: difference(previous, next) || 'no differences' }
+          : {})
       },
       context: { ...remainingContext }
     }
