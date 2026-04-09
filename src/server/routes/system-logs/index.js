@@ -30,6 +30,13 @@ export const systemLogs = {
           path: '/system-logs',
           ...systemLogGetController,
           options: {
+            validate: {
+              query: Joi.object({
+                referenceNumber: Joi.string().allow('').optional(),
+                cursor: Joi.string().optional(),
+                page: Joi.number().integer().min(1).optional().default(1)
+              })
+            },
             app: { pageTitle: 'System logs' }
           }
         }

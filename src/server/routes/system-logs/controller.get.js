@@ -10,11 +10,11 @@ export const systemLogGetController = {
       request.query,
       'referenceNumber'
     )
-    const rawRef = request.query?.referenceNumber
+    const rawRef = request.query.referenceNumber
     const searchTermReferenceNumber =
       typeof rawRef === 'string' ? rawRef.trim() : ''
-    const cursor = request.query?.cursor || null
-    const page = Number(request.query?.page) || 1
+    const cursor = request.query.cursor ?? null
+    const page = request.query.page
 
     if (!searchTermReferenceNumber) {
       return h.view('routes/system-logs/index', {
