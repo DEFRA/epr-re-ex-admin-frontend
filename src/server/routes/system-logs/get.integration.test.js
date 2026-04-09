@@ -552,6 +552,55 @@ describe('GET /system-logs', () => {
           expect(diff).toEqual(expectedDifference)
         }
       )
+
+      it.each([
+        [
+          'only previous is present',
+          { previous: { value: 1 } },
+          { rendered: 'Previous', notRendered: 'Next' }
+        ],
+        [
+          'only next is present',
+          { next: { value: 2 } },
+          { rendered: 'Next', notRendered: 'Previous' }
+        ]
+      ])(
+        'does not render the difference row when %s',
+        async (_description, context, { rendered, notRendered }) => {
+          stubBackendReponse(
+            HttpResponse.json({
+              systemLogs: [
+                {
+                  createdBy: {},
+                  event: {},
+                  context
+                }
+              ]
+            })
+          )
+
+          const { $, statusCode } = await loadPage(
+            new URLSearchParams({ referenceNumber: 'ORG-123' })
+          )
+
+          expect(statusCode).toBe(statusCodes.ok)
+
+          const renderedRow = $(
+            '.govuk-summary-card .govuk-summary-list__row'
+          ).has(`dt:contains("${rendered}")`)
+          expect(renderedRow).toHaveLength(1)
+
+          const notRenderedRow = $(
+            '.govuk-summary-card .govuk-summary-list__row'
+          ).has(`dt:contains("${notRendered}")`)
+          expect(notRenderedRow).toHaveLength(0)
+
+          const differenceRow = $(
+            '.govuk-summary-card .govuk-summary-list__row'
+          ).has('dt:contains("Difference")')
+          expect(differenceRow).toHaveLength(0)
+        }
+      )
     })
 
     describe('search parameters', () => {
