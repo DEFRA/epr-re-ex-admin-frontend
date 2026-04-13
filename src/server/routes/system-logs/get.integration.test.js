@@ -152,7 +152,7 @@ describe('GET /system-logs', () => {
         }
       }
 
-      it('does not render a download link when feature flag is off', async () => {
+      it('renders a download link when context has summaryLogId', async () => {
         stubBackendReponse(
           HttpResponse.json({
             systemLogs: [systemLogWithFile]
@@ -165,63 +165,36 @@ describe('GET /system-logs', () => {
 
         expect(statusCode).toBe(statusCodes.ok)
 
-        const downloadLink = $('a[href*="/system-logs/download/"]')
-        expect(downloadLink).toHaveLength(0)
+        const downloadLink = $(
+          'a[href="/system-logs/download/org-123/reg-456/sl-789"]'
+        )
+        expect(downloadLink).toHaveLength(1)
+        expect(downloadLink.text().trim()).toBe('Download file')
       })
 
-      describe('when feature flag is on', () => {
-        beforeAll(() => {
-          config.set('featureFlags.summaryLogFileDownload', true)
-        })
-
-        afterAll(() => {
-          config.set('featureFlags.summaryLogFileDownload', false)
-        })
-
-        it('renders a download link when context has summaryLogId', async () => {
-          stubBackendReponse(
-            HttpResponse.json({
-              systemLogs: [systemLogWithFile]
-            })
-          )
-
-          const { $, statusCode } = await loadPage(
-            new URLSearchParams({ referenceNumber: 'ORG-123' })
-          )
-
-          expect(statusCode).toBe(statusCodes.ok)
-
-          const downloadLink = $(
-            'a[href="/system-logs/download/org-123/reg-456/sl-789"]'
-          )
-          expect(downloadLink).toHaveLength(1)
-          expect(downloadLink.text().trim()).toBe('Download file')
-        })
-
-        it('does not render a download link when context has no summaryLogId', async () => {
-          stubBackendReponse(
-            HttpResponse.json({
-              systemLogs: [
-                {
-                  createdBy: {},
-                  event: {},
-                  context: {
-                    someOtherField: 'value'
-                  }
+      it('does not render a download link when context has no summaryLogId', async () => {
+        stubBackendReponse(
+          HttpResponse.json({
+            systemLogs: [
+              {
+                createdBy: {},
+                event: {},
+                context: {
+                  someOtherField: 'value'
                 }
-              ]
-            })
-          )
+              }
+            ]
+          })
+        )
 
-          const { $, statusCode } = await loadPage(
-            new URLSearchParams({ referenceNumber: 'ORG-123' })
-          )
+        const { $, statusCode } = await loadPage(
+          new URLSearchParams({ referenceNumber: 'ORG-123' })
+        )
 
-          expect(statusCode).toBe(statusCodes.ok)
+        expect(statusCode).toBe(statusCodes.ok)
 
-          const downloadLink = $('a[href*="/system-logs/download/"]')
-          expect(downloadLink).toHaveLength(0)
-        })
+        const downloadLink = $('a[href*="/system-logs/download/"]')
+        expect(downloadLink).toHaveLength(0)
       })
     })
 

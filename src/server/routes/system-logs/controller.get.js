@@ -1,5 +1,4 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
-import { config } from '#config/config.js'
 import isEqual from 'lodash/isEqual.js'
 import isArray from 'lodash/isArray.js'
 import isObject from 'lodash/isObject.js'
@@ -30,8 +29,7 @@ export const systemLogGetController = {
             }
           : null,
         pagination: {},
-        page: 1,
-        showFileDownload: config.get('featureFlags.summaryLogFileDownload')
+        page: 1
       })
     }
 
@@ -68,8 +66,7 @@ export const systemLogGetController = {
       },
       error: null,
       pagination,
-      page,
-      showFileDownload: config.get('featureFlags.summaryLogFileDownload')
+      page
     })
   }
 }
