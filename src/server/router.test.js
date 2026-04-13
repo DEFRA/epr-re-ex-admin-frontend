@@ -1,16 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { router } from './router.js'
 
-const { mockConfigGet } = vi.hoisted(() => ({
-  mockConfigGet: vi.fn((key) => {
-    if (key === 'featureFlags.overseasSites') {
-      return false
-    }
-
-    return undefined
-  })
-}))
-
 const { mockInert } = vi.hoisted(() => ({
   mockInert: { plugin: { name: 'inert' } }
 }))
@@ -29,12 +19,6 @@ const { mockOrsUpload } = vi.hoisted(() => ({
 
 vi.mock('@hapi/inert', () => ({
   default: mockInert
-}))
-
-vi.mock('#config/config.js', () => ({
-  config: {
-    get: mockConfigGet
-  }
 }))
 
 vi.mock('./routes/home/index.js', () => ({
@@ -98,35 +82,12 @@ describe('router plugin', () => {
     }
   })
 
-  test('does not register ORS upload routes when feature flag is disabled', async () => {
-    mockConfigGet.mockImplementation((key) => {
-      if (key === 'featureFlags.overseasSites') {
-        return false
-      }
-
-      return undefined
-    })
-
+  test('registers all route plugins including ORS upload', async () => {
     await router.plugin.register(server)
 
     expect(server.register).toHaveBeenCalledTimes(4)
-    expect(mockConfigGet).toHaveBeenCalledWith('featureFlags.overseasSites')
-    expect(server.register).not.toHaveBeenCalledWith([mockOrsUpload])
-  })
-
-  test('registers ORS upload routes when feature flag is enabled', async () => {
-    mockConfigGet.mockImplementation((key) => {
-      if (key === 'featureFlags.overseasSites') {
-        return true
-      }
-
-      return undefined
-    })
-
-    await router.plugin.register(server)
-
-    expect(server.register).toHaveBeenCalledTimes(5)
-    expect(mockConfigGet).toHaveBeenCalledWith('featureFlags.overseasSites')
-    expect(server.register).toHaveBeenCalledWith([mockOrsUpload])
+    expect(server.register).toHaveBeenCalledWith(
+      expect.arrayContaining([mockOrsUpload])
+    )
   })
 })

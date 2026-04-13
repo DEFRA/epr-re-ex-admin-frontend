@@ -1,15 +1,7 @@
 import Blankie from 'blankie'
 import { config } from '#config/config.js'
 
-export function cspFormAction({
-  isProduction,
-  cdpUploaderUrl,
-  isOverseasSitesFeatureEnabled
-}) {
-  if (!isOverseasSitesFeatureEnabled) {
-    return ['self']
-  }
-
+export function cspFormAction({ isProduction, cdpUploaderUrl }) {
   if (isProduction) {
     return ['self']
   }
@@ -44,8 +36,7 @@ const contentSecurityPolicy = {
     frameAncestors: ['none'],
     formAction: cspFormAction({
       isProduction: config.get('isProduction'),
-      cdpUploaderUrl: config.get('cdpUploaderUrl'),
-      isOverseasSitesFeatureEnabled: config.get('featureFlags.overseasSites')
+      cdpUploaderUrl: config.get('cdpUploaderUrl')
     }),
     manifestSrc: ['self'],
     generateNonces: false
