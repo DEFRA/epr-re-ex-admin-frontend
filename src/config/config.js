@@ -292,12 +292,6 @@ export const config = convict({
       format: Boolean,
       default: false,
       env: 'FEATURE_FLAG_OVERSEAS_SITES'
-    },
-    summaryLogFileDownload: {
-      doc: 'Enable summary log file download from system logs',
-      format: Boolean,
-      default: false,
-      env: 'FEATURE_FLAG_SUMMARY_LOG_FILE_DOWNLOAD'
     }
   },
   cdpUploaderUrl: {
