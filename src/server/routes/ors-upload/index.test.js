@@ -1,5 +1,4 @@
-import { vi, beforeEach, afterEach, describe, test, expect } from 'vitest'
-import { config } from '#config/config.js'
+import { vi, beforeEach, describe, test, expect } from 'vitest'
 import { orsUpload } from './index.js'
 import { orsUploadRoutes } from './constants.js'
 
@@ -7,24 +6,9 @@ describe('#ors-upload routes plugin', () => {
   const mockServer = {
     route: vi.fn()
   }
-  const originalConfigGet = config.get.bind(config)
-  let configGetSpy
 
   beforeEach(() => {
     vi.clearAllMocks()
-
-    configGetSpy = vi.spyOn(config, 'get').mockImplementation((key) => {
-      if (key === 'featureFlags.overseasSites') {
-        return true
-      }
-
-      return originalConfigGet(key)
-    })
-  })
-
-  afterEach(() => {
-    configGetSpy.mockRestore()
-    vi.resetAllMocks()
   })
 
   test('Should have correct plugin name', () => {
@@ -34,24 +18,8 @@ describe('#ors-upload routes plugin', () => {
   test('Should register routes', () => {
     orsUpload.plugin.register(mockServer)
 
-    expect(configGetSpy).toHaveBeenCalledWith('featureFlags.overseasSites')
     expect(mockServer.route).toHaveBeenCalledTimes(1)
     expect(mockServer.route).toHaveBeenCalledWith(expect.any(Array))
-  })
-
-  test('Should not register routes when overseas-sites feature flag is disabled', () => {
-    configGetSpy.mockImplementation((key) => {
-      if (key === 'featureFlags.overseasSites') {
-        return false
-      }
-
-      return originalConfigGet(key)
-    })
-
-    orsUpload.plugin.register(mockServer)
-
-    expect(configGetSpy).toHaveBeenCalledWith('featureFlags.overseasSites')
-    expect(mockServer.route).not.toHaveBeenCalled()
   })
 
   test('Should register upload and status routes', () => {

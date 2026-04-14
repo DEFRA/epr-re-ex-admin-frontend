@@ -3,17 +3,12 @@ import { orsDownloadController } from './controller.download.js'
 import { orsListGetController } from './controller.list.get.js'
 import { orsUploadStatusGetController } from './controller.status.get.js'
 import { orsUploadRoutes } from './constants.js'
-import { config } from '#config/config.js'
 import Joi from 'joi'
 
 export const orsUpload = {
   plugin: {
     name: 'ors-upload',
     register(server) {
-      if (!config.get('featureFlags.overseasSites')) {
-        return
-      }
-
       server.route([
         {
           method: 'GET',
