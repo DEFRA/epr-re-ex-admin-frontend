@@ -91,6 +91,20 @@ describe('system-log download controller', () => {
     expect([...responseArg]).toEqual([...binaryContent])
   })
 
+  test('accepts Floci URLs', async () => {
+    const presignedUrl = 'http://floci:4566/bucket/file.xlsx'
+    const binaryContent = new Uint8Array([0x50, 0x4b, 0x03, 0x04])
+
+    fetchRedirectFromBackend.mockResolvedValue(presignedUrl)
+    mswServer.use(http.get(presignedUrl, () => new HttpResponse(binaryContent)))
+
+    await systemLogDownloadController.handler(mockRequest, mockH)
+
+    const responseArg = mockH.response.mock.calls[0][0]
+    expect(Buffer.isBuffer(responseArg)).toBe(true)
+    expect([...responseArg]).toEqual([...binaryContent])
+  })
+
   test('rejects invalid download URLs to prevent SSRF', async () => {
     fetchRedirectFromBackend.mockResolvedValue(
       'https://evil-site.com/steal-data'

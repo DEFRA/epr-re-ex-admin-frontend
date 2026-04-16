@@ -108,6 +108,24 @@ describe('public-register POST controller', () => {
     expect(mockH.response).toHaveBeenCalledWith(mockCsvContent)
   })
 
+  test('Should accept Floci URLs with Docker hostname', async () => {
+    const mockDownloadUrl =
+      'http://floci:4566/bucket/public-register.csv?signed=abc'
+    const mockCsvContent = 'csv,content'
+
+    fetchJsonFromBackend.mockResolvedValue({ downloadUrl: mockDownloadUrl })
+    mswServer.use(
+      http.get(
+        'http://floci:4566/bucket/public-register.csv',
+        () => new HttpResponse(mockCsvContent)
+      )
+    )
+
+    await publicRegisterPostController.handler(mockRequest, mockH)
+
+    expect(mockH.response).toHaveBeenCalledWith(mockCsvContent)
+  })
+
   test('Should reject invalid download URLs to prevent SSRF', async () => {
     const maliciousUrl = 'https://evil-site.com/steal-data'
 
