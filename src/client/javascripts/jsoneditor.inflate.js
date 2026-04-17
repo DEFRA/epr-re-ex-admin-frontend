@@ -119,7 +119,7 @@ function inflateRecursive(data, schema) {
  * @returns {*} Data with null objects inflated, or the original data if inputs are invalid
  */
 export function inflateNullObjects(data, schema) {
-  if (data == null || !schema) {
+  if (data === null || data === undefined || !schema) {
     return data
   }
   return inflateRecursive(data, schema)
