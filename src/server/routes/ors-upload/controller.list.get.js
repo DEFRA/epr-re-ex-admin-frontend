@@ -1,6 +1,7 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { formatDate } from '#config/nunjucks/filters/format-date.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
+import { isNil } from '#server/common/helpers/is-nil.js'
 import {
   buildBackendPath,
   buildPageHref,
@@ -11,11 +12,11 @@ import {
 const logger = createLogger()
 
 function toDisplayValue(value) {
-  return value === null || value === undefined || value === '' ? '-' : value
+  return isNil(value) || value === '' ? '-' : value
 }
 
 function toValidFromDisplayValue(value) {
-  if (value === null || value === undefined || value === '') {
+  if (isNil(value) || value === '') {
     return '-'
   }
 

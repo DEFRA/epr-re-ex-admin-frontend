@@ -1,3 +1,5 @@
+import { isNil } from '#server/common/helpers/is-nil.js'
+
 const materialDisplayNames = {
   aluminium: 'Aluminium',
   fibre: 'Fibre based composite',
@@ -21,7 +23,7 @@ export function formatMaterialName(material) {
 }
 
 export function formatTonnage(tonnage) {
-  if (tonnage === undefined || tonnage === null) {
+  if (isNil(tonnage)) {
     return ''
   }
   return tonnage.toFixed(2)
@@ -30,7 +32,7 @@ export function formatTonnage(tonnage) {
 export function materialRowHeading(row) {
   if (row.material) {
     return formatMaterialName(row.material)
-  } else if (row.type === null || row.type === undefined) {
+  } else if (isNil(row.type)) {
     return 'Total'
   } else {
     return ''
