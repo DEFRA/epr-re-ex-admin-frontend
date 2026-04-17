@@ -1,6 +1,7 @@
 import { writeToString } from '@fast-csv/format'
 import { formatDate } from '#config/nunjucks/filters/format-date.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { isNil } from '#server/common/helpers/is-nil.js'
 import { sanitizeFormulaInjection } from '#server/common/helpers/sanitize-formula-injection.js'
 import { buildBackendPath } from './helpers.js'
 
@@ -8,7 +9,7 @@ const dateFormat = 'd MMMM yyyy'
 const utf8Bom = '\uFEFF'
 
 function toCsvValue(value) {
-  if (value === null || value === undefined || value === '') {
+  if (isNil(value) || value === '') {
     return ''
   }
 
@@ -16,7 +17,7 @@ function toCsvValue(value) {
 }
 
 function toValidFromCsvValue(value) {
-  if (value === null || value === undefined || value === '') {
+  if (isNil(value) || value === '') {
     return ''
   }
 

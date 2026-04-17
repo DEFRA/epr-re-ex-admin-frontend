@@ -1,4 +1,5 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { isNil } from '#server/common/helpers/is-nil.js'
 import isEqual from 'lodash/isEqual.js'
 import isArray from 'lodash/isArray.js'
 import isObject from 'lodash/isObject.js'
@@ -159,5 +160,5 @@ function renderChange(a, b) {
 }
 
 function isSimple(x) {
-  return x === undefined || x === null || (!isObject(x) && !isArray(x))
+  return isNil(x) || (!isObject(x) && !isArray(x))
 }
