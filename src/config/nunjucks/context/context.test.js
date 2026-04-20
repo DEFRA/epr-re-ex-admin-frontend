@@ -110,6 +110,11 @@ describe('context and cache', () => {
             },
             {
               current: false,
+              text: 'Report submissions',
+              href: '/report-submissions'
+            },
+            {
+              current: false,
               text: 'System logs',
               href: '/system-logs'
             }
@@ -288,6 +293,11 @@ describe('context and cache', () => {
               current: false,
               text: 'PRN tonnage',
               href: '/prn-tonnage'
+            },
+            {
+              current: false,
+              text: 'Report submissions',
+              href: '/report-submissions'
             },
             {
               current: false,
