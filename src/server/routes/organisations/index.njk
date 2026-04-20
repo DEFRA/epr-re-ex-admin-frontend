@@ -55,7 +55,7 @@
             {% set orgId = org.orgId %}
 
             {# build cells as objects expected by govukTable #}
-            {% set nameCell = { text: org.name } %}
+            {% set nameCell = { html: '<a class="govuk-link govuk-link--no-visited-state" href="/organisations/' ~ org.id ~ '/overview">' ~ org.name ~ '</a>' } %}
             {% set orgIdCell = { text: orgId } %}
             {% set registrationNumberCell = { text: org.registrationNumber } %}
 

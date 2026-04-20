@@ -3,6 +3,8 @@ import inert from '@hapi/inert'
 import { home } from './routes/home/index.js'
 import { organisations } from './routes/organisations/index.js'
 import { organisation } from './routes/organisation/index.js'
+import { organisationOverview } from './routes/organisation-overview/index.js'
+import { reports } from './routes/reports/index.js'
 import { health } from './routes/health/index.js'
 import { auth } from './routes/auth/index.js'
 import { defraFormsSubmission } from './routes/defra-forms-submission/index.js'
@@ -32,6 +34,8 @@ export const router = {
         home,
         organisations,
         organisation,
+        organisationOverview,
+        reports,
         auth,
         defraFormsSubmission,
         systemLogs,

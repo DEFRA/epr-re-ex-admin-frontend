@@ -1,0 +1,9 @@
+{% extends 'layout.njk' %}
+
+{% block content %}
+  <div class="govuk-width-container">
+    <h1 class="govuk-heading-xl">{{ heading }}</h1>
+
+    <pre><code data-testid="report-json">{{ reportJson }}</code></pre>
+  </div>
+{% endblock %}
