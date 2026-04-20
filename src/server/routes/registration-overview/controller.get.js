@@ -2,7 +2,7 @@ import Boom from '@hapi/boom'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { fetchOrganisationOverview } from '#server/common/helpers/fetch-organisation-overview.js'
 
-export const reportsGetListController = {
+export const registrationOverviewGETController = {
   async handler(request, h) {
     const { organisationId, registrationId } = request.params
 
@@ -26,7 +26,7 @@ export const reportsGetListController = {
 
     const heading = `${overview.companyName} - ${registration.registrationNumber ?? registration.id}`
 
-    return h.view('routes/reports/list', {
+    return h.view('routes/registration-overview/index', {
       breadcrumbs: [
         { text: 'Organisations', href: '/organisations' },
         { text: 'Overview', href: `/organisations/${organisationId}/overview` }

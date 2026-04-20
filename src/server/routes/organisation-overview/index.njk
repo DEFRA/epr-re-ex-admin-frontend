@@ -10,8 +10,8 @@
 
     {% set tableRows = [] %}
     {% for registration in registrations %}
-      {% set reportsUrl = '/organisations/' ~ organisationId ~ '/registrations/' ~ registration.id ~ '/reports' %}
-      {% set actionsHtml = '<a class="govuk-link govuk-link--no-visited-state" href="' ~ reportsUrl ~ '">View reports</a>' %}
+      {% set reportsUrl = '/organisations/' ~ organisationId ~ '/registrations/' ~ registration.id ~ '/overview' %}
+      {% set actionsHtml = '<a class="govuk-link govuk-link--no-visited-state" href="' ~ reportsUrl ~ '">View</a>' %}
       {% set row = [
         { text: registration.registrationNumber },
         { html: govukTag({ text: registration.status }) },

@@ -19,7 +19,7 @@ export const reportDetailGETController = {
         { text: 'Overview', href: `/organisations/${organisationId}/overview` },
         {
           text: 'Registration reports',
-          href: `/organisations/${organisationId}/registrations/${registrationId}/reports`
+          href: `/organisations/${organisationId}/registrations/${registrationId}/overview`
         }
       ],
       pageTitle,

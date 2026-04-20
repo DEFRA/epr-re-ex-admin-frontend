@@ -65,7 +65,7 @@ describe('reports GET controller', () => {
         },
         {
           text: 'Registration reports',
-          href: '/organisations/69c3b4f0abda9efa68dd6697/registrations/69c3b4f0abda9efa68dd669b/reports'
+          href: '/organisations/69c3b4f0abda9efa68dd6697/registrations/69c3b4f0abda9efa68dd669b/overview'
         }
       ],
       pageTitle: 'Report',
@@ -90,7 +90,7 @@ describe('reports GET controller', () => {
           },
           {
             text: 'Registration reports',
-            href: '/organisations/69c3b4f0abda9efa68dd6697/registrations/69c3b4f0abda9efa68dd669b/reports'
+            href: '/organisations/69c3b4f0abda9efa68dd6697/registrations/69c3b4f0abda9efa68dd669b/overview'
           }
         ]
       })

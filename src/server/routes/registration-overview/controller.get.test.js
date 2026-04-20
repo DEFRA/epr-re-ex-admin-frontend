@@ -1,6 +1,6 @@
 import { vi } from 'vitest'
 import Boom from '@hapi/boom'
-import { reportsGetListController } from './controller.get-list.js'
+import { registrationOverviewGETController } from './controller.get.js'
 import { fetchOrganisationOverview } from '#server/common/helpers/fetch-organisation-overview.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
@@ -62,7 +62,7 @@ const mockCalendar = {
   reportingPeriods: mockRegistration.reports.reportingPeriods
 }
 
-describe('reports get-list GET controller', () => {
+describe('registration-overview GET controller', () => {
   let mockRequest
   let mockH
 
@@ -90,7 +90,7 @@ describe('reports get-list GET controller', () => {
     fetchOrganisationOverview.mockResolvedValue(mockOverview)
     fetchJsonFromBackend.mockResolvedValue(mockCalendar)
 
-    await reportsGetListController.handler(mockRequest, mockH)
+    await registrationOverviewGETController.handler(mockRequest, mockH)
 
     expect(fetchOrganisationOverview).toHaveBeenCalledWith(
       mockRequest,
@@ -102,7 +102,7 @@ describe('reports get-list GET controller', () => {
     fetchOrganisationOverview.mockResolvedValue(mockOverview)
     fetchJsonFromBackend.mockResolvedValue(mockCalendar)
 
-    await reportsGetListController.handler(mockRequest, mockH)
+    await registrationOverviewGETController.handler(mockRequest, mockH)
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
       mockRequest,
@@ -115,17 +115,17 @@ describe('reports get-list GET controller', () => {
     fetchOrganisationOverview.mockResolvedValue({ ...mockOverview, registrations: [] })
 
     await expect(
-      reportsGetListController.handler(mockRequest, mockH)
+      registrationOverviewGETController.handler(mockRequest, mockH)
     ).rejects.toMatchObject(Boom.notFound())
   })
 
-  test('renders the list view with registration, cadence and reporting periods', async () => {
+  test('renders the view with registration, cadence and reporting periods', async () => {
     fetchOrganisationOverview.mockResolvedValue(mockOverview)
     fetchJsonFromBackend.mockResolvedValue(mockCalendar)
 
-    await reportsGetListController.handler(mockRequest, mockH)
+    await registrationOverviewGETController.handler(mockRequest, mockH)
 
-    expect(mockH.view).toHaveBeenCalledWith('routes/reports/list', {
+    expect(mockH.view).toHaveBeenCalledWith('routes/registration-overview/index', {
       breadcrumbs: [
         { text: 'Organisations', href: '/organisations' },
         {
@@ -147,10 +147,10 @@ describe('reports get-list GET controller', () => {
     fetchOrganisationOverview.mockResolvedValue(mockOverview)
     fetchJsonFromBackend.mockResolvedValue(mockCalendar)
 
-    await reportsGetListController.handler(mockRequest, mockH)
+    await registrationOverviewGETController.handler(mockRequest, mockH)
 
     expect(mockH.view).toHaveBeenCalledWith(
-      'routes/reports/list',
+      'routes/registration-overview/index',
       expect.objectContaining({
         breadcrumbs: [
           { text: 'Organisations', href: '/organisations' },
@@ -167,10 +167,10 @@ describe('reports get-list GET controller', () => {
     fetchOrganisationOverview.mockResolvedValue(mockOverview)
     fetchJsonFromBackend.mockResolvedValue(mockCalendar)
 
-    await reportsGetListController.handler(mockRequest, mockH)
+    await registrationOverviewGETController.handler(mockRequest, mockH)
 
     expect(mockH.view).toHaveBeenCalledWith(
-      'routes/reports/list',
+      'routes/registration-overview/index',
       expect.objectContaining({
         registration: expect.objectContaining({
           site: 'Site A',
@@ -184,10 +184,10 @@ describe('reports get-list GET controller', () => {
     fetchOrganisationOverview.mockResolvedValue(mockOverview)
     fetchJsonFromBackend.mockResolvedValue(mockCalendar)
 
-    await reportsGetListController.handler(mockRequest, mockH)
+    await registrationOverviewGETController.handler(mockRequest, mockH)
 
     expect(mockH.view).toHaveBeenCalledWith(
-      'routes/reports/list',
+      'routes/registration-overview/index',
       expect.objectContaining({ heading: 'ACME ltd - REG-50030-001' })
     )
   })
@@ -200,10 +200,10 @@ describe('reports get-list GET controller', () => {
     })
     fetchJsonFromBackend.mockResolvedValue(mockCalendar)
 
-    await reportsGetListController.handler(mockRequest, mockH)
+    await registrationOverviewGETController.handler(mockRequest, mockH)
 
     expect(mockH.view).toHaveBeenCalledWith(
-      'routes/reports/list',
+      'routes/registration-overview/index',
       expect.objectContaining({ heading: 'ACME ltd - 69c3b4f0abda9efa68dd669b' })
     )
   })
