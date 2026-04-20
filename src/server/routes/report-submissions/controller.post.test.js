@@ -103,15 +103,17 @@ describe('reportSubmissionsPostController', () => {
 
     const csv = mockH.response.mock.calls[0][0]
     expect(csv).toContain('Organisation name')
-    expect(csv).toContain('Registration submitter contact number')
-    expect(csv).toContain('Registration approved person contact number')
-    expect(csv).toContain('Registration submitter email address')
-    expect(csv).toContain('Registration approved person email address')
+    expect(csv).toContain('Organisation registered approver contact number')
+    expect(csv).toContain(
+      'Organisation registered approver person email address'
+    )
+    expect(csv).toContain('Organisation registered submitter contact number')
+    expect(csv).toContain('Organisation registered submitter email address')
     expect(csv).toContain('Material')
-    expect(csv).toContain('Registration No')
     expect(csv).toContain('Accreditation No')
+    expect(csv).toContain('Registered No')
     expect(csv).toContain('Report Type')
-    expect(csv).toContain('Reporting Period')
+    expect(csv).toContain('Report Period')
     expect(csv).toContain('Due Date')
     expect(csv).toContain('Submitted Date')
     expect(csv).toContain('Submitted By')
