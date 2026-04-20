@@ -8,55 +8,35 @@
   <div class="govuk-width-container">
     <h1 class="govuk-heading-xl">{{ heading }}</h1>
 
+    {% set tableRows = [] %}
     {% for registration in registrations %}
-      <div id="{{ registration.id }}">
-        <h2 class="govuk-heading-l">{{ registration.registrationNumber if registration.registrationNumber else registration.id }} </h2>
-
-        <div class="govuk-grid-row">
-          <div class="govuk-grid-column-one-third">
-            {{ govukSummaryList({ rows: [
-              { key: { text: "Material" }, value: { text: registration.material } },
-              { key: { text: "Number" }, value: { text: registration.registrationNumber } },
-              { key: { text: "Status" }, value: { html: govukTag({ text: registration.status }) } },
-              { key: { text: "Accreditation number" }, value: { html: registration.accreditation.accreditationNumber } },
-              { key: { text: "Accreditation status" }, value: { html: govukTag({ text: registration.accreditation.status }) } }
-            ] }) }}
-          </div>
-        </div>
-
-        {% if registration.reports.reportingPeriods and registration.reports.reportingPeriods.length %}
-          {% set tableRows = [] %}
-          {% for period in registration.reports.reportingPeriods %}
-            {% set statusText = period.report.status if period.report else 'Due' %}
-            {% if period.report %}
-              {% set reportUrl = '/organisations/' ~ organisationId ~ '/registrations/' ~ registration.id ~ '/reports/' ~ period.year ~ '/' ~ registration.reports.cadence ~ '/' ~ period.period %}
-              {% set viewLink = '<a class="govuk-link govuk-link--no-visited-state" href="' ~ reportUrl ~ '">View</a>' %}
-            {% else %}
-              {% set viewLink = '' %}
-            {% endif %}
-            {% set row = [
-              { text: period.startDate },
-              { text: period.endDate },
-              { html: govukTag({ text: statusText }) },
-              { html: viewLink }
-            ] %}
-            {% set tableRows = tableRows.concat([row]) %}
-          {% endfor %}
-
-          {{ govukTable({
-            caption: "Reports",
-            captionClasses: "govuk-table__caption--m",
-            head: [
-              { text: "Start" },
-              { text: "End" },
-              { text: "Status" },
-              { text: "Actions" }
-            ],
-            rows: tableRows
-          }) }}
-        {% endif %}
-      </div>
+      {% set reportsUrl = '/organisations/' ~ organisationId ~ '/registrations/' ~ registration.id ~ '/reports' %}
+      {% set actionsHtml = '<a class="govuk-link govuk-link--no-visited-state" href="' ~ reportsUrl ~ '">View reports</a>' %}
+      {% set row = [
+        { text: registration.registrationNumber },
+        { html: govukTag({ text: registration.status }) },
+        { text: registration.processingType },
+        { text: registration.material },
+        { text: registration.site },
+        { text: registration.accreditation.accreditationNumber },
+        { html: govukTag({ text: registration.accreditation.status }) },
+        { html: actionsHtml }
+      ] %}
+      {% set tableRows = tableRows.concat([row]) %}
     {% endfor %}
 
+    {{ govukTable({
+      head: [
+        { text: "Registration number" },
+        { text: "Status" },
+        { text: "Processing type" },
+        { text: "Material" },
+        { text: "Site" },
+        { text: "Accreditation number" },
+        { text: "Accreditation status" },
+        { text: "Actions" }
+      ],
+      rows: tableRows
+    }) }}
   </div>
 {% endblock %}

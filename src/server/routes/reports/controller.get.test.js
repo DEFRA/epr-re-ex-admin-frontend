@@ -1,5 +1,5 @@
 import { vi } from 'vitest'
-import { reportsGETController } from './controller.get.js'
+import { reportDetailGETController } from './controller.get.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
 vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
@@ -42,7 +42,7 @@ describe('reports GET controller', () => {
   test('fetches report from backend using all route params', async () => {
     fetchJsonFromBackend.mockResolvedValue(mockReport)
 
-    await reportsGETController.handler(mockRequest, mockH)
+    await reportDetailGETController.handler(mockRequest, mockH)
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
       mockRequest,
@@ -54,20 +54,54 @@ describe('reports GET controller', () => {
   test('renders the view with correct context', async () => {
     fetchJsonFromBackend.mockResolvedValue(mockReport)
 
-    await reportsGETController.handler(mockRequest, mockH)
+    await reportDetailGETController.handler(mockRequest, mockH)
 
     expect(mockH.view).toHaveBeenCalledWith('routes/reports/index', {
+      breadcrumbs: [
+        { text: 'Organisations', href: '/organisations' },
+        {
+          text: 'Overview',
+          href: '/organisations/69c3b4f0abda9efa68dd6697/overview'
+        },
+        {
+          text: 'Registration reports',
+          href: '/organisations/69c3b4f0abda9efa68dd6697/registrations/69c3b4f0abda9efa68dd669b/reports'
+        }
+      ],
       pageTitle: 'Report',
       heading: 'Report',
       reportJson: JSON.stringify(mockReport, null, 2)
     })
   })
 
+  test('passes breadcrumbs for organisations, overview and registration reports', async () => {
+    fetchJsonFromBackend.mockResolvedValue(mockReport)
+
+    await reportDetailGETController.handler(mockRequest, mockH)
+
+    expect(mockH.view).toHaveBeenCalledWith(
+      'routes/reports/index',
+      expect.objectContaining({
+        breadcrumbs: [
+          { text: 'Organisations', href: '/organisations' },
+          {
+            text: 'Overview',
+            href: '/organisations/69c3b4f0abda9efa68dd6697/overview'
+          },
+          {
+            text: 'Registration reports',
+            href: '/organisations/69c3b4f0abda9efa68dd6697/registrations/69c3b4f0abda9efa68dd669b/reports'
+          }
+        ]
+      })
+    )
+  })
+
   test('uses pageTitle as heading', async () => {
     mockRequest.route.settings.app.pageTitle = 'Custom Title'
     fetchJsonFromBackend.mockResolvedValue(mockReport)
 
-    await reportsGETController.handler(mockRequest, mockH)
+    await reportDetailGETController.handler(mockRequest, mockH)
 
     expect(mockH.view).toHaveBeenCalledWith(
       'routes/reports/index',

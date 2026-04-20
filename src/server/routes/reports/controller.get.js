@@ -1,6 +1,6 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
-export const reportsGETController = {
+export const reportDetailGETController = {
   async handler(request, h) {
     const { organisationId, registrationId, year, cadence, period } =
       request.params
@@ -14,6 +14,14 @@ export const reportsGETController = {
     const pageTitle = request.route.settings.app.pageTitle
 
     return h.view('routes/reports/index', {
+      breadcrumbs: [
+        { text: 'Organisations', href: '/organisations' },
+        { text: 'Overview', href: `/organisations/${organisationId}/overview` },
+        {
+          text: 'Registration reports',
+          href: `/organisations/${organisationId}/registrations/${registrationId}/reports`
+        }
+      ],
       pageTitle,
       heading: pageTitle,
       reportJson: JSON.stringify(data, null, 2)

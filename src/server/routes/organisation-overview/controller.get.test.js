@@ -1,9 +1,9 @@
 import { vi } from 'vitest'
 import { organisationOverviewGETController } from './controller.get.js'
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { fetchOrganisationOverview } from '#server/common/helpers/fetch-organisation-overview.js'
 
-vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
-  fetchJsonFromBackend: vi.fn()
+vi.mock('#server/common/helpers/fetch-organisation-overview.js', () => ({
+  fetchOrganisationOverview: vi.fn()
 }))
 
 const mockOrganisationOverview = {
@@ -71,25 +71,25 @@ describe('organisation-overview GET controller', () => {
   })
 
   test('fetches organisation overview from backend using the id param', async () => {
-    fetchJsonFromBackend.mockResolvedValue(mockOrganisationOverview)
+    fetchOrganisationOverview.mockResolvedValue(mockOrganisationOverview)
 
     await organisationOverviewGETController.handler(mockRequest, mockH)
 
-    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
+    expect(fetchOrganisationOverview).toHaveBeenCalledWith(
       mockRequest,
-      '/v1/organisations/69c3b4f0abda9efa68dd6697/overview',
-      {}
+      '69c3b4f0abda9efa68dd6697'
     )
   })
 
   test('renders the view with correct context', async () => {
-    fetchJsonFromBackend.mockResolvedValue(mockOrganisationOverview)
+    fetchOrganisationOverview.mockResolvedValue(mockOrganisationOverview)
 
     await organisationOverviewGETController.handler(mockRequest, mockH)
 
     expect(mockH.view).toHaveBeenCalledWith(
       'routes/organisation-overview/index',
       {
+        breadcrumbs: [{ text: 'Organisations', href: '/organisations' }],
         pageTitle: 'Organisation Overview',
         heading: 'ACME ltd',
         organisationId: '69c3b4f0abda9efa68dd6697',
@@ -98,8 +98,21 @@ describe('organisation-overview GET controller', () => {
     )
   })
 
+  test('passes a breadcrumb linking to the organisations list', async () => {
+    fetchOrganisationOverview.mockResolvedValue(mockOrganisationOverview)
+
+    await organisationOverviewGETController.handler(mockRequest, mockH)
+
+    expect(mockH.view).toHaveBeenCalledWith(
+      'routes/organisation-overview/index',
+      expect.objectContaining({
+        breadcrumbs: [{ text: 'Organisations', href: '/organisations' }]
+      })
+    )
+  })
+
   test('uses companyName from response as heading', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    fetchOrganisationOverview.mockResolvedValue({
       ...mockOrganisationOverview,
       companyName: 'Different Company'
     })
