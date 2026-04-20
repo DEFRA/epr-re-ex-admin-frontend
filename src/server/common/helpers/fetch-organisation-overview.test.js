@@ -34,7 +34,10 @@ describe('fetchOrganisationOverview', () => {
   test('returns the overview response from the backend', async () => {
     fetchJsonFromBackend.mockResolvedValue(mockOverview)
 
-    const result = await fetchOrganisationOverview(mockRequest, '69c3b4f0abda9efa68dd6697')
+    const result = await fetchOrganisationOverview(
+      mockRequest,
+      '69c3b4f0abda9efa68dd6697'
+    )
 
     expect(result).toBe(mockOverview)
   })

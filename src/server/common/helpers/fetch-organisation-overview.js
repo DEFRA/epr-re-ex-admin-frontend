@@ -12,4 +12,8 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * @returns {Promise<OrganisationOverview>}
  */
 export const fetchOrganisationOverview = (request, organisationId) =>
-  fetchJsonFromBackend(request, `/v1/organisations/${organisationId}/overview`, {})
+  fetchJsonFromBackend(
+    request,
+    `/v1/organisations/${organisationId}/overview`,
+    {}
+  )

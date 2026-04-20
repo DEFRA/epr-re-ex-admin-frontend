@@ -112,7 +112,10 @@ describe('registration-overview GET controller', () => {
   })
 
   test('throws a 404 when the registration is not found in the overview', async () => {
-    fetchOrganisationOverview.mockResolvedValue({ ...mockOverview, registrations: [] })
+    fetchOrganisationOverview.mockResolvedValue({
+      ...mockOverview,
+      registrations: []
+    })
 
     await expect(
       registrationOverviewGETController.handler(mockRequest, mockH)
@@ -125,22 +128,25 @@ describe('registration-overview GET controller', () => {
 
     await registrationOverviewGETController.handler(mockRequest, mockH)
 
-    expect(mockH.view).toHaveBeenCalledWith('routes/registration-overview/index', {
-      breadcrumbs: [
-        { text: 'Organisations', href: '/organisations' },
-        {
-          text: 'Overview',
-          href: '/organisations/69c3b4f0abda9efa68dd6697/overview'
-        }
-      ],
-      pageTitle: 'Reports',
-      heading: 'ACME ltd - REG-50030-001',
-      organisationId: '69c3b4f0abda9efa68dd6697',
-      registrationId: '69c3b4f0abda9efa68dd669b',
-      registration: mockRegistration,
-      cadence: 'monthly',
-      reportingPeriods: mockCalendar.reportingPeriods
-    })
+    expect(mockH.view).toHaveBeenCalledWith(
+      'routes/registration-overview/index',
+      {
+        breadcrumbs: [
+          { text: 'Organisations', href: '/organisations' },
+          {
+            text: 'Overview',
+            href: '/organisations/69c3b4f0abda9efa68dd6697/overview'
+          }
+        ],
+        pageTitle: 'Reports',
+        heading: 'ACME ltd - REG-50030-001',
+        organisationId: '69c3b4f0abda9efa68dd6697',
+        registrationId: '69c3b4f0abda9efa68dd669b',
+        registration: mockRegistration,
+        cadence: 'monthly',
+        reportingPeriods: mockCalendar.reportingPeriods
+      }
+    )
   })
 
   test('passes breadcrumbs for organisations and overview', async () => {
@@ -193,7 +199,10 @@ describe('registration-overview GET controller', () => {
   })
 
   test('falls back to registration.id as heading when registrationNumber is missing', async () => {
-    const registrationWithoutNumber = { ...mockRegistration, registrationNumber: undefined }
+    const registrationWithoutNumber = {
+      ...mockRegistration,
+      registrationNumber: undefined
+    }
     fetchOrganisationOverview.mockResolvedValue({
       ...mockOverview,
       registrations: [registrationWithoutNumber]
@@ -204,7 +213,9 @@ describe('registration-overview GET controller', () => {
 
     expect(mockH.view).toHaveBeenCalledWith(
       'routes/registration-overview/index',
-      expect.objectContaining({ heading: 'ACME ltd - 69c3b4f0abda9efa68dd669b' })
+      expect.objectContaining({
+        heading: 'ACME ltd - 69c3b4f0abda9efa68dd669b'
+      })
     )
   })
 })
