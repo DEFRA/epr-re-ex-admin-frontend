@@ -31,17 +31,41 @@ describe('queue-management', () => {
     vi.clearAllMocks()
   })
 
-  const stubDlqStatus = (messageCount) => {
+  const sampleMessages = [
+    {
+      messageId: 'abc-123',
+      sentTimestamp: '2026-04-21T10:30:00.000Z',
+      approximateReceiveCount: 4,
+      command: {
+        type: 'SUMMARY_LOG_COMMAND.VALIDATE',
+        payload: { summaryLogId: 'log-001' }
+      },
+      body: '{"type":"SUMMARY_LOG_COMMAND.VALIDATE","payload":{"summaryLogId":"log-001"}}'
+    },
+    {
+      messageId: 'def-456',
+      sentTimestamp: '2026-04-20T08:15:00.000Z',
+      approximateReceiveCount: 1,
+      command: null,
+      body: 'not valid json'
+    }
+  ]
+
+  const stubDlqMessages = (messages, { omitMessagesField = false } = {}) => {
     mswServer.use(
-      http.get(`${backendUrl}/v1/admin/queues/dlq/status`, () =>
-        HttpResponse.json({ approximateMessageCount: messageCount })
+      http.get(`${backendUrl}/v1/admin/queues/dlq/messages`, () =>
+        HttpResponse.json(
+          omitMessagesField
+            ? { approximateMessageCount: 0 }
+            : { approximateMessageCount: messages.length, messages }
+        )
       )
     )
   }
 
-  const stubDlqStatusError = () => {
+  const stubDlqMessagesError = () => {
     mswServer.use(
-      http.get(`${backendUrl}/v1/admin/queues/dlq/status`, () =>
+      http.get(`${backendUrl}/v1/admin/queues/dlq/messages`, () =>
         HttpResponse.error()
       )
     )
@@ -82,7 +106,7 @@ describe('queue-management', () => {
       })
 
       test('Should return OK and render page with message count', async () => {
-        stubDlqStatus(3)
+        stubDlqMessages(sampleMessages)
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -94,11 +118,113 @@ describe('queue-management', () => {
 
         const $ = cheerio.load(result)
         expect($('h1').text()).toContain('Queue management')
-        expect(result).toContain('3')
+        expect(result).toContain('2')
+      })
+
+      test('Should render table with correct columns and data', async () => {
+        stubDlqMessages(sampleMessages)
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: '/queue-management',
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const $ = cheerio.load(result)
+
+        // Check table headers
+        const headers = $('thead th')
+          .map((_, el) => $(el).text().trim())
+          .get()
+        expect(headers).toEqual([
+          'Command type',
+          'Summary log ID',
+          'Sent timestamp',
+          'Receive count',
+          'Raw message'
+        ])
+
+        // Check first row data
+        const firstRowCells = $('tbody tr')
+          .first()
+          .find('td')
+          .map((_, el) => $(el).text().trim())
+          .get()
+        expect(firstRowCells[0]).toBe('SUMMARY_LOG_COMMAND.VALIDATE')
+        expect(firstRowCells[1]).toBe('log-001')
+        expect(firstRowCells[3]).toBe('4')
+
+        // Check second row has "Unknown" and "N/A" for null command
+        const secondRowCells = $('tbody tr')
+          .eq(1)
+          .find('td')
+          .map((_, el) => $(el).text().trim())
+          .get()
+        expect(secondRowCells[0]).toBe('Unknown')
+        expect(secondRowCells[1]).toBe('N/A')
+      })
+
+      test('Should render details expander with raw JSON body', async () => {
+        stubDlqMessages(sampleMessages)
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: '/queue-management',
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const $ = cheerio.load(result)
+
+        // Each message should have a details component
+        const details = $('details.govuk-details')
+        expect(details.length).toBe(2)
+
+        // The first details component should contain the raw JSON body
+        const firstDetailsContent = details.first().find('code').text().trim()
+        expect(firstDetailsContent).toContain('SUMMARY_LOG_COMMAND.VALIDATE')
+        expect(firstDetailsContent).toContain('log-001')
+      })
+
+      test('Should render empty state when no messages', async () => {
+        stubDlqMessages([])
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: '/queue-management',
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const $ = cheerio.load(result)
+        expect(result).toContain(
+          'There are no messages on the dead-letter queue.'
+        )
+        // No table should be rendered
+        expect($('table').length).toBe(0)
+      })
+
+      test('Should handle missing messages field gracefully', async () => {
+        stubDlqMessages([], { omitMessagesField: true })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: '/queue-management',
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain(
+          'There are no messages on the dead-letter queue.'
+        )
       })
 
       test('Should render success banner after a successful purge redirect', async () => {
-        stubDlqStatus(0)
+        stubDlqMessages([])
         stubDlqPurge()
 
         // GET the confirm page to obtain crumb and session cookies
@@ -157,7 +283,7 @@ describe('queue-management', () => {
       })
 
       test('Should render error state when backend call fails', async () => {
-        stubDlqStatusError()
+        stubDlqMessagesError()
 
         const { result, statusCode } = await server.inject({
           method: 'GET',

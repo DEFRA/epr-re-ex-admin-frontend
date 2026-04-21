@@ -1,10 +1,12 @@
 {% extends 'layout.njk' %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/details/macro.njk" import govukDetails %}
 {% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
 
 {% block content %}
   <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
+    <div class="govuk-grid-column-full">
       <div class="govuk-body" data-testid="app-page-body">
 
         {% if success %}
@@ -26,11 +28,45 @@
           {{ "message" if approximateMessageCount === 1 else "messages" }}.
         </p>
 
-        {{ govukButton({
-          text: "Clear all messages",
-          href: "/queue-management/confirm-clear",
-          classes: "govuk-button--warning"
-        }) }}
+        {% if messages and messages.length %}
+          {% set tableRows = [] %}
+          {% for msg in messages %}
+            {% set bodyHtml %}
+              {{ govukDetails({
+                summaryText: "Show raw message",
+                html: '<code class="app-json-display">' ~ msg.bodyJson ~ '</code>'
+              }) }}
+            {% endset %}
+
+            {% set tableRows = tableRows.concat([[
+              { text: msg.commandType },
+              { text: msg.summaryLogId },
+              { text: msg.sentTimestamp },
+              { text: msg.receiveCount },
+              { html: bodyHtml }
+            ]]) %}
+          {% endfor %}
+
+          {{ govukTable({
+            firstCellIsHeader: false,
+            head: [
+              { text: "Command type" },
+              { text: "Summary log ID" },
+              { text: "Sent timestamp" },
+              { text: "Receive count" },
+              { text: "Raw message" }
+            ],
+            rows: tableRows
+          }) }}
+
+          {{ govukButton({
+            text: "Clear all messages",
+            href: "/queue-management/confirm-clear",
+            classes: "govuk-button--warning"
+          }) }}
+        {% else %}
+          <p class="govuk-body">There are no messages on the dead-letter queue.</p>
+        {% endif %}
 
       </div>
     </div>
