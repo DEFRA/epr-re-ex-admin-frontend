@@ -61,6 +61,11 @@ describe('#buildNavigation', () => {
       },
       {
         current: false,
+        text: 'Report submissions',
+        href: '/report-submissions'
+      },
+      {
+        current: false,
         text: 'System logs',
         href: '/system-logs'
       }
@@ -121,6 +126,11 @@ describe('#buildNavigation', () => {
       },
       {
         current: false,
+        text: 'Report submissions',
+        href: '/report-submissions'
+      },
+      {
+        current: false,
         text: 'System logs',
         href: '/system-logs'
       }
@@ -141,6 +151,20 @@ describe('#buildNavigation', () => {
         }
       ])
     )
+  })
+
+  test('Should place report submissions before system logs', () => {
+    const navigation = buildNavigation(
+      mockRequest({ path: '/non-existent-path' })
+    )
+    const reportSubmissionsIndex = navigation.findIndex(
+      (item) => item.text === 'Report submissions'
+    )
+    const systemLogsIndex = navigation.findIndex(
+      (item) => item.text === 'System logs'
+    )
+
+    expect(reportSubmissionsIndex).toBe(systemLogsIndex - 1)
   })
 
   test('Should place overseas sites after summary log uploads', () => {

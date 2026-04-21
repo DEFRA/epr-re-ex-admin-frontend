@@ -9,6 +9,7 @@ const navItems = [
   { text: 'Overseas sites', href: '/overseas-sites', matchSubPaths: true },
   { text: 'PRN activity', href: '/prn-activity' },
   { text: 'PRN tonnage', href: '/prn-tonnage' },
+  { text: 'Report submissions', href: '/report-submissions' },
   { text: 'System logs', href: '/system-logs' }
 ]
 

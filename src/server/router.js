@@ -18,6 +18,7 @@ import { linkedOrganisations } from './routes/linked-organisations/index.js'
 import { prnActivity } from './routes/prn-activity/index.js'
 import { summaryLogUploadsReport } from './routes/summary-log/index.js'
 import { orsUpload } from './routes/ors-upload/index.js'
+import { reportSubmissions } from './routes/report-submissions/index.js'
 
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
 
@@ -48,7 +49,8 @@ export const router = {
         linkedOrganisations,
         prnActivity,
         summaryLogUploadsReport,
-        orsUpload
+        orsUpload,
+        reportSubmissions
       ])
 
       await server.register([serveStaticFiles])
