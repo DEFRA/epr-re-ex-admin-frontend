@@ -1,0 +1,31 @@
+{% extends 'layout.njk' %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/warning-text/macro.njk" import govukWarningText %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <h1 class="govuk-heading-xl">{{ heading }}</h1>
+
+      {{ govukWarningText({
+        text: "All messages in the dead-letter queue will be permanently deleted.",
+        iconFallbackText: "Warning"
+      }) }}
+
+      <form method="POST" action="/queue-management/clear">
+        <input type="hidden" name="crumb" value="{{ crumb }}" />
+
+        {{ govukButton({
+          text: "Yes, clear all messages",
+          classes: "govuk-button--warning"
+        }) }}
+
+        <p class="govuk-body">
+          <a class="govuk-link" href="/queue-management">Cancel</a>
+        </p>
+      </form>
+
+    </div>
+  </div>
+{% endblock %}

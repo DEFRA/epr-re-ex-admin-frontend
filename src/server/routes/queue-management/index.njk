@@ -1,0 +1,38 @@
+{% extends 'layout.njk' %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <div class="govuk-body" data-testid="app-page-body">
+
+        {% if success %}
+          {% set successHtml %}
+            <p class="govuk-body">All dead-letter queue messages have been cleared.</p>
+          {% endset %}
+
+          {{ govukNotificationBanner({
+            html: successHtml,
+            type: "success"
+          }) }}
+        {% endif %}
+
+        <h1 class="govuk-heading-xl">{{ heading }}</h1>
+
+        <p class="govuk-body">
+          The dead-letter queue currently has
+          <strong>{{ approximateMessageCount }}</strong>
+          {{ "message" if approximateMessageCount === 1 else "messages" }}.
+        </p>
+
+        {{ govukButton({
+          text: "Clear all messages",
+          href: "/queue-management/confirm-clear",
+          classes: "govuk-button--warning"
+        }) }}
+
+      </div>
+    </div>
+  </div>
+{% endblock %}
