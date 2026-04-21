@@ -27,40 +27,39 @@
     </div>
     <div class="govuk-grid-row">
       <div class="govuk-grid-column-two-thirds">
-          {% if reportingPeriods and reportingPeriods.length %}
-            {% set tableRows = [] %}
-            {% for period in reportingPeriods %}
-              {% set statusText = period.report.status if period.report else 'Due' %}
-              {% if period.report %}
-                {% set reportUrl = '/organisations/' ~ organisationId ~ '/registrations/' ~ registrationId ~ '/reports/' ~ period.year ~ '/' ~ cadence ~ '/' ~ period.period %}
-                {% set viewLink = '<a class="govuk-link govuk-link--no-visited-state" href="' ~ reportUrl ~ '">View</a>' %}
-              {% else %}
-                {% set viewLink = '' %}
-              {% endif %}
-              {% set row = [
-                { text: period.startDate },
-                { text: period.endDate },
-                { text: period.dueDate },
-                { html: govukTag({ text: statusText }) },
-                { html: viewLink }
-              ] %}
-              {% set tableRows = tableRows.concat([row]) %}
-            {% endfor %}
+        {% if reportingPeriods and reportingPeriods.length %}
+          {% set tableRows = [] %}
+          {% for period in reportingPeriods %}
+            {% set statusText = period.report.status if period.report else 'Due' %}
+            {% if period.report %}
+              {% set reportUrl = '/organisations/' ~ organisationId ~ '/registrations/' ~ registrationId ~ '/reports/' ~ period.year ~ '/' ~ cadence ~ '/' ~ period.period %}
+              {% set viewLink = '<a class="govuk-link govuk-link--no-visited-state" href="' ~ reportUrl ~ '">View</a>' %}
+            {% else %}
+              {% set viewLink = '' %}
+            {% endif %}
+            {% set row = [
+              { text: period.startDate },
+              { text: period.endDate },
+              { text: period.dueDate },
+              { html: govukTag({ text: statusText }) },
+              { html: viewLink }
+            ] %}
+            {% set tableRows = tableRows.concat([row]) %}
+          {% endfor %}
 
-            {{ govukTable({
-              caption: "Reports",
-              captionClasses: "govuk-table__caption--m",
-              head: [
-                { text: "Start" },
-                { text: "End" },
-                { text: "Due" },
-                { text: "Status" },
-                { text: "Actions" }
-              ],
-              rows: tableRows
-            }) }}
-          {% endif %}
-        </div>
+          {{ govukTable({
+            caption: "Reports",
+            captionClasses: "govuk-table__caption--m",
+            head: [
+              { text: "Start" },
+              { text: "End" },
+              { text: "Due" },
+              { text: "Status" },
+              { text: "Actions" }
+            ],
+            rows: tableRows
+          }) }}
+        {% endif %}
       </div>
     </div>
   </div>
