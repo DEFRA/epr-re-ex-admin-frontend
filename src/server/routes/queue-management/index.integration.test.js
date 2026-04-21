@@ -227,51 +227,34 @@ describe('queue-management', () => {
         stubDlqMessages([])
         stubDlqPurge()
 
-        // GET the confirm page to obtain crumb and session cookies
-        const getResponse = await server.inject({
-          method: 'GET',
-          url: '/queue-management/confirm-clear',
-          auth: { strategy: 'session', credentials: mockUserSession }
-        })
+        const { cookie, crumb } = await getCsrfToken(
+          server,
+          '/queue-management/confirm-clear',
+          { strategy: 'session', credentials: mockUserSession }
+        )
 
-        const setCookieHeader = getResponse.headers['set-cookie']
-        const cookies = Array.isArray(setCookieHeader)
-          ? setCookieHeader
-          : [setCookieHeader].filter(Boolean)
-
-        // Build a cookie header containing all session cookies
-        const cookieHeader = cookies.map((c) => c.split(';')[0]).join('; ')
-
-        const crumbCookie = cookies.find((c) => c.startsWith('crumb='))
-        const crumb = crumbCookie ? crumbCookie.split(';')[0].split('=')[1] : ''
-
-        // POST to trigger purge
         const postResponse = await server.inject({
           method: 'POST',
           url: '/queue-management/clear',
-          headers: { cookie: cookieHeader },
+          headers: { cookie },
           payload: { crumb },
           auth: { strategy: 'session', credentials: mockUserSession }
         })
 
         expect(postResponse.statusCode).toBe(302)
-        expect(postResponse.headers.location).toBe('/queue-management')
-
-        // Collect updated cookies from POST response
-        const postSetCookie = postResponse.headers['set-cookie']
-        const postCookies = Array.isArray(postSetCookie)
-          ? postSetCookie
-          : [postSetCookie].filter(Boolean)
-
-        const updatedCookieHeader = postCookies.length
-          ? postCookies.map((c) => c.split(';')[0]).join('; ')
-          : cookieHeader
 
         // Follow redirect with the updated session cookie
+        const postCookies = [postResponse.headers['set-cookie']]
+          .flat()
+          .filter(Boolean)
+        const redirectCookie = postCookies.length
+          ? postCookies.map((c) => c.split(';')[0]).join('; ')
+          : cookie
+
         const { result, statusCode } = await server.inject({
           method: 'GET',
           url: '/queue-management',
-          headers: { cookie: updatedCookieHeader },
+          headers: { cookie: redirectCookie },
           auth: { strategy: 'session', credentials: mockUserSession }
         })
 

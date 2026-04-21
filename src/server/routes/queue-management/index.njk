@@ -34,7 +34,7 @@
             {% set bodyHtml %}
               {{ govukDetails({
                 summaryText: "Show raw message",
-                html: '<code class="app-json-display">' ~ msg.bodyJson ~ '</code>'
+                html: '<code class="app-json-display">' ~ (msg.bodyJson | escape) ~ '</code>'
               }) }}
             {% endset %}
 

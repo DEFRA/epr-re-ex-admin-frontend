@@ -9,7 +9,7 @@ export const queueManagementGetController = {
     )
 
     const success = request.yar.get('success')
-    await request.yar.clear('success')
+    request.yar.clear('success')
 
     const pageTitle = request.route.settings.app.pageTitle
 
