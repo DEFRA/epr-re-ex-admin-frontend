@@ -133,7 +133,7 @@ describe('#registrationOverviewController', () => {
       })
 
       const $ = cheerio.load(result)
-      expect($('h1').text().trim()).toEqual('ACME ltd - REG-50030-001')
+      expect($('h1').text().trim()).toEqual('ACME ltd : REG-50030-001')
     })
 
     test('Should fall back to registration id in heading when registrationNumber is missing', async () => {
@@ -149,7 +149,7 @@ describe('#registrationOverviewController', () => {
       })
 
       const $ = cheerio.load(result)
-      expect($('h1').text().trim()).toEqual(`ACME ltd - ${registrationId}`)
+      expect($('h1').text().trim()).toEqual(`ACME ltd : ${registrationId}`)
     })
 
     test('Should render breadcrumbs for Organisations and Overview', async () => {

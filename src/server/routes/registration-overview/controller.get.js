@@ -25,7 +25,7 @@ export const registrationOverviewGETController = {
 
     const pageTitle = request.route.settings.app.pageTitle
 
-    const heading = `${overview.companyName} - ${registration.registrationNumber ?? registration.id}`
+    const heading = `${overview.companyName} : ${registration.registrationNumber ?? registration.id}`
 
     return h.view('routes/registration-overview/index', {
       breadcrumbs: [
