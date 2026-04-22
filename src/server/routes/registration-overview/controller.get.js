@@ -30,7 +30,10 @@ export const registrationOverviewGETController = {
     return h.view('routes/registration-overview/index', {
       breadcrumbs: [
         { text: 'Organisations', href: '/organisations' },
-        { text: 'Overview', href: `/organisations/${organisationId}/overview` }
+        {
+          text: 'Organisation overview',
+          href: `/organisations/${organisationId}/overview`
+        }
       ],
       pageTitle,
       heading,

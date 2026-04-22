@@ -12,18 +12,22 @@ export const reportDetailGETController = {
     )
 
     const pageTitle = request.route.settings.app.pageTitle
+    const heading = `Report – ${year} ${cadence} period ${period}`
 
     return h.view('routes/reports/index', {
       breadcrumbs: [
         { text: 'Organisations', href: '/organisations' },
-        { text: 'Overview', href: `/organisations/${organisationId}/overview` },
         {
-          text: 'Registration reports',
+          text: 'Organisation overview',
+          href: `/organisations/${organisationId}/overview`
+        },
+        {
+          text: 'Registration overview',
           href: `/organisations/${organisationId}/registrations/${registrationId}/overview`
         }
       ],
       pageTitle,
-      heading: pageTitle,
+      heading,
       reportJson: JSON.stringify(data, null, 2)
     })
   }

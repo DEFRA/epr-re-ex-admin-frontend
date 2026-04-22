@@ -166,7 +166,7 @@ describe('#registrationOverviewController', () => {
       expect(breadcrumbLinks).toHaveLength(2)
       expect($(breadcrumbLinks[0]).text()).toEqual('Organisations')
       expect($(breadcrumbLinks[0]).attr('href')).toEqual('/organisations')
-      expect($(breadcrumbLinks[1]).text()).toEqual('Overview')
+      expect($(breadcrumbLinks[1]).text()).toEqual('Organisation overview')
       expect($(breadcrumbLinks[1]).attr('href')).toEqual(
         `/organisations/${organisationId}/overview`
       )
