@@ -1,0 +1,66 @@
+{% extends 'layout.njk' %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/tag/macro.njk" import govukTag %}
+
+{% block content %}
+  <div class="govuk-width-container">
+    <h1 class="govuk-heading-xl">{{ heading }}</h1>
+
+    {% set summaryRows = [
+      { key: { text: "Status" }, value: { html: govukTag({ text: registration.status }) } },
+      { key: { text: "Processing type" }, value: { text: registration.processingType } },
+      { key: { text: "Material" }, value: { text: registration.material } },
+      { key: { text: "Site" }, value: { text: registration.site } }
+    ] %}
+    {% if registration.accreditation %}
+      {% set summaryRows = summaryRows.concat([
+        { key: { text: "Accreditation number" }, value: { text: registration.accreditation.accreditationNumber } },
+        { key: { text: "Accreditation status" }, value: { html: govukTag({ text: registration.accreditation.status }) } }
+      ]) %}
+    {% endif %}
+
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-one-third">
+        {{ govukSummaryList({ rows: summaryRows }) }}
+      </div>
+    </div>
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-two-thirds">
+        {% if reportingPeriods and reportingPeriods.length %}
+          {% set tableRows = [] %}
+          {% for period in reportingPeriods %}
+            {% set statusText = period.report.status if period.report else 'Due' %}
+            {% if period.report %}
+              {% set reportUrl = '/organisations/' ~ organisationId ~ '/registrations/' ~ registrationId ~ '/reports/' ~ period.year ~ '/' ~ cadence ~ '/' ~ period.period %}
+              {% set viewLink = '<a class="govuk-link govuk-link--no-visited-state" href="' ~ reportUrl ~ '">View</a>' %}
+            {% else %}
+              {% set viewLink = '' %}
+            {% endif %}
+            {% set row = [
+              { text: period.startDate },
+              { text: period.endDate },
+              { text: period.dueDate },
+              { html: govukTag({ text: statusText }) },
+              { html: viewLink }
+            ] %}
+            {% set tableRows = tableRows.concat([row]) %}
+          {% endfor %}
+
+          {{ govukTable({
+            caption: "Reports",
+            captionClasses: "govuk-table__caption--m",
+            head: [
+              { text: "Start" },
+              { text: "End" },
+              { text: "Due" },
+              { text: "Status" },
+              { text: "Actions" }
+            ],
+            rows: tableRows
+          }) }}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

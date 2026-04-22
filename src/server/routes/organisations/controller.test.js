@@ -126,19 +126,23 @@ describe('#organisationsController', () => {
       )
 
       const actionLinks = $(rowData[4]).find('a')
-      expect(actionLinks).toHaveLength(4)
-      expect($(actionLinks[0]).text()).toEqual('Edit')
-      expect($(actionLinks[0]).attr('href')).toEqual('/organisations/org-1')
-      expect($(actionLinks[1]).text()).toEqual('View submission data')
-      expect($(actionLinks[1]).attr('href')).toEqual(
+      expect(actionLinks).toHaveLength(5)
+      expect($(actionLinks[0]).text()).toEqual('View')
+      expect($(actionLinks[0]).attr('href')).toEqual(
+        '/organisations/org-1/overview'
+      )
+      expect($(actionLinks[1]).text()).toEqual('Edit')
+      expect($(actionLinks[1]).attr('href')).toEqual('/organisations/org-1')
+      expect($(actionLinks[2]).text()).toEqual('View submission data')
+      expect($(actionLinks[2]).attr('href')).toEqual(
         '/defra-forms-submission/org-1'
       )
-      expect($(actionLinks[2]).text()).toEqual('View system logs')
-      expect($(actionLinks[2]).attr('href')).toEqual(
+      expect($(actionLinks[3]).text()).toEqual('View system logs')
+      expect($(actionLinks[3]).attr('href')).toEqual(
         '/system-logs?referenceNumber=org-1'
       )
-      expect($(actionLinks[3]).text()).toEqual('View linked organisations')
-      expect($(actionLinks[3]).attr('href')).toEqual(
+      expect($(actionLinks[4]).text()).toEqual('View linked organisations')
+      expect($(actionLinks[4]).attr('href')).toEqual(
         '/linked-organisations?search=Acme%20Ltd'
       )
 
