@@ -2,18 +2,15 @@ import Boom from '@hapi/boom'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { fetchOrganisationOverview } from '#server/common/helpers/fetch-organisation-overview.js'
 
+const GREEN_TAG = 'govuk-tag--green'
+const RED_TAG = 'govuk-tag--red'
+
 const STATUS_DISPLAY = {
-  submitted: { label: 'Success', className: 'govuk-tag--green' },
-  rejected: { label: 'Failed (Rejected)', className: 'govuk-tag--red' },
-  invalid: { label: 'Failed (Invalid)', className: 'govuk-tag--red' },
-  validation_failed: {
-    label: 'Failed (Validation)',
-    className: 'govuk-tag--red'
-  },
-  submission_failed: {
-    label: 'Failed (Submission)',
-    className: 'govuk-tag--red'
-  }
+  submitted: { label: 'Success', className: GREEN_TAG },
+  rejected: { label: 'Failed (Rejected)', className: RED_TAG },
+  invalid: { label: 'Failed (Invalid)', className: RED_TAG },
+  validation_failed: { label: 'Failed (Validation)', className: RED_TAG },
+  submission_failed: { label: 'Failed (Submission)', className: RED_TAG }
 }
 
 const toSummaryLogTableRow =
