@@ -82,9 +82,29 @@ describe('#registrationOverviewController', () => {
     ]
   }
 
+  const mockSubmittedSummaryLog = {
+    summaryLogId: 'sl-submitted',
+    filename: 'jan.xlsx',
+    uploadedAt: '2026-01-01T11:00:00.000Z',
+    status: 'submitted'
+  }
+
+  const mockValidationFailedSummaryLog = {
+    summaryLogId: 'sl-validation-failed',
+    filename: 'feb.xlsx',
+    uploadedAt: '2026-01-04T11:00:00.000Z',
+    status: 'validation_failed'
+  }
+
+  const findSummaryLogsTable = ($) =>
+    $('table').filter(
+      (_, t) => $(t).find('caption').text().trim() === 'Summary logs'
+    )
+
   const useMockBackend = (
     overviewResponse = mockOverview,
-    calendarResponse = mockCalendar
+    calendarResponse = mockCalendar,
+    summaryLogsResponse = { summaryLogs: [] }
   ) => {
     mswServer.use(
       http.get(
@@ -94,6 +114,10 @@ describe('#registrationOverviewController', () => {
       http.get(
         `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
         () => HttpResponse.json(calendarResponse)
+      ),
+      http.get(
+        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs`,
+        () => HttpResponse.json(summaryLogsResponse)
       )
     )
   }
@@ -276,6 +300,155 @@ describe('#registrationOverviewController', () => {
         $(secondRowCells[3]).find('strong.govuk-tag').text().trim()
       ).toEqual('Due')
       expect($(secondRowCells[4]).find('a')).toHaveLength(0)
+    })
+
+    test('Should render the Summary logs table with column headers when summary logs exist', async () => {
+      useMockBackend(mockOverview, mockCalendar, {
+        summaryLogs: [mockSubmittedSummaryLog]
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const $ = cheerio.load(result)
+      const slTable = findSummaryLogsTable($)
+      expect(slTable).toHaveLength(1)
+
+      const headers = slTable.find('thead tr th')
+      expect($(headers[0]).text().trim()).toEqual('Uploaded at')
+      expect($(headers[1]).text().trim()).toEqual('Status')
+      expect($(headers[2]).text().trim()).toEqual('Actions')
+    })
+
+    test('Should render a green Success tag and Download link for a submitted log', async () => {
+      useMockBackend(mockOverview, mockCalendar, {
+        summaryLogs: [mockSubmittedSummaryLog]
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const $ = cheerio.load(result)
+      const slTable = findSummaryLogsTable($)
+      const cells = slTable.find('tbody tr').first().find('td')
+
+      expect($(cells[0]).text().trim()).toEqual('2026-01-01T11:00:00.000Z')
+
+      const tag = $(cells[1]).find('strong.govuk-tag')
+      expect(tag.text().trim()).toEqual('Success')
+      expect(tag.hasClass('govuk-tag--green')).toBe(true)
+
+      const downloadLink = $(cells[2]).find('a')
+      expect(downloadLink.text().trim()).toEqual('Download')
+      expect(downloadLink.attr('href')).toEqual(
+        `/system-logs/download/${organisationId}/${registrationId}/${mockSubmittedSummaryLog.summaryLogId}`
+      )
+    })
+
+    test.each([
+      ['rejected', 'Failed (Rejected)'],
+      ['invalid', 'Failed (Invalid)'],
+      ['validation_failed', 'Failed (Validation)'],
+      ['submission_failed', 'Failed (Submission)']
+    ])(
+      'Should render a red "%s" tag labelled "%s"',
+      async (status, expectedLabel) => {
+        useMockBackend(mockOverview, mockCalendar, {
+          summaryLogs: [{ ...mockValidationFailedSummaryLog, status }]
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const $ = cheerio.load(result)
+        const slTable = $('table').filter(
+          (_, t) => $(t).find('caption').text().trim() === 'Summary logs'
+        )
+        const tag = slTable.find('tbody tr').first().find('strong.govuk-tag')
+
+        expect(tag.text().trim()).toEqual(expectedLabel)
+        expect(tag.hasClass('govuk-tag--red')).toBe(true)
+      }
+    )
+
+    test('Should render multiple summary-log rows newest-first', async () => {
+      useMockBackend(mockOverview, mockCalendar, {
+        summaryLogs: [
+          mockSubmittedSummaryLog,
+          mockValidationFailedSummaryLog
+        ]
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const $ = cheerio.load(result)
+      const slTable = findSummaryLogsTable($)
+      const rows = slTable.find('tbody tr')
+      expect(rows).toHaveLength(2)
+
+      expect($(rows[0]).find('td').first().text().trim()).toEqual(
+        '2026-01-01T11:00:00.000Z'
+      )
+      expect($(rows[1]).find('td').first().text().trim()).toEqual(
+        '2026-01-04T11:00:00.000Z'
+      )
+    })
+
+    test('Should render "No summary logs" when the summary-logs list is empty', async () => {
+      useMockBackend()
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const $ = cheerio.load(result)
+      const slTable = findSummaryLogsTable($)
+      expect(slTable).toHaveLength(0)
+      expect(result).toContain('No summary logs')
+    })
+
+    test('Should show 500 error page when the summary-logs backend returns a non-OK response', async () => {
+      mswServer.use(
+        http.get(
+          `${backendUrl}/v1/organisations/${organisationId}/overview`,
+          () => HttpResponse.json(mockOverview)
+        ),
+        http.get(
+          `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
+          () => HttpResponse.json(mockCalendar)
+        ),
+        http.get(
+          `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs`,
+          () => {
+            throw HttpResponse.text('', { status: 500 })
+          }
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      expect(result).toEqual(
+        expect.stringContaining('Sorry, there is a problem with the service')
+      )
     })
 
     test('Should return 404 when registration is not found', async () => {

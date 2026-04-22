@@ -2,15 +2,51 @@ import Boom from '@hapi/boom'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { fetchOrganisationOverview } from '#server/common/helpers/fetch-organisation-overview.js'
 
+const STATUS_DISPLAY = {
+  submitted: { label: 'Success', className: 'govuk-tag--green' },
+  rejected: { label: 'Failed (Rejected)', className: 'govuk-tag--red' },
+  invalid: { label: 'Failed (Invalid)', className: 'govuk-tag--red' },
+  validation_failed: {
+    label: 'Failed (Validation)',
+    className: 'govuk-tag--red'
+  },
+  submission_failed: {
+    label: 'Failed (Submission)',
+    className: 'govuk-tag--red'
+  }
+}
+
+const toSummaryLogTableRow =
+  (organisationId, registrationId) => (summaryLog) => {
+    const { summaryLogId, uploadedAt, status } = summaryLog
+
+    const { label, className } = STATUS_DISPLAY[status]
+
+    const downloadUrl = `/system-logs/download/${organisationId}/${registrationId}/${summaryLogId}`
+
+    return [
+      { text: uploadedAt },
+      { html: `<strong class="govuk-tag ${className}">${label}</strong>` },
+      {
+        html: `<a class="govuk-link govuk-link--no-visited-state" href="${downloadUrl}">Download</a>`
+      }
+    ]
+  }
+
 export const registrationOverviewGETController = {
   async handler(request, h) {
     const { organisationId, registrationId } = request.params
 
-    const [overview, calendar] = await Promise.all([
+    const [overview, calendar, { summaryLogs }] = await Promise.all([
       fetchOrganisationOverview(request, organisationId),
       fetchJsonFromBackend(
         request,
         `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
+        {}
+      ),
+      fetchJsonFromBackend(
+        request,
+        `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs`,
         {}
       )
     ])
@@ -27,6 +63,10 @@ export const registrationOverviewGETController = {
 
     const heading = `${overview.companyName} - ${registration.registrationNumber ?? registration.id}`
 
+    const summaryLogRows = summaryLogs.map(
+      toSummaryLogTableRow(organisationId, registrationId)
+    )
+
     return h.view('routes/registration-overview/index', {
       breadcrumbs: [
         { text: 'Organisations', href: '/organisations' },
@@ -41,7 +81,8 @@ export const registrationOverviewGETController = {
       registrationId,
       registration,
       cadence: calendar.cadence,
-      reportingPeriods: calendar.reportingPeriods
+      reportingPeriods: calendar.reportingPeriods,
+      summaryLogRows
     })
   }
 }
