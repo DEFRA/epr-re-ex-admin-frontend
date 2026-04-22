@@ -5,7 +5,7 @@ const ALLOWED_URL_PATTERNS = [
   /^https:\/\/s3\.[a-z0-9-]+\.amazonaws\.com\//,
   /^https:\/\/[a-z0-9-]+\.s3\.amazonaws\.com\//,
   /^http:\/\/localhost:4566\//,
-  /^http:\/\/(localstack|floci):4566\//
+  /^http:\/\/floci:4566\//
 ]
 
 function isAllowedDownloadUrl(url) {
