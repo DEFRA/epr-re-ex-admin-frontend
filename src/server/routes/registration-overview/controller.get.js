@@ -6,7 +6,14 @@ export const registrationOverviewGETController = {
   async handler(request, h) {
     const { organisationId, registrationId } = request.params
 
-    const overview = await fetchOrganisationOverview(request, organisationId)
+    const [overview, calendar] = await Promise.all([
+      fetchOrganisationOverview(request, organisationId),
+      fetchJsonFromBackend(
+        request,
+        `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
+        {}
+      )
+    ])
 
     const registration = overview.registrations.find(
       (r) => r.id === registrationId
@@ -15,12 +22,6 @@ export const registrationOverviewGETController = {
     if (!registration) {
       throw Boom.notFound()
     }
-
-    const calendar = await fetchJsonFromBackend(
-      request,
-      `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
-      {}
-    )
 
     const pageTitle = request.route.settings.app.pageTitle
 
