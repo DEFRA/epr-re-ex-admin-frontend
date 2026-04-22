@@ -382,10 +382,7 @@ describe('#registrationOverviewController', () => {
 
     test('Should render multiple summary-log rows newest-first', async () => {
       useMockBackend(mockOverview, mockCalendar, {
-        summaryLogs: [
-          mockSubmittedSummaryLog,
-          mockValidationFailedSummaryLog
-        ]
+        summaryLogs: [mockSubmittedSummaryLog, mockValidationFailedSummaryLog]
       })
 
       const { result } = await server.inject({
