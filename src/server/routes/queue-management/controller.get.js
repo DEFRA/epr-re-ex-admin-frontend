@@ -1,5 +1,23 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
+/**
+ * @typedef {Object} DlqMessage
+ * @property {string} messageId
+ * @property {string} sentTimestamp - ISO 8601 timestamp
+ * @property {number} approximateReceiveCount
+ * @property {{ type: string, payload?: { summaryLogId?: string } } | null} command
+ * @property {string} body - Raw JSON string
+ */
+
+/**
+ * @typedef {Object} FormattedDlqMessage
+ * @property {string} commandType
+ * @property {string} summaryLogId
+ * @property {string} sentTimestamp
+ * @property {number} receiveCount
+ * @property {string} bodyJson - Pretty-printed JSON or raw string
+ */
+
 export const queueManagementGetController = {
   async handler(request, h) {
     const data = await fetchJsonFromBackend(
@@ -32,8 +50,8 @@ export const queueManagementGetController = {
 
 /**
  * Format a raw DLQ message for display in the template.
- * @param {object} message - Raw message from the backend
- * @returns {object} Formatted message for the view
+ * @param {DlqMessage} message - Raw message from the backend
+ * @returns {FormattedDlqMessage} Formatted message for the view
  */
 function formatMessage(message) {
   return {
