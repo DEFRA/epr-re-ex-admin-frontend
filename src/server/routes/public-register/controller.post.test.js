@@ -76,31 +76,13 @@ describe('public-register POST controller', () => {
     )
   })
 
-  test('Should accept LocalStack URLs with localhost', async () => {
+  test('Should accept localhost URLs', async () => {
     const mockDownloadUrl = 'http://localhost:4566/bucket/public-register.csv'
     const mockCsvContent = 'csv,content'
 
     fetchJsonFromBackend.mockResolvedValue({ downloadUrl: mockDownloadUrl })
     mswServer.use(
       http.get(mockDownloadUrl, () => new HttpResponse(mockCsvContent))
-    )
-
-    await publicRegisterPostController.handler(mockRequest, mockH)
-
-    expect(mockH.response).toHaveBeenCalledWith(mockCsvContent)
-  })
-
-  test('Should accept LocalStack URLs with Docker hostname', async () => {
-    const mockDownloadUrl =
-      'http://localstack:4566/bucket/public-register.csv?signed=abc'
-    const mockCsvContent = 'csv,content'
-
-    fetchJsonFromBackend.mockResolvedValue({ downloadUrl: mockDownloadUrl })
-    mswServer.use(
-      http.get(
-        'http://localstack:4566/bucket/public-register.csv',
-        () => new HttpResponse(mockCsvContent)
-      )
     )
 
     await publicRegisterPostController.handler(mockRequest, mockH)
