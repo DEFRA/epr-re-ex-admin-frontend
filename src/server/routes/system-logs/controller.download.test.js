@@ -77,7 +77,7 @@ describe('system-log download controller', () => {
     )
   })
 
-  test('accepts LocalStack URLs', async () => {
+  test('accepts localhost URLs', async () => {
     const presignedUrl = 'http://localhost:4566/bucket/file.xlsx'
     const binaryContent = new Uint8Array([0x50, 0x4b, 0x03, 0x04])
 
