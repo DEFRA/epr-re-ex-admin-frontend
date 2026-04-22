@@ -16,8 +16,8 @@
         { text: registration.processingType },
         { text: registration.material },
         { text: registration.site },
-        { text: registration.accreditation.accreditationNumber },
-        { html: govukTag({ text: registration.accreditation.status }) },
+        { text: registration.accreditation.accreditationNumber if registration.accreditation else '-' },
+        { html: govukTag({ text: registration.accreditation.status }) if registration.accreditation else '-' },
         { html: actionsHtml }
       ] %}
       {% set tableRows = tableRows.concat([row]) %}
