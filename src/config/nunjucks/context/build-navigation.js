@@ -10,7 +10,8 @@ const navItems = [
   { text: 'PRN activity', href: '/prn-activity' },
   { text: 'PRN tonnage', href: '/prn-tonnage' },
   { text: 'Report submissions', href: '/report-submissions' },
-  { text: 'System logs', href: '/system-logs' }
+  { text: 'System logs', href: '/system-logs' },
+  { text: 'Queue management', href: '/queue-management', matchSubPaths: true }
 ]
 
 export function buildNavigation(request) {

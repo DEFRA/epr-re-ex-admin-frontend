@@ -68,6 +68,11 @@ describe('#buildNavigation', () => {
         current: false,
         text: 'System logs',
         href: '/system-logs'
+      },
+      {
+        current: false,
+        text: 'Queue management',
+        href: '/queue-management'
       }
     ])
   })
@@ -133,6 +138,11 @@ describe('#buildNavigation', () => {
         current: false,
         text: 'System logs',
         href: '/system-logs'
+      },
+      {
+        current: false,
+        text: 'Queue management',
+        href: '/queue-management'
       }
     ])
   })

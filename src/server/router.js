@@ -19,6 +19,7 @@ import { prnActivity } from './routes/prn-activity/index.js'
 import { summaryLogUploadsReport } from './routes/summary-log/index.js'
 import { orsUpload } from './routes/ors-upload/index.js'
 import { reportSubmissions } from './routes/report-submissions/index.js'
+import { queueManagement } from './routes/queue-management/index.js'
 
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
 
@@ -50,7 +51,8 @@ export const router = {
         prnActivity,
         summaryLogUploadsReport,
         orsUpload,
-        reportSubmissions
+        reportSubmissions,
+        queueManagement
       ])
 
       await server.register([serveStaticFiles])

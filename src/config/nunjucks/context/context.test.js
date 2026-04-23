@@ -117,6 +117,11 @@ describe('context and cache', () => {
               current: false,
               text: 'System logs',
               href: '/system-logs'
+            },
+            {
+              current: false,
+              text: 'Queue management',
+              href: '/queue-management'
             }
           ],
           serviceName: 'epr-re-ex-admin-frontend',
@@ -303,6 +308,11 @@ describe('context and cache', () => {
               current: false,
               text: 'System logs',
               href: '/system-logs'
+            },
+            {
+              current: false,
+              text: 'Queue management',
+              href: '/queue-management'
             }
           ],
           serviceName: 'epr-re-ex-admin-frontend',
