@@ -96,10 +96,8 @@ describe('#registrationOverviewController', () => {
     status: 'validation_failed'
   }
 
-  const findSummaryLogsTable = ($) =>
-    $('table').filter(
-      (_, t) => $(t).find('caption').text().trim() === 'Summary logs'
-    )
+  const findReportsTable = ($) => $('#reports table')
+  const findSummaryLogsTable = ($) => $('#summary-logs table')
 
   const useMockBackend = (
     overviewResponse = mockOverview,
@@ -272,14 +270,14 @@ describe('#registrationOverviewController', () => {
       })
 
       const $ = cheerio.load(result)
-      const headers = $('table thead tr th')
+      const headers = findReportsTable($).find('thead tr th')
       expect($(headers[0]).text()).toEqual('Start')
       expect($(headers[1]).text()).toEqual('End')
       expect($(headers[2]).text()).toEqual('Due')
       expect($(headers[3]).text()).toEqual('Status')
       expect($(headers[4]).text()).toEqual('Actions')
 
-      const rows = $('table tbody tr')
+      const rows = findReportsTable($).find('tbody tr')
       expect(rows).toHaveLength(2)
 
       const firstRowCells = $(rows[0]).find('td')
@@ -370,9 +368,7 @@ describe('#registrationOverviewController', () => {
         })
 
         const $ = cheerio.load(result)
-        const slTable = $('table').filter(
-          (_, t) => $(t).find('caption').text().trim() === 'Summary logs'
-        )
+        const slTable = findSummaryLogsTable($)
         const tag = slTable.find('tbody tr').first().find('strong.govuk-tag')
 
         expect(tag.text().trim()).toEqual(expectedLabel)
