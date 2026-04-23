@@ -15,7 +15,7 @@
     "npm": ">=11.11.0"
   },
   "scripts": {
-    "schema:compile": "ajv compile --all-errors --verbose --data -c ajv-formats -s ./src/server/common/schemas/organisation.json -o ./src/server/common/schemas/organisation.ajv.js --code-es5",
+    "schema:compile": "ajv compile --all-errors --verbose --data -c ajv-formats -s ./src/server/common/schemas/organisation.json -o ./src/server/common/schemas/organisation.ajv.js --code-es5 && node -e \"const fs=require('fs');const f='./src/server/common/schemas/organisation.ajv.js';fs.writeFileSync(f,'// @ts-nocheck\\n'+fs.readFileSync(f,'utf8'))\"",
     "build:frontend": "NODE_ENV=production webpack",
     "dev": "run-p frontend:watch server:watch",
     "dev:debug": "run-p frontend:watch server:debug",
@@ -28,6 +28,7 @@
     "lint:js": "eslint .",
     "lint:js:fix": "eslint . --fix",
     "lint:scss": "stylelint \"src/**/*.scss\" --cache --cache-location .cache/stylelint --cache-strategy content --color --ignore-path .gitignore",
+    "lint:types": "tsc -p jsconfig.typecheck.json",
     "pretest": "npm run build:frontend",
     "test": "TZ=UTC vitest run --coverage",
     "test:watch": "TZ=UTC vitest",
@@ -111,6 +112,7 @@
     "stylelint": "17.6.0",
     "stylelint-config-gds": "2.0.0",
     "terser-webpack-plugin": "5.4.0",
+    "typescript": "5.9.3",
     "vitest": "4.1.2",
     "webpack": "5.105.4",
     "webpack-assets-manifest": "6.5.1",
