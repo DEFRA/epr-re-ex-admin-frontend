@@ -140,7 +140,6 @@ describe('queue-management', () => {
           .get()
         expect(headers).toEqual([
           'Command type',
-          'Summary log ID',
           'Sent timestamp',
           'Receive count',
           'Raw message'
@@ -153,17 +152,15 @@ describe('queue-management', () => {
           .map((_, el) => $(el).text().trim())
           .get()
         expect(firstRowCells[0]).toBe('SUMMARY_LOG_COMMAND.VALIDATE')
-        expect(firstRowCells[1]).toBe('log-001')
-        expect(firstRowCells[3]).toBe('4')
+        expect(firstRowCells[2]).toBe('4')
 
-        // Check second row has "Unknown" and "N/A" for null command
+        // Check second row has "Unknown" for null command
         const secondRowCells = $('tbody tr')
           .eq(1)
           .find('td')
           .map((_, el) => $(el).text().trim())
           .get()
         expect(secondRowCells[0]).toBe('Unknown')
-        expect(secondRowCells[1]).toBe('N/A')
       })
 
       test('Should render details expander with raw JSON body', async () => {

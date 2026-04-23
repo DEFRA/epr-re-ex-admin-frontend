@@ -5,14 +5,13 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * @property {string} messageId
  * @property {string} sentTimestamp - ISO 8601 timestamp
  * @property {number} approximateReceiveCount
- * @property {{ type: string, payload?: { summaryLogId?: string } } | null} command
+ * @property {{ type: string } | null} command
  * @property {string} body - Raw JSON string
  */
 
 /**
  * @typedef {Object} FormattedDlqMessage
  * @property {string} commandType
- * @property {string} summaryLogId
  * @property {string} sentTimestamp
  * @property {number} receiveCount
  * @property {string} bodyJson - Pretty-printed JSON or raw string
@@ -56,7 +55,6 @@ export const queueManagementGetController = {
 function formatMessage(message) {
   return {
     commandType: message.command?.type ?? 'Unknown',
-    summaryLogId: message.command?.payload?.summaryLogId ?? 'N/A',
     sentTimestamp: message.sentTimestamp,
     receiveCount: message.approximateReceiveCount,
     bodyJson: formatJson(message.body)

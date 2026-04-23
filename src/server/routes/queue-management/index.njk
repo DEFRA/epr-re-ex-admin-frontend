@@ -40,7 +40,6 @@
 
             {% set tableRows = tableRows.concat([[
               { text: msg.commandType },
-              { text: msg.summaryLogId },
               { text: msg.sentTimestamp },
               { text: msg.receiveCount },
               { html: bodyHtml }
@@ -51,7 +50,6 @@
             firstCellIsHeader: false,
             head: [
               { text: "Command type" },
-              { text: "Summary log ID" },
               { text: "Sent timestamp" },
               { text: "Receive count" },
               { text: "Raw message" }
