@@ -107,16 +107,20 @@ describe('POST /system-logs', () => {
         expect(backendCalls[0].body).toEqual({ email: 'alice@example.com' })
       })
 
-      test('passes subCategory to backend when searching by event type', async () => {
+      test('passes subCategory to backend alongside email', async () => {
         const backendCalls = stubBackendResponse(
           HttpResponse.json({ systemLogs: [] })
         )
 
-        await submitSearch({ subCategory: 'Reconciliation' })
+        await submitSearch({
+          email: 'alice@example.com',
+          subCategory: 'summary-log'
+        })
 
         expect(backendCalls).toHaveLength(1)
         expect(backendCalls[0].body).toEqual({
-          subCategory: 'Reconciliation'
+          email: 'alice@example.com',
+          subCategory: 'summary-log'
         })
       })
 
@@ -139,14 +143,14 @@ describe('POST /system-logs', () => {
         await submitSearch({
           referenceNumber: 'ORG-123',
           email: 'alice@example.com',
-          subCategory: 'Reconciliation'
+          subCategory: 'summary-log'
         })
 
         expect(backendCalls).toHaveLength(1)
         expect(backendCalls[0].body).toEqual({
           organisationId: 'ORG-123',
           email: 'alice@example.com',
-          subCategory: 'Reconciliation'
+          subCategory: 'summary-log'
         })
       })
 
@@ -167,7 +171,7 @@ describe('POST /system-logs', () => {
     })
 
     describe('validation', () => {
-      test('shows error when no filters are provided', async () => {
+      test('shows error on both fields when no filters are provided', async () => {
         const { $, statusCode } = await submitSearch({
           referenceNumber: '',
           email: '',
@@ -176,7 +180,28 @@ describe('POST /system-logs', () => {
 
         expect(statusCode).toBe(statusCodes.ok)
         expect($.text()).toContain('There is a problem')
-        expect($.text()).toContain('Enter at least one search term')
+        expect($.text()).toContain(
+          'Enter an organisation reference number or email address'
+        )
+        expect($('#referenceNumber-error').text()).toContain(
+          'Enter an organisation reference number or email address'
+        )
+        expect($('#email-error').text()).toContain(
+          'Enter an organisation reference number or email address'
+        )
+      })
+
+      test('shows error when only subCategory is provided', async () => {
+        const { $, statusCode } = await submitSearch({
+          referenceNumber: '',
+          email: '',
+          subCategory: 'summary-log'
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect($.text()).toContain(
+          'Enter an organisation reference number or email address'
+        )
       })
 
       test('does not call backend when no filters are provided', async () => {
@@ -188,6 +213,20 @@ describe('POST /system-logs', () => {
           referenceNumber: '',
           email: '',
           subCategory: ''
+        })
+
+        expect(backendCalls).toHaveLength(0)
+      })
+
+      test('does not call backend when only subCategory is provided', async () => {
+        const backendCalls = stubBackendResponse(
+          HttpResponse.json({ systemLogs: [] })
+        )
+
+        await submitSearch({
+          referenceNumber: '',
+          email: '',
+          subCategory: 'summary-log'
         })
 
         expect(backendCalls).toHaveLength(0)
@@ -256,12 +295,13 @@ describe('POST /system-logs', () => {
 
         expect(options).toEqual([
           '',
-          'Organisations',
-          'Overseas sites',
-          'Summary log',
-          'Reconciliation',
-          'Public register',
-          'Download'
+          'download',
+          'epr-organisations',
+          'overseas-sites',
+          'packaging-recycling-notes',
+          'reports',
+          'summary-log',
+          'waste-balance'
         ])
       })
 
@@ -272,9 +312,9 @@ describe('POST /system-logs', () => {
               {
                 createdBy: { email: 'alice@example.com' },
                 event: {
-                  category: 'cat',
-                  subCategory: 'Reconciliation',
-                  action: 'act'
+                  category: 'entity',
+                  subCategory: 'summary-log',
+                  action: 'create'
                 },
                 context: {}
               }
@@ -285,13 +325,13 @@ describe('POST /system-logs', () => {
         const { $ } = await submitSearch({
           referenceNumber: 'ORG-123',
           email: 'alice@example.com',
-          subCategory: 'Reconciliation'
+          subCategory: 'summary-log'
         })
 
         expect($('input[name="referenceNumber"]').val()).toBe('ORG-123')
         expect($('input[name="email"]').val()).toBe('alice@example.com')
         expect($('select[name="subCategory"] option[selected]').val()).toBe(
-          'Reconciliation'
+          'summary-log'
         )
       })
 
@@ -320,8 +360,8 @@ describe('POST /system-logs', () => {
                 createdAt: '2025-03-15T10:00:00Z',
                 createdBy: { email: 'alice@example.com' },
                 event: {
-                  category: 'Admin',
-                  subCategory: 'Reconciliation',
+                  category: 'entity',
+                  subCategory: 'epr-organisations',
                   action: 'create'
                 },
                 context: {}
@@ -337,7 +377,7 @@ describe('POST /system-logs', () => {
         expect(statusCode).toBe(statusCodes.ok)
         expect($('.govuk-summary-card')).toHaveLength(1)
         expect($('.govuk-summary-card__title').text().trim()).toBe(
-          'Admin, Reconciliation, create'
+          'entity, epr-organisations, create'
         )
       })
 

@@ -56,6 +56,7 @@
               name: "email",
               type: "email",
               value: searchTerms.email,
+              errorMessage: error if error,
               autocomplete: "off",
               classes: "govuk-input--width-20"
             }) }}
@@ -71,12 +72,13 @@
               },
               items: [
                 { value: "", text: "All event types", selected: not searchTerms.subCategory },
-                { value: "Organisations", text: "Organisations", selected: searchTerms.subCategory == "Organisations" },
-                { value: "Overseas sites", text: "Overseas sites", selected: searchTerms.subCategory == "Overseas sites" },
-                { value: "Summary log", text: "Summary log", selected: searchTerms.subCategory == "Summary log" },
-                { value: "Reconciliation", text: "Reconciliation", selected: searchTerms.subCategory == "Reconciliation" },
-                { value: "Public register", text: "Public register", selected: searchTerms.subCategory == "Public register" },
-                { value: "Download", text: "Download", selected: searchTerms.subCategory == "Download" }
+                { value: "download", text: "Download", selected: searchTerms.subCategory == "download" },
+                { value: "epr-organisations", text: "Organisations", selected: searchTerms.subCategory == "epr-organisations" },
+                { value: "overseas-sites", text: "Overseas sites", selected: searchTerms.subCategory == "overseas-sites" },
+                { value: "packaging-recycling-notes", text: "Packaging recycling notes", selected: searchTerms.subCategory == "packaging-recycling-notes" },
+                { value: "reports", text: "Reports", selected: searchTerms.subCategory == "reports" },
+                { value: "summary-log", text: "Summary log", selected: searchTerms.subCategory == "summary-log" },
+                { value: "waste-balance", text: "Waste balance", selected: searchTerms.subCategory == "waste-balance" }
               ]
             }) }}
           </div>
