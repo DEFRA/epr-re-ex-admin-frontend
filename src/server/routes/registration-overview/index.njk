@@ -26,7 +26,7 @@
       </div>
     </div>
     <div class="govuk-grid-row">
-      <div class="govuk-grid-column-two-thirds">
+      <div id="reports" class="govuk-grid-column-two-thirds">
         {% if reportingPeriods and reportingPeriods.length %}
           {% set tableRows = [] %}
           {% for period in reportingPeriods %}
@@ -63,7 +63,7 @@
       </div>
     </div>
     <div class="govuk-grid-row">
-      <div class="govuk-grid-column-two-thirds">
+      <div id="summary-logs" class="govuk-grid-column-two-thirds">
         {% if summaryLogRows and summaryLogRows.length %}
           {{ govukTable({
             caption: "Summary logs",
