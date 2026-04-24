@@ -1,8 +1,5 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
-import { isNil } from '#server/common/helpers/is-nil.js'
-import isEqual from 'lodash/isEqual.js'
-import isArray from 'lodash/isArray.js'
-import isObject from 'lodash/isObject.js'
+import { transformSystemLog } from './transform-system-log.js'
 
 export const systemLogGetController = {
   async handler(request, h) {
@@ -21,7 +18,9 @@ export const systemLogGetController = {
         pageTitle: request.route.settings.app.pageTitle,
         systemLogs: [],
         searchTerms: {
-          referenceNumber: ''
+          referenceNumber: '',
+          email: '',
+          subCategory: ''
         },
         error: hasReferenceNumberQuery
           ? {
@@ -56,14 +55,11 @@ export const systemLogGetController = {
 
     return h.view('routes/system-logs/index', {
       pageTitle: request.route.settings.app.pageTitle,
-      systemLogs: data.systemLogs.map((systemLog) => ({
-        timestamp: systemLog.createdAt,
-        event: systemLog.event,
-        user: systemLog.createdBy,
-        ...contextWithDeltaBetweenPreviousAndNextExtracted(systemLog)
-      })),
+      systemLogs: data.systemLogs.map(transformSystemLog),
       searchTerms: {
-        referenceNumber: searchTermReferenceNumber
+        referenceNumber: searchTermReferenceNumber,
+        email: '',
+        subCategory: ''
       },
       error: null,
       pagination,
@@ -96,69 +92,4 @@ function buildPagination({ data, referenceNumber, cursor, page }) {
   }
 
   return pagination
-}
-
-function contextWithDeltaBetweenPreviousAndNextExtracted({ context }) {
-  const { previous, next, ...remainingContext } = context
-  const hasPrevious = 'previous' in context
-  const hasNext = 'next' in context
-  if (hasPrevious || hasNext) {
-    return {
-      renderDelta: {
-        previous,
-        ...(hasPrevious ? { previous } : {}),
-        ...(hasNext ? { next } : {}),
-        ...(hasPrevious && hasNext
-          ? { difference: difference(previous, next) || 'no differences' }
-          : {})
-      },
-      context: { ...remainingContext }
-    }
-  }
-
-  return { context }
-}
-
-function difference(previous, next) {
-  if (isEqual(previous, next)) {
-    return undefined
-  }
-  if (isSimple(previous) || isSimple(next)) {
-    return renderChange(previous, next)
-  }
-
-  const allKeysDeDuped = [...new Set([previous, next].flatMap(Object.keys))]
-  return allKeysDeDuped.reduce((acc, key) => {
-    const diff = difference(previous[key], next[key])
-    if (diff) {
-      acc[key] = diff
-    }
-    return acc
-  }, {})
-}
-
-function renderChange(a, b) {
-  if (isSimple(a) && isSimple(b)) {
-    if (!a) {
-      return { _added: b }
-    }
-    if (!b) {
-      return { _removed: a }
-    }
-    return { _changed: `${a} -> ${b}` }
-  }
-
-  if (!a) {
-    return { _added: b }
-  }
-
-  if (!b) {
-    return { _removed: a }
-  }
-
-  return { _previous: a, _next: b }
-}
-
-function isSimple(x) {
-  return isNil(x) || (!isObject(x) && !isArray(x))
 }

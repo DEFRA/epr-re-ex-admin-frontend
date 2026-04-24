@@ -4,6 +4,7 @@
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 {% from "govuk/components/input/macro.njk" import govukInput %}
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/select/macro.njk" import govukSelect %}
 {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 {% from "govuk/components/pagination/macro.njk" import govukPagination %}
 
@@ -26,7 +27,8 @@
 
         <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
 
-        <form method="get" class="app-filters">
+        <form method="post" action="/system-logs" class="app-filters">
+          <input type="hidden" name="crumb" value="{{ crumb }}" />
           <h2 class="govuk-heading-m">Search system logs by</h2>
           <div class="govuk-form-group">
             {{ govukInput({
@@ -44,11 +46,48 @@
             }) }}
           </div>
 
+          <div class="govuk-form-group">
+            {{ govukInput({
+              label: {
+                text: "User email",
+                classes: "govuk-label--s"
+              },
+              id: "email",
+              name: "email",
+              type: "email",
+              value: searchTerms.email,
+              errorMessage: error if error,
+              autocomplete: "off",
+              classes: "govuk-input--width-20"
+            }) }}
+          </div>
+
+          <div class="govuk-form-group">
+            {{ govukSelect({
+              id: "subCategory",
+              name: "subCategory",
+              label: {
+                text: "Event type",
+                classes: "govuk-label--s"
+              },
+              items: [
+                { value: "", text: "All event types", selected: not searchTerms.subCategory },
+                { value: "download", text: "Download", selected: searchTerms.subCategory == "download" },
+                { value: "epr-organisations", text: "Organisations", selected: searchTerms.subCategory == "epr-organisations" },
+                { value: "overseas-sites", text: "Overseas sites", selected: searchTerms.subCategory == "overseas-sites" },
+                { value: "packaging-recycling-notes", text: "Packaging recycling notes", selected: searchTerms.subCategory == "packaging-recycling-notes" },
+                { value: "reports", text: "Reports", selected: searchTerms.subCategory == "reports" },
+                { value: "summary-log", text: "Summary log", selected: searchTerms.subCategory == "summary-log" },
+                { value: "waste-balance", text: "Waste balance", selected: searchTerms.subCategory == "waste-balance" }
+              ]
+            }) }}
+          </div>
+
           <div class="govuk-button-group">
 
             {{ govukButton({ text: "Search" }) }}
 
-            <a href="?" class="govuk-button govuk-button--inverse">Clear search</a>
+            <a href="/system-logs" class="govuk-button govuk-button--inverse">Clear search</a>
           </div>
         </form>
 
