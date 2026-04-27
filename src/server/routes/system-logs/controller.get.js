@@ -33,18 +33,16 @@ export const systemLogGetController = {
       })
     }
 
-    const params = new URLSearchParams({
-      organisationId: searchTermReferenceNumber
-    })
+    const body = { organisationId: searchTermReferenceNumber }
 
     if (cursor) {
-      params.set('cursor', cursor)
+      body.cursor = cursor
     }
 
-    const data = await fetchJsonFromBackend(
-      request,
-      `/v1/system-logs?${params.toString()}`
-    )
+    const data = await fetchJsonFromBackend(request, '/v1/system-logs/search', {
+      method: 'POST',
+      body: JSON.stringify(body)
+    })
 
     const pagination = buildPagination({
       data,
