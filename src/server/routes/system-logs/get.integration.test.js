@@ -32,11 +32,11 @@ describe('GET /system-logs', () => {
   const stubBackendReponse = (response) => {
     const calls = []
     mswServer.use(
-      http.get(
-        `${config.get('eprBackendUrl')}/v1/system-logs`,
-        ({ request }) => {
-          const url = new URL(request.url)
-          calls.push({ url })
+      http.post(
+        `${config.get('eprBackendUrl')}/v1/system-logs/search`,
+        async ({ request }) => {
+          const body = await request.json()
+          calls.push({ body })
           return response
         }
       )
@@ -596,11 +596,9 @@ describe('GET /system-logs', () => {
 
         expect(statusCode).toEqual(statusCodes.ok)
 
-        // backend called with expected query
+        // backend called with expected body
         expect(backendCalls).toHaveLength(1)
-        expect(backendCalls[0].url.searchParams).toEqual(
-          new URLSearchParams({ organisationId: 12345 })
-        )
+        expect(backendCalls[0].body).toEqual({ organisationId: '12345' })
 
         // reference Number rendered in search form
         expect($('form input[name=referenceNumber]').val()).toEqual('12345')
@@ -642,12 +640,8 @@ describe('GET /system-logs', () => {
         )
 
         expect(backendCalls).toHaveLength(1)
-        expect(backendCalls[0].url.searchParams.get('cursor')).toBe(
-          'abc123def456abc123def456'
-        )
-        expect(backendCalls[0].url.searchParams.get('organisationId')).toBe(
-          '12345'
-        )
+        expect(backendCalls[0].body.cursor).toBe('abc123def456abc123def456')
+        expect(backendCalls[0].body.organisationId).toBe('12345')
       })
 
       it('renders Next pagination link when backend returns hasMore and nextCursor', async () => {
