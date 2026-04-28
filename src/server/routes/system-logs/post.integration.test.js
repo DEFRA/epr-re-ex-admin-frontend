@@ -295,6 +295,7 @@ describe('POST /system-logs', () => {
 
         expect(options).toEqual([
           '',
+          'defra-id-reconciliation',
           'download',
           'epr-organisations',
           'overseas-sites',
