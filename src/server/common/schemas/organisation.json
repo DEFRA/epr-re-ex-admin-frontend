@@ -88,10 +88,6 @@
       ],
       "additionalProperties": false
     },
-    "formSubmissionTime": {
-      "type": "string",
-      "format": "date-time"
-    },
     "id": {
       "not": {}
     },
@@ -307,7 +303,62 @@
       }
     },
     "schemaVersion": {
-      "const": 1
+      "type": "number",
+      "enum": [
+        1,
+        2
+      ]
+    },
+    "formSubmissionTime": {
+      "type": [
+        "array",
+        "boolean",
+        "number",
+        "object",
+        "string",
+        "null"
+      ],
+      "oneOf": [
+        {
+          "type": "string",
+          "format": "date-time"
+        },
+        {
+          "not": {}
+        }
+      ]
+    },
+    "formSubmission": {
+      "type": [
+        "array",
+        "boolean",
+        "number",
+        "object",
+        "string",
+        "null"
+      ],
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "time": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "id",
+            "time"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "not": {}
+        }
+      ]
     },
     "registrations": {
       "type": "array",
@@ -358,13 +409,6 @@
               "null"
             ],
             "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
-          },
-          "formSubmissionTime": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time"
           },
           "submittedToRegulator": {
             "type": [
@@ -550,6 +594,36 @@
               "string",
               "null"
             ]
+          },
+          "formSubmissionTime": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "formSubmission": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "readOnly": true
+              },
+              "time": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              }
+            },
+            "additionalProperties": false
           },
           "glassRecyclingProcess": {
             "type": [
@@ -1032,6 +1106,40 @@
             },
             "additionalProperties": false
           },
+          "applicationContactDetails": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "fullName": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "email": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "email"
+              },
+              "phone": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "jobTitle": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
           "samplingInspectionPlanPart1FileUploads": {
             "type": [
               "array",
@@ -1100,6 +1208,14 @@
               },
               "additionalProperties": false
             }
+          },
+          "overseasSites": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {},
+            "additionalProperties": false
           },
           "statusHistory": {
             "type": [
@@ -1189,13 +1305,6 @@
               "string",
               "null"
             ]
-          },
-          "formSubmissionTime": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time"
           },
           "submittedToRegulator": {
             "type": [
@@ -1298,6 +1407,36 @@
                   }
                 },
                 "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          "formSubmissionTime": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "formSubmission": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "readOnly": true
+              },
+              "time": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
               }
             },
             "additionalProperties": false
@@ -1545,7 +1684,6 @@
   },
   "required": [
     "companyDetails",
-    "formSubmissionTime",
     "orgId",
     "submittedToRegulator",
     "submitterContactDetails",
