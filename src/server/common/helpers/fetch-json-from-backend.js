@@ -1,5 +1,7 @@
 import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
+import { errorCodes } from '#server/common/enums/error-codes.js'
+import { classifierTail, internal } from './logging/cdp-boom.js'
 import { getUserSession } from './auth/get-user-session.js'
 import { withTraceId } from '@defra/hapi-tracing'
 import { getTracingHeaderName } from './request-tracing.js'
@@ -53,9 +55,15 @@ export const fetchJsonFromBackend = async (request, path, options) => {
       throw error
     }
 
-    // For network errors or other non-HTTP errors, create a 500 Boom error
-    throw Boom.internal(
-      `Failed to fetch from backend at url: ${url}: ${error.message}`
+    throw internal(
+      `Failed to fetch from backend at url: ${url}`,
+      errorCodes.externalFetchFailed,
+      {
+        event: {
+          action: 'external_fetch',
+          reason: classifierTail(error)
+        }
+      }
     )
   }
 }

@@ -79,7 +79,7 @@ describe('fetchRedirectFromBackend', () => {
 
     await expect(
       fetchRedirectFromBackend(mockRequest, '/v1/test/download')
-    ).rejects.toThrow(/Network failure/)
+    ).rejects.toThrow(/Failed to fetch redirect from backend/)
   })
 
   test('re-throws Boom errors without wrapping', async () => {
