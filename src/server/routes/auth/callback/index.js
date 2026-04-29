@@ -1,7 +1,7 @@
 import { createUserSession } from '#server/common/helpers/auth/create-user-session.js'
 import { randomUUID } from 'node:crypto'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
-import { LOGGING_EVENT_ACTIONS } from '#server/common/enums/event.js'
+import { loggingEventActions } from '#server/common/enums/event.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 
 export default {
@@ -45,7 +45,7 @@ export default {
     request.logger.info({
       message: 'User signed in',
       event: {
-        action: LOGGING_EVENT_ACTIONS.SIGN_IN,
+        action: loggingEventActions.signIn,
         reason: `userId=${userId} displayName=${displayName}`
       }
     })

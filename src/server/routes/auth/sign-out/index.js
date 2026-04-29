@@ -2,7 +2,7 @@ import { config } from '#config/config.js'
 import { clearUserSession } from '#server/common/helpers/auth/clear-user-session.js'
 import { getOidcConfig } from '#server/common/helpers/auth/get-oidc-config.js'
 import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
-import { LOGGING_EVENT_ACTIONS } from '#server/common/enums/event.js'
+import { loggingEventActions } from '#server/common/enums/event.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { auditSignOut } from '#server/common/helpers/auditing/index.js'
 
@@ -33,7 +33,7 @@ export default {
     request.logger.info({
       message: 'User signed out',
       event: {
-        action: LOGGING_EVENT_ACTIONS.SIGN_OUT,
+        action: loggingEventActions.signOut,
         reason: `userId=${userSession.userId} displayName=${userSession.displayName}`
       }
     })
