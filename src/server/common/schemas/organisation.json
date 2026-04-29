@@ -318,24 +318,13 @@
         "string",
         "null"
       ],
-      "anyOf": [
+      "oneOf": [
         {
           "type": "string",
           "format": "date-time"
         },
         {
-          "type": [
-            "array",
-            "boolean",
-            "number",
-            "object",
-            "string",
-            "null"
-          ]
-        },
-        {
-          "type": "string",
-          "format": "date-time"
+          "not": {}
         }
       ]
     },
@@ -348,17 +337,7 @@
         "string",
         "null"
       ],
-      "anyOf": [
-        {
-          "type": [
-            "array",
-            "boolean",
-            "number",
-            "object",
-            "string",
-            "null"
-          ]
-        },
+      "oneOf": [
         {
           "type": "object",
           "properties": {
@@ -377,21 +356,7 @@
           "additionalProperties": false
         },
         {
-          "type": "object",
-          "properties": {
-            "id": {
-              "type": "string"
-            },
-            "time": {
-              "type": "string",
-              "format": "date-time"
-            }
-          },
-          "required": [
-            "id",
-            "time"
-          ],
-          "additionalProperties": false
+          "not": {}
         }
       ]
     },
@@ -639,13 +604,26 @@
           },
           "formSubmission": {
             "type": [
-              "array",
-              "boolean",
-              "number",
               "object",
-              "string",
               "null"
-            ]
+            ],
+            "properties": {
+              "id": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "readOnly": true
+              },
+              "time": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              }
+            },
+            "additionalProperties": false
           },
           "glassRecyclingProcess": {
             "type": [
@@ -1442,13 +1420,26 @@
           },
           "formSubmission": {
             "type": [
-              "array",
-              "boolean",
-              "number",
               "object",
-              "string",
               "null"
-            ]
+            ],
+            "properties": {
+              "id": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "readOnly": true
+              },
+              "time": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              }
+            },
+            "additionalProperties": false
           },
           "prnIssuance": {
             "type": [
