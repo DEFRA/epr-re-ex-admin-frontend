@@ -24,6 +24,22 @@ const buildRow = (overrides = {}) => ({
   dueDate: '2026-04-20',
   submittedDate: '',
   submittedBy: '',
+  tonnageReceivedForRecycling: '',
+  tonnageRecycled: '',
+  tonnageExportedForRecycling: '',
+  tonnageSentOnTotal: '',
+  tonnageSentOnToReprocessor: '',
+  tonnageSentOnToExporter: '',
+  tonnageSentOnToOtherFacilities: '',
+  tonnagePrnsPernsIssued: '',
+  totalRevenuePrnsPerns: '',
+  averagePrnPernPricePerTonne: '',
+  tonnageReceivedButNotRecycled: '',
+  tonnageReceivedButNotExported: '',
+  tonnageExportedThatWasStopped: '',
+  tonnageExportedThatWasRefused: '',
+  tonnageRepatriated: '',
+  noteToRegulator: '',
   ...overrides
 })
 
@@ -145,6 +161,80 @@ describe('reportSubmissionsPostController', () => {
 
     const csv = mockH.response.mock.calls[0][0]
     expect(csv).toContain("'=SUM(A1)")
+  })
+
+  test('CSV includes the 16 tonnage column headers', async () => {
+    fetchJsonFromBackend.mockResolvedValue({
+      reportSubmissions: [],
+      generatedAt: '2026-04-17T10:00:00.000Z'
+    })
+
+    await reportSubmissionsPostController.handler(mockRequest, mockH)
+
+    const csv = mockH.response.mock.calls[0][0]
+    expect(csv).toContain('Tonnage received for recycling')
+    expect(csv).toContain('Tonnage recycled')
+    expect(csv).toContain('Tonnage exported for recycling')
+    expect(csv).toContain('Tonnage sent on, total')
+    expect(csv).toContain('Tonnage sent on to a reprocessor')
+    expect(csv).toContain('Tonnage sent on to an exporter')
+    expect(csv).toContain('Tonnage sent on to other facilities')
+    expect(csv).toContain('Tonnage of PRNs/PERNs issued')
+    expect(csv).toContain('Total revenue from PRNs/PERNs')
+    expect(csv).toContain('Average PRN/PERN price per tonne')
+    expect(csv).toContain('Tonnage received but not recycled')
+    expect(csv).toContain('Tonnage received but not exported')
+    expect(csv).toContain('Tonnage exported that was stopped')
+    expect(csv).toContain('Tonnage exported that was refused')
+    expect(csv).toContain('Tonnage repatriated')
+    expect(csv).toContain('Note to regulator')
+  })
+
+  test('CSV maps tonnage field values into data row', async () => {
+    fetchJsonFromBackend.mockResolvedValue({
+      reportSubmissions: [
+        buildRow({
+          tonnageReceivedForRecycling: '100.5',
+          tonnageRecycled: '80',
+          tonnageExportedForRecycling: '20.25',
+          tonnageSentOnTotal: '15',
+          tonnageSentOnToReprocessor: '5',
+          tonnageSentOnToExporter: '7',
+          tonnageSentOnToOtherFacilities: '3',
+          tonnagePrnsPernsIssued: '90',
+          totalRevenuePrnsPerns: '4500',
+          averagePrnPernPricePerTonne: '50',
+          tonnageReceivedButNotRecycled: '19.5',
+          tonnageReceivedButNotExported: '0',
+          tonnageExportedThatWasStopped: '1',
+          tonnageExportedThatWasRefused: '2',
+          tonnageRepatriated: '0.5',
+          noteToRegulator: 'All good'
+        })
+      ],
+      generatedAt: '2026-04-17T10:00:00.000Z'
+    })
+
+    await reportSubmissionsPostController.handler(mockRequest, mockH)
+
+    const csv = mockH.response.mock.calls[0][0]
+    expect(csv).toContain('100.5')
+    expect(csv).toContain('80')
+    expect(csv).toContain('20.25')
+    expect(csv).toContain('All good')
+  })
+
+  test('sanitizes formula injection on noteToRegulator', async () => {
+    fetchJsonFromBackend.mockResolvedValue({
+      reportSubmissions: [buildRow({ noteToRegulator: '=HYPERLINK("evil")' })],
+      generatedAt: '2026-04-17T10:00:00.000Z'
+    })
+
+    await reportSubmissionsPostController.handler(mockRequest, mockH)
+
+    const csv = mockH.response.mock.calls[0][0]
+    expect(csv).toContain("'=HYPERLINK")
+    expect(csv).not.toContain('=HYPERLINK("evil")')
   })
 
   test('sanitizes formula injection on submittedBy', async () => {
