@@ -4,6 +4,7 @@
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "govuk/components/input/macro.njk" import govukInput %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/pagination/macro.njk" import govukPagination %}
 
 {% block content %}
   <div class="govuk-grid-row">
@@ -87,6 +88,13 @@
             ],
             rows: tableRows
           }) }}
+
+          {% if pagination.previous or pagination.next %}
+            {{ govukPagination({
+              previous: pagination.previous,
+              next: pagination.next
+            }) }}
+          {% endif %}
 
         {% else %}
           {% if searchTerm %}

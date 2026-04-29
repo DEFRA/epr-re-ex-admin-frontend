@@ -1,4 +1,5 @@
-import { organisationsController } from './controller.js'
+import { organisationsGetController } from './controller.get.js'
+import { organisationsPostController } from './controller.post.js'
 
 /**
  * Sets up the routes used in the /organisations page.
@@ -12,7 +13,7 @@ export const organisations = {
         {
           method: 'GET',
           path: '/organisations',
-          ...organisationsController,
+          ...organisationsGetController,
           options: {
             app: { pageTitle: 'Organisations' }
           }
@@ -20,7 +21,7 @@ export const organisations = {
         {
           method: 'POST',
           path: '/organisations',
-          ...organisationsController,
+          ...organisationsPostController,
           options: {
             app: { pageTitle: 'Organisations' }
           }
