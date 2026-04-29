@@ -427,13 +427,16 @@ describe('#callback route', () => {
 
     await callbackRoute.handler(mockRequest, mockToolkit)
 
-    expect(mockLogger.info).toHaveBeenCalledWith(
-      { userId: mockProfile.id, displayName: mockProfile.displayName },
-      'User signed in'
-    )
-    expect(mockLogger.info).toHaveBeenCalledWith(
-      'Sign-in complete, redirecting user to /'
-    )
+    expect(mockLogger.info).toHaveBeenCalledWith({
+      message: 'User signed in',
+      event: {
+        action: 'sign_in',
+        reason: `userId=${mockProfile.id} displayName=${mockProfile.displayName}`
+      }
+    })
+    expect(mockLogger.info).toHaveBeenCalledWith({
+      message: 'Sign-in complete, redirecting user to /'
+    })
   })
 
   test('Should log redirect to referrer page after sign-in', async () => {
@@ -454,9 +457,9 @@ describe('#callback route', () => {
 
     await callbackRoute.handler(mockRequest, mockToolkit)
 
-    expect(mockLogger.info).toHaveBeenCalledWith(
-      'Sign-in complete, redirecting user to /prn-activity'
-    )
+    expect(mockLogger.info).toHaveBeenCalledWith({
+      message: 'Sign-in complete, redirecting user to /prn-activity'
+    })
   })
 
   test('Should call auditSignIn with user session on successful authentication', async () => {
@@ -538,6 +541,8 @@ describe('#callback route', () => {
 
     await callbackRoute.handler(mockRequest, mockToolkit)
 
-    expect(mockLogger.error).toHaveBeenCalledWith('Sign-in failed')
+    expect(mockLogger.error).toHaveBeenCalledWith({
+      message: 'Sign-in failed'
+    })
   })
 })

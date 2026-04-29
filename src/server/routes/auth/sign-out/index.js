@@ -29,10 +29,13 @@ export default {
 
     await clearUserSession(request)
 
-    request.logger.info(
-      { userId: userSession.userId, displayName: userSession.displayName },
-      'User signed out'
-    )
+    request.logger.info({
+      message: 'User signed out',
+      event: {
+        action: 'sign_out',
+        reason: `userId=${userSession.userId} displayName=${userSession.displayName}`
+      }
+    })
     auditSignOut(userSession)
     await metrics.signOutSuccess()
 
