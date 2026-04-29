@@ -30,7 +30,23 @@ function generateCsv(reportSubmissions, generatedAt) {
       'Report Period',
       'Due Date',
       'Submitted Date',
-      'Submitted By'
+      'Submitted By',
+      'Tonnage received for recycling',
+      'Tonnage recycled',
+      'Tonnage exported for recycling',
+      'Tonnage sent on, total',
+      'Tonnage sent on to a reprocessor',
+      'Tonnage sent on to an exporter',
+      'Tonnage sent on to other facilities',
+      'Tonnage of PRNs/PERNs issued',
+      'Total revenue from PRNs/PERNs',
+      'Average PRN/PERN price per tonne',
+      'Tonnage received but not recycled',
+      'Tonnage received but not exported',
+      'Tonnage exported that was stopped',
+      'Tonnage exported that was refused',
+      'Tonnage repatriated',
+      'Note to regulator'
     ]
   ]
 
@@ -48,7 +64,23 @@ function generateCsv(reportSubmissions, generatedAt) {
       row.reportingPeriod,
       row.dueDate,
       row.submittedDate,
-      sanitizeFormulaInjection(row.submittedBy)
+      sanitizeFormulaInjection(row.submittedBy),
+      row.tonnageReceivedForRecycling,
+      row.tonnageRecycled,
+      row.tonnageExportedForRecycling,
+      row.tonnageSentOnTotal,
+      row.tonnageSentOnToReprocessor,
+      row.tonnageSentOnToExporter,
+      row.tonnageSentOnToOtherFacilities,
+      row.tonnagePrnsPernsIssued,
+      row.totalRevenuePrnsPerns,
+      row.averagePrnPernPricePerTonne,
+      row.tonnageReceivedButNotRecycled,
+      row.tonnageReceivedButNotExported,
+      row.tonnageExportedThatWasStopped,
+      row.tonnageExportedThatWasRefused,
+      row.tonnageRepatriated,
+      sanitizeFormulaInjection(row.noteToRegulator)
     ])
   }
 
