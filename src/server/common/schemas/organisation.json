@@ -88,10 +88,6 @@
       ],
       "additionalProperties": false
     },
-    "formSubmissionTime": {
-      "type": "string",
-      "format": "date-time"
-    },
     "id": {
       "not": {}
     },
@@ -307,7 +303,97 @@
       }
     },
     "schemaVersion": {
-      "const": 1
+      "type": "number",
+      "enum": [
+        1,
+        2
+      ]
+    },
+    "formSubmissionTime": {
+      "type": [
+        "array",
+        "boolean",
+        "number",
+        "object",
+        "string",
+        "null"
+      ],
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time"
+        },
+        {
+          "type": [
+            "array",
+            "boolean",
+            "number",
+            "object",
+            "string",
+            "null"
+          ]
+        },
+        {
+          "type": "string",
+          "format": "date-time"
+        }
+      ]
+    },
+    "formSubmission": {
+      "type": [
+        "array",
+        "boolean",
+        "number",
+        "object",
+        "string",
+        "null"
+      ],
+      "anyOf": [
+        {
+          "type": [
+            "array",
+            "boolean",
+            "number",
+            "object",
+            "string",
+            "null"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "time": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "id",
+            "time"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "time": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "id",
+            "time"
+          ],
+          "additionalProperties": false
+        }
+      ]
     },
     "registrations": {
       "type": "array",
@@ -358,13 +444,6 @@
               "null"
             ],
             "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
-          },
-          "formSubmissionTime": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time"
           },
           "submittedToRegulator": {
             "type": [
@@ -547,6 +626,23 @@
           },
           "accreditationId": {
             "type": [
+              "string",
+              "null"
+            ]
+          },
+          "formSubmissionTime": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "formSubmission": {
+            "type": [
+              "array",
+              "boolean",
+              "number",
+              "object",
               "string",
               "null"
             ]
@@ -1032,6 +1128,40 @@
             },
             "additionalProperties": false
           },
+          "applicationContactDetails": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "fullName": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "email": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "email"
+              },
+              "phone": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "jobTitle": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
           "samplingInspectionPlanPart1FileUploads": {
             "type": [
               "array",
@@ -1100,6 +1230,14 @@
               },
               "additionalProperties": false
             }
+          },
+          "overseasSites": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {},
+            "additionalProperties": false
           },
           "statusHistory": {
             "type": [
@@ -1189,13 +1327,6 @@
               "string",
               "null"
             ]
-          },
-          "formSubmissionTime": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time"
           },
           "submittedToRegulator": {
             "type": [
@@ -1301,6 +1432,23 @@
               }
             },
             "additionalProperties": false
+          },
+          "formSubmissionTime": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "formSubmission": {
+            "type": [
+              "array",
+              "boolean",
+              "number",
+              "object",
+              "string",
+              "null"
+            ]
           },
           "prnIssuance": {
             "type": [
@@ -1545,7 +1693,6 @@
   },
   "required": [
     "companyDetails",
-    "formSubmissionTime",
     "orgId",
     "submittedToRegulator",
     "submitterContactDetails",
