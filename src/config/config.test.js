@@ -1,4 +1,6 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, test, vi } from 'vitest'
+
+import { config, isProductionEnvironment } from './config.js'
 
 describe('#config', () => {
   beforeEach(() => {
@@ -26,6 +28,32 @@ describe('#config', () => {
 
       const redactPaths = config.get('log.redact')
       expect(redactPaths).toEqual([])
+    })
+  })
+
+  describe(isProductionEnvironment, () => {
+    afterEach(() => {
+      config.reset('cdpEnvironment')
+    })
+
+    it('should return true when cdpEnvironment is prod', () => {
+      config.set('cdpEnvironment', 'prod')
+
+      expect(isProductionEnvironment()).toBe(true)
+    })
+
+    it.each([
+      'local',
+      'infra-dev',
+      'management',
+      'dev',
+      'test',
+      'perf-test',
+      'ext-test'
+    ])('should return false when cdpEnvironment is %s', (env) => {
+      config.set('cdpEnvironment', env)
+
+      expect(isProductionEnvironment()).toBe(false)
     })
   })
 
