@@ -320,7 +320,11 @@
       }
     },
     "schemaVersion": {
-      "const": 2
+      "type": "number",
+      "enum": [
+        2,
+        3
+      ]
     },
     "registrations": {
       "type": "array",
