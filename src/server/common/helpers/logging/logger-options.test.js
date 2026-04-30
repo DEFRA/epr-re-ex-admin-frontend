@@ -1,4 +1,7 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
+
+import { config } from '#config/config.js'
+import { loggerOptions } from './logger-options.js'
 
 let mockGetTraceId
 
@@ -7,14 +10,6 @@ vi.mock('@defra/hapi-tracing', () => ({
 }))
 
 describe('#loggerOptions', () => {
-  let loggerOptions
-
-  beforeEach(async () => {
-    vi.resetModules()
-    const loggerOptionsModule = await import('./logger-options.js')
-    loggerOptions = loggerOptionsModule.loggerOptions
-  })
-
   describe('mixin function', () => {
     test('Should include trace ID in mixin when trace ID exists', () => {
       mockGetTraceId = vi.fn().mockReturnValue('test-trace-id-123')
@@ -153,33 +148,13 @@ describe('#loggerOptions', () => {
 })
 
 describe('#loggerOptions in production environment', () => {
-  beforeEach(() => {
-    vi.resetModules()
+  afterEach(() => {
+    config.reset('cdpEnvironment')
   })
 
-  test('Should exclude Boom error details in prod environment', async () => {
-    vi.doMock('#config/config.js', () => ({
-      config: {
-        get: vi.fn((key) => {
-          const values = {
-            log: {
-              enabled: true,
-              level: 'info',
-              format: 'ecs',
-              redact: []
-            },
-            serviceName: 'test-service',
-            serviceVersion: '1.0.0',
-            cdpEnvironment: 'prod'
-          }
-          return values[key]
-        })
-      }
-    }))
-
-    const { loggerOptions: prodLoggerOptions } =
-      await import('./logger-options.js')
-    const { err: errorSerializer } = prodLoggerOptions.serializers
+  test('Should exclude Boom error details in prod environment', () => {
+    config.set('cdpEnvironment', 'prod')
+    const { err: errorSerializer } = loggerOptions.serializers
 
     const boomError = new Error('Validation failed')
     boomError.isBoom = true

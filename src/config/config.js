@@ -295,3 +295,6 @@ export const config = convict({
 })
 
 config.validate({ allowed: 'strict' })
+
+export const isProductionEnvironment = () =>
+  config.get('cdpEnvironment') === 'prod'
