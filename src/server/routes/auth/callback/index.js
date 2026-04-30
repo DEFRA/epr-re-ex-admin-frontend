@@ -1,6 +1,7 @@
 import { createUserSession } from '#server/common/helpers/auth/create-user-session.js'
 import { randomUUID } from 'node:crypto'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
+import { loggingEventActions } from '#server/common/enums/event.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 
 export default {
@@ -11,7 +12,7 @@ export default {
   },
   handler: async function (request, h) {
     if (request.auth.error) {
-      request.logger.error('Sign-in failed')
+      request.logger.error({ message: 'Sign-in failed' })
       await metrics.signInFailure()
     }
 
@@ -41,11 +42,19 @@ export default {
 
     const safeRedirect = getSafeRedirect(redirect)
 
-    request.logger.info({ userId, displayName }, 'User signed in')
+    request.logger.info({
+      message: 'User signed in',
+      event: {
+        action: loggingEventActions.signIn,
+        reason: `userId=${userId} displayName=${displayName}`
+      }
+    })
     auditSignIn(userSession)
     await metrics.signInSuccess()
 
-    request.logger.info(`Sign-in complete, redirecting user to ${safeRedirect}`)
+    request.logger.info({
+      message: `Sign-in complete, redirecting user to ${safeRedirect}`
+    })
     return h.redirect(safeRedirect)
   }
 }

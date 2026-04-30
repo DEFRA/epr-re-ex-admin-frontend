@@ -74,7 +74,7 @@ describe('orsUploadStatusGetController', () => {
         category: 'data',
         action: 'status-check-succeeded',
         reference: 'import-123',
-        status: 'processing'
+        reason: 'status=processing'
       },
       http: {
         response: {

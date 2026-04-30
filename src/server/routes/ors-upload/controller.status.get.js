@@ -45,7 +45,7 @@ export const orsUploadStatusGetController = {
           category: 'data',
           action: 'status-check-succeeded',
           reference: importId,
-          status: data.status
+          reason: `status=${data.status}`
         },
         http: {
           response: {
