@@ -88,6 +88,23 @@
       ],
       "additionalProperties": false
     },
+    "formSubmission": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "time": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "time"
+      ],
+      "additionalProperties": false
+    },
     "id": {
       "not": {}
     },
@@ -305,59 +322,8 @@
     "schemaVersion": {
       "type": "number",
       "enum": [
-        1,
-        2
-      ]
-    },
-    "formSubmissionTime": {
-      "type": [
-        "array",
-        "boolean",
-        "number",
-        "object",
-        "string",
-        "null"
-      ],
-      "oneOf": [
-        {
-          "type": "string",
-          "format": "date-time"
-        },
-        {
-          "not": {}
-        }
-      ]
-    },
-    "formSubmission": {
-      "type": [
-        "array",
-        "boolean",
-        "number",
-        "object",
-        "string",
-        "null"
-      ],
-      "oneOf": [
-        {
-          "type": "object",
-          "properties": {
-            "id": {
-              "type": "string"
-            },
-            "time": {
-              "type": "string",
-              "format": "date-time"
-            }
-          },
-          "required": [
-            "id",
-            "time"
-          ],
-          "additionalProperties": false
-        },
-        {
-          "not": {}
-        }
+        2,
+        3
       ]
     },
     "registrations": {
@@ -594,13 +560,6 @@
               "string",
               "null"
             ]
-          },
-          "formSubmissionTime": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time"
           },
           "formSubmission": {
             "type": [
@@ -1411,13 +1370,6 @@
             },
             "additionalProperties": false
           },
-          "formSubmissionTime": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time"
-          },
           "formSubmission": {
             "type": [
               "object",
@@ -1684,6 +1636,7 @@
   },
   "required": [
     "companyDetails",
+    "formSubmission",
     "orgId",
     "submittedToRegulator",
     "submitterContactDetails",
