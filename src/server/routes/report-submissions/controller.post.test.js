@@ -11,6 +11,7 @@ vi.mock('#server/common/helpers/logging/logger.js', () => ({
 }))
 
 const buildRow = (overrides = {}) => ({
+  regulator: 'EA',
   organisationName: 'Acme Ltd',
   submitterPhone: '01234567890',
   approvedPersonsPhone: '09876543210',
@@ -109,7 +110,7 @@ describe('reportSubmissionsPostController', () => {
     expect(firstLine).toContain('Report submissions')
   })
 
-  test('CSV includes the 12 column headers', async () => {
+  test('CSV includes the non-tonnage column headers', async () => {
     fetchJsonFromBackend.mockResolvedValue({
       reportSubmissions: [],
       generatedAt: '2026-04-17T10:00:00.000Z'
@@ -118,6 +119,7 @@ describe('reportSubmissionsPostController', () => {
     await reportSubmissionsPostController.handler(mockRequest, mockH)
 
     const csv = mockH.response.mock.calls[0][0]
+    expect(csv).toContain('Regulator')
     expect(csv).toContain('Organisation name')
     expect(csv).toContain('Organisation registered approver contact number')
     expect(csv).toContain(
@@ -133,6 +135,51 @@ describe('reportSubmissionsPostController', () => {
     expect(csv).toContain('Due Date')
     expect(csv).toContain('Submitted Date')
     expect(csv).toContain('Submitted By')
+  })
+
+  test('Regulator is the first column header', async () => {
+    fetchJsonFromBackend.mockResolvedValue({
+      reportSubmissions: [],
+      generatedAt: '2026-04-17T10:00:00.000Z'
+    })
+
+    await reportSubmissionsPostController.handler(mockRequest, mockH)
+
+    const csv = mockH.response.mock.calls[0][0]
+    const headerLine = csv
+      .split(/\r?\n/)
+      .find((line) => line.startsWith('"Regulator"'))
+    expect(headerLine).toMatch(/^"Regulator","Organisation name"/)
+  })
+
+  test('regulator value appears as the first cell of a data row', async () => {
+    fetchJsonFromBackend.mockResolvedValue({
+      reportSubmissions: [buildRow({ regulator: 'NIEA' })],
+      generatedAt: '2026-04-17T10:00:00.000Z'
+    })
+
+    await reportSubmissionsPostController.handler(mockRequest, mockH)
+
+    const csv = mockH.response.mock.calls[0][0]
+    const dataLine = csv
+      .split(/\r?\n/)
+      .find((line) => line.startsWith('"NIEA"'))
+    expect(dataLine).toMatch(/^"NIEA","Acme Ltd"/)
+  })
+
+  test('empty regulator renders as an empty first cell', async () => {
+    fetchJsonFromBackend.mockResolvedValue({
+      reportSubmissions: [buildRow({ regulator: '' })],
+      generatedAt: '2026-04-17T10:00:00.000Z'
+    })
+
+    await reportSubmissionsPostController.handler(mockRequest, mockH)
+
+    const csv = mockH.response.mock.calls[0][0]
+    const dataLine = csv
+      .split(/\r?\n/)
+      .find((line) => line.startsWith('"","Acme Ltd"'))
+    expect(dataLine).toBeDefined()
   })
 
   test('CSV includes data rows', async () => {
