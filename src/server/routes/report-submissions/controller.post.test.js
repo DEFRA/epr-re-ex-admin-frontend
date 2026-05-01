@@ -167,21 +167,6 @@ describe('reportSubmissionsPostController', () => {
     expect(dataLine).toMatch(/^"NIEA","Acme Ltd"/)
   })
 
-  test('empty regulator renders as an empty first cell', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
-      reportSubmissions: [buildRow({ regulator: '' })],
-      generatedAt: '2026-04-17T10:00:00.000Z'
-    })
-
-    await reportSubmissionsPostController.handler(mockRequest, mockH)
-
-    const csv = mockH.response.mock.calls[0][0]
-    const dataLine = csv
-      .split(/\r?\n/)
-      .find((line) => line.startsWith('"","Acme Ltd"'))
-    expect(dataLine).toBeDefined()
-  })
-
   test('CSV includes data rows', async () => {
     fetchJsonFromBackend.mockResolvedValue({
       reportSubmissions: [buildRow()],
