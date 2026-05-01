@@ -18,6 +18,7 @@ function generateCsv(reportSubmissions, generatedAt) {
     ['Generated at', formatDateTime(generatedAt)],
     [],
     [
+      'Regulator',
       'Organisation name',
       'Organisation registered approver contact number',
       'Organisation registered approver person email address',
@@ -52,6 +53,7 @@ function generateCsv(reportSubmissions, generatedAt) {
 
   for (const row of reportSubmissions) {
     rows.push([
+      row.regulator,
       sanitizeFormulaInjection(row.organisationName),
       row.approvedPersonsPhone,
       row.approvedPersonsEmail,
