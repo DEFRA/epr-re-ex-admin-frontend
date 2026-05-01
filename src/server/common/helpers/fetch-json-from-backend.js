@@ -7,11 +7,15 @@ import { withTraceId } from '@defra/hapi-tracing'
 import { getTracingHeaderName } from './request-tracing.js'
 
 /**
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ */
+
+/**
  * Fetch JSON from a given path in the backend service.
- * @param {import('@hapi/hapi').Request} request - The Hapi request object
- * @param {string} path - The API path to append to the backend URL
- * @param {RequestInit} [options] - Fetch API options (method, headers, body, etc.)
- * @returns {Promise<*>} The parsed JSON response or throws a Boom error
+ * @param {HapiRequest} request
+ * @param {string} path
+ * @param {RequestInit} [options]
+ * @returns {Promise<*>}
  */
 export const fetchJsonFromBackend = async (request, path, options) => {
   const eprBackendUrl = config.get('eprBackendUrl')

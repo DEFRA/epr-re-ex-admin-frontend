@@ -1,6 +1,11 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
+/**
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ */
+
 export const queueManagementPostController = {
+  /** @param {HapiRequest} request */
   async handler(request, h) {
     try {
       await fetchJsonFromBackend(request, '/v1/admin/queues/dlq/purge', {

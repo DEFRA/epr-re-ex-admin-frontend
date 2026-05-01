@@ -6,9 +6,14 @@ import { loggingEventActions } from '#server/common/enums/event.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { auditSignOut } from '#server/common/helpers/auditing/index.js'
 
+/**
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ */
+
 export default {
   method: 'GET',
   path: '/auth/sign-out',
+  /** @param {HapiRequest} request */
   handler: async (request, h) => {
     const userSession = await getUserSession(request)
 

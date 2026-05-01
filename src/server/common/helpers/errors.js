@@ -1,5 +1,9 @@
 import { statusCodes } from '../constants/status-codes.js'
 
+/**
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ */
+
 function storeRedirectPath(request) {
   if (request.yar && request.path) {
     const redirectPath = request.path + (request.url?.search ?? '')
@@ -7,6 +11,7 @@ function storeRedirectPath(request) {
   }
 }
 
+/** @param {HapiRequest} request */
 export function catchAll(request, h) {
   const { response } = request
 

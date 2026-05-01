@@ -4,12 +4,23 @@ import { auditSignIn } from '#server/common/helpers/auditing/index.js'
 import { loggingEventActions } from '#server/common/enums/event.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 
+/**
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ *
+ * @typedef {{
+ *   profile: { id: string, email: string, displayName?: string, loginHint?: string },
+ *   token: string,
+ *   refreshToken: string
+ * }} BellCredentials
+ */
+
 export default {
   method: 'GET',
   path: '/auth/callback',
   options: {
     auth: { strategy: 'entra-id', mode: 'try' }
   },
+  /** @param {HapiRequest} request */
   handler: async function (request, h) {
     if (request.auth.error) {
       request.logger.error({ message: 'Sign-in failed' })
@@ -20,7 +31,9 @@ export default {
       return h.view('unauthorised')
     }
 
-    const { profile, token, refreshToken } = request.auth.credentials
+    const { profile, token, refreshToken } = /** @type {BellCredentials} */ (
+      /** @type {unknown} */ (request.auth.credentials)
+    )
 
     const { displayName = '', id: userId, email, loginHint } = profile
 
