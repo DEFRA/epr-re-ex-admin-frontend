@@ -60,6 +60,9 @@ describe('#metrics', () => {
 
       await metrics[metricName]()
 
-      expect(mockLoggerError).toHaveBeenCalledWith(Error(mockError), mockError)
+      expect(mockLoggerError).toHaveBeenCalledWith({
+        message: mockError,
+        err: Error(mockError)
+      })
     }))
 })
