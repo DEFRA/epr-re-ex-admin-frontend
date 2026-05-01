@@ -61,7 +61,9 @@ describe('#buildRedisClient', () => {
       const connectHandler = connectCall[1]
       connectHandler()
 
-      expect(mockLoggerInfo).toHaveBeenCalledWith('Connected to Redis server')
+      expect(mockLoggerInfo).toHaveBeenCalledWith({
+        message: 'Connected to Redis server'
+      })
     })
 
     test('Should log error message when error event fires', () => {
@@ -118,7 +120,9 @@ describe('#buildRedisClient', () => {
       const connectHandler = connectCall[1]
       connectHandler()
 
-      expect(mockLoggerInfo).toHaveBeenCalledWith('Connected to Redis server')
+      expect(mockLoggerInfo).toHaveBeenCalledWith({
+        message: 'Connected to Redis server'
+      })
     })
 
     test('Should log error message when error event fires', () => {

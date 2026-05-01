@@ -16,14 +16,13 @@
     "strictNullChecks": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "baseUrl": ".",
     "paths": {
       "#config/*": ["./src/config/*"],
       "#server/*": ["./src/server/*"],
       "#vite/*": ["./.vite/*"]
     }
   },
-  "include": ["src/**/*.js"],
+  "include": ["src/**/*.js", "src/**/*.d.ts"],
   "exclude": [
     "node_modules",
     ".vite",

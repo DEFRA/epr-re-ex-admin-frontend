@@ -107,7 +107,10 @@ export const reportSubmissionsPostController = {
           'attachment; filename="report-submissions.csv"'
         )
     } catch (error) {
-      logger.error(error, 'Failed to generate report submissions CSV')
+      logger.error({
+        message: 'Failed to generate report submissions CSV',
+        err: error
+      })
 
       const errorMessage =
         error.output?.payload?.message ||

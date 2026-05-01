@@ -1,5 +1,6 @@
-import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
+import { errorCodes } from '#server/common/enums/error-codes.js'
+import { badGateway, classifierTail, internal } from './logging/cdp-boom.js'
 import { getUserSession } from './auth/get-user-session.js'
 import { withTraceId } from '@defra/hapi-tracing'
 import { getTracingHeaderName } from './request-tracing.js'
@@ -28,7 +29,16 @@ export const fetchRedirectFromBackend = async (request, path) => {
     const location = response.headers.get('location')
 
     if (!location) {
-      throw Boom.badGateway(`Backend did not return a redirect for: ${url}`)
+      throw badGateway(
+        `Backend did not return a redirect for: ${url}`,
+        errorCodes.externalRedirectInvalid,
+        {
+          event: {
+            action: 'external_redirect',
+            reason: 'missing_location_header'
+          }
+        }
+      )
     }
 
     return location
@@ -37,8 +47,15 @@ export const fetchRedirectFromBackend = async (request, path) => {
       throw error
     }
 
-    throw Boom.internal(
-      `Failed to fetch redirect from backend at url: ${url}: ${error.message}`
+    throw internal(
+      `Failed to fetch redirect from backend at url: ${url}`,
+      errorCodes.externalFetchFailed,
+      {
+        event: {
+          action: 'external_fetch',
+          reason: classifierTail(error)
+        }
+      }
     )
   }
 }

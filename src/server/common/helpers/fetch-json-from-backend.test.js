@@ -164,7 +164,7 @@ describe('#fetchJsonFromBackend', () => {
         statusCode: 500
       },
       message: expect.stringContaining(
-        `Failed to fetch from backend at url: ${backendUrl}/network:`
+        `Failed to fetch from backend at url: ${backendUrl}/network`
       )
     })
   })
@@ -227,7 +227,7 @@ describe('#fetchJsonFromBackend', () => {
         statusCode: 500
       },
       message: expect.stringContaining(
-        `Failed to fetch from backend at url: ${backendUrl}/malformed:`
+        `Failed to fetch from backend at url: ${backendUrl}/malformed`
       )
     })
   })

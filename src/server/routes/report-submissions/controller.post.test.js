@@ -6,8 +6,9 @@ vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
 }))
 
+const { mockLoggerError } = vi.hoisted(() => ({ mockLoggerError: vi.fn() }))
 vi.mock('#server/common/helpers/logging/logger.js', () => ({
-  createLogger: () => ({ error: vi.fn() })
+  createLogger: () => ({ error: mockLoggerError })
 }))
 
 const buildRow = (overrides = {}) => ({
@@ -282,13 +283,18 @@ describe('reportSubmissionsPostController', () => {
   })
 
   test('redirects with error message when fetch fails', async () => {
-    fetchJsonFromBackend.mockRejectedValue(new Error('Network error'))
+    const error = new Error('Network error')
+    fetchJsonFromBackend.mockRejectedValue(error)
 
     const result = await reportSubmissionsPostController.handler(
       mockRequest,
       mockH
     )
 
+    expect(mockLoggerError).toHaveBeenCalledWith({
+      message: 'Failed to generate report submissions CSV',
+      err: error
+    })
     expect(mockRequest.yar.set).toHaveBeenCalledWith(
       'error',
       'There was a problem downloading the report submissions data. Please try again.'

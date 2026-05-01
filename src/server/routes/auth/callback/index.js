@@ -1,7 +1,18 @@
 import { createUserSession } from '#server/common/helpers/auth/create-user-session.js'
 import { randomUUID } from 'node:crypto'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
+import { loggingEventActions } from '#server/common/enums/event.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
+
+/**
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ *
+ * @typedef {{
+ *   profile: { id: string, email: string, displayName?: string, loginHint?: string },
+ *   token: string,
+ *   refreshToken: string
+ * }} BellCredentials
+ */
 
 export default {
   method: 'GET',
@@ -9,9 +20,10 @@ export default {
   options: {
     auth: { strategy: 'entra-id', mode: 'try' }
   },
+  /** @param {HapiRequest} request */
   handler: async function (request, h) {
     if (request.auth.error) {
-      request.logger.error('Sign-in failed')
+      request.logger.error({ message: 'Sign-in failed' })
       await metrics.signInFailure()
     }
 
@@ -19,7 +31,9 @@ export default {
       return h.view('unauthorised')
     }
 
-    const { profile, token, refreshToken } = request.auth.credentials
+    const { profile, token, refreshToken } = /** @type {BellCredentials} */ (
+      /** @type {unknown} */ (request.auth.credentials)
+    )
 
     const { displayName = '', id: userId, email, loginHint } = profile
 
@@ -41,11 +55,19 @@ export default {
 
     const safeRedirect = getSafeRedirect(redirect)
 
-    request.logger.info({ userId, displayName }, 'User signed in')
+    request.logger.info({
+      message: 'User signed in',
+      event: {
+        action: loggingEventActions.signIn,
+        reason: `userId=${userId} displayName=${displayName}`
+      }
+    })
     auditSignIn(userSession)
     await metrics.signInSuccess()
 
-    request.logger.info(`Sign-in complete, redirecting user to ${safeRedirect}`)
+    request.logger.info({
+      message: `Sign-in complete, redirecting user to ${safeRedirect}`
+    })
     return h.redirect(safeRedirect)
   }
 }

@@ -2,12 +2,18 @@ import { config } from '#config/config.js'
 import { clearUserSession } from '#server/common/helpers/auth/clear-user-session.js'
 import { getOidcConfig } from '#server/common/helpers/auth/get-oidc-config.js'
 import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
+import { loggingEventActions } from '#server/common/enums/event.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { auditSignOut } from '#server/common/helpers/auditing/index.js'
+
+/**
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ */
 
 export default {
   method: 'GET',
   path: '/auth/sign-out',
+  /** @param {HapiRequest} request */
   handler: async (request, h) => {
     const userSession = await getUserSession(request)
 
@@ -29,10 +35,13 @@ export default {
 
     await clearUserSession(request)
 
-    request.logger.info(
-      { userId: userSession.userId, displayName: userSession.displayName },
-      'User signed out'
-    )
+    request.logger.info({
+      message: 'User signed out',
+      event: {
+        action: loggingEventActions.signOut,
+        reason: `userId=${userSession.userId} displayName=${userSession.displayName}`
+      }
+    })
     auditSignOut(userSession)
     await metrics.signOutSuccess()
 

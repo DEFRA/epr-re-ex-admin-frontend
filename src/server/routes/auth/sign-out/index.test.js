@@ -323,12 +323,12 @@ describe('#signOut route', () => {
 
     await signOutRoute.handler(mockRequest, mockToolkit)
 
-    expect(mockLogger.info).toHaveBeenCalledWith(
-      {
-        userId: mockUserSession.userId,
-        displayName: mockUserSession.displayName
-      },
-      'User signed out'
-    )
+    expect(mockLogger.info).toHaveBeenCalledWith({
+      message: 'User signed out',
+      event: {
+        action: 'sign_out',
+        reason: `userId=${mockUserSession.userId} displayName=${mockUserSession.displayName}`
+      }
+    })
   })
 })

@@ -1,6 +1,7 @@
-import Boom from '@hapi/boom'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { fetchOrganisationOverview } from '#server/common/helpers/fetch-organisation-overview.js'
+import { errorCodes } from '#server/common/enums/error-codes.js'
+import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 
 const GREEN_TAG = 'govuk-tag--green'
 const RED_TAG = 'govuk-tag--red'
@@ -53,7 +54,16 @@ export const registrationOverviewGETController = {
     )
 
     if (!registration) {
-      throw Boom.notFound()
+      throw notFound(
+        'Registration not found',
+        errorCodes.registrationNotFound,
+        {
+          event: {
+            action: 'fetch_registration',
+            reason: `organisationId=${organisationId} registrationId=${registrationId}`
+          }
+        }
+      )
     }
 
     const pageTitle = request.route.settings.app.pageTitle
