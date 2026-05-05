@@ -20,6 +20,7 @@ import { summaryLogUploadsReport } from './routes/summary-log/index.js'
 import { orsUpload } from './routes/ors-upload/index.js'
 import { reportSubmissions } from './routes/report-submissions/index.js'
 import { queueManagement } from './routes/queue-management/index.js'
+import { reportUnsubmit } from './routes/report-unsubmit/index.js'
 
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
 
@@ -52,7 +53,8 @@ export const router = {
         summaryLogUploadsReport,
         orsUpload,
         reportSubmissions,
-        queueManagement
+        queueManagement,
+        reportUnsubmit
       ])
 
       await server.register([serveStaticFiles])

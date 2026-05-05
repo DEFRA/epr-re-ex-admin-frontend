@@ -37,12 +37,17 @@
             {% else %}
               {% set viewLink = '' %}
             {% endif %}
+            {% set unsubmitLink = '' %}
+            {% if featureFlagReportUnsubmit and period.report and period.report.status === 'submitted' %}
+              {% set unsubmitUrl = '/organisations/' ~ organisationId ~ '/registrations/' ~ registrationId ~ '/reports/' ~ period.year ~ '/' ~ cadence ~ '/' ~ period.period ~ '/unsubmit/confirm' %}
+              {% set unsubmitLink = '<br><a class="govuk-link govuk-link--no-visited-state" href="' ~ unsubmitUrl ~ '">Unsubmit</a>' %}
+            {% endif %}
             {% set row = [
               { text: period.startDate },
               { text: period.endDate },
               { text: period.dueDate },
               { html: govukTag({ text: statusText }) },
-              { html: viewLink }
+              { html: viewLink + unsubmitLink }
             ] %}
             {% set tableRows = tableRows.concat([row]) %}
           {% endfor %}
