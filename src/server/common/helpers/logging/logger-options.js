@@ -7,7 +7,11 @@ const logConfig = config.get('log')
 const serviceName = config.get('serviceName')
 const serviceVersion = config.get('serviceVersion')
 
-const ecsOptions = ecsFormat({ serviceVersion, serviceName })
+const ecsOptions = ecsFormat({
+  serviceVersion,
+  serviceName,
+  convertReqRes: true
+})
 const ecsLog =
   /** @type {(obj: object) => { error?: { stack_trace?: string } }} */ (
     ecsOptions.formatters?.log
@@ -35,6 +39,15 @@ const formatters = {
 export const loggerOptions = {
   enabled: logConfig.enabled,
   ignorePaths: ['/health'],
+  getChildBindings: (request) => ({
+    http: {
+      request: {
+        id: request.info.id,
+        method: request.method.toUpperCase()
+      }
+    },
+    url: { path: request.path }
+  }),
   redact: {
     paths: logConfig.redact,
     remove: true
