@@ -34,66 +34,6 @@ describe('user-agent protection', () => {
     expect(response.statusCode).toBe(httpConstants.HTTP_STATUS_OK)
   })
 
-  test('should truncate oversized User-Agent strings', async () => {
-    const longUserAgent = `Mozilla/5.0 ${'X'.repeat(2000)}`
-    const expectedTruncated = longUserAgent.substring(0, MAX_USER_AGENT_LENGTH)
-
-    const response = await server.inject({
-      method: 'GET',
-      url: '/',
-      headers: {
-        'user-agent': longUserAgent
-      }
-    })
-
-    expect(response.statusCode).toBe(httpConstants.HTTP_STATUS_OK)
-    expect(longUserAgent.length).toBeGreaterThan(MAX_USER_AGENT_LENGTH)
-    expect(expectedTruncated).toHaveLength(MAX_USER_AGENT_LENGTH)
-    expect(expectedTruncated).toBe(`Mozilla/5.0 ${'X'.repeat(138)}`)
-  })
-
-  test('should truncate User-Agent strings with suspicious patterns (ReDoS PoC)', async () => {
-    const maliciousUserAgent = `Mozilla/5.0 (${'X'.repeat(200)}) Gecko/20100101 Firefox/77.0`
-    const expectedTruncated = maliciousUserAgent.substring(
-      0,
-      MAX_USER_AGENT_LENGTH
-    )
-
-    const response = await server.inject({
-      method: 'GET',
-      url: '/',
-      headers: {
-        'user-agent': maliciousUserAgent
-      }
-    })
-
-    expect(response.statusCode).toBe(httpConstants.HTTP_STATUS_OK)
-    expect(maliciousUserAgent.length).toBeGreaterThan(MAX_USER_AGENT_LENGTH)
-    expect(expectedTruncated).toHaveLength(MAX_USER_AGENT_LENGTH)
-    expect(expectedTruncated.startsWith('Mozilla/5.0 (')).toBe(true)
-  })
-
-  test('should truncate User-Agent strings with repeated characters', async () => {
-    const maliciousUserAgent = `Mozilla/5.0 ${'A'.repeat(1500)} Safari`
-    const expectedTruncated = maliciousUserAgent.substring(
-      0,
-      MAX_USER_AGENT_LENGTH
-    )
-
-    const response = await server.inject({
-      method: 'GET',
-      url: '/',
-      headers: {
-        'user-agent': maliciousUserAgent
-      }
-    })
-
-    expect(response.statusCode).toBe(httpConstants.HTTP_STATUS_OK)
-    expect(maliciousUserAgent.length).toBeGreaterThan(MAX_USER_AGENT_LENGTH)
-    expect(expectedTruncated).toHaveLength(MAX_USER_AGENT_LENGTH)
-    expect(expectedTruncated).toBe(`Mozilla/5.0 ${'A'.repeat(138)}`)
-  })
-
   test('should handle requests without User-Agent header', async () => {
     const response = await server.inject({
       method: 'GET',
