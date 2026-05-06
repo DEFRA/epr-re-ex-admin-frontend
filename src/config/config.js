@@ -289,7 +289,7 @@ export const config = convict({
   featureFlagReportUnsubmit: {
     doc: 'Feature Flag: Enable admin unsubmit UI for reports',
     format: Boolean,
-    default: false,
+    default: true,
     env: 'FEATURE_FLAG_REPORT_UNSUBMIT'
   },
   cdpUploaderUrl: {
