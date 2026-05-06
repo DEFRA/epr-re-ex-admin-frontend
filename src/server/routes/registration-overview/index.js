@@ -10,7 +10,7 @@ export const registrationOverview = {
           path: '/organisations/{organisationId}/registrations/{registrationId}/overview',
           ...registrationOverviewGETController,
           options: {
-            app: { pageTitle: 'Reports' }
+            app: { pageTitle: 'Registration overview' }
           }
         }
       ])
