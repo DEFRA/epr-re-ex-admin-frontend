@@ -19,9 +19,9 @@ describe('#config', () => {
 
       const redactPaths = config.get('log.redact')
       expect(redactPaths).toEqual([
-        'req.headers.authorization',
-        'req.headers.cookie',
-        'res.headers'
+        'http.request.headers.authorization',
+        'http.request.headers.cookie',
+        'http.response.headers'
       ])
     })
 
