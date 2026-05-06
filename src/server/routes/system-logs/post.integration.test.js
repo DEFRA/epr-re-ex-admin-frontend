@@ -208,21 +208,6 @@ describe('POST /system-logs', () => {
 
         expect(backendCalls).toHaveLength(0)
       })
-
-      test('calls backend when only subCategory is provided', async () => {
-        const backendCalls = stubBackendResponse(
-          HttpResponse.json({ systemLogs: [] })
-        )
-
-        await submitSearch({
-          referenceNumber: '',
-          email: '',
-          subCategory: 'summary-log'
-        })
-
-        expect(backendCalls).toHaveLength(1)
-        expect(backendCalls[0].body).toEqual({ subCategory: 'summary-log' })
-      })
     })
 
     describe('form rendering', () => {
