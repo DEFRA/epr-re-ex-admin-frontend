@@ -6,6 +6,7 @@ import { config, isProductionEnvironment } from '#config/config.js'
 const logConfig = config.get('log')
 const serviceName = config.get('serviceName')
 const serviceVersion = config.get('serviceVersion')
+const tracingHeader = config.get('tracing.header')
 
 const ecsOptions = ecsFormat({
   serviceVersion,
@@ -39,15 +40,19 @@ const formatters = {
 export const loggerOptions = {
   enabled: logConfig.enabled,
   ignorePaths: ['/health'],
-  getChildBindings: (request) => ({
-    http: {
-      request: {
-        id: request.info.id,
-        method: request.method.toUpperCase()
-      }
-    },
-    url: { path: request.path }
-  }),
+  getChildBindings: (request) => {
+    const traceId = request.headers[tracingHeader]
+    return {
+      http: {
+        request: {
+          id: request.info.id,
+          method: request.method.toUpperCase()
+        }
+      },
+      url: { path: request.path },
+      ...(traceId ? { trace: { id: traceId } } : {})
+    }
+  },
   redact: {
     paths: logConfig.redact,
     remove: true
