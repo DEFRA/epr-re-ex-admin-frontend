@@ -7,7 +7,7 @@ export const systemLogPostController = {
     const email = request.payload?.email?.trim() || ''
     const subCategory = request.payload?.subCategory || ''
 
-    const hasAnyFilter = referenceNumber || email
+    const hasAnyFilter = referenceNumber || email || subCategory
 
     if (!hasAnyFilter) {
       return h.view('routes/system-logs/index', {
@@ -15,7 +15,7 @@ export const systemLogPostController = {
         systemLogs: [],
         searchTerms: { referenceNumber, email, subCategory },
         error: {
-          text: 'Enter an organisation reference number or email address',
+          text: 'Enter an organisation reference number, email address or event type',
           href: '#referenceNumber'
         }
       })
