@@ -14,11 +14,12 @@ const MONTHS = [
 ]
 
 export function formatPeriod(period, cadence) {
+  const num = Number(period)
   if (cadence === 'monthly') {
-    return MONTHS[Number.parseInt(period, 10) - 1]
+    return MONTHS[num - 1]
   }
   if (cadence === 'quarterly') {
-    return `Quarter ${period}`
+    return `Quarter ${num}`
   }
-  return `${cadence.charAt(0).toUpperCase()}${cadence.slice(1)} ${period}`
+  throw new Error(`Unknown cadence: '${cadence}'`)
 }

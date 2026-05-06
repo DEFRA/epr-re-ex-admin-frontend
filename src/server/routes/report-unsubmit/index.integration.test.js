@@ -61,397 +61,178 @@ describe('report-unsubmit', () => {
     vi.clearAllMocks()
   })
 
-  const stubOverview = () => {
+  const stubOverview = () =>
     mswServer.use(
       http.get(
         `${backendUrl}/v1/organisations/${organisationId}/overview`,
         () => HttpResponse.json(mockOverview)
       )
     )
-  }
 
-  const stubUnsubmitSuccess = () => {
+  const stubReport = ({
+    currentStatus = 'ready_to_submit',
+    unsubmittedAt = '2026-05-06T10:00:00.000Z'
+  } = {}) =>
+    mswServer.use(
+      http.get(
+        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`,
+        () =>
+          HttpResponse.json({
+            status: {
+              currentStatus,
+              ...(unsubmittedAt ? { unsubmitted: { at: unsubmittedAt } } : {})
+            }
+          })
+      )
+    )
+
+  const stubUnsubmitSuccess = () =>
     mswServer.use(
       http.post(
         `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/unsubmit`,
         () => HttpResponse.json({ status: 'ready_to_submit' })
       )
     )
-  }
 
-  const stubUnsubmitConflict = () => {
+  const stubUnsubmitFailure = (status = 409) =>
     mswServer.use(
       http.post(
         `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/unsubmit`,
-        () => HttpResponse.json({ error: 'Conflict' }, { status: 409 })
+        () => HttpResponse.json({ error: 'Conflict' }, { status })
       )
     )
-  }
-
-  const stubUnsubmitNotFound = () => {
-    mswServer.use(
-      http.post(
-        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/unsubmit`,
-        () => HttpResponse.json({ error: 'Not found' }, { status: 404 })
-      )
-    )
-  }
-
-  const stubUnsubmitServerError = () => {
-    mswServer.use(
-      http.post(
-        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/unsubmit`,
-        () => HttpResponse.json({ error: 'Internal error' }, { status: 500 })
-      )
-    )
-  }
-
-  const stubOverviewNoRegistration = () => {
-    mswServer.use(
-      http.get(
-        `${backendUrl}/v1/organisations/${organisationId}/overview`,
-        () => HttpResponse.json({ ...mockOverview, registrations: [] })
-      )
-    )
-  }
 
   const authOptions = { strategy: 'session', credentials: mockUserSession }
 
-  /**
-   * Extracts the updated session cookie from a POST response so the flash
-   * data written by yar is available to the subsequent GET.
-   */
-  const sessionCookieAfterPost = (postResponse, fallbackCookie) => {
-    const setCookies = [postResponse.headers['set-cookie']]
-      .flat()
-      .filter(Boolean)
-    return setCookies.length
-      ? setCookies.map((c) => c.split(';')[0]).join('; ')
-      : fallbackCookie
+  const postUnsubmit = async () => {
+    const { cookie, crumb } = await getCsrfToken(
+      server,
+      confirmUrl,
+      authOptions
+    )
+    return server.inject({
+      method: 'POST',
+      url: postUrl,
+      auth: authOptions,
+      headers: { cookie },
+      payload: { crumb }
+    })
   }
 
-  describe('GET .../unsubmit/confirm', () => {
-    describe('when unauthenticated', () => {
-      test('returns 401', async () => {
-        const { statusCode } = await server.inject({
-          method: 'GET',
-          url: confirmUrl
-        })
-        expect(statusCode).toBe(statusCodes.unauthorised)
-      })
+  test('unauthenticated requests are rejected', async () => {
+    const { statusCode } = await server.inject({
+      method: 'GET',
+      url: confirmUrl
     })
-
-    describe('when authenticated', () => {
-      beforeEach(() => {
-        getUserSession.mockReturnValue(mockUserSession)
-        stubOverview()
-      })
-
-      test('returns 200 with heading', async () => {
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url: confirmUrl,
-          auth: authOptions
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-        const $ = cheerio.load(result)
-        expect($('h1').text().trim()).toBe('Unsubmit report')
-      })
-
-      test('shows registration number and period details', async () => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: confirmUrl,
-          auth: authOptions
-        })
-
-        expect(result).toContain('E25SR500020912PA')
-        expect(result).toContain('January')
-        expect(result).toContain(year)
-      })
-
-      test('form action points to POST url', async () => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: confirmUrl,
-          auth: authOptions
-        })
-
-        const $ = cheerio.load(result)
-        expect($('form').attr('action')).toBe(postUrl)
-      })
-
-      test('cancel link goes to overview', async () => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: confirmUrl,
-          auth: authOptions
-        })
-
-        const $ = cheerio.load(result)
-        expect($('a:contains("Cancel")').attr('href')).toBe(overviewUrl)
-      })
-
-      test('shows warning text about consequences', async () => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: confirmUrl,
-          auth: authOptions
-        })
-
-        expect(result).toContain('ready to submit')
-      })
-
-      test('falls back to registrationId when registration not found in overview', async () => {
-        stubOverviewNoRegistration()
-
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url: confirmUrl,
-          auth: authOptions
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-        expect(result).toContain(registrationId)
-      })
-    })
+    expect(statusCode).toBe(statusCodes.unauthorised)
   })
 
-  describe('POST .../unsubmit', () => {
-    beforeEach(() => {
-      getUserSession.mockReturnValue(mockUserSession)
-      stubOverview()
+  test('confirm page shows report details and unsubmit action', async () => {
+    getUserSession.mockReturnValue(mockUserSession)
+    stubOverview()
+    stubReport({ currentStatus: 'submitted', unsubmittedAt: null })
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: confirmUrl,
+      auth: authOptions
     })
 
-    test('redirects to result page on backend success', async () => {
-      stubUnsubmitSuccess()
-      const { cookie, crumb } = await getCsrfToken(
-        server,
-        confirmUrl,
-        authOptions
-      )
-
-      const { statusCode, headers } = await server.inject({
-        method: 'POST',
-        url: postUrl,
-        auth: authOptions,
-        headers: { cookie },
-        payload: { crumb }
-      })
-
-      expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe(resultUrl)
-    })
-
-    test('redirects to result page on backend 409 conflict', async () => {
-      stubUnsubmitConflict()
-      const { cookie, crumb } = await getCsrfToken(
-        server,
-        confirmUrl,
-        authOptions
-      )
-
-      const { statusCode, headers } = await server.inject({
-        method: 'POST',
-        url: postUrl,
-        auth: authOptions,
-        headers: { cookie },
-        payload: { crumb }
-      })
-
-      expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe(resultUrl)
-    })
-
-    test('redirects to result page on backend 404', async () => {
-      stubUnsubmitNotFound()
-      const { cookie, crumb } = await getCsrfToken(
-        server,
-        confirmUrl,
-        authOptions
-      )
-
-      const { statusCode, headers } = await server.inject({
-        method: 'POST',
-        url: postUrl,
-        auth: authOptions,
-        headers: { cookie },
-        payload: { crumb }
-      })
-
-      expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe(resultUrl)
-    })
-
-    test('redirects to result page on unexpected backend error', async () => {
-      stubUnsubmitServerError()
-      const { cookie, crumb } = await getCsrfToken(
-        server,
-        confirmUrl,
-        authOptions
-      )
-
-      const { statusCode, headers } = await server.inject({
-        method: 'POST',
-        url: postUrl,
-        auth: authOptions,
-        headers: { cookie },
-        payload: { crumb }
-      })
-
-      expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe(resultUrl)
-    })
+    expect(statusCode).toBe(statusCodes.ok)
+    const $ = cheerio.load(result)
+    expect($('h1').text().trim()).toBe('Unsubmit report')
+    expect(result).toContain('E25SR500020912PA')
+    expect(result).toContain('January')
+    expect($('form').attr('action')).toBe(postUrl)
+    expect($('a:contains("Cancel")').attr('href')).toBe(overviewUrl)
   })
 
-  describe('GET .../unsubmit/result', () => {
-    beforeEach(() => {
-      getUserSession.mockReturnValue(mockUserSession)
-      stubOverview()
+  test('confirm page redirects to overview for a non-submitted report', async () => {
+    getUserSession.mockReturnValue(mockUserSession)
+    stubOverview()
+    stubReport({ currentStatus: 'ready_to_submit', unsubmittedAt: null })
+
+    const { statusCode, headers } = await server.inject({
+      method: 'GET',
+      url: confirmUrl,
+      auth: authOptions
     })
 
-    test('shows success panel when unsubmit succeeds', async () => {
-      stubUnsubmitSuccess()
-      const { cookie, crumb } = await getCsrfToken(
-        server,
-        confirmUrl,
-        authOptions
-      )
+    expect(statusCode).toBe(statusCodes.found)
+    expect(headers.location).toBe(overviewUrl)
+  })
 
-      const postResponse = await server.inject({
-        method: 'POST',
-        url: postUrl,
-        auth: authOptions,
-        headers: { cookie },
-        payload: { crumb }
-      })
+  test('submitting the confirmation redirects to the success page', async () => {
+    getUserSession.mockReturnValue(mockUserSession)
+    stubOverview()
+    stubReport({ currentStatus: 'submitted', unsubmittedAt: null })
+    stubUnsubmitSuccess()
 
-      const resultCookie = sessionCookieAfterPost(postResponse, cookie)
+    const { statusCode, headers } = await postUnsubmit()
 
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: resultUrl,
-        auth: authOptions,
-        headers: { cookie: resultCookie }
-      })
+    expect(statusCode).toBe(statusCodes.found)
+    expect(headers.location).toBe(resultUrl)
+  })
 
-      expect(statusCode).toBe(statusCodes.ok)
-      const $ = cheerio.load(result)
-      expect($('.govuk-panel__title').text().trim()).toBe('Report unsubmitted')
-      expect(result).toContain('E25SR500020912PA')
+  test('backend failure shows the unsubmit failed page', async () => {
+    getUserSession.mockReturnValue(mockUserSession)
+    stubOverview()
+    stubReport({ currentStatus: 'submitted', unsubmittedAt: null })
+    stubUnsubmitFailure()
+
+    const { result, statusCode } = await postUnsubmit()
+
+    expect(statusCode).toBe(statusCodes.ok)
+    const $ = cheerio.load(result)
+    expect($('.govuk-panel__title').text().trim()).toBe('Unsubmit failed')
+  })
+
+  test('success page confirms the report was unsubmitted', async () => {
+    getUserSession.mockReturnValue(mockUserSession)
+    stubOverview()
+    stubReport()
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: resultUrl,
+      auth: authOptions
     })
 
-    test('shows error banner when unsubmit fails with 409', async () => {
-      stubUnsubmitConflict()
-      const { cookie, crumb } = await getCsrfToken(
-        server,
-        confirmUrl,
-        authOptions
-      )
+    expect(statusCode).toBe(statusCodes.ok)
+    const $ = cheerio.load(result)
+    expect($('.govuk-panel__title').text().trim()).toBe('Report unsubmitted')
+    expect(result).toContain('E25SR500020912PA')
+    expect($('a:contains("Back to registration overview")').attr('href')).toBe(
+      overviewUrl
+    )
+  })
 
-      const postResponse = await server.inject({
-        method: 'POST',
-        url: postUrl,
-        auth: authOptions,
-        headers: { cookie },
-        payload: { crumb }
-      })
+  test('result page redirects to overview when accessed without completing unsubmit', async () => {
+    getUserSession.mockReturnValue(mockUserSession)
+    stubOverview()
+    stubReport({ currentStatus: 'submitted', unsubmittedAt: null })
 
-      const resultCookie = sessionCookieAfterPost(postResponse, cookie)
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: resultUrl,
-        auth: authOptions,
-        headers: { cookie: resultCookie }
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('govuk-panel--error')
-      expect(result).toContain('not in a submitted state')
+    const { statusCode, headers } = await server.inject({
+      method: 'GET',
+      url: resultUrl,
+      auth: authOptions
     })
 
-    test('redirects to overview when accessed directly without prior POST', async () => {
-      const { statusCode, headers } = await server.inject({
-        method: 'GET',
-        url: resultUrl,
-        auth: authOptions
-      })
-
-      expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe(overviewUrl)
-    })
-
-    test('shows back to overview link after successful POST', async () => {
-      stubUnsubmitSuccess()
-      const { cookie, crumb } = await getCsrfToken(
-        server,
-        confirmUrl,
-        authOptions
-      )
-
-      const postResponse = await server.inject({
-        method: 'POST',
-        url: postUrl,
-        auth: authOptions,
-        headers: { cookie },
-        payload: { crumb }
-      })
-
-      const resultCookie = sessionCookieAfterPost(postResponse, cookie)
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: resultUrl,
-        auth: authOptions,
-        headers: { cookie: resultCookie }
-      })
-
-      const $ = cheerio.load(result)
-      expect(
-        $('a:contains("Back to registration overview")').attr('href')
-      ).toBe(overviewUrl)
-    })
-
-    test('falls back to registrationId when registration not found in overview', async () => {
-      stubUnsubmitSuccess()
-      const { cookie, crumb } = await getCsrfToken(
-        server,
-        confirmUrl,
-        authOptions
-      )
-
-      const postResponse = await server.inject({
-        method: 'POST',
-        url: postUrl,
-        auth: authOptions,
-        headers: { cookie },
-        payload: { crumb }
-      })
-
-      const resultCookie = sessionCookieAfterPost(postResponse, cookie)
-
-      stubOverviewNoRegistration()
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: resultUrl,
-        auth: authOptions,
-        headers: { cookie: resultCookie }
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain(registrationId)
-    })
+    expect(statusCode).toBe(statusCodes.found)
+    expect(headers.location).toBe(overviewUrl)
   })
 
   describe('when feature flag is disabled', () => {
-    beforeAll(() => {
+    let serverWithFlagOff
+
+    beforeAll(async () => {
       config.set('featureFlagReportUnsubmit', false)
+      serverWithFlagOff = await createServer()
+      await serverWithFlagOff.initialize()
     })
 
-    afterAll(() => {
+    afterAll(async () => {
+      await serverWithFlagOff.stop({ timeout: 0 })
       config.set('featureFlagReportUnsubmit', true)
     })
 
@@ -459,46 +240,22 @@ describe('report-unsubmit', () => {
       getUserSession.mockReturnValue(mockUserSession)
     })
 
-    test('GET confirm returns 404', async () => {
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: confirmUrl,
-        auth: authOptions
-      })
-      expect(statusCode).toBe(statusCodes.notFound)
-    })
+    test('unsubmit routes are not registered and return 404', async () => {
+      const [confirmRes, resultRes] = await Promise.all([
+        serverWithFlagOff.inject({
+          method: 'GET',
+          url: confirmUrl,
+          auth: authOptions
+        }),
+        serverWithFlagOff.inject({
+          method: 'GET',
+          url: resultUrl,
+          auth: authOptions
+        })
+      ])
 
-    test('POST returns 404', async () => {
-      mswServer.use(
-        http.get(
-          `${backendUrl}/v1/organisations/${organisationId}/overview`,
-          () => HttpResponse.json(mockOverview)
-        )
-      )
-      // Fetch a valid crumb from any authenticated GET route
-      const { cookie, crumb } = await getCsrfToken(
-        server,
-        `/organisations/${organisationId}/overview`,
-        authOptions
-      )
-
-      const { statusCode } = await server.inject({
-        method: 'POST',
-        url: postUrl,
-        auth: authOptions,
-        headers: { cookie },
-        payload: { crumb }
-      })
-      expect(statusCode).toBe(statusCodes.notFound)
-    })
-
-    test('GET result returns 404', async () => {
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: resultUrl,
-        auth: authOptions
-      })
-      expect(statusCode).toBe(statusCodes.notFound)
+      expect(confirmRes.statusCode).toBe(statusCodes.notFound)
+      expect(resultRes.statusCode).toBe(statusCodes.notFound)
     })
   })
 })

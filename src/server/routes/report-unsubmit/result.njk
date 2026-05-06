@@ -1,6 +1,6 @@
 {% extends 'layout.njk' %}
 
- {% block content %}
+{% block content %}
    <div class="govuk-grid-row">
      <div class="govuk-grid-column-two-thirds">
        <div class="app-content-width">
@@ -19,10 +19,16 @@
              The report is now in 'ready to submit' state. The operator can delete and recreate it to pick up corrected figures.
            </p>
          {% else %}
-           <div class="govuk-panel govuk-panel--error">
+           <div class="govuk-panel app-panel--error">
              <h1 class="govuk-panel__title">Unsubmit failed</h1>
            </div>
-           <p class="govuk-body govuk-!-margin-top-6">{{ errorMessage }}</p>
+           <p class="govuk-body govuk-!-margin-top-6">
+             <strong>Registration:</strong> {{ registrationNumber }}
+           </p>
+           <p class="govuk-body">
+             <strong>Period:</strong> {{ formattedPeriod }}, {{ year }}
+           </p>
+           <p class="govuk-body">The report could not be unsubmitted.</p>
          {% endif %}
 
          <p class="govuk-body govuk-!-margin-top-6">
@@ -32,4 +38,4 @@
        </div>
      </div>
    </div>
- {% endblock %}
+{% endblock %}

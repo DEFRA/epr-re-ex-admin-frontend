@@ -2,6 +2,7 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
 import { fetchOrganisationOverview } from '#server/common/helpers/fetch-organisation-overview.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
+import { formatPeriod } from '#server/common/helpers/format-reporting-period.js'
 
 const GREEN_TAG = 'govuk-tag--green'
 const RED_TAG = 'govuk-tag--red'
@@ -88,7 +89,10 @@ export const registrationOverviewGETController = {
       registrationId,
       registration,
       cadence: calendar.cadence,
-      reportingPeriods: calendar.reportingPeriods,
+      reportingPeriods: calendar.reportingPeriods.map((rp) => ({
+        ...rp,
+        formattedPeriod: formatPeriod(rp.period, calendar.cadence)
+      })),
       summaryLogRows
     })
   }

@@ -1,17 +1,24 @@
-import Boom from '@hapi/boom'
-import { config } from '#config/config.js'
+import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { fetchOrganisationOverview } from '#server/common/helpers/fetch-organisation-overview.js'
-import { FEATURE_FLAG_KEY, PAGE_TITLE } from './constants.js'
-import { formatPeriod } from './helpers.js'
+import { PAGE_TITLE } from './constants.js'
+import { formatPeriod } from '#server/common/helpers/format-reporting-period.js'
 
 export const reportUnsubmitConfirmGetController = {
   async handler(request, h) {
-    if (!config.get(FEATURE_FLAG_KEY)) {
-      throw Boom.notFound()
-    }
-
     const { organisationId, registrationId, year, cadence, period } =
       request.params
+
+    const overviewUrl = `/organisations/${organisationId}/registrations/${registrationId}/overview`
+
+    const report = await fetchJsonFromBackend(
+      request,
+      `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`,
+      {}
+    )
+
+    if (report.status.currentStatus !== 'submitted') {
+      return h.redirect(overviewUrl)
+    }
 
     const overview = await fetchOrganisationOverview(request, organisationId)
     const registration = overview.registrations.find(
@@ -28,13 +35,13 @@ export const reportUnsubmitConfirmGetController = {
           href: `/organisations/${organisationId}/overview`
         },
         {
-          text: 'Reports',
-          href: `/organisations/${organisationId}/registrations/${registrationId}/overview`
+          text: 'Registration overview',
+          href: overviewUrl
         }
       ],
-      overviewUrl: `/organisations/${organisationId}/registrations/${registrationId}/overview`,
+      overviewUrl,
       postUrl: `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/unsubmit`,
-      registrationNumber: registration?.registrationNumber ?? registrationId,
+      registrationNumber: registration.registrationNumber,
       formattedPeriod: formatPeriod(period, cadence),
       year
     })

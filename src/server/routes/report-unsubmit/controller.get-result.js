@@ -1,27 +1,27 @@
-import Boom from '@hapi/boom'
-import { config } from '#config/config.js'
+import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { fetchOrganisationOverview } from '#server/common/helpers/fetch-organisation-overview.js'
-import { FEATURE_FLAG_KEY, SESSION_KEY } from './constants.js'
-import { formatPeriod } from './helpers.js'
+import { formatPeriod } from '#server/common/helpers/format-reporting-period.js'
 
 export const reportUnsubmitResultGetController = {
   async handler(request, h) {
-    if (!config.get(FEATURE_FLAG_KEY)) {
-      throw Boom.notFound()
-    }
-
     const { organisationId, registrationId, year, cadence, period } =
       request.params
 
-    const result = request.yar.get(SESSION_KEY)
-
     const overviewUrl = `/organisations/${organisationId}/registrations/${registrationId}/overview`
 
-    if (!result) {
+    const report = await fetchJsonFromBackend(
+      request,
+      `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`,
+      {}
+    )
+
+    const success =
+      report.status.currentStatus === 'ready_to_submit' &&
+      Boolean(report.status.unsubmitted?.at)
+
+    if (!success) {
       return h.redirect(overviewUrl)
     }
-
-    request.yar.clear(SESSION_KEY)
 
     const overview = await fetchOrganisationOverview(request, organisationId)
     const registration = overview.registrations.find(
@@ -30,18 +30,17 @@ export const reportUnsubmitResultGetController = {
 
     return h.view('routes/report-unsubmit/result', {
       pageTitle: request.route.settings.app.pageTitle,
+      success: true,
       breadcrumbs: [
         { text: 'Organisations', href: '/organisations' },
         {
           text: 'Organisation overview',
           href: `/organisations/${organisationId}/overview`
         },
-        { text: 'Reports', href: overviewUrl }
+        { text: 'Registration overview', href: overviewUrl }
       ],
-      success: result.success,
-      errorMessage: result.message,
       overviewUrl,
-      registrationNumber: registration?.registrationNumber ?? registrationId,
+      registrationNumber: registration.registrationNumber,
       formattedPeriod: formatPeriod(period, cadence),
       year
     })

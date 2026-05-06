@@ -271,23 +271,21 @@ describe('#registrationOverviewController', () => {
 
       const $ = cheerio.load(result)
       const headers = findReportsTable($).find('thead tr th')
-      expect($(headers[0]).text()).toEqual('Start')
-      expect($(headers[1]).text()).toEqual('End')
-      expect($(headers[2]).text()).toEqual('Due')
-      expect($(headers[3]).text()).toEqual('Status')
-      expect($(headers[4]).text()).toEqual('Actions')
+      expect($(headers[0]).text()).toEqual('Period')
+      expect($(headers[1]).text()).toEqual('Due')
+      expect($(headers[2]).text()).toEqual('Status')
+      expect($(headers[3]).text()).toEqual('Actions')
 
       const rows = findReportsTable($).find('tbody tr')
       expect(rows).toHaveLength(2)
 
       const firstRowCells = $(rows[0]).find('td')
-      expect($(firstRowCells[0]).text().trim()).toEqual('2026-01-01')
-      expect($(firstRowCells[1]).text().trim()).toEqual('2026-01-31')
-      expect($(firstRowCells[2]).text().trim()).toEqual('2026-02-20')
+      expect($(firstRowCells[0]).text().trim()).toEqual('January')
+      expect($(firstRowCells[1]).text().trim()).toEqual('2026-02-20')
       expect(
-        $(firstRowCells[3]).find('strong.govuk-tag').text().trim()
+        $(firstRowCells[2]).find('strong.govuk-tag').text().trim()
       ).toEqual('ready_to_submit')
-      const viewLink = $(firstRowCells[4]).find('a')
+      const viewLink = $(firstRowCells[3]).find('a')
       expect(viewLink.text()).toEqual('View')
       expect(viewLink.attr('href')).toEqual(
         `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1`
@@ -295,9 +293,9 @@ describe('#registrationOverviewController', () => {
 
       const secondRowCells = $(rows[1]).find('td')
       expect(
-        $(secondRowCells[3]).find('strong.govuk-tag').text().trim()
+        $(secondRowCells[2]).find('strong.govuk-tag').text().trim()
       ).toEqual('Due')
-      expect($(secondRowCells[4]).find('a')).toHaveLength(0)
+      expect($(secondRowCells[3]).find('a')).toHaveLength(0)
     })
 
     test('Should render the Summary logs table with column headers when summary logs exist', async () => {
