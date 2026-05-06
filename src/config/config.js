@@ -298,3 +298,5 @@ config.validate({ allowed: 'strict' })
 
 export const isProductionEnvironment = () =>
   config.get('cdpEnvironment') === 'prod'
+
+export const isLocalEnvironment = () => config.get('cdpEnvironment') === 'local'

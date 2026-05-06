@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, test, vi } from 'vitest'
 
-import { config, isProductionEnvironment } from './config.js'
+import {
+  config,
+  isLocalEnvironment,
+  isProductionEnvironment
+} from './config.js'
 
 describe('#config', () => {
   beforeEach(() => {
@@ -54,6 +58,32 @@ describe('#config', () => {
       config.set('cdpEnvironment', env)
 
       expect(isProductionEnvironment()).toBe(false)
+    })
+  })
+
+  describe(isLocalEnvironment, () => {
+    afterEach(() => {
+      config.reset('cdpEnvironment')
+    })
+
+    it('should return true when cdpEnvironment is local', () => {
+      config.set('cdpEnvironment', 'local')
+
+      expect(isLocalEnvironment()).toBe(true)
+    })
+
+    it.each([
+      'infra-dev',
+      'management',
+      'dev',
+      'test',
+      'perf-test',
+      'ext-test',
+      'prod'
+    ])('should return false when cdpEnvironment is %s', (env) => {
+      config.set('cdpEnvironment', env)
+
+      expect(isLocalEnvironment()).toBe(false)
     })
   })
 
