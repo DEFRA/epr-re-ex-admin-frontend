@@ -37,9 +37,13 @@ const formatters = {
   'pino-pretty': { transport: { target: 'pino-pretty' } }
 }
 
+const isAccessLogIgnored = (/** @type {string} */ path) =>
+  path === '/health' || path.startsWith('/public/')
+
 export const loggerOptions = {
   enabled: logConfig.enabled,
-  ignorePaths: ['/health'],
+  ignoreFunc: (_options, /** @type {{ path: string }} */ request) =>
+    isAccessLogIgnored(request.path),
   getChildBindings: (request) => {
     const traceId = request.headers[tracingHeader]
     return {
