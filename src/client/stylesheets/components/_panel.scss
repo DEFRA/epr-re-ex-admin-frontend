@@ -1,0 +1,6 @@
+@use 'govuk-frontend' as *;
+
+.app-panel--error {
+  background-color: govuk-colour('red');
+  color: govuk-colour('white');
+}
