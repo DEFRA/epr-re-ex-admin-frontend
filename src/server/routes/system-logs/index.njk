@@ -70,6 +70,7 @@
                 text: "Event type",
                 classes: "govuk-label--s"
               },
+              errorMessage: error if error,
               items: [
                 { value: "", text: "All event types", selected: not searchTerms.subCategory },
                 { value: "defra-id-reconciliation", text: "Defra ID reconciliation", selected: searchTerms.subCategory == "defra-id-reconciliation" },

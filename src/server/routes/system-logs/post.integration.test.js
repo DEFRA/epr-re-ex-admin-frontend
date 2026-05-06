@@ -171,7 +171,7 @@ describe('POST /system-logs', () => {
     })
 
     describe('validation', () => {
-      test('shows error on both fields when no filters are provided', async () => {
+      test('shows error on all fields when no filters are provided', async () => {
         const { $, statusCode } = await submitSearch({
           referenceNumber: '',
           email: '',
@@ -179,28 +179,19 @@ describe('POST /system-logs', () => {
         })
 
         expect(statusCode).toBe(statusCodes.ok)
-        expect($.text()).toContain('There is a problem')
-        expect($.text()).toContain(
-          'Enter an organisation reference number or email address'
+        expect($('.govuk-error-summary').text()).toContain('There is a problem')
+        expect($('.govuk-error-summary').text()).toContain(
+          'Enter an organisation reference number, email address or event type'
         )
+
         expect($('#referenceNumber-error').text()).toContain(
-          'Enter an organisation reference number or email address'
+          'Enter an organisation reference number, email address or event type'
         )
         expect($('#email-error').text()).toContain(
-          'Enter an organisation reference number or email address'
+          'Enter an organisation reference number, email address or event type'
         )
-      })
-
-      test('shows error when only subCategory is provided', async () => {
-        const { $, statusCode } = await submitSearch({
-          referenceNumber: '',
-          email: '',
-          subCategory: 'summary-log'
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-        expect($.text()).toContain(
-          'Enter an organisation reference number or email address'
+        expect($('#subCategory-error').text()).toContain(
+          'Enter an organisation reference number, email address or event type'
         )
       })
 
@@ -218,7 +209,7 @@ describe('POST /system-logs', () => {
         expect(backendCalls).toHaveLength(0)
       })
 
-      test('does not call backend when only subCategory is provided', async () => {
+      test('calls backend when only subCategory is provided', async () => {
         const backendCalls = stubBackendResponse(
           HttpResponse.json({ systemLogs: [] })
         )
@@ -229,7 +220,8 @@ describe('POST /system-logs', () => {
           subCategory: 'summary-log'
         })
 
-        expect(backendCalls).toHaveLength(0)
+        expect(backendCalls).toHaveLength(1)
+        expect(backendCalls[0].body).toEqual({ subCategory: 'summary-log' })
       })
     })
 
