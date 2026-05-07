@@ -128,7 +128,6 @@ describe('context and cache', () => {
           serviceUrl: '/',
           userSession: mockUserSession,
           isAuthenticated: true,
-          role: mockUserSession.role,
           scopes: mockUserSession.scopes
         })
       })
@@ -321,7 +320,6 @@ describe('context and cache', () => {
           serviceUrl: '/',
           userSession: mockUserSession,
           isAuthenticated: true,
-          role: mockUserSession.role,
           scopes: mockUserSession.scopes
         })
       })

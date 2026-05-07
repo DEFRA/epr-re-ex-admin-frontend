@@ -1,7 +1,7 @@
 import { config } from '#config/config.js'
 
 /**
- * @typedef {{ role: string | null, scopes: string[] }} AdminMeResponse
+ * @typedef {{ scopes: string[] }} AdminMeResponse
  */
 
 /**
@@ -10,9 +10,9 @@ import { config } from '#config/config.js'
  * before a user session exists (so we cannot route through fetch-json-from-backend
  * which reads the token from the session).
  *
- * Returns the resolved admin role and the scope bundle the role carries.
- * Throws on non-200 — callers decide whether a 403 means "no admin tier" or
- * something more serious (an Entra outage etc.).
+ * Returns the resolved admin scope bundle. Throws on non-200 — callers decide
+ * whether a 403 means "no admin tier" or something more serious (an Entra
+ * outage etc.).
  *
  * @param {string} accessToken - Entra ID access token
  * @returns {Promise<AdminMeResponse>}

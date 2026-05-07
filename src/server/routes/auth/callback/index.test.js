@@ -14,7 +14,6 @@ vi.mock('#server/common/helpers/auditing/index.js')
 vi.mock('node:crypto')
 
 const ADMIN_ME_DEFAULT = {
-  role: 'service_maintainer_write',
   scopes: ['admin.read', 'admin.write', 'admin.dlq.purge']
 }
 
@@ -122,7 +121,6 @@ describe('#callback route', () => {
           sessionId: mockSessionId,
           displayName: mockProfile.displayName,
           isAuthenticated: true,
-          role: ADMIN_ME_DEFAULT.role,
           scopes: ADMIN_ME_DEFAULT.scopes,
           token: mockToken,
           refreshToken: mockRefreshToken
@@ -159,7 +157,6 @@ describe('#callback route', () => {
       sessionId: mockSessionId,
       displayName: '',
       isAuthenticated: true,
-      role: ADMIN_ME_DEFAULT.role,
       scopes: ADMIN_ME_DEFAULT.scopes,
       token: mockToken,
       refreshToken: mockRefreshToken
@@ -185,7 +182,6 @@ describe('#callback route', () => {
       sessionId: mockSessionId,
       displayName: '',
       isAuthenticated: true,
-      role: ADMIN_ME_DEFAULT.role,
       scopes: ADMIN_ME_DEFAULT.scopes,
       token: mockToken,
       refreshToken: mockRefreshToken
@@ -297,7 +293,6 @@ describe('#callback route', () => {
       sessionId: mockSessionId,
       displayName: mockProfile.displayName,
       isAuthenticated: true,
-      role: ADMIN_ME_DEFAULT.role,
       scopes: ADMIN_ME_DEFAULT.scopes,
       token: mockToken,
       refreshToken: mockRefreshToken
@@ -387,7 +382,6 @@ describe('#callback route', () => {
       sessionId: mockSessionId,
       displayName: complexProfile.displayName,
       isAuthenticated: true,
-      role: ADMIN_ME_DEFAULT.role,
       scopes: ADMIN_ME_DEFAULT.scopes,
       token: mockToken,
       refreshToken: undefined
@@ -514,7 +508,6 @@ describe('#callback route', () => {
       displayName: mockProfile.displayName,
       email: mockProfile.email,
       isAuthenticated: true,
-      role: ADMIN_ME_DEFAULT.role,
       scopes: ADMIN_ME_DEFAULT.scopes,
       token: mockToken,
       refreshToken: mockRefreshToken

@@ -19,7 +19,6 @@ describe('#fetchAdminMe', () => {
 
   test('calls /v1/admin/me with the bearer token and returns the parsed JSON', async () => {
     const expected = {
-      role: 'service_maintainer_write',
       scopes: ['admin.read', 'admin.write', 'admin.dlq.purge']
     }
 

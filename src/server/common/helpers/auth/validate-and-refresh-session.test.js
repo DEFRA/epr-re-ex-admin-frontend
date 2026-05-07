@@ -32,7 +32,6 @@ describe('#validateAndRefreshSession', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockFetchAdminMe.mockResolvedValue({
-      role: 'service_maintainer_write',
       scopes: ['admin.read', 'admin.write', 'admin.dlq.purge']
     })
   })
@@ -133,7 +132,6 @@ describe('#validateAndRefreshSession', () => {
       ...mockUserSession,
       token: newTokens.access_token,
       refreshToken: newTokens.refresh_token,
-      role: 'service_maintainer_write',
       scopes: ['admin.read', 'admin.write', 'admin.dlq.purge']
     })
   })
@@ -165,7 +163,6 @@ describe('#validateAndRefreshSession', () => {
       ...mockUserSession,
       token: newTokens.access_token,
       refreshToken: newTokens.refresh_token,
-      role: 'service_maintainer_write',
       scopes: ['admin.read', 'admin.write', 'admin.dlq.purge']
     })
   })
@@ -197,7 +194,6 @@ describe('#validateAndRefreshSession', () => {
       ...mockUserSession,
       token: newTokens.access_token,
       refreshToken: newTokens.refresh_token,
-      role: 'service_maintainer_write',
       scopes: ['admin.read', 'admin.write', 'admin.dlq.purge']
     })
   })

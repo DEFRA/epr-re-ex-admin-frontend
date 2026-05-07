@@ -38,10 +38,9 @@ export default {
 
     const { displayName = '', id: userId, email, loginHint } = profile
 
-    let role = null
     let scopes = []
     try {
-      ;({ role, scopes } = await fetchAdminMe(token))
+      ;({ scopes } = await fetchAdminMe(token))
     } catch (error) {
       const statusCode = /** @type {{ statusCode?: number }} */ (error)
         .statusCode
@@ -55,7 +54,7 @@ export default {
       }
       request.logger.error({
         err: error,
-        message: 'Failed to resolve admin role from backend'
+        message: 'Failed to resolve admin scopes from backend'
       })
       await metrics.signInFailure()
       throw error
@@ -70,7 +69,6 @@ export default {
       email,
       loginHint,
       isAuthenticated: true,
-      role,
       scopes,
       token,
       refreshToken

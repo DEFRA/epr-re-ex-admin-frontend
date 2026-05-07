@@ -71,7 +71,6 @@ describe('GET /auth/callback', () => {
         () =>
           adminMeOverride ??
           HttpResponse.json({
-            role: 'service_maintainer_write',
             scopes: ['admin.read', 'admin.write', 'admin.dlq.purge']
           })
       )

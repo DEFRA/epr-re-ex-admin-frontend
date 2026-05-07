@@ -19,9 +19,10 @@
         <span data-testid="app-login-username">
           {{ userSession.displayName }}
         </span>
-        {% if role %}
+        {% set tierLabel = scopes | roleLabel %}
+        {% if tierLabel %}
           <span class="govuk-tag govuk-tag--blue app-service-header__role-tag" data-testid="app-login-role">
-            {{ role | roleLabel }}
+            {{ tierLabel }}
           </span>
         {% endif %}
       {% endif %}

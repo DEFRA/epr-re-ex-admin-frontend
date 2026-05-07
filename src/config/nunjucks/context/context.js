@@ -34,7 +34,6 @@ export async function context(request) {
     serviceUrl: '/',
     userSession,
     isAuthenticated: userSession?.isAuthenticated ?? false,
-    role: userSession?.role ?? null,
     scopes: userSession?.scopes ?? [],
     navigation: buildNavigation(request),
     getAssetPath(asset) {
