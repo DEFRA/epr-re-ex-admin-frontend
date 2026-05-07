@@ -57,11 +57,13 @@
             rows: tableRows
           }) }}
 
-          {{ govukButton({
-            text: "Clear all messages",
-            href: "/queue-management/confirm-clear",
-            classes: "govuk-button--warning"
-          }) }}
+          {% if 'admin.dlq.purge' in scopes %}
+            {{ govukButton({
+              text: "Clear all messages",
+              href: "/queue-management/confirm-clear",
+              classes: "govuk-button--warning"
+            }) }}
+          {% endif %}
         {% else %}
           <p class="govuk-body">There are no messages on the dead-letter queue.</p>
         {% endif %}

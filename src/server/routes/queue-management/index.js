@@ -1,6 +1,9 @@
 import { queueManagementGetController } from './controller.get.js'
 import { queueManagementConfirmClearGetController } from './controller.get-confirm.js'
 import { queueManagementPostController } from './controller.post.js'
+import { requireScope } from '#server/common/helpers/auth/require-scope.js'
+
+const requireDlqPurge = [requireScope('admin.dlq.purge')]
 
 export const queueManagement = {
   plugin: {
@@ -20,13 +23,17 @@ export const queueManagement = {
           path: '/queue-management/confirm-clear',
           ...queueManagementConfirmClearGetController,
           options: {
+            pre: requireDlqPurge,
             app: { pageTitle: 'Confirm clear all messages' }
           }
         },
         {
           method: 'POST',
           path: '/queue-management/clear',
-          ...queueManagementPostController
+          ...queueManagementPostController,
+          options: {
+            pre: requireDlqPurge
+          }
         }
       ])
     }

@@ -19,6 +19,11 @@
         <span data-testid="app-login-username">
           {{ userSession.displayName }}
         </span>
+        {% if role %}
+          <span class="govuk-tag govuk-tag--blue app-service-header__role-tag" data-testid="app-login-role">
+            {{ role | roleLabel }}
+          </span>
+        {% endif %}
       {% endif %}
 
       <span class="app-service-header__login{% if isAuthenticated %} app-service-header__login--logged-in{% endif %}">
