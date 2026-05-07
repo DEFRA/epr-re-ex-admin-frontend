@@ -2,14 +2,21 @@ import { vi, beforeEach, afterEach, describe, test, expect } from 'vitest'
 
 import callbackRoute from './index.js'
 import { createUserSession } from '#server/common/helpers/auth/create-user-session.js'
+import { fetchAdminMe } from '#server/common/helpers/auth/fetch-admin-me.js'
 import { randomUUID } from 'node:crypto'
 import { verifyToken } from '#server/common/helpers/auth/verify-token.js'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
 
 vi.mock('#server/common/helpers/auth/create-user-session.js')
+vi.mock('#server/common/helpers/auth/fetch-admin-me.js')
 vi.mock('#server/common/helpers/auth/verify-token.js')
 vi.mock('#server/common/helpers/auditing/index.js')
 vi.mock('node:crypto')
+
+const ADMIN_ME_DEFAULT = {
+  role: 'service_maintainer_write',
+  scopes: ['admin.read', 'admin.write', 'admin.dlq.purge']
+}
 
 describe('#callback route', () => {
   const mockToolkit = {
@@ -38,6 +45,7 @@ describe('#callback route', () => {
     mockToolkit.view.mockReturnValue('unauthorised-view-result')
     mockToolkit.redirect.mockReturnValue('redirect-result')
     createUserSession.mockResolvedValue()
+    fetchAdminMe.mockResolvedValue(ADMIN_ME_DEFAULT)
     verifyToken.mockResolvedValue()
     randomUUID.mockReturnValue(mockSessionId)
   })
@@ -114,6 +122,8 @@ describe('#callback route', () => {
           sessionId: mockSessionId,
           displayName: mockProfile.displayName,
           isAuthenticated: true,
+          role: ADMIN_ME_DEFAULT.role,
+          scopes: ADMIN_ME_DEFAULT.scopes,
           token: mockToken,
           refreshToken: mockRefreshToken
         })
@@ -149,6 +159,8 @@ describe('#callback route', () => {
       sessionId: mockSessionId,
       displayName: '',
       isAuthenticated: true,
+      role: ADMIN_ME_DEFAULT.role,
+      scopes: ADMIN_ME_DEFAULT.scopes,
       token: mockToken,
       refreshToken: mockRefreshToken
     })
@@ -173,6 +185,8 @@ describe('#callback route', () => {
       sessionId: mockSessionId,
       displayName: '',
       isAuthenticated: true,
+      role: ADMIN_ME_DEFAULT.role,
+      scopes: ADMIN_ME_DEFAULT.scopes,
       token: mockToken,
       refreshToken: mockRefreshToken
     })
@@ -283,6 +297,8 @@ describe('#callback route', () => {
       sessionId: mockSessionId,
       displayName: mockProfile.displayName,
       isAuthenticated: true,
+      role: ADMIN_ME_DEFAULT.role,
+      scopes: ADMIN_ME_DEFAULT.scopes,
       token: mockToken,
       refreshToken: mockRefreshToken
     }
@@ -371,6 +387,8 @@ describe('#callback route', () => {
       sessionId: mockSessionId,
       displayName: complexProfile.displayName,
       isAuthenticated: true,
+      role: ADMIN_ME_DEFAULT.role,
+      scopes: ADMIN_ME_DEFAULT.scopes,
       token: mockToken,
       refreshToken: undefined
     })
@@ -378,6 +396,11 @@ describe('#callback route', () => {
 
   test('Should call functions in correct order for successful authentication', async () => {
     const callOrder = []
+
+    fetchAdminMe.mockImplementation(async () => {
+      callOrder.push('fetchAdminMe')
+      return ADMIN_ME_DEFAULT
+    })
 
     randomUUID.mockImplementation(() => {
       callOrder.push('randomUUID')
@@ -406,7 +429,12 @@ describe('#callback route', () => {
 
     await callbackRoute.handler(mockRequest, mockToolkit)
 
-    expect(callOrder).toEqual(['randomUUID', 'createUserSession', 'redirect'])
+    expect(callOrder).toEqual([
+      'fetchAdminMe',
+      'randomUUID',
+      'createUserSession',
+      'redirect'
+    ])
   })
 
   test('Should log sign-in on successful authentication', async () => {
@@ -486,6 +514,8 @@ describe('#callback route', () => {
       displayName: mockProfile.displayName,
       email: mockProfile.email,
       isAuthenticated: true,
+      role: ADMIN_ME_DEFAULT.role,
+      scopes: ADMIN_ME_DEFAULT.scopes,
       token: mockToken,
       refreshToken: mockRefreshToken
     })
@@ -528,6 +558,79 @@ describe('#callback route', () => {
         loginHint: 'user@example.test'
       })
     )
+  })
+
+  describe('Admin role resolution', () => {
+    test('Returns the unauthorised view when /v1/admin/me returns 403 (no admin tier)', async () => {
+      const error = Object.assign(
+        new Error('GET /v1/admin/me failed: 403 Forbidden'),
+        { statusCode: 403 }
+      )
+      fetchAdminMe.mockRejectedValue(error)
+
+      const mockRequest = {
+        logger: mockLogger,
+        auth: {
+          isAuthenticated: true,
+          credentials: {
+            profile: mockProfile,
+            token: mockToken,
+            refreshToken: mockRefreshToken
+          }
+        }
+      }
+
+      const result = await callbackRoute.handler(mockRequest, mockToolkit)
+
+      expect(mockToolkit.view).toHaveBeenCalledWith('unauthorised')
+      expect(result).toBe('unauthorised-view-result')
+      expect(createUserSession).not.toHaveBeenCalled()
+    })
+
+    test('Re-throws non-403 errors from /v1/admin/me so the platform sees the failure', async () => {
+      const error = Object.assign(
+        new Error('GET /v1/admin/me failed: 500 Internal Server Error'),
+        { statusCode: 500 }
+      )
+      fetchAdminMe.mockRejectedValue(error)
+
+      const mockRequest = {
+        logger: mockLogger,
+        auth: {
+          isAuthenticated: true,
+          credentials: {
+            profile: mockProfile,
+            token: mockToken,
+            refreshToken: mockRefreshToken
+          }
+        }
+      }
+
+      await expect(
+        callbackRoute.handler(mockRequest, mockToolkit)
+      ).rejects.toThrow('GET /v1/admin/me failed: 500')
+
+      expect(createUserSession).not.toHaveBeenCalled()
+    })
+
+    test('Calls /v1/admin/me with the Bell access token', async () => {
+      const mockRequest = {
+        logger: mockLogger,
+        auth: {
+          isAuthenticated: true,
+          credentials: {
+            profile: mockProfile,
+            token: mockToken,
+            refreshToken: mockRefreshToken
+          }
+        },
+        yar: { flash: vi.fn().mockReturnValue([]) }
+      }
+
+      await callbackRoute.handler(mockRequest, mockToolkit)
+
+      expect(fetchAdminMe).toHaveBeenCalledWith(mockToken)
+    })
   })
 
   test('Should log error on sign-in failure', async () => {

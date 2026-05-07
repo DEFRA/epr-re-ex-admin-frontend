@@ -1,4 +1,5 @@
 import { createUserSession } from './create-user-session.js'
+import { fetchAdminMe } from './fetch-admin-me.js'
 import { refreshTokens } from './refresh-tokens.js'
 import Jwt from '@hapi/jwt'
 
@@ -34,7 +35,19 @@ async function performRefresh(request, userSession) {
   const { access_token: token, refresh_token: refreshToken } =
     await refreshTokens(userSession.refreshToken)
 
-  const updatedSession = { ...userSession, token, refreshToken }
+  // Re-resolve the admin role from the backend on every refresh so that
+  // role / scope changes (e.g. a user added to or removed from an admin
+  // email list in cdp-app-config) take effect at the next refresh rather
+  // than only on a fresh sign-in.
+  const { role, scopes } = await fetchAdminMe(token)
+
+  const updatedSession = {
+    ...userSession,
+    token,
+    refreshToken,
+    role,
+    scopes
+  }
   await createUserSession(request, updatedSession)
   return updatedSession
 }

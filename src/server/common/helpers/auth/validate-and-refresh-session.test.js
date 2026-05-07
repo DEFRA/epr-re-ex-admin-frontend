@@ -4,12 +4,17 @@ import Jwt from '@hapi/jwt'
 import { validateAndRefreshSession } from './validate-and-refresh-session.js'
 import { makeToken } from '#server/common/test-helpers/test-constants.js'
 
-const { mockRefreshTokens } = vi.hoisted(() => ({
-  mockRefreshTokens: vi.fn()
+const { mockRefreshTokens, mockFetchAdminMe } = vi.hoisted(() => ({
+  mockRefreshTokens: vi.fn(),
+  mockFetchAdminMe: vi.fn()
 }))
 
 vi.mock('./refresh-tokens.js', () => ({
   refreshTokens: mockRefreshTokens
+}))
+
+vi.mock('./fetch-admin-me.js', () => ({
+  fetchAdminMe: mockFetchAdminMe
 }))
 
 vi.mock('./create-user-session.js', () => ({
@@ -26,6 +31,10 @@ describe('#validateAndRefreshSession', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    mockFetchAdminMe.mockResolvedValue({
+      role: 'service_maintainer_write',
+      scopes: ['admin.read', 'admin.write', 'admin.dlq.purge']
+    })
   })
 
   afterEach(() => {
@@ -119,10 +128,13 @@ describe('#validateAndRefreshSession', () => {
 
     expect(decodeSpy).toHaveBeenCalledWith(mockUserSession.token)
     expect(mockRefreshTokens).toHaveBeenCalledWith(mockUserSession.refreshToken)
+    expect(mockFetchAdminMe).toHaveBeenCalledWith(newTokens.access_token)
     expect(result).toEqual({
       ...mockUserSession,
       token: newTokens.access_token,
-      refreshToken: newTokens.refresh_token
+      refreshToken: newTokens.refresh_token,
+      role: 'service_maintainer_write',
+      scopes: ['admin.read', 'admin.write', 'admin.dlq.purge']
     })
   })
 
@@ -148,10 +160,13 @@ describe('#validateAndRefreshSession', () => {
     expect(decodeSpy).toHaveBeenCalledWith(mockUserSession.token)
     expect(verifyTimeSpy).toHaveBeenCalledWith(mockDecoded, { timeSkewSec: 60 })
     expect(mockRefreshTokens).toHaveBeenCalledWith(mockUserSession.refreshToken)
+    expect(mockFetchAdminMe).toHaveBeenCalledWith(newTokens.access_token)
     expect(result).toEqual({
       ...mockUserSession,
       token: newTokens.access_token,
-      refreshToken: newTokens.refresh_token
+      refreshToken: newTokens.refresh_token,
+      role: 'service_maintainer_write',
+      scopes: ['admin.read', 'admin.write', 'admin.dlq.purge']
     })
   })
 
@@ -177,10 +192,13 @@ describe('#validateAndRefreshSession', () => {
     const result = await validateAndRefreshSession({}, mockUserSession)
 
     expect(mockRefreshTokens).toHaveBeenCalledWith(mockUserSession.refreshToken)
+    expect(mockFetchAdminMe).toHaveBeenCalledWith(newTokens.access_token)
     expect(result).toEqual({
       ...mockUserSession,
       token: newTokens.access_token,
-      refreshToken: newTokens.refresh_token
+      refreshToken: newTokens.refresh_token,
+      role: 'service_maintainer_write',
+      scopes: ['admin.read', 'admin.write', 'admin.dlq.purge']
     })
   })
 })

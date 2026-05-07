@@ -1,4 +1,5 @@
 import { createUserSession } from '#server/common/helpers/auth/create-user-session.js'
+import { fetchAdminMe } from '#server/common/helpers/auth/fetch-admin-me.js'
 import { randomUUID } from 'node:crypto'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
 import { loggingEventActions } from '#server/common/enums/event.js'
@@ -37,6 +38,29 @@ export default {
 
     const { displayName = '', id: userId, email, loginHint } = profile
 
+    let role = null
+    let scopes = []
+    try {
+      ;({ role, scopes } = await fetchAdminMe(token))
+    } catch (error) {
+      const statusCode = /** @type {{ statusCode?: number }} */ (error)
+        .statusCode
+      if (statusCode === 403) {
+        request.logger.info({
+          message: `Sign-in denied: user ${email} has no admin tier`,
+          event: { action: loggingEventActions.signIn, reason: 'no_admin_tier' }
+        })
+        await metrics.signInFailure()
+        return h.view('unauthorised')
+      }
+      request.logger.error({
+        err: error,
+        message: 'Failed to resolve admin role from backend'
+      })
+      await metrics.signInFailure()
+      throw error
+    }
+
     const sessionId = randomUUID()
 
     const userSession = {
@@ -46,6 +70,8 @@ export default {
       email,
       loginHint,
       isAuthenticated: true,
+      role,
+      scopes,
       token,
       refreshToken
     }
