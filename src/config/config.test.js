@@ -11,30 +11,6 @@ describe('#config', () => {
     vi.resetModules()
   })
 
-  describe('Log redact configuration', () => {
-    test('Should set log redact paths for production environment', async () => {
-      vi.stubEnv('NODE_ENV', 'production')
-      const configModule = await import('./config.js')
-      const config = configModule.config
-
-      const redactPaths = config.get('log.redact')
-      expect(redactPaths).toEqual([
-        'http.request.headers.authorization',
-        'http.request.headers.cookie',
-        'http.response.headers'
-      ])
-    })
-
-    test('Should set log redact paths to empty array for non-production environments', async () => {
-      vi.stubEnv('NODE_ENV', 'test')
-      const configModule = await import('./config.js')
-      const config = configModule.config
-
-      const redactPaths = config.get('log.redact')
-      expect(redactPaths).toEqual([])
-    })
-  })
-
   describe(isProductionEnvironment, () => {
     afterEach(() => {
       config.reset('cdpEnvironment')
@@ -84,6 +60,15 @@ describe('#config', () => {
       config.set('cdpEnvironment', env)
 
       expect(isLocalEnvironment()).toBe(false)
+    })
+  })
+
+  describe('production defaults', () => {
+    it('should default log.format to ecs when NODE_ENV is production', async () => {
+      vi.stubEnv('NODE_ENV', 'production')
+      const configModule = await import('./config.js')
+
+      expect(configModule.config.get('log.format')).toBe('ecs')
     })
   })
 

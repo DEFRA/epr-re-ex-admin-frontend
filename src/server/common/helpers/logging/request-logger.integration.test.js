@@ -168,6 +168,32 @@ describe('request-logger integration (hapi-pino + pino + ecs format)', () => {
     expect(out).toBeUndefined()
   })
 
+  it('should redact authorization, cookie, and response headers in production', async () => {
+    config.set('cdpEnvironment', 'prod')
+
+    const { server, lines } = await createLogCaptureServer()
+    server.route({
+      method: 'GET',
+      path: '/test',
+      handler: (_, h) =>
+        h.response('ok').header('x-redact-test', 'LEAKED_RESPONSE_HEADER')
+    })
+
+    await server.inject({
+      url: '/test',
+      headers: {
+        authorization: 'Bearer LEAKED_JWT_TOKEN',
+        cookie: 'session=LEAKED_SESSION_VALUE'
+      }
+    })
+
+    const emitted = lines.join('\n')
+
+    expect(emitted).not.toContain('LEAKED_JWT_TOKEN')
+    expect(emitted).not.toContain('LEAKED_SESSION_VALUE')
+    expect(emitted).not.toContain('LEAKED_RESPONSE_HEADER')
+  })
+
   it('should still emit an access log for non-/public requests', async () => {
     const { server, findLine } = await createLogCaptureServer()
     server.route({
