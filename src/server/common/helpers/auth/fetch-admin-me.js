@@ -37,5 +37,5 @@ export async function fetchAdminMe(accessToken) {
     )
   }
 
-  return await response.json()
+  return response.json()
 }

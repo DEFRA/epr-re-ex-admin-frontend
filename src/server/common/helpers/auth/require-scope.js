@@ -1,3 +1,4 @@
+import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getUserSession } from './get-user-session.js'
 
 /**
@@ -21,7 +22,7 @@ export function requireScope(scope) {
         request.logger.info({
           message: `Route requires scope ${scope} but user has [${(session?.scopes ?? []).join(', ')}]; rendering 403`
         })
-        return h.view('403').code(403).takeover()
+        return h.view('403').code(statusCodes.forbidden).takeover()
       }
       return h.continue
     }

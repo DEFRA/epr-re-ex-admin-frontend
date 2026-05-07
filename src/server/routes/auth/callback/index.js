@@ -1,6 +1,7 @@
 import { createUserSession } from '#server/common/helpers/auth/create-user-session.js'
 import { fetchAdminMe } from '#server/common/helpers/auth/fetch-admin-me.js'
 import { randomUUID } from 'node:crypto'
+import { statusCodes } from '#server/common/constants/status-codes.js'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
 import { loggingEventActions } from '#server/common/enums/event.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
@@ -44,7 +45,7 @@ export default {
     } catch (error) {
       const statusCode = /** @type {{ statusCode?: number }} */ (error)
         .statusCode
-      if (statusCode === 403) {
+      if (statusCode === statusCodes.forbidden) {
         request.logger.info({
           message: `Sign-in denied: user ${email} has no admin tier`,
           event: { action: loggingEventActions.signIn, reason: 'no_admin_tier' }
