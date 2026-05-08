@@ -49,7 +49,9 @@ export const streamFromBackend = async (request, path, options) => {
 
     return response
   } catch (error) {
-    if (error.isBoom) throw error
+    if (error.isBoom) {
+      throw error
+    }
 
     throw internal(
       `Failed to stream from backend at url: ${url}`,
