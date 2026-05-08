@@ -115,6 +115,11 @@ describe('context and cache', () => {
             },
             {
               current: false,
+              text: 'Waste records export',
+              href: '/waste-records-export'
+            },
+            {
+              current: false,
               text: 'System logs',
               href: '/system-logs'
             },
@@ -303,6 +308,11 @@ describe('context and cache', () => {
               current: false,
               text: 'Report submissions',
               href: '/report-submissions'
+            },
+            {
+              current: false,
+              text: 'Waste records export',
+              href: '/waste-records-export'
             },
             {
               current: false,
