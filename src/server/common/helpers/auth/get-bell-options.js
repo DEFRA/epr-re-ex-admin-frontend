@@ -17,7 +17,9 @@ export function getBellOptions(oidcConfig) {
         const tokenPayload = await verifyToken(credentials.token)
         const { oid: id } = tokenPayload
         const name = tokenPayload.name?.trim() || ''
-        const email = tokenPayload.preferred_username
+        // Real Entra ID tokens carry the email under `preferred_username`; the
+        // local `epr-re-ex-entra-stub` emits it under `email`. Accept either.
+        const email = tokenPayload.preferred_username ?? tokenPayload.email
 
         credentials.profile = {
           id,
