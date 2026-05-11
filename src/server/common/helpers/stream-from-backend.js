@@ -11,13 +11,16 @@ import { getTracingHeaderName } from './request-tracing.js'
  */
 
 /**
- * Fetch JSON from a given path in the backend service.
+ * Streaming counterpart to fetchJsonFromBackend — returns the raw fetch
+ * Response so the caller can pass `response.body` straight through to
+ * `h.response(body)` for chunked download proxying.
+ *
  * @param {HapiRequest} request
  * @param {string} path
  * @param {RequestInit} [options]
- * @returns {Promise<*>}
+ * @returns {Promise<Response>}
  */
-export const fetchJsonFromBackend = async (request, path, options) => {
+export const streamFromBackend = async (request, path, options) => {
   const eprBackendUrl = config.get('eprBackendUrl')
   const userSession = await getUserSession(request)
 
@@ -26,7 +29,7 @@ export const fetchJsonFromBackend = async (request, path, options) => {
     headers: withTraceId(getTracingHeaderName(), {
       ...options?.headers,
       Authorization: `Bearer ${userSession?.token}`,
-      'Content-Type': 'application/json'
+      Accept: 'text/csv'
     })
   }
 
@@ -36,37 +39,25 @@ export const fetchJsonFromBackend = async (request, path, options) => {
     const response = await fetch(url, completeOptions)
 
     if (!response.ok) {
-      // Create a Boom error that matches the backend response
-      const error = Boom.boomify(
+      throw Boom.boomify(
         new Error(
-          `Failed to fetch from backend at url: ${url}: ${response.status} ${response.statusText}`
+          `Failed to stream from backend at url: ${url}: ${response.status} ${response.statusText}`
         ),
         { statusCode: response.status }
       )
-
-      // Add response body to the error payload if needed
-      if (response.headers.get('content-type')?.includes('application/json')) {
-        error.output.payload = await response.json()
-      }
-
-      throw error
     }
 
-    return await response.json()
+    return response
   } catch (error) {
-    // If it's already a Boom error, re-throw it
     if (error.isBoom) {
       throw error
     }
 
     throw internal(
-      `Failed to fetch from backend at url: ${url}`,
+      `Failed to stream from backend at url: ${url}`,
       errorCodes.externalFetchFailed,
       {
-        event: {
-          action: 'external_fetch',
-          reason: classifierTail(error)
-        },
+        event: { action: 'external_fetch', reason: classifierTail(error) },
         cause: error
       }
     )

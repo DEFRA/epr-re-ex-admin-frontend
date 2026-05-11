@@ -1,0 +1,35 @@
+{% extends 'layout.njk' %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {% if error %}
+        {{ govukErrorSummary({
+          titleText: "There is a problem",
+          errorList: [
+            {
+              text: error
+            }
+          ]
+        }) }}
+      {% endif %}
+
+      <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
+
+      <p class="govuk-body">
+        Download every waste record currently held, with all summary-log fields. The CSV may be very large.
+      </p>
+
+      <form method="POST" action="/waste-records-export">
+        <input type="hidden" name="crumb" value="{{ crumb }}" />
+        {{ govukButton({
+          text: "Download CSV"
+        }) }}
+      </form>
+
+    </div>
+  </div>
+{% endblock %}

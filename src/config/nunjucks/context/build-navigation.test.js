@@ -66,6 +66,11 @@ describe('#buildNavigation', () => {
       },
       {
         current: false,
+        text: 'Waste records export',
+        href: '/waste-records-export'
+      },
+      {
+        current: false,
         text: 'System logs',
         href: '/system-logs'
       },
@@ -136,6 +141,11 @@ describe('#buildNavigation', () => {
       },
       {
         current: false,
+        text: 'Waste records export',
+        href: '/waste-records-export'
+      },
+      {
+        current: false,
         text: 'System logs',
         href: '/system-logs'
       },
@@ -163,18 +173,22 @@ describe('#buildNavigation', () => {
     )
   })
 
-  test('Should place report submissions before system logs', () => {
+  test('Should place report submissions before waste records export before system logs', () => {
     const navigation = buildNavigation(
       mockRequest({ path: '/non-existent-path' })
     )
     const reportSubmissionsIndex = navigation.findIndex(
       (item) => item.text === 'Report submissions'
     )
+    const wasteRecordsExportIndex = navigation.findIndex(
+      (item) => item.text === 'Waste records export'
+    )
     const systemLogsIndex = navigation.findIndex(
       (item) => item.text === 'System logs'
     )
 
-    expect(reportSubmissionsIndex).toBe(systemLogsIndex - 1)
+    expect(wasteRecordsExportIndex).toBe(reportSubmissionsIndex + 1)
+    expect(systemLogsIndex).toBe(wasteRecordsExportIndex + 1)
   })
 
   test('Should place overseas sites after summary log uploads', () => {

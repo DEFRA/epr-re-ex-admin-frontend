@@ -56,5 +56,28 @@ describe('cdp-boom', () => {
 
       expect(boom.output.payload).toMatchObject({ detail: { id: 'x' } })
     })
+
+    it('attaches the underlying error to .cause when provided so it surfaces in pino err logs', () => {
+      const underlying = Object.assign(new TypeError('network down'), {
+        code: 'UND_ERR_SOCKET'
+      })
+      const boom = internal('wrapper message', 'a_code', {
+        event: {
+          action: 'external_fetch',
+          reason: 'type=TypeError code=UND_ERR_SOCKET'
+        },
+        cause: underlying
+      })
+
+      expect(boom.cause).toBe(underlying)
+    })
+
+    it('omits the cause property when not provided so existing call sites are unaffected', () => {
+      const boom = internal('msg', 'a_code', {
+        event: { action: 'an_action', reason: 'a_reason' }
+      })
+
+      expect('cause' in boom).toBe(false)
+    })
   })
 })
