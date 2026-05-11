@@ -138,4 +138,23 @@ describe('wasteRecordsExportPostController', () => {
 
     expect(yarSet).toHaveBeenCalledWith('error', 'Backend exploded')
   })
+
+  it('logs and redirects with a flash error when the backend response has no body', async () => {
+    streamFromBackend.mockResolvedValue({ body: null, headers: new Headers() })
+
+    const { h } = buildHapiH()
+    const yarSet = vi.fn()
+    const request = { yar: { set: yarSet } }
+
+    const result = await wasteRecordsExportPostController.handler(request, h)
+
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'Failed to stream waste records export'
+      })
+    )
+    expect(yarSet).toHaveBeenCalledWith('error', expect.any(String))
+    expect(h.redirect).toHaveBeenCalledWith('/waste-records-export')
+    expect(result).toBe('redirect-response')
+  })
 })

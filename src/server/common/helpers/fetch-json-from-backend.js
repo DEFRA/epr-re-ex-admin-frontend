@@ -66,7 +66,8 @@ export const fetchJsonFromBackend = async (request, path, options) => {
         event: {
           action: 'external_fetch',
           reason: classifierTail(error)
-        }
+        },
+        cause: error
       }
     )
   }

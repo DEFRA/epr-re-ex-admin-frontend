@@ -57,7 +57,8 @@ export const streamFromBackend = async (request, path, options) => {
       `Failed to stream from backend at url: ${url}`,
       errorCodes.externalFetchFailed,
       {
-        event: { action: 'external_fetch', reason: classifierTail(error) }
+        event: { action: 'external_fetch', reason: classifierTail(error) },
+        cause: error
       }
     )
   }
