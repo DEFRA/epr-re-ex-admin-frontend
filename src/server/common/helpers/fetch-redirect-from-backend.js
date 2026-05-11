@@ -54,7 +54,8 @@ export const fetchRedirectFromBackend = async (request, path) => {
         event: {
           action: 'external_fetch',
           reason: classifierTail(error)
-        }
+        },
+        cause: error
       }
     )
   }
