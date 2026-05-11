@@ -1,3 +1,5 @@
+import { Readable } from 'node:stream'
+
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 
 import { wasteRecordsExportPostController } from './controller.post.js'
@@ -6,6 +8,24 @@ import { streamFromBackend } from '#server/common/helpers/stream-from-backend.js
 vi.mock('#server/common/helpers/stream-from-backend.js', () => ({
   streamFromBackend: vi.fn()
 }))
+
+const buildWebStream = (chunks) =>
+  new ReadableStream({
+    start(controller) {
+      for (const chunk of chunks) {
+        controller.enqueue(new TextEncoder().encode(chunk))
+      }
+      controller.close()
+    }
+  })
+
+const collectNodeStream = (stream) =>
+  new Promise((resolve, reject) => {
+    const parts = []
+    stream.on('data', (c) => parts.push(c))
+    stream.on('end', () => resolve(Buffer.concat(parts).toString('utf-8')))
+    stream.on('error', reject)
+  })
 
 const { mockLoggerError } = vi.hoisted(() => ({ mockLoggerError: vi.fn() }))
 vi.mock('#server/common/helpers/logging/logger.js', () => ({
@@ -34,10 +54,9 @@ describe('wasteRecordsExportPostController', () => {
     return { h, responseBuilder, calls }
   }
 
-  it('proxies the backend response body and copies content-type/disposition headers', async () => {
-    const fakeBody = {}
+  it('converts the backend Web ReadableStream to a Node Readable and preserves the CSV chunks', async () => {
     streamFromBackend.mockResolvedValue({
-      body: fakeBody,
+      body: buildWebStream(['header1,header2\n', 'a,b\n', 'c,d\n']),
       headers: new Headers({
         'content-type': 'text/csv; charset=utf-8',
         'content-disposition':
@@ -54,7 +73,13 @@ describe('wasteRecordsExportPostController', () => {
       request,
       '/v1/admin/waste-records/export.csv'
     )
-    expect(h.response).toHaveBeenCalledWith(fakeBody)
+
+    const passedBody = h.response.mock.calls[0][0]
+    expect(passedBody).toBeInstanceOf(Readable)
+    expect(await collectNodeStream(passedBody)).toBe(
+      'header1,header2\na,b\nc,d\n'
+    )
+
     expect(calls.type).toEqual([['text/csv; charset=utf-8']])
     expect(calls.header).toEqual([
       [
@@ -66,7 +91,7 @@ describe('wasteRecordsExportPostController', () => {
 
   it('falls back to default content-type and disposition when backend headers are missing', async () => {
     streamFromBackend.mockResolvedValue({
-      body: {},
+      body: buildWebStream([]),
       headers: new Headers({})
     })
 
