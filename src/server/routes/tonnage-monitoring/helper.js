@@ -1,3 +1,16 @@
+/**
+ * A row in the materialised tonnage-monitoring table. Three semantic variants
+ * share one structural shape: material rows have `material` and `type`, type
+ * total rows have `type`, year total rows have neither.
+ * @typedef {{
+ *   material?: string
+ *   type?: string
+ *   year: number
+ *   monthValues: Record<string, number | undefined>
+ *   total: number
+ * }} TonnageRow
+ */
+
 const masterOrder = [
   'Jan',
   'Feb',
@@ -69,7 +82,11 @@ export function buildMaterialRowData(data) {
     rows.push(typeTotal, yearTotal)
   }
 
-  return { hasMultipleYears, monthNames, rows }
+  return {
+    hasMultipleYears,
+    monthNames,
+    rows: /** @type {TonnageRow[]} */ (rows)
+  }
 }
 
 function initTypeTotal(item, monthNames) {
