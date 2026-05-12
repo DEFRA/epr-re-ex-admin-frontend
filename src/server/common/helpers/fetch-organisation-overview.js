@@ -5,16 +5,16 @@ import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 /**
  * @typedef {{
  *   id: string,
- *   accreditationNumber: string,
+ *   accreditationNumber: string | null,
  *   status: string
  * }} Accreditation
  *
  * @typedef {{
  *   id: string,
- *   registrationNumber: string,
+ *   registrationNumber: string | null,
  *   status: string,
  *   material: string,
- *   site: string,
+ *   site: string | null,
  *   processingType: string,
  *   accreditation?: Accreditation
  * }} Registration

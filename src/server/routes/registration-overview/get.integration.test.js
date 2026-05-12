@@ -100,9 +100,9 @@ describe('#registrationOverviewController', () => {
   const findSummaryLogsTable = ($) => $('#summary-logs table')
 
   /**
-   * @param {object} [overviewResponse]
-   * @param {object} [calendarResponse]
-   * @param {{ summaryLogs: object[] }} [summaryLogsResponse]
+   * @param {import('#server/common/helpers/fetch-organisation-overview.js').OrganisationOverview} [overviewResponse]
+   * @param {typeof mockCalendar} [calendarResponse]
+   * @param {{ summaryLogs: typeof mockSubmittedSummaryLog[] }} [summaryLogsResponse]
    */
   const useMockBackend = (
     overviewResponse = mockOverview,
@@ -164,11 +164,9 @@ describe('#registrationOverviewController', () => {
     })
 
     test('Should fall back to registration id in heading when registrationNumber is missing', async () => {
-      const { registrationNumber: _, ...registrationWithoutNumber } =
-        mockRegistration
       useMockBackend({
         ...mockOverview,
-        registrations: [registrationWithoutNumber]
+        registrations: [{ ...mockRegistration, registrationNumber: null }]
       })
 
       const { result } = await server.inject({
