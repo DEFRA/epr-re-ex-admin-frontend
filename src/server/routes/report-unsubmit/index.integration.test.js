@@ -3,15 +3,15 @@ import * as cheerio from 'cheerio'
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
-import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
+import * as getUserSessionMod from '#server/common/helpers/auth/get-user-session.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { http, server as mswServer, HttpResponse } from '#vite/setup-msw.js'
 import { createServer } from '#server/server.js'
 
-vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
-  getUserSession: vi.fn().mockReturnValue(null)
-}))
+vi.mock('#server/common/helpers/auth/get-user-session.js')
+
+const { getUserSession } = vi.mocked(getUserSessionMod)
 
 describe('report-unsubmit', () => {
   const backendUrl = config.get('eprBackendUrl')
@@ -69,6 +69,9 @@ describe('report-unsubmit', () => {
       )
     )
 
+  /**
+   * @param {{ currentStatus?: string, unsubmittedAt?: string | null }} [opts]
+   */
   const stubReport = ({
     currentStatus = 'ready_to_submit',
     unsubmittedAt = '2026-05-06T10:00:00.000Z'

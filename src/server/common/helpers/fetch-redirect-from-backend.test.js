@@ -1,15 +1,16 @@
 import { vi } from 'vitest'
 import Boom from '@hapi/boom'
 import { fetchRedirectFromBackend } from './fetch-redirect-from-backend.js'
-import { getUserSession } from './auth/get-user-session.js'
+import * as getUserSessionMod from './auth/get-user-session.js'
+import { asHapiRequest } from '#server/common/test-helpers/request.js'
 
-vi.mock('./auth/get-user-session.js', () => ({
-  getUserSession: vi.fn()
-}))
+vi.mock('./auth/get-user-session.js')
+
+const { getUserSession } = vi.mocked(getUserSessionMod)
 
 describe('fetchRedirectFromBackend', () => {
   const mockToken = 'test-token'
-  const mockRequest = {}
+  const mockRequest = asHapiRequest({})
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -44,8 +45,12 @@ describe('fetchRedirectFromBackend', () => {
 
     await fetchRedirectFromBackend(mockRequest, '/v1/test/download')
 
-    const [, options] = fetchSpy.mock.calls[0]
-    expect(options.headers.Authorization).toBe(`Bearer ${mockToken}`)
+    const [, options] = /** @type {[string, RequestInit]} */ (
+      fetchSpy.mock.calls[0]
+    )
+    expect(
+      /** @type {Record<string, string>} */ (options.headers).Authorization
+    ).toBe(`Bearer ${mockToken}`)
   })
 
   test('uses redirect manual to prevent following the redirect', async () => {
@@ -58,7 +63,9 @@ describe('fetchRedirectFromBackend', () => {
 
     await fetchRedirectFromBackend(mockRequest, '/v1/test/download')
 
-    const [, options] = fetchSpy.mock.calls[0]
+    const [, options] = /** @type {[string, RequestInit]} */ (
+      fetchSpy.mock.calls[0]
+    )
     expect(options.redirect).toBe('manual')
   })
 
