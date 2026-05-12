@@ -70,4 +70,27 @@ describe('#index', () => {
       expect(process.exitCode).toBe(1)
     })
   })
+
+  describe('When unhandledRejection occurs with a non-Error reason', () => {
+    beforeEach(async () => {
+      await import('./index.js')
+
+      process.emit('unhandledRejection', 'plain string rejection')
+    })
+
+    test('Should wrap the reason in an Error before logging', () => {
+      expect(mockLoggerError).toHaveBeenCalledWith({
+        err: expect.any(Error),
+        message: 'Unhandled rejection'
+      })
+
+      const [{ err }] = mockLoggerError.mock.calls[0]
+
+      expect(err.message).toBe('plain string rejection')
+    })
+
+    test('Should set process exitCode to 1', () => {
+      expect(process.exitCode).toBe(1)
+    })
+  })
 })
