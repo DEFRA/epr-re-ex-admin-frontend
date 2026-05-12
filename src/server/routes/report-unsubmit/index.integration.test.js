@@ -131,7 +131,7 @@ describe('report-unsubmit', () => {
   })
 
   test('confirm page shows report details and unsubmit action', async () => {
-    getUserSession.mockReturnValue(mockUserSession)
+    getUserSession.mockResolvedValue(mockUserSession)
     stubOverview()
     stubReport({ currentStatus: 'submitted', unsubmittedAt: null })
 
@@ -151,7 +151,7 @@ describe('report-unsubmit', () => {
   })
 
   test('confirm page returns 404 when the registration is missing from the overview', async () => {
-    getUserSession.mockReturnValue(mockUserSession)
+    getUserSession.mockResolvedValue(mockUserSession)
     mswServer.use(
       http.get(
         `${backendUrl}/v1/organisations/${organisationId}/overview`,
@@ -170,7 +170,7 @@ describe('report-unsubmit', () => {
   })
 
   test('confirm page redirects to overview for a non-submitted report', async () => {
-    getUserSession.mockReturnValue(mockUserSession)
+    getUserSession.mockResolvedValue(mockUserSession)
     stubOverview()
     stubReport({ currentStatus: 'ready_to_submit', unsubmittedAt: null })
 
@@ -185,7 +185,7 @@ describe('report-unsubmit', () => {
   })
 
   test('submitting the confirmation redirects to the success page', async () => {
-    getUserSession.mockReturnValue(mockUserSession)
+    getUserSession.mockResolvedValue(mockUserSession)
     stubOverview()
     stubReport({ currentStatus: 'submitted', unsubmittedAt: null })
     stubUnsubmitSuccess()
@@ -197,7 +197,7 @@ describe('report-unsubmit', () => {
   })
 
   test('backend failure shows the unsubmit failed page', async () => {
-    getUserSession.mockReturnValue(mockUserSession)
+    getUserSession.mockResolvedValue(mockUserSession)
     stubOverview()
     stubReport({ currentStatus: 'submitted', unsubmittedAt: null })
     stubUnsubmitFailure()
@@ -210,7 +210,7 @@ describe('report-unsubmit', () => {
   })
 
   test('success page confirms the report was unsubmitted', async () => {
-    getUserSession.mockReturnValue(mockUserSession)
+    getUserSession.mockResolvedValue(mockUserSession)
     stubOverview()
     stubReport()
 
@@ -230,7 +230,7 @@ describe('report-unsubmit', () => {
   })
 
   test('result page redirects to overview when accessed without completing unsubmit', async () => {
-    getUserSession.mockReturnValue(mockUserSession)
+    getUserSession.mockResolvedValue(mockUserSession)
     stubOverview()
     stubReport({ currentStatus: 'submitted', unsubmittedAt: null })
 
@@ -259,7 +259,7 @@ describe('report-unsubmit', () => {
     })
 
     beforeEach(() => {
-      getUserSession.mockReturnValue(mockUserSession)
+      getUserSession.mockResolvedValue(mockUserSession)
     })
 
     test('unsubmit routes are not registered and return 404', async () => {
