@@ -1420,6 +1420,63 @@ describe('JSONEditor Helpers', () => {
       document.getElementById = originalGetById
     })
 
+    it('should not throw when the stale draft warning placeholder is missing', () => {
+      payloadEl.textContent = JSON.stringify({
+        id: 1,
+        name: 'Original',
+        version: '2'
+      })
+
+      const draftData = { id: 1, name: 'Draft', version: 1 }
+
+      const originalGetById = document.getElementById
+      document.getElementById = vi.fn((id) => {
+        if (id === 'jsoneditor') return container
+        if (id === 'organisation-json') return payloadEl
+        if (id === 'jsoneditor-organisation-object') return hiddenInput
+        if (id === 'jsoneditor-reset-button') return resetButton
+        if (id === 'jsoneditor-save-button') return saveButton
+        if (id === 'organisation-success-message') return messageEl
+        return null
+      })
+
+      localStorageMock.getItem
+        .mockReturnValueOnce(JSON.stringify(draftData))
+        .mockReturnValueOnce(null)
+
+      expect(() =>
+        initJSONEditor({
+          schema: testSchema,
+          validate: mockValidate,
+          storageKey: 'test-storage-key'
+        })
+      ).not.toThrow()
+
+      document.getElementById = originalGetById
+    })
+
+    it('should not throw when the reset button is missing', () => {
+      const originalGetById = document.getElementById
+      document.getElementById = vi.fn((id) => {
+        if (id === 'jsoneditor') return container
+        if (id === 'organisation-json') return payloadEl
+        if (id === 'jsoneditor-organisation-object') return hiddenInput
+        if (id === 'jsoneditor-save-button') return saveButton
+        if (id === 'organisation-success-message') return messageEl
+        return null
+      })
+
+      expect(() =>
+        initJSONEditor({
+          schema: testSchema,
+          validate: mockValidate,
+          storageKey: 'test-storage-key'
+        })
+      ).not.toThrow()
+
+      document.getElementById = originalGetById
+    })
+
     it('should reset editor when confirmed', () => {
       initJSONEditor({
         schema: testSchema,

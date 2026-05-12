@@ -5,6 +5,10 @@ import { schemaTypeIncludes } from './jsoneditor.schema-utils.js'
 import { inflateNullObjects, buildNullTemplate } from './jsoneditor.inflate.js'
 
 /**
+ * @import { ValidateFunction } from 'ajv'
+ */
+
+/**
  * Finds a schema node by following a JSONEditor path
  * @param {Object} schema - The root JSON schema
  * @param {Array} path - Array of path segments
@@ -323,7 +327,7 @@ export function getAutocompleteOptions(schema, path) {
  * @param {*} json - The JSON data to validate
  * @param {*} originalData - The original data to compare against for read-only checks
  * @param {Object} schema - The JSON schema to validate against
- * @param {Function} validate - The AJV validation function
+ * @param {ValidateFunction} validate - The AJV validation function
  * @returns {Array} Array of validation errors
  */
 export function validateJSON(json, originalData, schema, validate) {
@@ -387,7 +391,9 @@ export function validateJSON(json, originalData, schema, validate) {
  * @param {*} data - The data to sync
  */
 function syncHiddenInput(hiddenInputId, data) {
-  const hiddenInput = document.getElementById(hiddenInputId)
+  const hiddenInput = /** @type {HTMLInputElement | null} */ (
+    document.getElementById(hiddenInputId)
+  )
   if (hiddenInput) {
     hiddenInput.value = JSON.stringify(data)
   }
@@ -424,7 +430,9 @@ function clearStorageIfSuccessful(successMessageId, storageManager) {
  * @param {Array} errors - Array of validation errors
  */
 function updateSaveButtonState(saveButtonId, errors) {
-  const saveButton = document.getElementById(saveButtonId)
+  const saveButton = /** @type {HTMLButtonElement | null} */ (
+    document.getElementById(saveButtonId)
+  )
   if (saveButton) {
     saveButton.disabled = errors.length > 0
   }
@@ -438,6 +446,9 @@ function isDraftValid(draftData, backendData) {
 
 function injectDraftStaleWarning(staleWarningPlaceholderId) {
   const container = document.getElementById(staleWarningPlaceholderId)
+  if (!container) {
+    return
+  }
   container.innerHTML = `
   <div class="govuk-notification-banner" role="region" aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner" tabindex="-1">
     <div class="govuk-notification-banner__header">
@@ -477,7 +488,7 @@ function clearDraftIfStale(
  * Creates JSONEditor configuration options
  * @param {Object} options - Configuration options
  * @param {Object} options.schema - JSON schema
- * @param {Function} options.validate - AJV validation function
+ * @param {ValidateFunction} options.validate - AJV validation function
  * @param {Object} options.originalData - Original data for comparison
  * @param {string} options.hiddenInputId - The ID of the hidden input element
  * @param {string} options.saveButtonId - The ID of the save button
@@ -561,6 +572,9 @@ function setupResetButton(
   hiddenInputId
 ) {
   const resetButton = document.getElementById(resetButtonId)
+  if (!resetButton) {
+    return
+  }
   resetButton.addEventListener('click', () => {
     if (globalThis.confirm('Are you sure you want to reset all changes?')) {
       storageManager.clear()
@@ -700,14 +714,15 @@ function loadEditorData(
  * Initialise the JSONEditor for organisation data
  * @param {Object} options - Configuration options
  * @param {Object} options.schema - The JSON schema for validation
- * @param {Function} options.validate - The AJV validation function
+ * @param {ValidateFunction} options.validate - The AJV validation function
  * @param {string} options.storageKey - The localStorage key for draft storage
- * @param {string} options.containerId - The ID of the container element
- * @param {string} options.payloadElementId - The ID of the element containing original JSON data
- * @param {string} options.hiddenInputId - The ID of the hidden input for form submission
- * @param {string} options.successMessageId - The ID of the success message element
- * @param {string} options.resetButtonId - The ID of the reset button
- * @param {string} options.saveButtonId - The ID of the save button
+ * @param {string} [options.containerId] - The ID of the container element
+ * @param {string} [options.payloadElementId] - The ID of the element containing original JSON data
+ * @param {string} [options.hiddenInputId] - The ID of the hidden input for form submission
+ * @param {string} [options.successMessageId] - The ID of the success message element
+ * @param {string} [options.resetButtonId] - The ID of the reset button
+ * @param {string} [options.saveButtonId] - The ID of the save button
+ * @param {string} [options.staleDraftWarningPlaceholderId] - The ID of the stale draft warning placeholder
  */
 export function initJSONEditor({
   schema,
