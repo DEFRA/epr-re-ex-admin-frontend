@@ -3,15 +3,17 @@ import Boom from '@hapi/boom'
 import { fetchRedirectFromBackend } from './fetch-redirect-from-backend.js'
 import * as getUserSessionMod from './auth/get-user-session.js'
 
+/**
+ * @import { Request } from '@hapi/hapi'
+ */
+
 vi.mock('./auth/get-user-session.js')
 
 const { getUserSession } = vi.mocked(getUserSessionMod)
 
 describe('fetchRedirectFromBackend', () => {
   const mockToken = 'test-token'
-  const mockRequest = /** @type {import('@hapi/hapi').Request} */ (
-    /** @type {unknown} */ ({})
-  )
+  const mockRequest = /** @type {Request} */ (/** @type {unknown} */ ({}))
 
   beforeEach(() => {
     vi.clearAllMocks()

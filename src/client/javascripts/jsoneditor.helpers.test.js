@@ -1,15 +1,17 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   findSchemaNode,
-  getValueAtPath,
-  isNodeEditable,
-  checkReadOnlyChanges,
-  highlightChanges,
-  LocalStorageManager,
   getAutocompleteOptions,
-  validateJSON,
-  initJSONEditor
+  highlightChanges,
+  initJSONEditor,
+  isNodeEditable,
+  LocalStorageManager
 } from './jsoneditor.helpers.js'
+import {
+  checkReadOnlyChanges,
+  getValueAtPath,
+  validateJSON
+} from './jsoneditor.validation.js'
 
 // Use vi.hoisted to ensure these are available when mocks are set up
 const { mockSet, mockGet, MockJSONEditorConstructor } = vi.hoisted(() => {

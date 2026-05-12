@@ -8,6 +8,10 @@ import { vi } from 'vitest'
 import { http, HttpResponse, server as mswServer } from '#vite/setup-msw.js'
 import * as cheerio from 'cheerio'
 
+/**
+ * @import { OrganisationOverview } from '#server/common/helpers/fetch-organisation-overview.js'
+ */
+
 vi.mock('#server/common/helpers/auth/get-user-session.js')
 
 const { getUserSession } = vi.mocked(getUserSessionMod)
@@ -100,7 +104,7 @@ describe('#registrationOverviewController', () => {
   const findSummaryLogsTable = ($) => $('#summary-logs table')
 
   /**
-   * @param {import('#server/common/helpers/fetch-organisation-overview.js').OrganisationOverview} [overviewResponse]
+   * @param {OrganisationOverview} [overviewResponse]
    * @param {typeof mockCalendar} [calendarResponse]
    * @param {{ summaryLogs: typeof mockSubmittedSummaryLog[] }} [summaryLogsResponse]
    */
