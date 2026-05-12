@@ -1,5 +1,8 @@
 import { vi } from 'vitest'
-import { fetchOrganisationOverview } from './fetch-organisation-overview.js'
+import {
+  fetchOrganisationOverview,
+  findRegistration
+} from './fetch-organisation-overview.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
 vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
@@ -49,5 +52,37 @@ describe('fetchOrganisationOverview', () => {
     await expect(
       fetchOrganisationOverview(mockRequest, '69c3b4f0abda9efa68dd6697')
     ).rejects.toThrow('backend unavailable')
+  })
+})
+
+describe(findRegistration, () => {
+  const organisationId = 'aaa111bbb222ccc333ddd4444'
+  const registrationId = 'bbb222ccc333ddd444eee5555'
+
+  test('returns the matching registration when present', () => {
+    const registration = { id: registrationId, registrationNumber: 'REG-001' }
+    const overview = { registrations: [registration] }
+
+    expect(findRegistration(overview, organisationId, registrationId)).toBe(
+      registration
+    )
+  })
+
+  test('throws notFound enriched with code and event when missing', () => {
+    const overview = { registrations: [] }
+
+    expect(() =>
+      findRegistration(overview, organisationId, registrationId)
+    ).toThrow(
+      expect.objectContaining({
+        isBoom: true,
+        message: 'Registration not found',
+        code: 'registration_not_found',
+        event: {
+          action: 'fetch_registration',
+          reason: `organisationId=${organisationId} registrationId=${registrationId}`
+        }
+      })
+    )
   })
 })

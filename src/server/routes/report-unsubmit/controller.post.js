@@ -1,5 +1,8 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
-import { fetchOrganisationOverview } from '#server/common/helpers/fetch-organisation-overview.js'
+import {
+  fetchOrganisationOverview,
+  findRegistration
+} from '#server/common/helpers/fetch-organisation-overview.js'
 import { formatPeriod } from '#server/common/helpers/format-reporting-period.js'
 
 export const reportUnsubmitPostController = {
@@ -22,8 +25,10 @@ export const reportUnsubmitPostController = {
     }
 
     const overview = await fetchOrganisationOverview(request, organisationId)
-    const registration = overview.registrations.find(
-      (r) => r.id === registrationId
+    const registration = findRegistration(
+      overview,
+      organisationId,
+      registrationId
     )
 
     return h.view('routes/report-unsubmit/result', {
