@@ -1,0 +1,12 @@
+{
+  "extends": "./jsconfig.typecheck.json",
+  "compilerOptions": {
+    "types": ["vitest/globals"]
+  },
+  "include": [
+    "src/**/*.test.js",
+    "src/**/test-helpers/**/*.js",
+    "src/**/test-fixtures.js"
+  ],
+  "exclude": ["node_modules", ".vite"]
+}
