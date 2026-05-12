@@ -59,29 +59,52 @@ jobs:
 
       - name: Lint types (tests)
         run: |
+          # disable setup-node's tsc problem matcher: we summarise below
+          # rather than wanting per-line pr annotations on every error
+          echo "::remove-matcher owner=tsc::"
+
           OUTPUT=$(npm run lint:types:tests 2>&1) && STATUS=0 || STATUS=$?
           echo "$OUTPUT"
 
-          ERRORS=$(echo "$OUTPUT" | grep -c "^src/" || true)
+          if [ "$STATUS" -eq 0 ]; then
+            cat <<'EOF' >> "$GITHUB_STEP_SUMMARY"
+          ## Lint Types - Tests
 
-          {
-            if [ "$STATUS" -eq 0 ]; then
-              echo "## Lint Types - Tests"
-              echo ""
-              echo ":white_check_mark: Test type check passed"
-            else
-              echo "## Lint Types - Tests"
-              echo ""
-              echo ":warning: **${ERRORS} type errors found in tests** (advisory — not blocking)"
-              echo ""
-              echo "<details><summary>Errors by file</summary>"
-              echo ""
-              echo '```'
-              echo "$OUTPUT" | grep "^src/" | sed 's/(.*/:/' | sort | uniq -c | sort -rn
-              echo '```'
-              echo "</details>"
-            fi
-          } >> "$GITHUB_STEP_SUMMARY"
+          :white_check_mark: Test type check passed
+          EOF
+          else
+            ERRORS=$(echo "$OUTPUT" | grep -c "^src/" || true)
+            BY_CODE=$(echo "$OUTPUT" | grep -oE 'TS[0-9]+' | sort | uniq -c | sort -rn | head -10)
+            BY_FILE=$(echo "$OUTPUT" | grep "^src/" | sed 's/(.*/:/' | sort | uniq -c | sort -rn)
+            FULL=$(echo "$OUTPUT" | grep "^src/")
+            cat <<EOF >> "$GITHUB_STEP_SUMMARY"
+          ## Lint Types - Tests
+
+          :warning: **${ERRORS} type errors found in tests** (advisory — not blocking)
+
+          ### Top error codes
+
+          \`\`\`
+          ${BY_CODE}
+          \`\`\`
+
+          <details><summary>Errors by file (count)</summary>
+
+          \`\`\`
+          ${BY_FILE}
+          \`\`\`
+
+          </details>
+
+          <details><summary>Full error list</summary>
+
+          \`\`\`
+          ${FULL}
+          \`\`\`
+
+          </details>
+          EOF
+          fi
 
   test-journey:
     name: Run Journey Tests
