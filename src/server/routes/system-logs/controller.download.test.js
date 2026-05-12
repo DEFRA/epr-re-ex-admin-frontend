@@ -1,11 +1,11 @@
 import { vi } from 'vitest'
 import { systemLogDownloadController } from './controller.download.js'
-import { fetchRedirectFromBackend } from '#server/common/helpers/fetch-redirect-from-backend.js'
+import * as fetchRedirectFromBackendMod from '#server/common/helpers/fetch-redirect-from-backend.js'
 import { http, server as mswServer, HttpResponse } from '#vite/setup-msw.js'
 
-vi.mock('#server/common/helpers/fetch-redirect-from-backend.js', () => ({
-  fetchRedirectFromBackend: vi.fn()
-}))
+vi.mock('#server/common/helpers/fetch-redirect-from-backend.js')
+
+const { fetchRedirectFromBackend } = vi.mocked(fetchRedirectFromBackendMod)
 
 describe('system-log download controller', () => {
   let mockRequest

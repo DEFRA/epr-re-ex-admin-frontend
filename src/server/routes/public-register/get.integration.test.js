@@ -3,15 +3,15 @@ import { createServer } from '#server/server.js'
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
-import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
+import * as getUserSessionMod from '#server/common/helpers/auth/get-user-session.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { http, server as mswServer, HttpResponse } from '#vite/setup-msw.js'
 import * as cheerio from 'cheerio'
 
-vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
-  getUserSession: vi.fn().mockReturnValue(null)
-}))
+vi.mock('#server/common/helpers/auth/get-user-session.js')
+
+const { getUserSession } = vi.mocked(getUserSessionMod)
 
 describe('public-register', () => {
   const backendUrl = config.get('eprBackendUrl')
@@ -30,7 +30,7 @@ describe('public-register', () => {
   describe('GET /public-register', () => {
     describe('When user is unauthenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(null)
+        getUserSession.mockResolvedValue(null)
       })
 
       test('Should return unauthorised status code', async () => {
@@ -46,7 +46,7 @@ describe('public-register', () => {
 
     describe('When user is authenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(mockUserSession)
+        getUserSession.mockResolvedValue(mockUserSession)
       })
 
       test('Should return OK and render page with heading', async () => {
@@ -123,7 +123,7 @@ describe('public-register', () => {
   describe('POST /public-register', () => {
     describe('When user is unauthenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(null)
+        getUserSession.mockResolvedValue(null)
       })
 
       test('Should return unauthorised status code', async () => {
@@ -140,7 +140,7 @@ describe('public-register', () => {
 
     describe('When user is authenticated', () => {
       test('Should return CSV file on successful generation', async () => {
-        getUserSession.mockReturnValue(mockUserSession)
+        getUserSession.mockResolvedValue(mockUserSession)
 
         const mockDownloadUrl =
           'https://epr-bucket.s3.eu-west-2.amazonaws.com/public-register.csv?signed=abc123'
@@ -195,7 +195,7 @@ describe('public-register', () => {
       })
 
       test('Should redirect back to GET with error on backend failure', async () => {
-        getUserSession.mockReturnValue(mockUserSession)
+        getUserSession.mockResolvedValue(mockUserSession)
 
         mswServer.use(
           http.post(`${backendUrl}/v1/public-register/generate`, () => {

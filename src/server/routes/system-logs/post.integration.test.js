@@ -3,14 +3,14 @@ import { createServer } from '#server/server.js'
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
-import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
+import * as getUserSessionMod from '#server/common/helpers/auth/get-user-session.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { http, server as mswServer, HttpResponse } from '#vite/setup-msw.js'
 import * as cheerio from 'cheerio'
 
-vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
-  getUserSession: vi.fn().mockReturnValue(null)
-}))
+vi.mock('#server/common/helpers/auth/get-user-session.js')
+
+const { getUserSession } = vi.mocked(getUserSessionMod)
 
 describe('POST /system-logs', () => {
   let server
@@ -45,7 +45,7 @@ describe('POST /system-logs', () => {
   }
 
   const getCrumb = async () => {
-    getUserSession.mockReturnValue(mockUserSession)
+    getUserSession.mockResolvedValue(mockUserSession)
     const { result } = await server.inject({
       method: 'GET',
       url: '/system-logs',
@@ -74,7 +74,7 @@ describe('POST /system-logs', () => {
     let crumb
 
     beforeEach(async () => {
-      getUserSession.mockReturnValue(mockUserSession)
+      getUserSession.mockResolvedValue(mockUserSession)
       crumb = await getCrumb()
     })
 

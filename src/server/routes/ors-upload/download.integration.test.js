@@ -3,16 +3,16 @@ import { vi } from 'vitest'
 
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
+import * as getUserSessionMod from '#server/common/helpers/auth/get-user-session.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/server.js'
 import { HttpResponse, http, server as mswServer } from '#vite/setup-msw.js'
 
-vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
-  getUserSession: vi.fn().mockReturnValue(null)
-}))
+vi.mock('#server/common/helpers/auth/get-user-session.js')
+
+const { getUserSession } = vi.mocked(getUserSessionMod)
 
 describe('ors-upload download integration', () => {
   const backendUrl = config.get('eprBackendUrl')
@@ -95,7 +95,7 @@ describe('ors-upload download integration', () => {
   describe('GET /overseas-sites', () => {
     describe('When user is unauthenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(null)
+        getUserSession.mockResolvedValue(null)
       })
 
       test('Should return unauthorised status code', async () => {
@@ -110,7 +110,7 @@ describe('ors-upload download integration', () => {
 
     describe('When user is authenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(mockUserSession)
+        getUserSession.mockResolvedValue(mockUserSession)
       })
 
       test('Should render upload at the top and download below the table', async () => {
@@ -199,7 +199,7 @@ describe('ors-upload download integration', () => {
   describe('POST /overseas-sites', () => {
     describe('When user is unauthenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(null)
+        getUserSession.mockResolvedValue(null)
       })
 
       test('Should return unauthorised status code', async () => {
@@ -215,7 +215,7 @@ describe('ors-upload download integration', () => {
 
     describe('When user is authenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(mockUserSession)
+        getUserSession.mockResolvedValue(mockUserSession)
       })
 
       test('Should return CSV file on successful request', async () => {

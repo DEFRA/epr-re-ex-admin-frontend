@@ -1,10 +1,10 @@
 import { vi, describe, test, beforeEach, expect } from 'vitest'
 import { summaryLogUploadsReportPostController } from './controller.post.js'
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import * as fetchJsonFromBackendMod from '#server/common/helpers/fetch-json-from-backend.js'
 
-vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
-  fetchJsonFromBackend: vi.fn()
-}))
+vi.mock('#server/common/helpers/fetch-json-from-backend.js')
+
+const { fetchJsonFromBackend } = vi.mocked(fetchJsonFromBackendMod)
 
 vi.mock('#server/common/helpers/formatters.js', () => ({
   formatDateTime: vi.fn((isoString) => {

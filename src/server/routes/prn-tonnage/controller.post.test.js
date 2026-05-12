@@ -1,10 +1,11 @@
+import Boom from '@hapi/boom'
 import { vi } from 'vitest'
 import { prnTonnagePostController } from './controller.post.js'
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import * as fetchJsonFromBackendMod from '#server/common/helpers/fetch-json-from-backend.js'
 
-vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
-  fetchJsonFromBackend: vi.fn()
-}))
+vi.mock('#server/common/helpers/fetch-json-from-backend.js')
+
+const { fetchJsonFromBackend } = vi.mocked(fetchJsonFromBackendMod)
 
 describe('prn-tonnage POST controller', () => {
   let mockRequest
@@ -105,8 +106,8 @@ describe('prn-tonnage POST controller', () => {
   })
 
   test('Should use error message from backend when available', async () => {
-    const error = new Error('Backend error')
-    error.output = { payload: { message: 'Custom backend error message' } }
+    const error = Boom.internal('Backend error')
+    error.output.payload.message = 'Custom backend error message'
     fetchJsonFromBackend.mockRejectedValue(error)
 
     await prnTonnagePostController.handler(mockRequest, mockH)

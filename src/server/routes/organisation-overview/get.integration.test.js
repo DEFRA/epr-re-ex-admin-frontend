@@ -1,6 +1,6 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
+import * as getUserSessionMod from '#server/common/helpers/auth/get-user-session.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/server.js'
@@ -8,9 +8,9 @@ import { vi } from 'vitest'
 import { http, HttpResponse, server as mswServer } from '#vite/setup-msw.js'
 import * as cheerio from 'cheerio'
 
-vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
-  getUserSession: vi.fn().mockReturnValue(null)
-}))
+vi.mock('#server/common/helpers/auth/get-user-session.js')
+
+const { getUserSession } = vi.mocked(getUserSessionMod)
 
 describe('#organisationOverviewController', () => {
   const originalBackendUrl = config.get('eprBackendUrl')
@@ -48,7 +48,7 @@ describe('#organisationOverviewController', () => {
 
   describe('When user is authenticated', () => {
     beforeAll(() => {
-      getUserSession.mockReturnValue(mockUserSession)
+      getUserSession.mockResolvedValue(mockUserSession)
     })
 
     const mockOverview = {

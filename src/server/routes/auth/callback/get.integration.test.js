@@ -17,13 +17,20 @@ const mock = {
   signInFailureMetric: vi.fn()
 }
 
-vi.mock('#server/common/helpers/metrics/index.js', async (importOriginal) => ({
-  metrics: {
-    ...(await importOriginal()).metrics,
-    signInFailure: () => mock.signInFailureMetric(),
-    signInSuccess: () => mock.signInSuccessMetric()
+vi.mock('#server/common/helpers/metrics/index.js', async (importOriginal) => {
+  const original =
+    /** @type {typeof import('#server/common/helpers/metrics/index.js')} */ (
+      await importOriginal()
+    )
+
+  return {
+    metrics: {
+      ...original.metrics,
+      signInFailure: () => mock.signInFailureMetric(),
+      signInSuccess: () => mock.signInSuccessMetric()
+    }
   }
-}))
+})
 
 vi.mock('@defra/cdp-auditing', () => ({
   audit: (...args) => mock.cdpAuditing(...args)

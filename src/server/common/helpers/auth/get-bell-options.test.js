@@ -2,10 +2,16 @@ import { vi, beforeEach, afterEach, describe, test, expect } from 'vitest'
 
 import { getBellOptions } from './get-bell-options.js'
 import { config } from '#config/config.js'
-import { verifyToken } from '#server/common/helpers/auth/verify-token.js'
+import * as verifyTokenMod from '#server/common/helpers/auth/verify-token.js'
+
+/**
+ * @import { EntraIdTokenPayload } from '#server/common/helpers/auth/types.js'
+ */
 
 vi.mock(import('#config/config.js'))
 vi.mock(import('#server/common/helpers/auth/verify-token.js'))
+
+const { verifyToken } = vi.mocked(verifyTokenMod)
 
 describe('#getBellOptions', () => {
   const mockOidcConfig = {
@@ -21,10 +27,12 @@ describe('#getBellOptions', () => {
     appBaseUrl: 'https://example-app.test'
   }
 
+  /** @type {EntraIdTokenPayload} */
   const mockJwtPayload = {
     oid: 'user-id',
     name: 'John Doe',
-    preferred_username: 'john.doe@example-user.test'
+    preferred_username: 'john.doe@example-user.test',
+    exp: 0
   }
 
   beforeEach(() => {
@@ -32,7 +40,7 @@ describe('#getBellOptions', () => {
 
     config.get = vi.fn().mockImplementation((key) => mockConfig[key])
 
-    verifyToken.mockReturnValue(mockJwtPayload)
+    verifyToken.mockResolvedValue(mockJwtPayload)
   })
 
   afterEach(() => {
@@ -123,12 +131,14 @@ describe('#getBellOptions', () => {
   })
 
   test('Should handle displayName fallback to empty when no names available', async () => {
-    const noNamePayload = {
-      preferred_username: 'user@example-user.test',
-      oid: 'user-id'
-    }
+    const noNamePayload = /** @type {EntraIdTokenPayload} */ (
+      /** @type {unknown} */ ({
+        preferred_username: 'user@example-user.test',
+        oid: 'user-id'
+      })
+    )
 
-    verifyToken.mockReturnValue(noNamePayload)
+    verifyToken.mockResolvedValue(noNamePayload)
 
     const result = getBellOptions(mockOidcConfig)
     const mockCredentials = {
@@ -151,7 +161,7 @@ describe('#getBellOptions', () => {
       login_hint: 'john.doe@example-user.test'
     }
 
-    verifyToken.mockReturnValue(payloadWithLoginHint)
+    verifyToken.mockResolvedValue(payloadWithLoginHint)
 
     const result = getBellOptions(mockOidcConfig)
     const mockCredentials = { token: 'mock-jwt-token' }

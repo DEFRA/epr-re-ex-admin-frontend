@@ -21,7 +21,7 @@ export async function getCsrfToken(server, getUrl, auth) {
   // Preserve all cookies from the response (e.g., session + crumb)
   // to accurately represent multi-cookie scenarios in tests
   const cookieHeader = cookies
-    .filter((c) => c)
+    .filter(/** @returns {c is string} */ (c) => Boolean(c))
     .map((c) => c.split(';')[0])
     .join('; ')
   return { cookie: cookieHeader, crumb: crumbValue }

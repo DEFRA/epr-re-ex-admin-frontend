@@ -24,7 +24,7 @@ describe('formatters', () => {
     })
 
     test('returns empty string when given null', () => {
-      const result = formatDateTime(null)
+      const result = formatDateTime(/** @type {any} */ (null))
       expect(result).toBe('')
     })
   })

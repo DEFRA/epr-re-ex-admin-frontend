@@ -58,7 +58,7 @@ describe('#buildRedisClient', () => {
       const connectCall = mockOn.mock.calls.find(
         (call) => call[0] === 'connect'
       )
-      const connectHandler = connectCall[1]
+      const connectHandler = connectCall?.[1]
       connectHandler()
 
       expect(mockLoggerInfo).toHaveBeenCalledWith({
@@ -68,7 +68,7 @@ describe('#buildRedisClient', () => {
 
     test('Should log error message when error event fires', () => {
       const errorCall = mockOn.mock.calls.find((call) => call[0] === 'error')
-      const errorHandler = errorCall[1]
+      const errorHandler = errorCall?.[1]
       const mockError = new Error('Connection failed')
       errorHandler(mockError)
 
@@ -103,12 +103,12 @@ describe('#buildRedisClient', () => {
     })
 
     test('Should configure dnsLookup to pass through address', () => {
-      const clusterCall = Cluster.mock.calls[0]
-      const config = clusterCall[1]
-      const dnsLookup = config.dnsLookup
+      const clusterCall = vi.mocked(Cluster).mock.calls[0]
+      const config = clusterCall?.[1]
+      const dnsLookup = config?.dnsLookup
       const mockCallback = vi.fn()
 
-      dnsLookup('test-address', mockCallback)
+      dnsLookup?.('test-address', mockCallback)
 
       expect(mockCallback).toHaveBeenCalledWith(null, 'test-address')
     })
@@ -117,7 +117,7 @@ describe('#buildRedisClient', () => {
       const connectCall = mockOn.mock.calls.find(
         (call) => call[0] === 'connect'
       )
-      const connectHandler = connectCall[1]
+      const connectHandler = connectCall?.[1]
       connectHandler()
 
       expect(mockLoggerInfo).toHaveBeenCalledWith({
@@ -127,7 +127,7 @@ describe('#buildRedisClient', () => {
 
     test('Should log error message when error event fires', () => {
       const errorCall = mockOn.mock.calls.find((call) => call[0] === 'error')
-      const errorHandler = errorCall[1]
+      const errorHandler = errorCall?.[1]
       const mockError = new Error('Cluster connection failed')
       errorHandler(mockError)
 

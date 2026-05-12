@@ -50,22 +50,23 @@ describe('wasteRecordsExportPostController', () => {
       })
     }
     const h = {
-      /** @type {(body: unknown) => typeof responseBuilder} */
-      response: vi.fn(() => responseBuilder),
+      response: vi.fn((/** @type {unknown} */ _body) => responseBuilder),
       redirect: vi.fn().mockReturnValue('redirect-response')
     }
     return { h, responseBuilder, calls }
   }
 
   it('converts the backend Web ReadableStream to a Node Readable and preserves the CSV chunks', async () => {
-    streamFromBackend.mockResolvedValue({
-      body: buildWebStream(['header1,header2\n', 'a,b\n', 'c,d\n']),
-      headers: new Headers({
-        'content-type': 'text/csv; charset=utf-8',
-        'content-disposition':
-          'attachment; filename="waste-records-2026-05-08T10-00-00Z.csv"'
+    streamFromBackend.mockResolvedValue(
+      /** @type {Response} */ ({
+        body: buildWebStream(['header1,header2\n', 'a,b\n', 'c,d\n']),
+        headers: new Headers({
+          'content-type': 'text/csv; charset=utf-8',
+          'content-disposition':
+            'attachment; filename="waste-records-2026-05-08T10-00-00Z.csv"'
+        })
       })
-    })
+    )
 
     const { h, calls } = buildHapiH()
     const request = { yar: { set: vi.fn() } }
@@ -93,10 +94,12 @@ describe('wasteRecordsExportPostController', () => {
   })
 
   it('falls back to default content-type and disposition when backend headers are missing', async () => {
-    streamFromBackend.mockResolvedValue({
-      body: buildWebStream([]),
-      headers: new Headers({})
-    })
+    streamFromBackend.mockResolvedValue(
+      /** @type {Response} */ ({
+        body: buildWebStream([]),
+        headers: new Headers({})
+      })
+    )
 
     const { h, calls } = buildHapiH()
     const request = { yar: { set: vi.fn() } }
@@ -143,7 +146,9 @@ describe('wasteRecordsExportPostController', () => {
   })
 
   it('logs and redirects with a flash error when the backend response has no body', async () => {
-    streamFromBackend.mockResolvedValue({ body: null, headers: new Headers() })
+    streamFromBackend.mockResolvedValue(
+      /** @type {Response} */ ({ body: null, headers: new Headers() })
+    )
 
     const { h } = buildHapiH()
     const yarSet = vi.fn()

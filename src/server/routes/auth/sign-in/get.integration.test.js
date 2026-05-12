@@ -8,12 +8,19 @@ import {
 
 const mockSignInAttemptedMetric = vi.fn()
 
-vi.mock('#server/common/helpers/metrics/index.js', async (importOriginal) => ({
-  metrics: {
-    ...(await importOriginal()).metrics,
-    signInAttempted: () => mockSignInAttemptedMetric()
+vi.mock('#server/common/helpers/metrics/index.js', async (importOriginal) => {
+  const original =
+    /** @type {typeof import('#server/common/helpers/metrics/index.js')} */ (
+      await importOriginal()
+    )
+
+  return {
+    metrics: {
+      ...original.metrics,
+      signInAttempted: () => mockSignInAttemptedMetric()
+    }
   }
-}))
+})
 
 describe('GET /auth/sign-in', () => {
   let server

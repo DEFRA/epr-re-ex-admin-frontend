@@ -3,7 +3,7 @@ import { config } from '#config/config.js'
 import { createServer } from '#server/server.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
-import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
+import * as getUserSessionMod from '#server/common/helpers/auth/get-user-session.js'
 import {
   createMockOidcServer,
   mockOidcResponse
@@ -12,20 +12,27 @@ import {
 const mockSignOutSuccessMetric = vi.fn()
 const mockCdpAuditing = vi.fn()
 
-vi.mock('#server/common/helpers/metrics/index.js', async (importOriginal) => ({
-  metrics: {
-    ...(await importOriginal()).metrics,
-    signOutSuccess: () => mockSignOutSuccessMetric()
+vi.mock('#server/common/helpers/metrics/index.js', async (importOriginal) => {
+  const original =
+    /** @type {typeof import('#server/common/helpers/metrics/index.js')} */ (
+      await importOriginal()
+    )
+
+  return {
+    metrics: {
+      ...original.metrics,
+      signOutSuccess: () => mockSignOutSuccessMetric()
+    }
   }
-}))
+})
 
 vi.mock('@defra/cdp-auditing', () => ({
   audit: (...args) => mockCdpAuditing(...args)
 }))
 
-vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
-  getUserSession: vi.fn().mockReturnValue(null)
-}))
+vi.mock('#server/common/helpers/auth/get-user-session.js')
+
+const { getUserSession } = vi.mocked(getUserSessionMod)
 
 describe('GET /auth/sign-out', () => {
   let server
@@ -45,7 +52,7 @@ describe('GET /auth/sign-out', () => {
     let response
 
     beforeEach(async () => {
-      getUserSession.mockReturnValue(mockUserSession)
+      getUserSession.mockResolvedValue(mockUserSession)
 
       response = await server.inject({
         method: 'GET',

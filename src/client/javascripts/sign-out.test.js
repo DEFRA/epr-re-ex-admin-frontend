@@ -139,7 +139,8 @@ describe('#sign-out', () => {
   test('Should setup via DOMContentLoaded when document is loading', async () => {
     mockDocument.readyState = 'loading'
 
-    let domContentLoadedHandler = null
+    /** @type {(() => void) | undefined} */
+    let domContentLoadedHandler
     mockDocument.addEventListener.mockImplementation((event, handler) => {
       if (event === 'DOMContentLoaded') {
         domContentLoadedHandler = handler
@@ -167,7 +168,7 @@ describe('#sign-out', () => {
     expect(mockDocument.getElementById).not.toHaveBeenCalled()
 
     // Simulate DOMContentLoaded event
-    domContentLoadedHandler()
+    domContentLoadedHandler?.()
 
     // Now it should have executed
     expect(mockDocument.getElementById).toHaveBeenCalledWith('sign-out-data')
