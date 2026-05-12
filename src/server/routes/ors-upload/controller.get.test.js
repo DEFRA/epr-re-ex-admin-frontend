@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import * as fetchJsonFromBackendMod from '#server/common/helpers/fetch-json-from-backend.js'
 import { orsUploadGetController } from './controller.get.js'
 
-vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
-  fetchJsonFromBackend: vi.fn()
-}))
+vi.mock('#server/common/helpers/fetch-json-from-backend.js')
+
+const { fetchJsonFromBackend } = vi.mocked(fetchJsonFromBackendMod)
 
 const mockLoggerError = vi.hoisted(() => vi.fn())
 

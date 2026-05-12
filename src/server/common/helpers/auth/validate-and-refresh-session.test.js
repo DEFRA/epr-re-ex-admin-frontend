@@ -40,7 +40,9 @@ describe('#validateAndRefreshSession', () => {
         iat: nowSec - 1800
       }
     }
-    const decodeSpy = vi.spyOn(Jwt.token, 'decode').mockReturnValue(mockDecoded)
+    const decodeSpy = vi
+      .spyOn(Jwt.token, 'decode')
+      .mockReturnValue(/** @type {any} */ (mockDecoded))
     const verifyTimeSpy = vi
       .spyOn(Jwt.token, 'verifyTime')
       .mockImplementation(() => {})
@@ -59,7 +61,9 @@ describe('#validateAndRefreshSession', () => {
         exp: nowSec + 3600
       }
     }
-    const decodeSpy = vi.spyOn(Jwt.token, 'decode').mockReturnValue(mockDecoded)
+    const decodeSpy = vi
+      .spyOn(Jwt.token, 'decode')
+      .mockReturnValue(/** @type {any} */ (mockDecoded))
     const verifyTimeSpy = vi
       .spyOn(Jwt.token, 'verifyTime')
       .mockImplementation(() => {})
@@ -73,7 +77,9 @@ describe('#validateAndRefreshSession', () => {
 
   test('Should return original session when token has no payload', async () => {
     const mockDecoded = {}
-    const decodeSpy = vi.spyOn(Jwt.token, 'decode').mockReturnValue(mockDecoded)
+    const decodeSpy = vi
+      .spyOn(Jwt.token, 'decode')
+      .mockReturnValue(/** @type {any} */ (mockDecoded))
     const verifyTimeSpy = vi
       .spyOn(Jwt.token, 'verifyTime')
       .mockImplementation(() => {})
@@ -128,7 +134,9 @@ describe('#validateAndRefreshSession', () => {
 
   test('Should refresh tokens when verifyTime throws error', async () => {
     const mockDecoded = { payload: { exp: Date.now() / 1000 - 3600 } }
-    const decodeSpy = vi.spyOn(Jwt.token, 'decode').mockReturnValue(mockDecoded)
+    const decodeSpy = vi
+      .spyOn(Jwt.token, 'decode')
+      .mockReturnValue(/** @type {any} */ (mockDecoded))
     const verifyTimeSpy = vi
       .spyOn(Jwt.token, 'verifyTime')
       .mockImplementation(() => {
@@ -163,7 +171,9 @@ describe('#validateAndRefreshSession', () => {
         iat: nowSec - 3400
       }
     }
-    vi.spyOn(Jwt.token, 'decode').mockReturnValue(mockDecoded)
+    vi.spyOn(Jwt.token, 'decode').mockReturnValue(
+      /** @type {any} */ (mockDecoded)
+    )
     vi.spyOn(Jwt.token, 'verifyTime').mockImplementation(() => {})
 
     const newTokens = {

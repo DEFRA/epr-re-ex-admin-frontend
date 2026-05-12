@@ -10,13 +10,14 @@ import {
 
 import { fetchJsonFromBackend } from './fetch-json-from-backend.js'
 import { config } from '#config/config.js'
-import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
+import * as getUserSessionMod from '#server/common/helpers/auth/get-user-session.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
+import { asHapiRequest } from '#server/common/test-helpers/request.js'
 import { http, HttpResponse, server as mswServer } from '#vite/setup-msw.js'
 
-vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
-  getUserSession: vi.fn().mockReturnValue(null)
-}))
+vi.mock('#server/common/helpers/auth/get-user-session.js')
+
+const { getUserSession } = vi.mocked(getUserSessionMod)
 
 vi.mock(import('@defra/hapi-tracing'), () => ({
   withTraceId: vi.fn((headerName, headers = {}) => {
@@ -31,7 +32,8 @@ vi.mock(import('@defra/hapi-tracing'), () => ({
 describe('#fetchJsonFromBackend', () => {
   const originalBackendUrl = config.get('eprBackendUrl')
   const backendUrl = 'http://mock-backend'
-  getUserSession.mockReturnValue(mockUserSession)
+  const mockRequest = asHapiRequest({})
+  getUserSession.mockResolvedValue(mockUserSession)
 
   beforeAll(() => {
     config.set('eprBackendUrl', backendUrl)
@@ -72,7 +74,7 @@ describe('#fetchJsonFromBackend', () => {
       }
 
       const result = await fetchJsonFromBackend(
-        {},
+        mockRequest,
         '/v1/organisations',
         options
       )
@@ -90,7 +92,9 @@ describe('#fetchJsonFromBackend', () => {
       })
       mswServer.use(getOrganisationsHandler)
 
-      await fetchJsonFromBackend({}, '/v1/organisations', { method: 'GET' })
+      await fetchJsonFromBackend(mockRequest, '/v1/organisations', {
+        method: 'GET'
+      })
 
       expect(capturedHeaders).toEqual(
         expect.objectContaining({
@@ -112,7 +116,7 @@ describe('#fetchJsonFromBackend', () => {
     mswServer.use(unauthorisedHandler)
 
     await expect(
-      fetchJsonFromBackend({}, '/secure', { method: 'GET' })
+      fetchJsonFromBackend(mockRequest, '/secure', { method: 'GET' })
     ).rejects.toMatchObject({
       isBoom: true,
       output: {
@@ -136,7 +140,7 @@ describe('#fetchJsonFromBackend', () => {
     mswServer.use(errorHandler)
 
     await expect(
-      fetchJsonFromBackend({}, path, { method: 'GET' })
+      fetchJsonFromBackend(mockRequest, path, { method: 'GET' })
     ).rejects.toMatchObject({
       isBoom: true,
       output: {
@@ -157,7 +161,7 @@ describe('#fetchJsonFromBackend', () => {
     mswServer.use(networkErrorHandler)
 
     await expect(
-      fetchJsonFromBackend({}, path, { method: 'GET' })
+      fetchJsonFromBackend(mockRequest, path, { method: 'GET' })
     ).rejects.toMatchObject({
       isBoom: true,
       output: {
@@ -191,7 +195,7 @@ describe('#fetchJsonFromBackend', () => {
     mswServer.use(errorHandler)
 
     await expect(
-      fetchJsonFromBackend({}, path, { method: 'GET' })
+      fetchJsonFromBackend(mockRequest, path, { method: 'GET' })
     ).rejects.toMatchObject({
       isBoom: true,
       output: {
@@ -220,7 +224,7 @@ describe('#fetchJsonFromBackend', () => {
     mswServer.use(errorHandler)
 
     await expect(
-      fetchJsonFromBackend({}, path, { method: 'GET' })
+      fetchJsonFromBackend(mockRequest, path, { method: 'GET' })
     ).rejects.toMatchObject({
       isBoom: true,
       output: {
@@ -243,7 +247,7 @@ describe('#fetchJsonFromBackend', () => {
     })
     mswServer.use(handler)
 
-    await fetchJsonFromBackend({}, path, { method: 'GET' })
+    await fetchJsonFromBackend(mockRequest, path, { method: 'GET' })
 
     expect(capturedHeaders['x-cdp-request-id']).toBe('mock-trace-id-1')
   })

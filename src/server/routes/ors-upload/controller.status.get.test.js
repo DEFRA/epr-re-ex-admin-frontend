@@ -1,11 +1,12 @@
+import Boom from '@hapi/boom'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import * as fetchJsonFromBackendMod from '#server/common/helpers/fetch-json-from-backend.js'
 import { orsUploadStatusGetController } from './controller.status.get.js'
 
-vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
-  fetchJsonFromBackend: vi.fn()
-}))
+vi.mock('#server/common/helpers/fetch-json-from-backend.js')
+
+const { fetchJsonFromBackend } = vi.mocked(fetchJsonFromBackendMod)
 
 const mockLoggerError = vi.hoisted(() => vi.fn())
 const mockLoggerInfo = vi.hoisted(() => vi.fn())
@@ -162,10 +163,7 @@ describe('orsUploadStatusGetController', () => {
   })
 
   test('handles status fetch failure and renders failed view model', async () => {
-    const error = new Error('Request failed')
-    error.output = {
-      statusCode: 500
-    }
+    const error = Boom.internal('Request failed')
     fetchJsonFromBackend.mockRejectedValue(error)
 
     await orsUploadStatusGetController.handler(mockRequest, mockH)

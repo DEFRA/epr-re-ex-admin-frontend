@@ -1,11 +1,12 @@
 import { vi } from 'vitest'
+
+import * as fetchJsonFromBackendMod from '#server/common/helpers/fetch-json-from-backend.js'
 import { linkedOrganisationsController } from './controller.js'
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { mockLinkedOrg } from './test-fixtures.js'
 
-vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
-  fetchJsonFromBackend: vi.fn()
-}))
+vi.mock('#server/common/helpers/fetch-json-from-backend.js')
+
+const { fetchJsonFromBackend } = vi.mocked(fetchJsonFromBackendMod)
 
 describe('linked-organisations controller', () => {
   let mockRequest

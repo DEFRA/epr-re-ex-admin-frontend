@@ -3,19 +3,22 @@ import {
   fetchOrganisationOverview,
   findRegistration
 } from './fetch-organisation-overview.js'
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import * as fetchJsonFromBackendMod from '#server/common/helpers/fetch-json-from-backend.js'
 
-vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
-  fetchJsonFromBackend: vi.fn()
-}))
+vi.mock('#server/common/helpers/fetch-json-from-backend.js')
 
-const mockRequest = {}
+const { fetchJsonFromBackend } = vi.mocked(fetchJsonFromBackendMod)
 
-const mockOverview = {
-  id: '69c3b4f0abda9efa68dd6697',
-  companyName: 'ACME ltd',
-  registrations: []
-}
+const mockRequest = /** @type {import('@hapi/hapi').Request} */ (
+  /** @type {unknown} */ ({})
+)
+
+const mockOverview =
+  /** @type {import('./fetch-organisation-overview.js').OrganisationOverview} */ ({
+    id: '69c3b4f0abda9efa68dd6697',
+    companyName: 'ACME ltd',
+    registrations: []
+  })
 
 describe('fetchOrganisationOverview', () => {
   beforeEach(() => {
@@ -60,8 +63,15 @@ describe(findRegistration, () => {
   const registrationId = 'bbb222ccc333ddd444eee5555'
 
   test('returns the matching registration when present', () => {
-    const registration = { id: registrationId, registrationNumber: 'REG-001' }
-    const overview = { registrations: [registration] }
+    const registration =
+      /** @type {import('./fetch-organisation-overview.js').Registration} */ ({
+        id: registrationId,
+        registrationNumber: 'REG-001'
+      })
+    const overview =
+      /** @type {import('./fetch-organisation-overview.js').OrganisationOverview} */ ({
+        registrations: [registration]
+      })
 
     expect(findRegistration(overview, organisationId, registrationId)).toBe(
       registration
@@ -69,7 +79,12 @@ describe(findRegistration, () => {
   })
 
   test('throws notFound enriched with code and event when missing', () => {
-    const overview = { registrations: [] }
+    const overview =
+      /** @type {import('./fetch-organisation-overview.js').OrganisationOverview} */ (
+        /** @type {unknown} */ ({
+          registrations: []
+        })
+      )
 
     expect(() =>
       findRegistration(overview, organisationId, registrationId)

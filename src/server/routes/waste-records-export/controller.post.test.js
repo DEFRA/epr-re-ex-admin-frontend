@@ -1,13 +1,14 @@
 import { Readable } from 'node:stream'
 
+import Boom from '@hapi/boom'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 
 import { wasteRecordsExportPostController } from './controller.post.js'
-import { streamFromBackend } from '#server/common/helpers/stream-from-backend.js'
+import * as streamFromBackendMod from '#server/common/helpers/stream-from-backend.js'
 
-vi.mock('#server/common/helpers/stream-from-backend.js', () => ({
-  streamFromBackend: vi.fn()
-}))
+vi.mock('#server/common/helpers/stream-from-backend.js')
+
+const { streamFromBackend } = vi.mocked(streamFromBackendMod)
 
 const buildWebStream = (chunks) =>
   new ReadableStream({
@@ -36,6 +37,7 @@ describe('wasteRecordsExportPostController', () => {
   beforeEach(() => vi.clearAllMocks())
 
   const buildHapiH = () => {
+    /** @type {{ type: unknown[][], header: unknown[][] }} */
     const calls = { type: [], header: [] }
     const responseBuilder = {
       type: vi.fn(function (...args) {
@@ -48,6 +50,7 @@ describe('wasteRecordsExportPostController', () => {
       })
     }
     const h = {
+      /** @type {(body: unknown) => typeof responseBuilder} */
       response: vi.fn(() => responseBuilder),
       redirect: vi.fn().mockReturnValue('redirect-response')
     }
@@ -126,8 +129,8 @@ describe('wasteRecordsExportPostController', () => {
   })
 
   it('uses the Boom payload message when available', async () => {
-    const error = new Error('upstream')
-    error.output = { payload: { message: 'Backend exploded' } }
+    const error = Boom.internal('upstream')
+    error.output.payload.message = 'Backend exploded'
     streamFromBackend.mockRejectedValue(error)
 
     const { h } = buildHapiH()

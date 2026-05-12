@@ -1,6 +1,6 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
+import * as getUserSessionMod from '#server/common/helpers/auth/get-user-session.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/server.js'
@@ -8,9 +8,9 @@ import { vi } from 'vitest'
 import { http, HttpResponse, server as mswServer } from '#vite/setup-msw.js'
 import * as cheerio from 'cheerio'
 
-vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
-  getUserSession: vi.fn().mockReturnValue(null)
-}))
+vi.mock('#server/common/helpers/auth/get-user-session.js')
+
+const { getUserSession } = vi.mocked(getUserSessionMod)
 
 describe('#registrationOverviewController', () => {
   const originalBackendUrl = config.get('eprBackendUrl')
@@ -99,6 +99,11 @@ describe('#registrationOverviewController', () => {
   const findReportsTable = ($) => $('#reports table')
   const findSummaryLogsTable = ($) => $('#summary-logs table')
 
+  /**
+   * @param {object} [overviewResponse]
+   * @param {object} [calendarResponse]
+   * @param {{ summaryLogs: object[] }} [summaryLogsResponse]
+   */
   const useMockBackend = (
     overviewResponse = mockOverview,
     calendarResponse = mockCalendar,
@@ -130,7 +135,7 @@ describe('#registrationOverviewController', () => {
 
   describe('When user is authenticated', () => {
     beforeAll(() => {
-      getUserSession.mockReturnValue(mockUserSession)
+      getUserSession.mockResolvedValue(mockUserSession)
     })
 
     test('Should return OK', async () => {
@@ -159,9 +164,11 @@ describe('#registrationOverviewController', () => {
     })
 
     test('Should fall back to registration id in heading when registrationNumber is missing', async () => {
+      const { registrationNumber: _, ...registrationWithoutNumber } =
+        mockRegistration
       useMockBackend({
         ...mockOverview,
-        registrations: [{ ...mockRegistration, registrationNumber: undefined }]
+        registrations: [registrationWithoutNumber]
       })
 
       const { result } = await server.inject({
@@ -241,9 +248,11 @@ describe('#registrationOverviewController', () => {
     })
 
     test('Should not render accreditation rows in summary list when accreditation is absent', async () => {
+      const { accreditation: _, ...registrationWithoutAccreditation } =
+        mockRegistration
       useMockBackend({
         ...mockOverview,
-        registrations: [{ ...mockRegistration, accreditation: null }]
+        registrations: [registrationWithoutAccreditation]
       })
 
       const { result } = await server.inject({

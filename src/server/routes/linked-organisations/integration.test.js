@@ -1,18 +1,19 @@
+import * as cheerio from 'cheerio'
 import { vi, beforeEach } from 'vitest'
-import { createServer } from '#server/server.js'
+
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
-import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
-import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
+import * as getUserSessionMod from '#server/common/helpers/auth/get-user-session.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
+import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
+import { createServer } from '#server/server.js'
 import { http, server as mswServer, HttpResponse } from '#vite/setup-msw.js'
-import * as cheerio from 'cheerio'
 import { mockLinkedOrgs } from './test-fixtures.js'
 
-vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
-  getUserSession: vi.fn().mockReturnValue(null)
-}))
+vi.mock('#server/common/helpers/auth/get-user-session.js')
+
+const { getUserSession } = vi.mocked(getUserSessionMod)
 
 describe('linked-organisations', () => {
   const backendUrl = config.get('eprBackendUrl')
@@ -43,7 +44,7 @@ describe('linked-organisations', () => {
   describe('GET /linked-organisations', () => {
     describe('When user is unauthenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(null)
+        getUserSession.mockResolvedValue(null)
       })
 
       test('Should return unauthorised status code', async () => {
@@ -59,7 +60,7 @@ describe('linked-organisations', () => {
 
     describe('When user is authenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(mockUserSession)
+        getUserSession.mockResolvedValue(mockUserSession)
       })
 
       test('Should return OK and render page with heading', async () => {
@@ -243,7 +244,7 @@ describe('linked-organisations', () => {
   describe('GET /linked-organisations?search= (search)', () => {
     describe('When user is authenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(mockUserSession)
+        getUserSession.mockResolvedValue(mockUserSession)
       })
 
       test('Should render page with search results', async () => {
@@ -325,7 +326,7 @@ describe('linked-organisations', () => {
   describe('POST /linked-organisations/download', () => {
     describe('When user is unauthenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(null)
+        getUserSession.mockResolvedValue(null)
       })
 
       test('Should return unauthorised status code', async () => {
@@ -342,7 +343,7 @@ describe('linked-organisations', () => {
 
     describe('When user is authenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(mockUserSession)
+        getUserSession.mockResolvedValue(mockUserSession)
       })
 
       test('Should return CSV file on successful request', async () => {
