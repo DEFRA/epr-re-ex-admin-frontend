@@ -7,6 +7,7 @@ import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
 import { getOidcConfig } from '#server/common/helpers/auth/get-oidc-config.js'
 import { auditSignOut } from '#server/common/helpers/auditing/index.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
+import { asHapiRequest } from '#server/common/test-helpers/request.js'
 
 vi.mock('#server/common/helpers/auth/clear-user-session.js')
 vi.mock('#server/common/helpers/auth/get-user-session.js')
@@ -32,9 +33,9 @@ describe('#signOut route', () => {
 
     mockToolkit.redirect.mockReturnValue('redirect-result')
     mockToolkit.view.mockReturnValue('view-result')
-    getOidcConfig.mockResolvedValue(mockOidcConfig)
-    clearUserSession.mockResolvedValue()
-    getUserSession.mockResolvedValue(mockUserSession)
+    vi.mocked(getOidcConfig).mockResolvedValue(mockOidcConfig)
+    vi.mocked(clearUserSession).mockResolvedValue()
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
   })
 
   afterEach(() => {
@@ -55,9 +56,9 @@ describe('#signOut route', () => {
   })
 
   test('Should redirect to home if there is no user session', async () => {
-    getUserSession.mockResolvedValue(null)
+    vi.mocked(getUserSession).mockResolvedValue(null)
 
-    const result = await signOutRoute.handler({}, mockToolkit)
+    const result = await signOutRoute.handler(asHapiRequest(), mockToolkit)
 
     expect(mockToolkit.redirect).toHaveBeenCalledWith('/')
     expect(result).toBe('redirect-result')
@@ -66,12 +67,12 @@ describe('#signOut route', () => {
   })
 
   test('Should clear session and render sign-out view for authenticated user', async () => {
-    const mockRequest = {
+    const mockRequest = asHapiRequest({
       logger: mockLogger,
       auth: {
         isAuthenticated: true
       }
-    }
+    })
 
     const result = await signOutRoute.handler(mockRequest, mockToolkit)
 
@@ -96,12 +97,12 @@ describe('#signOut route', () => {
   })
 
   test('Should construct logout URL with correct parameters', async () => {
-    const mockRequest = {
+    const mockRequest = asHapiRequest({
       logger: mockLogger,
       auth: {
         isAuthenticated: true
       }
-    }
+    })
 
     await signOutRoute.handler(mockRequest, mockToolkit)
 
@@ -122,15 +123,15 @@ describe('#signOut route', () => {
   })
 
   test('Should prefer loginHint over email for logout_hint', async () => {
-    getUserSession.mockResolvedValue({
+    vi.mocked(getUserSession).mockResolvedValue({
       ...mockUserSession,
       loginHint: 'hint@example.test'
     })
 
-    const mockRequest = {
+    const mockRequest = asHapiRequest({
       logger: mockLogger,
       auth: { isAuthenticated: true }
-    }
+    })
 
     await signOutRoute.handler(mockRequest, mockToolkit)
 
@@ -143,16 +144,16 @@ describe('#signOut route', () => {
   })
 
   test('Should omit logout_hint when neither loginHint nor email available', async () => {
-    getUserSession.mockResolvedValue({
+    vi.mocked(getUserSession).mockResolvedValue({
       ...mockUserSession,
       loginHint: undefined,
       email: undefined
     })
 
-    const mockRequest = {
+    const mockRequest = asHapiRequest({
       logger: mockLogger,
       auth: { isAuthenticated: true }
-    }
+    })
 
     await signOutRoute.handler(mockRequest, mockToolkit)
 
@@ -173,16 +174,18 @@ describe('#signOut route', () => {
 
     for (const endpoint of testEndpoints) {
       vi.clearAllMocks()
-      getOidcConfig.mockResolvedValue({ end_session_endpoint: endpoint })
-      clearUserSession.mockResolvedValue()
+      vi.mocked(getOidcConfig).mockResolvedValue({
+        end_session_endpoint: endpoint
+      })
+      vi.mocked(clearUserSession).mockResolvedValue()
       mockToolkit.view.mockReturnValue('view-result')
 
-      const mockRequest = {
+      const mockRequest = asHapiRequest({
         logger: mockLogger,
         auth: {
           isAuthenticated: true
         }
-      }
+      })
 
       await signOutRoute.handler(mockRequest, mockToolkit)
 
@@ -205,11 +208,11 @@ describe('#signOut route', () => {
 
   test('Should handle getOidcConfig errors', async () => {
     const error = new Error('Failed to get OIDC config')
-    getOidcConfig.mockRejectedValue(error)
+    vi.mocked(getOidcConfig).mockRejectedValue(error)
 
-    await expect(signOutRoute.handler({}, mockToolkit)).rejects.toThrow(
-      'Failed to get OIDC config'
-    )
+    await expect(
+      signOutRoute.handler(asHapiRequest(), mockToolkit)
+    ).rejects.toThrow('Failed to get OIDC config')
 
     expect(clearUserSession).not.toHaveBeenCalledWith()
     expect(mockToolkit.view).not.toHaveBeenCalled()
@@ -217,16 +220,16 @@ describe('#signOut route', () => {
 
   test('Should handle clearUserSession errors', async () => {
     const error = new Error('Failed to clear session')
-    clearUserSession.mockImplementation(() => {
+    vi.mocked(clearUserSession).mockImplementation(() => {
       throw error
     })
 
-    const mockRequest = {
+    const mockRequest = asHapiRequest({
       logger: mockLogger,
       auth: {
         isAuthenticated: true
       }
-    }
+    })
 
     await expect(
       signOutRoute.handler(mockRequest, mockToolkit)
@@ -238,11 +241,11 @@ describe('#signOut route', () => {
   test('Should call functions in correct order for authenticated user', async () => {
     const callOrder = []
 
-    clearUserSession.mockImplementation(async () => {
+    vi.mocked(clearUserSession).mockImplementation(async () => {
       callOrder.push('clearUserSession')
     })
 
-    getOidcConfig.mockImplementation(async () => {
+    vi.mocked(getOidcConfig).mockImplementation(async () => {
       callOrder.push('getOidcConfig')
       return mockOidcConfig
     })
@@ -252,12 +255,12 @@ describe('#signOut route', () => {
       return 'view-result'
     })
 
-    const mockRequest = {
+    const mockRequest = asHapiRequest({
       logger: mockLogger,
       auth: {
         isAuthenticated: true
       }
-    }
+    })
 
     await signOutRoute.handler(mockRequest, mockToolkit)
 
@@ -265,14 +268,14 @@ describe('#signOut route', () => {
   })
 
   test('Should handle missing end_session_endpoint in OIDC config', async () => {
-    getOidcConfig.mockResolvedValue({})
+    vi.mocked(getOidcConfig).mockResolvedValue({})
 
-    const mockRequest = {
+    const mockRequest = asHapiRequest({
       logger: mockLogger,
       auth: {
         isAuthenticated: true
       }
-    }
+    })
 
     await signOutRoute.handler(mockRequest, mockToolkit)
 
@@ -293,12 +296,12 @@ describe('#signOut route', () => {
   })
 
   test('Should call auditSignOut with user session', async () => {
-    const mockRequest = {
+    const mockRequest = asHapiRequest({
       logger: mockLogger,
       auth: {
         isAuthenticated: true
       }
-    }
+    })
 
     await signOutRoute.handler(mockRequest, mockToolkit)
 
@@ -306,20 +309,20 @@ describe('#signOut route', () => {
   })
 
   test('Should not call auditSignOut when no user session', async () => {
-    getUserSession.mockResolvedValue(null)
+    vi.mocked(getUserSession).mockResolvedValue(null)
 
-    await signOutRoute.handler({}, mockToolkit)
+    await signOutRoute.handler(asHapiRequest(), mockToolkit)
 
     expect(auditSignOut).not.toHaveBeenCalled()
   })
 
   test('Should log sign-out with user details', async () => {
-    const mockRequest = {
+    const mockRequest = asHapiRequest({
       logger: mockLogger,
       auth: {
         isAuthenticated: true
       }
-    }
+    })
 
     await signOutRoute.handler(mockRequest, mockToolkit)
 
