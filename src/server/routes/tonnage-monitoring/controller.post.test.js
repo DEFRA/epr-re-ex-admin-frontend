@@ -1,10 +1,12 @@
 import { vi } from 'vitest'
 import { tonnageMonitoringPostController } from './controller.post.js'
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import * as fetchJsonFromBackendMod from '#server/common/helpers/fetch-json-from-backend.js'
 
 vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
 }))
+
+const { fetchJsonFromBackend } = vi.mocked(fetchJsonFromBackendMod)
 
 describe('tonnage-monitoring POST controller', () => {
   let mockRequest
@@ -277,8 +279,10 @@ describe('tonnage-monitoring POST controller', () => {
   })
 
   test('Should use error message from backend when available', async () => {
-    const error = new Error('Backend error')
-    error.output = { payload: { message: 'Custom backend error message' } }
+    /** @type {Error & { output: { payload: { message: string } } }} */
+    const error = Object.assign(new Error('Backend error'), {
+      output: { payload: { message: 'Custom backend error message' } }
+    })
     fetchJsonFromBackend.mockRejectedValue(error)
 
     await tonnageMonitoringPostController.handler(mockRequest, mockH)

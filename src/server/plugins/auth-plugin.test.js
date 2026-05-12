@@ -1,14 +1,18 @@
 import { vi, beforeEach, afterEach, describe, test, expect } from 'vitest'
 
 import { authPlugin } from './auth-plugin.js'
-import { getOidcConfig } from '#server/common/helpers/auth/get-oidc-config.js'
-import { getBellOptions } from '#server/common/helpers/auth/get-bell-options.js'
-import { getCookieOptions } from '#server/common/helpers/auth/get-cookie-options.js'
+import * as getOidcConfigMod from '#server/common/helpers/auth/get-oidc-config.js'
+import * as getBellOptionsMod from '#server/common/helpers/auth/get-bell-options.js'
+import * as getCookieOptionsMod from '#server/common/helpers/auth/get-cookie-options.js'
 import { TEST_COOKIE_PASSWORD } from '#server/common/test-helpers/test-constants.js'
 
 vi.mock('#server/common/helpers/auth/get-oidc-config.js')
 vi.mock('#server/common/helpers/auth/get-bell-options.js')
 vi.mock('#server/common/helpers/auth/get-cookie-options.js')
+
+const { getOidcConfig } = vi.mocked(getOidcConfigMod)
+const { getBellOptions } = vi.mocked(getBellOptionsMod)
+const { getCookieOptions } = vi.mocked(getCookieOptionsMod)
 
 describe('#authPlugin', () => {
   const mockOidcConfig = {
@@ -17,7 +21,7 @@ describe('#authPlugin', () => {
     end_session_endpoint: 'https://example-auth.test/oauth/logout'
   }
 
-  const mockBellOptions = {
+  const mockBellOptions = /** @type {ReturnType<typeof getBellOptions>} */ ({
     provider: {
       name: 'entra-id',
       protocol: 'oauth2',
@@ -26,17 +30,18 @@ describe('#authPlugin', () => {
     },
     clientId: 'test-client-id',
     clientSecret: 'test-client-secret'
-  }
+  })
 
-  const mockCookieOptions = {
-    cookie: {
-      password: TEST_COOKIE_PASSWORD,
-      path: '/',
-      isSecure: false,
-      isSameSite: 'Lax'
-    },
-    redirectTo: false
-  }
+  const mockCookieOptions =
+    /** @type {ReturnType<typeof getCookieOptions>} */ ({
+      cookie: {
+        password: TEST_COOKIE_PASSWORD,
+        path: '/',
+        isSecure: false,
+        isSameSite: 'Lax'
+      },
+      redirectTo: false
+    })
 
   const mockServer = {
     auth: {

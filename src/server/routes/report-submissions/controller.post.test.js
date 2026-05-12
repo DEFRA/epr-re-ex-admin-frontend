@@ -1,6 +1,6 @@
 import { vi, describe, test, expect, beforeEach } from 'vitest'
 import { reportSubmissionsPostController } from './controller.post.js'
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import * as fetchJsonFromBackendMod from '#server/common/helpers/fetch-json-from-backend.js'
 
 vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
@@ -10,6 +10,8 @@ const { mockLoggerError } = vi.hoisted(() => ({ mockLoggerError: vi.fn() }))
 vi.mock('#server/common/helpers/logging/logger.js', () => ({
   createLogger: () => ({ error: mockLoggerError })
 }))
+
+const { fetchJsonFromBackend } = vi.mocked(fetchJsonFromBackendMod)
 
 const buildRow = (overrides = {}) => ({
   regulator: 'EA',
@@ -304,8 +306,9 @@ describe('reportSubmissionsPostController', () => {
   })
 
   test('uses error message from backend payload when available', async () => {
-    const error = new Error('Backend error')
-    error.output = { payload: { message: 'Custom backend error' } }
+    const error = Object.assign(new Error('Backend error'), {
+      output: { payload: { message: 'Custom backend error' } }
+    })
     fetchJsonFromBackend.mockRejectedValue(error)
 
     await reportSubmissionsPostController.handler(mockRequest, mockH)

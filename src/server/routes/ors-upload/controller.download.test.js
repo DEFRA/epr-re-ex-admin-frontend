@@ -1,11 +1,14 @@
+import Boom from '@hapi/boom'
 import { vi } from 'vitest'
 
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import * as fetchJsonFromBackendMod from '#server/common/helpers/fetch-json-from-backend.js'
 import { orsDownloadController } from './controller.download.js'
 
 vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
 }))
+
+const { fetchJsonFromBackend } = vi.mocked(fetchJsonFromBackendMod)
 
 describe('orsDownloadController', () => {
   let mockRequest
@@ -212,8 +215,8 @@ describe('orsDownloadController', () => {
   })
 
   test('Should use backend error message when available', async () => {
-    const error = new Error('Backend error')
-    error.output = { payload: { message: 'Custom backend error message' } }
+    const error = Boom.internal('Backend error')
+    error.output.payload.message = 'Custom backend error message'
     fetchJsonFromBackend.mockRejectedValue(error)
 
     await orsDownloadController.handler(mockRequest, mockH)

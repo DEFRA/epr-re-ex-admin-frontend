@@ -1,10 +1,12 @@
+import Boom from '@hapi/boom'
 import { vi } from 'vitest'
-import { prnActivityDownloadController } from './controller.download.js'
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
-vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
-  fetchJsonFromBackend: vi.fn()
-}))
+import * as fetchJsonFromBackendMod from '#server/common/helpers/fetch-json-from-backend.js'
+import { prnActivityDownloadController } from './controller.download.js'
+
+vi.mock('#server/common/helpers/fetch-json-from-backend.js')
+
+const { fetchJsonFromBackend } = vi.mocked(fetchJsonFromBackendMod)
 
 const expectedStatuses =
   'awaiting_authorisation,awaiting_acceptance,accepted,awaiting_cancellation,cancelled,deleted'
@@ -247,8 +249,8 @@ describe('prn-activity download controller', () => {
   })
 
   test('Should use error message from backend when available', async () => {
-    const error = new Error('Backend error')
-    error.output = { payload: { message: 'Custom backend error message' } }
+    const error = Boom.internal('Backend error')
+    error.output.payload.message = 'Custom backend error message'
     fetchJsonFromBackend.mockRejectedValue(error)
 
     await prnActivityDownloadController.handler(mockRequest, mockH)
