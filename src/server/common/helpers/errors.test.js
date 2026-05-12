@@ -4,6 +4,7 @@ import { catchAll } from './errors.js'
 import { createServer } from '#server/server.js'
 import { statusCodes } from '../constants/status-codes.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
+import { asHapiRequest } from '#server/common/test-helpers/request.js'
 
 describe('#errors integration', () => {
   let server
@@ -41,10 +42,10 @@ describe('#catchAll unit tests', () => {
       data: { stack: mockStack },
       output: { statusCode, headers }
     }
-    return {
+    return asHapiRequest({
       response,
       logger: { error: mockLoggerError }
-    }
+    })
   }
 
   const mockToolkitView = vi.fn()
@@ -68,9 +69,9 @@ describe('#catchAll unit tests', () => {
   })
 
   test('Should return early if response does not have isBoom property', () => {
-    const nonBoomRequest = {
+    const nonBoomRequest = asHapiRequest({
       response: {}
-    }
+    })
 
     const result = catchAll(nonBoomRequest, mockToolkit)
 
@@ -171,7 +172,7 @@ describe('#catchAll unit tests', () => {
   })
 
   test('Should handle missing headers gracefully', () => {
-    const request = {
+    const request = asHapiRequest({
       response: {
         isBoom: true,
         message: mockMessage,
@@ -179,7 +180,7 @@ describe('#catchAll unit tests', () => {
         output: { statusCode: statusCodes.notFound }
       },
       logger: { error: mockLoggerError }
-    }
+    })
 
     catchAll(request, mockToolkit)
 
@@ -190,7 +191,7 @@ describe('#catchAll unit tests', () => {
   })
 
   test('Should pass pageTitle from route settings to view context', () => {
-    const request = {
+    const request = asHapiRequest({
       response: {
         isBoom: true,
         message: mockMessage,
@@ -203,7 +204,7 @@ describe('#catchAll unit tests', () => {
         }
       },
       logger: { error: mockLoggerError }
-    }
+    })
 
     catchAll(request, mockToolkit)
 
@@ -214,16 +215,20 @@ describe('#catchAll unit tests', () => {
   })
 
   describe('Redirect after sign-in', () => {
+    /**
+     * @param {{ statusCode?: number, [key: string]: any }} [opts]
+     */
     const mockRedirectRequest = ({
       statusCode = statusCodes.unauthorised,
       ...overrides
-    } = {}) => ({
-      ...mockRequest(statusCode),
-      path: '/organisations',
-      url: { search: '' },
-      yar: { flash: vi.fn() },
-      ...overrides
-    })
+    } = {}) =>
+      asHapiRequest({
+        ...mockRequest(statusCode),
+        path: '/organisations',
+        url: { search: '' },
+        yar: { flash: vi.fn() },
+        ...overrides
+      })
 
     test('Should store request path in referrer flash on 401 error', () => {
       const request = mockRedirectRequest()
