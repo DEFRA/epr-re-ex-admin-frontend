@@ -1,16 +1,21 @@
 import { vi, beforeEach, afterEach, describe, test, expect } from 'vitest'
 
 import callbackRoute from './index.js'
-import { createUserSession } from '#server/common/helpers/auth/create-user-session.js'
-import { randomUUID } from 'node:crypto'
-import { verifyToken } from '#server/common/helpers/auth/verify-token.js'
-import { auditSignIn } from '#server/common/helpers/auditing/index.js'
+import * as createUserSessionMod from '#server/common/helpers/auth/create-user-session.js'
+import * as cryptoMod from 'node:crypto'
+import * as verifyTokenMod from '#server/common/helpers/auth/verify-token.js'
+import * as auditingMod from '#server/common/helpers/auditing/index.js'
 import { asHapiRequest } from '#server/common/test-helpers/request.js'
 
 vi.mock('#server/common/helpers/auth/create-user-session.js')
 vi.mock('#server/common/helpers/auth/verify-token.js')
 vi.mock('#server/common/helpers/auditing/index.js')
 vi.mock('node:crypto')
+
+const { createUserSession } = vi.mocked(createUserSessionMod)
+const { verifyToken } = vi.mocked(verifyTokenMod)
+const { auditSignIn } = vi.mocked(auditingMod)
+const { randomUUID } = vi.mocked(cryptoMod)
 
 describe('#callback route', () => {
   const mockToolkit = {
@@ -44,9 +49,9 @@ describe('#callback route', () => {
 
     mockToolkit.view.mockReturnValue('unauthorised-view-result')
     mockToolkit.redirect.mockReturnValue('redirect-result')
-    vi.mocked(createUserSession).mockResolvedValue()
-    vi.mocked(verifyToken).mockResolvedValue(mockTokenPayload)
-    vi.mocked(randomUUID).mockReturnValue(mockSessionId)
+    createUserSession.mockResolvedValue()
+    verifyToken.mockResolvedValue(mockTokenPayload)
+    randomUUID.mockReturnValue(mockSessionId)
   })
 
   afterEach(() => {
@@ -225,7 +230,7 @@ describe('#callback route', () => {
 
   test('Should handle createUserSession errors', async () => {
     const error = new Error('Failed to create session')
-    vi.mocked(createUserSession).mockRejectedValue(error)
+    createUserSession.mockRejectedValue(error)
 
     const mockRequest = asHapiRequest({
       logger: mockLogger,
@@ -249,7 +254,7 @@ describe('#callback route', () => {
 
   test('Should handle randomUUID errors', async () => {
     const error = new Error('Failed to generate UUID')
-    vi.mocked(randomUUID).mockImplementation(() => {
+    randomUUID.mockImplementation(() => {
       throw error
     })
 
@@ -390,12 +395,12 @@ describe('#callback route', () => {
   test('Should call functions in correct order for successful authentication', async () => {
     const callOrder = []
 
-    vi.mocked(randomUUID).mockImplementation(() => {
+    randomUUID.mockImplementation(() => {
       callOrder.push('randomUUID')
       return mockSessionId
     })
 
-    vi.mocked(createUserSession).mockImplementation(async () => {
+    createUserSession.mockImplementation(async () => {
       callOrder.push('createUserSession')
     })
 
