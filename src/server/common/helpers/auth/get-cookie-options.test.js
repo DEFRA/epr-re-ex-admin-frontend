@@ -3,13 +3,16 @@ import { vi, beforeEach, describe, test, expect } from 'vitest'
 import { getCookieOptions } from './get-cookie-options.js'
 import { TEST_COOKIE_PASSWORD } from '#server/common/test-helpers/test-constants.js'
 import { config } from '#config/config.js'
-import { getUserSession } from './get-user-session.js'
-import { validateAndRefreshSession } from './validate-and-refresh-session.js'
+import * as getUserSessionMod from './get-user-session.js'
+import * as validateAndRefreshSessionMod from './validate-and-refresh-session.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 
 vi.mock('#config/config.js')
 vi.mock('./get-user-session.js')
 vi.mock('./validate-and-refresh-session.js')
+
+const { getUserSession } = vi.mocked(getUserSessionMod)
+const { validateAndRefreshSession } = vi.mocked(validateAndRefreshSessionMod)
 
 describe('#getCookieOptions', () => {
   const mockConfig = {
