@@ -5,6 +5,7 @@ import { createUserSession } from '#server/common/helpers/auth/create-user-sessi
 import { randomUUID } from 'node:crypto'
 import { verifyToken } from '#server/common/helpers/auth/verify-token.js'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
+import { asHapiRequest } from '#server/common/test-helpers/request.js'
 
 vi.mock('#server/common/helpers/auth/create-user-session.js')
 vi.mock('#server/common/helpers/auth/verify-token.js')
@@ -30,16 +31,22 @@ describe('#callback route', () => {
 
   const mockToken = 'mock-jwt-token'
   const mockRefreshToken = 'mock-refresh-token'
-  const mockSessionId = 'generated-session-id-456'
+  const mockSessionId = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
+  const mockTokenPayload = {
+    oid: 'oid-1',
+    name: 'John Doe',
+    preferred_username: 'john.doe@example-user.test',
+    exp: 0
+  }
 
   beforeEach(() => {
     vi.clearAllMocks()
 
     mockToolkit.view.mockReturnValue('unauthorised-view-result')
     mockToolkit.redirect.mockReturnValue('redirect-result')
-    createUserSession.mockResolvedValue()
-    verifyToken.mockResolvedValue()
-    randomUUID.mockReturnValue(mockSessionId)
+    vi.mocked(createUserSession).mockResolvedValue()
+    vi.mocked(verifyToken).mockResolvedValue(mockTokenPayload)
+    vi.mocked(randomUUID).mockReturnValue(mockSessionId)
   })
 
   afterEach(() => {
@@ -65,12 +72,12 @@ describe('#callback route', () => {
   })
 
   test('Should return unauthorised view if not authenticated', async () => {
-    const mockRequest = {
+    const mockRequest = asHapiRequest({
       logger: mockLogger,
       auth: {
         isAuthenticated: false
       }
-    }
+    })
 
     const result = await callbackRoute.handler(mockRequest, mockToolkit)
 
@@ -90,7 +97,7 @@ describe('#callback route', () => {
     ])(
       'Should create session and redirect to either flash referrer (when present and safe) or home',
       async ({ referrer, expectedRedirectUrl }) => {
-        const mockRequest = {
+        const mockRequest = asHapiRequest({
           logger: mockLogger,
           auth: {
             isAuthenticated: true,
@@ -103,7 +110,7 @@ describe('#callback route', () => {
           yar: {
             flash: vi.fn().mockReturnValue(referrer)
           }
-        }
+        })
 
         const result = await callbackRoute.handler(mockRequest, mockToolkit)
 
@@ -129,7 +136,7 @@ describe('#callback route', () => {
       id: 'user-id'
     }
 
-    const mockRequest = {
+    const mockRequest = asHapiRequest({
       logger: mockLogger,
       auth: {
         isAuthenticated: true,
@@ -139,7 +146,7 @@ describe('#callback route', () => {
           refreshToken: mockRefreshToken
         }
       }
-    }
+    })
 
     await callbackRoute.handler(mockRequest, mockToolkit)
 
@@ -155,7 +162,7 @@ describe('#callback route', () => {
   })
 
   test('Should handle empty profile object', async () => {
-    const mockRequest = {
+    const mockRequest = asHapiRequest({
       logger: mockLogger,
       auth: {
         isAuthenticated: true,
@@ -165,7 +172,7 @@ describe('#callback route', () => {
           refreshToken: mockRefreshToken
         }
       }
-    }
+    })
 
     await callbackRoute.handler(mockRequest, mockToolkit)
 
@@ -179,13 +186,17 @@ describe('#callback route', () => {
   })
 
   test('Should generate unique session ID for each request', async () => {
-    const sessionIds = ['session-1', 'session-2', 'session-3']
-    randomUUID
+    const sessionIds = /** @type {const} */ ([
+      'aaa-bbb-ccc-ddd-001',
+      'aaa-bbb-ccc-ddd-002',
+      'aaa-bbb-ccc-ddd-003'
+    ])
+    vi.mocked(randomUUID)
       .mockReturnValueOnce(sessionIds[0])
       .mockReturnValueOnce(sessionIds[1])
       .mockReturnValueOnce(sessionIds[2])
 
-    const mockRequest = {
+    const mockRequest = asHapiRequest({
       logger: mockLogger,
       auth: {
         isAuthenticated: true,
@@ -195,7 +206,7 @@ describe('#callback route', () => {
           refreshToken: mockRefreshToken
         }
       }
-    }
+    })
 
     for (let i = 0; i < 3; i++) {
       await callbackRoute.handler(mockRequest, mockToolkit)
@@ -214,9 +225,9 @@ describe('#callback route', () => {
 
   test('Should handle createUserSession errors', async () => {
     const error = new Error('Failed to create session')
-    createUserSession.mockRejectedValue(error)
+    vi.mocked(createUserSession).mockRejectedValue(error)
 
-    const mockRequest = {
+    const mockRequest = asHapiRequest({
       logger: mockLogger,
       auth: {
         isAuthenticated: true,
@@ -226,7 +237,7 @@ describe('#callback route', () => {
           refreshToken: mockRefreshToken
         }
       }
-    }
+    })
 
     await expect(
       callbackRoute.handler(mockRequest, mockToolkit)
@@ -238,11 +249,11 @@ describe('#callback route', () => {
 
   test('Should handle randomUUID errors', async () => {
     const error = new Error('Failed to generate UUID')
-    randomUUID.mockImplementation(() => {
+    vi.mocked(randomUUID).mockImplementation(() => {
       throw error
     })
 
-    const mockRequest = {
+    const mockRequest = asHapiRequest({
       logger: mockLogger,
       auth: {
         isAuthenticated: true,
@@ -252,7 +263,7 @@ describe('#callback route', () => {
           refreshToken: mockRefreshToken
         }
       }
-    }
+    })
 
     await expect(
       callbackRoute.handler(mockRequest, mockToolkit)
@@ -263,7 +274,7 @@ describe('#callback route', () => {
   })
 
   test('Should include all required fields in user session', async () => {
-    const mockRequest = {
+    const mockRequest = asHapiRequest({
       logger: mockLogger,
       auth: {
         isAuthenticated: true,
@@ -273,7 +284,7 @@ describe('#callback route', () => {
           refreshToken: mockRefreshToken
         }
       }
-    }
+    })
 
     await callbackRoute.handler(mockRequest, mockToolkit)
 
@@ -294,13 +305,13 @@ describe('#callback route', () => {
   })
 
   test('Should handle missing credentials', async () => {
-    const mockRequest = {
+    const mockRequest = asHapiRequest({
       logger: mockLogger,
       auth: {
         isAuthenticated: true,
         credentials: undefined
       }
-    }
+    })
 
     await expect(
       callbackRoute.handler(mockRequest, mockToolkit)
@@ -308,7 +319,7 @@ describe('#callback route', () => {
   })
 
   test('Should handle missing profile in credentials', async () => {
-    const mockRequest = {
+    const mockRequest = asHapiRequest({
       logger: mockLogger,
       auth: {
         isAuthenticated: true,
@@ -316,7 +327,7 @@ describe('#callback route', () => {
           token: mockToken
         }
       }
-    }
+    })
 
     await expect(
       callbackRoute.handler(mockRequest, mockToolkit)
@@ -324,7 +335,7 @@ describe('#callback route', () => {
   })
 
   test('Should handle missing token in credentials', async () => {
-    const mockRequest = {
+    const mockRequest = asHapiRequest({
       logger: mockLogger,
       auth: {
         isAuthenticated: true,
@@ -332,7 +343,7 @@ describe('#callback route', () => {
           profile: mockProfile
         }
       }
-    }
+    })
 
     await callbackRoute.handler(mockRequest, mockToolkit)
 
@@ -352,7 +363,7 @@ describe('#callback route', () => {
       displayName: 'Jane Smith'
     }
 
-    const mockRequest = {
+    const mockRequest = asHapiRequest({
       logger: mockLogger,
       auth: {
         isAuthenticated: true,
@@ -361,7 +372,7 @@ describe('#callback route', () => {
           token: mockToken
         }
       }
-    }
+    })
 
     await callbackRoute.handler(mockRequest, mockToolkit)
 
@@ -379,12 +390,12 @@ describe('#callback route', () => {
   test('Should call functions in correct order for successful authentication', async () => {
     const callOrder = []
 
-    randomUUID.mockImplementation(() => {
+    vi.mocked(randomUUID).mockImplementation(() => {
       callOrder.push('randomUUID')
       return mockSessionId
     })
 
-    createUserSession.mockImplementation(async () => {
+    vi.mocked(createUserSession).mockImplementation(async () => {
       callOrder.push('createUserSession')
     })
 
@@ -393,7 +404,7 @@ describe('#callback route', () => {
       return 'redirect-result'
     })
 
-    const mockRequest = {
+    const mockRequest = asHapiRequest({
       logger: mockLogger,
       auth: {
         isAuthenticated: true,
@@ -402,7 +413,7 @@ describe('#callback route', () => {
           token: mockToken
         }
       }
-    }
+    })
 
     await callbackRoute.handler(mockRequest, mockToolkit)
 
@@ -410,7 +421,7 @@ describe('#callback route', () => {
   })
 
   test('Should log sign-in on successful authentication', async () => {
-    const mockRequest = {
+    const mockRequest = asHapiRequest({
       logger: mockLogger,
       auth: {
         isAuthenticated: true,
@@ -423,7 +434,7 @@ describe('#callback route', () => {
       yar: {
         flash: vi.fn().mockReturnValue([])
       }
-    }
+    })
 
     await callbackRoute.handler(mockRequest, mockToolkit)
 
@@ -440,7 +451,7 @@ describe('#callback route', () => {
   })
 
   test('Should log redirect to referrer page after sign-in', async () => {
-    const mockRequest = {
+    const mockRequest = asHapiRequest({
       logger: mockLogger,
       auth: {
         isAuthenticated: true,
@@ -453,7 +464,7 @@ describe('#callback route', () => {
       yar: {
         flash: vi.fn().mockReturnValue(['/prn-activity'])
       }
-    }
+    })
 
     await callbackRoute.handler(mockRequest, mockToolkit)
 
@@ -463,7 +474,7 @@ describe('#callback route', () => {
   })
 
   test('Should call auditSignIn with user session on successful authentication', async () => {
-    const mockRequest = {
+    const mockRequest = asHapiRequest({
       logger: mockLogger,
       auth: {
         isAuthenticated: true,
@@ -476,7 +487,7 @@ describe('#callback route', () => {
       yar: {
         flash: vi.fn().mockReturnValue([])
       }
-    }
+    })
 
     await callbackRoute.handler(mockRequest, mockToolkit)
 
@@ -492,12 +503,12 @@ describe('#callback route', () => {
   })
 
   test('Should not call auditSignIn when authentication fails', async () => {
-    const mockRequest = {
+    const mockRequest = asHapiRequest({
       logger: mockLogger,
       auth: {
         isAuthenticated: false
       }
-    }
+    })
 
     await callbackRoute.handler(mockRequest, mockToolkit)
 
@@ -505,7 +516,7 @@ describe('#callback route', () => {
   })
 
   test('Should include loginHint in user session when present in profile', async () => {
-    const mockRequest = {
+    const mockRequest = asHapiRequest({
       logger: mockLogger,
       auth: {
         isAuthenticated: true,
@@ -518,7 +529,7 @@ describe('#callback route', () => {
       yar: {
         flash: vi.fn().mockReturnValue([])
       }
-    }
+    })
 
     await callbackRoute.handler(mockRequest, mockToolkit)
 
@@ -531,13 +542,13 @@ describe('#callback route', () => {
   })
 
   test('Should log error on sign-in failure', async () => {
-    const mockRequest = {
+    const mockRequest = asHapiRequest({
       logger: mockLogger,
       auth: {
         isAuthenticated: false,
         error: new Error('Auth failed')
       }
-    }
+    })
 
     await callbackRoute.handler(mockRequest, mockToolkit)
 
