@@ -116,8 +116,8 @@ describe('#ors-upload routes plugin', () => {
       expect.objectContaining({ method: expect.any(Function) })
     )
 
-    expect(listRoute.options).not.toHaveProperty('pre')
+    expect(listRoute).not.toHaveProperty('options.pre')
     expect(downloadRoute).not.toHaveProperty('options.pre')
-    expect(statusRoute.options).not.toHaveProperty('pre')
+    expect(statusRoute).not.toHaveProperty('options.pre')
   })
 })
