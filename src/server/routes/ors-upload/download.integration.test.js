@@ -376,6 +376,7 @@ describe('ors-upload download integration', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('Upload ORS workbooks')
+      expect(result).toContain('example.test/upload/123')
     })
   })
 })
