@@ -17,6 +17,7 @@ vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
 describe('ors-upload download integration', () => {
   const backendUrl = config.get('eprBackendUrl')
   const pagePath = '/overseas-sites'
+  const readOnlySession = { ...mockUserSession, scopes: ['admin.read'] }
   let server
 
   beforeAll(async () => {
@@ -196,17 +197,14 @@ describe('ors-upload download integration', () => {
 
       test('Should hide the upload action when the user only has admin.read scope', async () => {
         stubListResponse(mockRows)
-        getUserSession.mockReturnValue({
-          ...mockUserSession,
-          scopes: ['admin.read']
-        })
+        getUserSession.mockReturnValue(readOnlySession)
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
           url: pagePath,
           auth: {
             strategy: 'session',
-            credentials: { ...mockUserSession, scopes: ['admin.read'] }
+            credentials: readOnlySession
           }
         })
 
@@ -338,17 +336,14 @@ describe('ors-upload download integration', () => {
     const uploadPath = '/overseas-sites/imports'
 
     test('Should return 403 when user lacks admin.write scope', async () => {
-      getUserSession.mockReturnValue({
-        ...mockUserSession,
-        scopes: ['admin.read']
-      })
+      getUserSession.mockReturnValue(readOnlySession)
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
         url: uploadPath,
         auth: {
           strategy: 'session',
-          credentials: { ...mockUserSession, scopes: ['admin.read'] }
+          credentials: readOnlySession
         }
       })
 
@@ -413,17 +408,14 @@ describe('ors-upload download integration', () => {
 
     test('Should link back to /overseas-sites on failure when user only has admin.read', async () => {
       stubStatus('failed')
-      getUserSession.mockReturnValue({
-        ...mockUserSession,
-        scopes: ['admin.read']
-      })
+      getUserSession.mockReturnValue(readOnlySession)
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url: statusPath,
         auth: {
           strategy: 'session',
-          credentials: { ...mockUserSession, scopes: ['admin.read'] }
+          credentials: readOnlySession
         }
       })
 
