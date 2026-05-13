@@ -379,4 +379,61 @@ describe('ors-upload download integration', () => {
       expect(result).toContain('example.test/upload/123')
     })
   })
+
+  describe('GET /overseas-sites/imports/{importId}', () => {
+    const importId = '8e76e280-dbd2-4d36-9679-c1f6adc31f6b'
+    const statusPath = `/overseas-sites/imports/${importId}`
+
+    const stubStatus = (status) =>
+      mswServer.use(
+        http.get(`${backendUrl}/v1/overseas-sites/imports/${importId}`, () =>
+          HttpResponse.json({ status, files: [] })
+        )
+      )
+
+    test('Should link back to /overseas-sites/imports on failure when user has admin.write', async () => {
+      stubStatus('failed')
+      getUserSession.mockReturnValue(mockUserSession)
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: statusPath,
+        auth: {
+          strategy: 'session',
+          credentials: mockUserSession
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const $ = cheerio.load(result)
+      expect($('a[href="/overseas-sites/imports"]').length).toBe(1)
+      expect(result).toContain('Return to ORS uploads')
+    })
+
+    test('Should link back to /overseas-sites on failure when user only has admin.read', async () => {
+      stubStatus('failed')
+      getUserSession.mockReturnValue({
+        ...mockUserSession,
+        scopes: ['admin.read']
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: statusPath,
+        auth: {
+          strategy: 'session',
+          credentials: { ...mockUserSession, scopes: ['admin.read'] }
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const $ = cheerio.load(result)
+      expect($('a[href="/overseas-sites/imports"]').length).toBe(0)
+      expect($('a[href="/overseas-sites"]').length).toBeGreaterThanOrEqual(1)
+      expect(result).toContain('Back to overseas sites')
+      expect(result).not.toContain('Return to ORS uploads')
+    })
+  })
 })

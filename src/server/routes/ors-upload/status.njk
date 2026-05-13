@@ -63,14 +63,24 @@
             }) }}
           {% endif %}
 
-          <a class="govuk-link" href="{% if status == "completed" %}{{ recordsUrl | escape }}{% else %}/overseas-sites/imports{% endif %}">{% if status == "completed" %}View ORS records{% else %}Return to ORS uploads{% endif %}</a>
+          {% if status == "completed" %}
+            <a class="govuk-link" href="{{ recordsUrl | escape }}">View ORS records</a>
+          {% elseif 'admin.write' in scopes %}
+            <a class="govuk-link" href="/overseas-sites/imports">Return to ORS uploads</a>
+          {% else %}
+            <a class="govuk-link" href="{{ recordsUrl | escape }}">Back to overseas sites</a>
+          {% endif %}
         {% else %}
           <h1 class="govuk-heading-xl">Import failed</h1>
           <p class="govuk-body">
             {{ error or "This ORS upload could not be completed." }}
           </p>
-          {{ govukInsetText({ text: "You can retry the upload from the ORS uploads page." }) }}
-          <a class="govuk-link" href="/overseas-sites/imports">Return to ORS uploads</a>
+          {% if 'admin.write' in scopes %}
+            {{ govukInsetText({ text: "You can retry the upload from the ORS uploads page." }) }}
+            <a class="govuk-link" href="/overseas-sites/imports">Return to ORS uploads</a>
+          {% else %}
+            <a class="govuk-link" href="/overseas-sites">Back to overseas sites</a>
+          {% endif %}
         {% endif %}
       </div>
     </div>
