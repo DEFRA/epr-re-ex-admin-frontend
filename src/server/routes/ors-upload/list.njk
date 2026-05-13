@@ -23,12 +23,14 @@
 
         <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
 
-        <div class="govuk-button-group">
-          {{ govukButton({
-            text: "Upload ORS workbooks",
-            href: "/overseas-sites/imports"
-          }) }}
-        </div>
+        {% if 'admin.write' in scopes %}
+          <div class="govuk-button-group">
+            {{ govukButton({
+              text: "Upload ORS workbooks",
+              href: "/overseas-sites/imports"
+            }) }}
+          </div>
+        {% endif %}
 
         <form method="get" action="/overseas-sites" class="app-filters">
           <h2 class="govuk-heading-m">Search overseas reprocessing sites by</h2>

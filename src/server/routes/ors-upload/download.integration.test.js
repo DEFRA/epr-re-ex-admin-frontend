@@ -193,6 +193,29 @@ describe('ors-upload download integration', () => {
         expect(buttonGroup.text()).not.toContain('Download CSV')
         expect(buttonGroup.find('form[method="POST"]').length).toBe(0)
       })
+
+      test('Should hide the upload action when the user only has admin.read scope', async () => {
+        stubListResponse(mockRows)
+        getUserSession.mockReturnValue({
+          ...mockUserSession,
+          scopes: ['admin.read']
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: pagePath,
+          auth: {
+            strategy: 'session',
+            credentials: { ...mockUserSession, scopes: ['admin.read'] }
+          }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const $ = cheerio.load(result)
+        expect(result).not.toContain('Upload ORS workbooks')
+        expect($('a[href="/overseas-sites/imports"]').length).toBe(0)
+      })
     })
   })
 
