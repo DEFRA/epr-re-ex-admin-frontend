@@ -333,4 +333,49 @@ describe('ors-upload download integration', () => {
       })
     })
   })
+
+  describe('GET /overseas-sites/imports', () => {
+    const uploadPath = '/overseas-sites/imports'
+
+    test('Should return 403 when user lacks admin.write scope', async () => {
+      getUserSession.mockReturnValue({
+        ...mockUserSession,
+        scopes: ['admin.read']
+      })
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: uploadPath,
+        auth: {
+          strategy: 'session',
+          credentials: { ...mockUserSession, scopes: ['admin.read'] }
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.forbidden)
+      expect(result).toContain('You do not have permission')
+    })
+
+    test('Should allow access when user has admin.write scope', async () => {
+      getUserSession.mockReturnValue(mockUserSession)
+
+      mswServer.use(
+        http.post(`${backendUrl}/v1/overseas-sites/imports`, () =>
+          HttpResponse.json({ uploadUrl: 'https://example.test/upload/123' })
+        )
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: uploadPath,
+        auth: {
+          strategy: 'session',
+          credentials: mockUserSession
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('Upload ORS workbooks')
+    })
+  })
 })
