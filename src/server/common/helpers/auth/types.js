@@ -7,15 +7,10 @@
  *
  * `login_hint` is optional — only present after a prior successful sign-in
  * when re-prompting the user.
- *
- * `email` is optional — real Entra ID tokens carry the address under
- * `preferred_username`; the local `epr-re-ex-entra-stub` emits it under
- * `email`, so sign-in accepts either.
  * @typedef {{
  *   oid: string
  *   name: string
  *   preferred_username: string
- *   email?: string
  *   login_hint?: string
  *   exp: number
  * }} EntraIdTokenPayload
