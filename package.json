@@ -1,5 +1,6 @@
 {
   "name": "epr-re-ex-admin-frontend",
+  "private": true,
   "version": "0.0.0",
   "description": "Admin UI for the Re-Ex packaging Extended Producer Responsibilities service (pEPR)",
   "sideEffects": false,
@@ -29,6 +30,7 @@
     "lint:js:fix": "eslint . --fix",
     "lint:scss": "stylelint \"src/**/*.scss\" --cache --cache-location .cache/stylelint --cache-strategy content --color --ignore-path .gitignore",
     "lint:types": "tsc -p jsconfig.typecheck.json",
+    "lint:types:tests": "tsc -p jsconfig.typecheck.tests.json",
     "pretest": "npm run build:frontend",
     "test": "TZ=UTC vitest run --coverage",
     "test:watch": "TZ=UTC vitest",
