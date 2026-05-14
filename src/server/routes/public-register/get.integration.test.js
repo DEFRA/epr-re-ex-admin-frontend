@@ -101,6 +101,30 @@ describe('public-register', () => {
         )
       })
 
+      test('Should render the download button for a read-only user', async () => {
+        const readOnlySession = {
+          ...mockUserSession,
+          scopes: ['admin.read']
+        }
+        getUserSession.mockReturnValue(readOnlySession)
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: '/public-register',
+          auth: {
+            strategy: 'session',
+            credentials: readOnlySession
+          }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const $ = cheerio.load(result)
+        expect($('button.govuk-button').text().trim()).toBe(
+          'Download public register'
+        )
+      })
+
       test('Should have navigation item for public register', async () => {
         const { result, statusCode } = await server.inject({
           method: 'GET',

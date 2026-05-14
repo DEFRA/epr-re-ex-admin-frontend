@@ -28,14 +28,12 @@
           You can download this data as a CSV file to use in a spreadsheet.
         </p>
 
-        {% if 'admin.write' in scopes %}
-          <form method="POST">
-            <input type="hidden" name="crumb" value="{{ crumb }}" />
-            {{ govukButton({
-              text: "Download public register"
-            }) }}
-          </form>
-        {% endif %}
+        <form method="POST">
+          <input type="hidden" name="crumb" value="{{ crumb }}" />
+          {{ govukButton({
+            text: "Download public register"
+          }) }}
+        </form>
       </div>
     </div>
   </div>
