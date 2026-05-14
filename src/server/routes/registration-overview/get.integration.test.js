@@ -82,6 +82,24 @@ describe('#registrationOverviewController', () => {
     ]
   }
 
+  const mockCalendarWithSubmittedReport = {
+    cadence: 'monthly',
+    reportingPeriods: [
+      {
+        year: 2026,
+        period: 1,
+        startDate: '2026-01-01',
+        endDate: '2026-01-31',
+        dueDate: '2026-02-20',
+        report: {
+          id: 'b41148de-8a76-4214-b68d-4b786400fb90',
+          status: 'submitted',
+          submissionNumber: 1
+        }
+      }
+    ]
+  }
+
   const mockSubmittedSummaryLog = {
     summaryLogId: 'sl-submitted',
     filename: 'jan.xlsx',
@@ -473,6 +491,55 @@ describe('#registrationOverviewController', () => {
       expect(result).toEqual(
         expect.stringContaining('Sorry, there is a problem with the service')
       )
+    })
+
+    describe('Unsubmit link visibility', () => {
+      afterEach(() => {
+        getUserSession.mockReturnValue(mockUserSession)
+      })
+
+      test('Should render the Unsubmit link for a submitted report when the user has admin.write scope', async () => {
+        useMockBackend(mockOverview, mockCalendarWithSubmittedReport)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const $ = cheerio.load(result)
+        const unsubmitLink = findReportsTable($)
+          .find('tbody tr td a')
+          .filter((_, el) => $(el).text().trim() === 'Unsubmit')
+
+        expect(unsubmitLink).toHaveLength(1)
+        expect(unsubmitLink.attr('href')).toEqual(
+          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/unsubmit/confirm`
+        )
+      })
+
+      test('Should not render the Unsubmit link when the user lacks admin.write scope', async () => {
+        const readOnlySession = {
+          ...mockUserSession,
+          scopes: ['admin.read']
+        }
+        getUserSession.mockReturnValue(readOnlySession)
+        useMockBackend(mockOverview, mockCalendarWithSubmittedReport)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: readOnlySession }
+        })
+
+        const $ = cheerio.load(result)
+        const linkTexts = findReportsTable($)
+          .find('tbody tr td a')
+          .map((_, el) => $(el).text().trim())
+          .get()
+
+        expect(linkTexts).not.toContain('Unsubmit')
+      })
     })
   })
 })
