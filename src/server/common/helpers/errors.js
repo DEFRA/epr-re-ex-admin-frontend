@@ -49,7 +49,7 @@ export function catchAll(request, h) {
   const pageTitle = request.route?.settings?.app?.pageTitle
   const viewResponse = h.view(template, { pageTitle }).code(statusCode)
 
-  const originalHeaders = response.headers || response.output?.headers || {}
+  const originalHeaders = response.output?.headers ?? {}
   for (const [key, value] of Object.entries(originalHeaders)) {
     if (key.toLowerCase() === 'content-type') {
       continue

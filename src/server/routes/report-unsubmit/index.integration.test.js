@@ -147,6 +147,25 @@ describe('report-unsubmit', () => {
     expect($('a:contains("Cancel")').attr('href')).toBe(overviewUrl)
   })
 
+  test('confirm page returns 404 when the registration is missing from the overview', async () => {
+    getUserSession.mockReturnValue(mockUserSession)
+    mswServer.use(
+      http.get(
+        `${backendUrl}/v1/organisations/${organisationId}/overview`,
+        () => HttpResponse.json({ ...mockOverview, registrations: [] })
+      )
+    )
+    stubReport({ currentStatus: 'submitted', unsubmittedAt: null })
+
+    const { statusCode } = await server.inject({
+      method: 'GET',
+      url: confirmUrl,
+      auth: authOptions
+    })
+
+    expect(statusCode).toBe(statusCodes.notFound)
+  })
+
   test('confirm page redirects to overview for a non-submitted report', async () => {
     getUserSession.mockReturnValue(mockUserSession)
     stubOverview()

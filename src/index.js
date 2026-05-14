@@ -5,8 +5,9 @@ import { createLogger } from './server/common/helpers/logging/logger.js'
 
 await startServer()
 
-process.on('unhandledRejection', (error) => {
+process.on('unhandledRejection', (reason) => {
   const logger = createLogger()
-  logger.error({ err: error, message: 'Unhandled rejection' })
+  const err = reason instanceof Error ? reason : new Error(String(reason))
+  logger.error({ err, message: 'Unhandled rejection' })
   process.exitCode = 1
 })

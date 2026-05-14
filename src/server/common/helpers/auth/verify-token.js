@@ -3,12 +3,7 @@ import { getOidcConfig } from './get-oidc-config.js'
 import { config } from '#config/config.js'
 
 /**
- * @typedef {Object} EntraIdTokenPayload
- * @property {string} [oid]
- * @property {string} [name]
- * @property {string} [preferred_username]
- * @property {string} [email]
- * @property {string} [login_hint]
+ * @import { EntraIdTokenPayload } from './types.js'
  */
 
 /**
@@ -28,7 +23,7 @@ async function verifyToken(token) {
     issuer: `https://login.microsoftonline.com/${tenantId}/v2.0`
   })
 
-  return /** @type {EntraIdTokenPayload} */ (/** @type {unknown} */ (payload))
+  return /** @type {EntraIdTokenPayload} */ (payload)
 }
 
 export { verifyToken }

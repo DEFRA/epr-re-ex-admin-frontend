@@ -39,8 +39,7 @@ describe('#catchAll unit tests', () => {
       isBoom: true,
       message: mockMessage,
       data: { stack: mockStack },
-      output: { statusCode, headers },
-      headers
+      output: { statusCode, headers }
     }
     return {
       response,
@@ -168,28 +167,6 @@ describe('#catchAll unit tests', () => {
     expect(mockToolkitHeader).not.toHaveBeenCalledWith(
       'content-type',
       'application/json'
-    )
-  })
-
-  test('Should handle headers from response.output.headers when response.headers is not available', () => {
-    const request = {
-      response: {
-        isBoom: true,
-        message: mockMessage,
-        data: { stack: mockStack },
-        output: {
-          statusCode: statusCodes.notFound,
-          headers: { 'x-output-header': 'output-value' }
-        }
-      },
-      logger: { error: mockLoggerError }
-    }
-
-    catchAll(request, mockToolkit)
-
-    expect(mockToolkitHeader).toHaveBeenCalledWith(
-      'x-output-header',
-      'output-value'
     )
   })
 

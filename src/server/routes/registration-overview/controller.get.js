@@ -1,7 +1,8 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
-import { fetchOrganisationOverview } from '#server/common/helpers/fetch-organisation-overview.js'
-import { errorCodes } from '#server/common/enums/error-codes.js'
-import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
+import {
+  fetchOrganisationOverview,
+  findRegistration
+} from '#server/common/helpers/fetch-organisation-overview.js'
 import { formatPeriod } from '#server/common/helpers/format-reporting-period.js'
 
 const GREEN_TAG = 'govuk-tag--green'
@@ -50,22 +51,11 @@ export const registrationOverviewGETController = {
       )
     ])
 
-    const registration = overview.registrations.find(
-      (r) => r.id === registrationId
+    const registration = findRegistration(
+      overview,
+      organisationId,
+      registrationId
     )
-
-    if (!registration) {
-      throw notFound(
-        'Registration not found',
-        errorCodes.registrationNotFound,
-        {
-          event: {
-            action: 'fetch_registration',
-            reason: `organisationId=${organisationId} registrationId=${registrationId}`
-          }
-        }
-      )
-    }
 
     const pageTitle = request.route.settings.app.pageTitle
 
