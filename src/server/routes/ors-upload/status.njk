@@ -65,7 +65,7 @@
 
           {% if status == "completed" %}
             <a class="govuk-link" href="{{ recordsUrl | escape }}">View ORS records</a>
-          {% elseif 'admin.write' in scopes %}
+          {% elseif SCOPES.adminWrite in scopes %}
             <a class="govuk-link" href="/overseas-sites/imports">Return to ORS uploads</a>
           {% else %}
             <a class="govuk-link" href="{{ recordsUrl | escape }}">Back to overseas sites</a>
@@ -75,7 +75,7 @@
           <p class="govuk-body">
             {{ error or "This ORS upload could not be completed." }}
           </p>
-          {% if 'admin.write' in scopes %}
+          {% if SCOPES.adminWrite in scopes %}
             {{ govukInsetText({ text: "You can retry the upload from the ORS uploads page." }) }}
             <a class="govuk-link" href="/overseas-sites/imports">Return to ORS uploads</a>
           {% else %}

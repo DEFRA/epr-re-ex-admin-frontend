@@ -1,3 +1,5 @@
+import { SCOPES } from '#server/common/helpers/auth/scopes.js'
+
 /**
  * Derives the human-readable admin tier label from the scopes bundle returned
  * by GET /v1/admin/me. Scopes are the source of truth — the backend no longer
@@ -16,13 +18,13 @@ export function roleLabel(scopes) {
   if (!Array.isArray(scopes) || scopes.length === 0) {
     return ''
   }
-  if (scopes.includes('admin.write')) {
+  if (scopes.includes(SCOPES.adminWrite)) {
     return 'Service maintainer (write)'
   }
-  if (scopes.includes('admin.dlq.purge')) {
+  if (scopes.includes(SCOPES.adminDlqPurge)) {
     return 'Service maintainer'
   }
-  if (scopes.includes('admin.read')) {
+  if (scopes.includes(SCOPES.adminRead)) {
     return 'Support'
   }
   return ''

@@ -4,9 +4,10 @@ import { orsListGetController } from './controller.list.get.js'
 import { orsUploadStatusGetController } from './controller.status.get.js'
 import { orsUploadRoutes } from './constants.js'
 import { requireScope } from '#server/common/helpers/auth/require-scope.js'
+import { SCOPES } from '#server/common/helpers/auth/scopes.js'
 import Joi from 'joi'
 
-const requireWrite = [requireScope('admin.write')]
+const requireWrite = [requireScope(SCOPES.adminWrite)]
 
 export const orsUpload = {
   plugin: {

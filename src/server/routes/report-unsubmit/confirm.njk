@@ -17,7 +17,7 @@
         iconFallbackText: "Warning"
       }) }}
 
-      {% if 'admin.write' in scopes %}
+      {% if SCOPES.adminWrite in scopes %}
         <form method="POST" action="{{ postUrl }}">
           <input type="hidden" name="crumb" value="{{ crumb }}" />
           {{ govukButton({

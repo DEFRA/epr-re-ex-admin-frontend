@@ -57,7 +57,7 @@
             rows: tableRows
           }) }}
 
-          {% if 'admin.dlq.purge' in scopes %}
+          {% if SCOPES.adminDlqPurge in scopes %}
             {{ govukButton({
               text: "Clear all messages",
               href: "/queue-management/confirm-clear",

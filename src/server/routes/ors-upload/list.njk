@@ -23,7 +23,7 @@
 
         <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
 
-        {% if 'admin.write' in scopes %}
+        {% if SCOPES.adminWrite in scopes %}
           <div class="govuk-button-group">
             {{ govukButton({
               text: "Upload ORS workbooks",

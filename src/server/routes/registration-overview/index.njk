@@ -38,7 +38,7 @@
               {% if period.report %}
                 <a class="govuk-link govuk-link--no-visited-state" href="{{ reportUrl }}">View</a>
               {% endif %}
-              {% if featureFlagReportUnsubmit and period.report and period.report.status === 'submitted' and 'admin.write' in scopes %}
+              {% if featureFlagReportUnsubmit and period.report and period.report.status === 'submitted' and SCOPES.adminWrite in scopes %}
                 {% set unsubmitUrl = '/organisations/' ~ organisationId ~ '/registrations/' ~ registrationId ~ '/reports/' ~ period.year ~ '/' ~ cadence ~ '/' ~ period.period ~ '/unsubmit/confirm' %}
                 <br><a class="govuk-link govuk-link--no-visited-state" href="{{ unsubmitUrl }}">Unsubmit</a>
               {% endif %}

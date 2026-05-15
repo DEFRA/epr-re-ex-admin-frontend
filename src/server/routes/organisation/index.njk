@@ -19,7 +19,7 @@
         <h1 class="govuk-heading-xl">{{ heading }}</h1>
       </div>
 
-      {% if 'admin.write' in scopes %}
+      {% if SCOPES.adminWrite in scopes %}
         <form id="jsoneditor-form" method="POST">
           <input type="hidden" name="crumb" value="{{ crumb }}" />
           {% if message === "success" %}
