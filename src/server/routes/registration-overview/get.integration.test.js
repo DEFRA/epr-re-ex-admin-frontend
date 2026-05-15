@@ -36,6 +36,17 @@ describe('#registrationOverviewController', () => {
     vi.clearAllMocks()
   })
 
+  /**
+   * @type {{
+   *   id: string,
+   *   registrationNumber: string | undefined,
+   *   status: string,
+   *   processingType: string,
+   *   material: string,
+   *   site: string,
+   *   accreditation: { id: string, accreditationNumber: string, status: string } | null
+   * }}
+   */
   const mockRegistration = {
     id: registrationId,
     registrationNumber: 'REG-50030-001',
@@ -120,7 +131,9 @@ describe('#registrationOverviewController', () => {
   const useMockBackend = (
     overviewResponse = mockOverview,
     calendarResponse = mockCalendar,
-    summaryLogsResponse = { summaryLogs: [] }
+    summaryLogsResponse = {
+      summaryLogs: /** @type {Array<typeof mockSubmittedSummaryLog>} */ ([])
+    }
   ) => {
     mswServer.use(
       http.get(
@@ -148,7 +161,7 @@ describe('#registrationOverviewController', () => {
 
   describe('When user is authenticated', () => {
     beforeAll(() => {
-      getUserSession.mockReturnValue(mockUserSession)
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
     })
 
     test('Should return OK', async () => {
@@ -495,7 +508,7 @@ describe('#registrationOverviewController', () => {
 
     describe('Unsubmit link visibility', () => {
       afterEach(() => {
-        getUserSession.mockReturnValue(mockUserSession)
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
       })
 
       test('Should render the Unsubmit link for a submitted report when the user has admin.write scope', async () => {
@@ -523,7 +536,7 @@ describe('#registrationOverviewController', () => {
           ...mockUserSession,
           scopes: ['admin.read']
         }
-        getUserSession.mockReturnValue(readOnlySession)
+        vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
         useMockBackend(mockOverview, mockCalendarWithSubmittedReport)
 
         const { result } = await server.inject({

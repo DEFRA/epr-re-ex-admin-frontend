@@ -96,7 +96,7 @@ describe('ors-upload download integration', () => {
   describe('GET /overseas-sites', () => {
     describe('When user is unauthenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(null)
+        vi.mocked(getUserSession).mockResolvedValue(null)
       })
 
       test('Should return unauthorised status code', async () => {
@@ -111,7 +111,7 @@ describe('ors-upload download integration', () => {
 
     describe('When user is authenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(mockUserSession)
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
       })
 
       test('Should render upload at the top and download below the table', async () => {
@@ -197,7 +197,7 @@ describe('ors-upload download integration', () => {
 
       test('Should hide the upload action when the user only has admin.read scope', async () => {
         stubListResponse(mockRows)
-        getUserSession.mockReturnValue(readOnlySession)
+        vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -220,7 +220,7 @@ describe('ors-upload download integration', () => {
   describe('POST /overseas-sites', () => {
     describe('When user is unauthenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(null)
+        vi.mocked(getUserSession).mockResolvedValue(null)
       })
 
       test('Should return unauthorised status code', async () => {
@@ -236,7 +236,7 @@ describe('ors-upload download integration', () => {
 
     describe('When user is authenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(mockUserSession)
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
       })
 
       test('Should return CSV file on successful request', async () => {
@@ -336,7 +336,7 @@ describe('ors-upload download integration', () => {
     const uploadPath = '/overseas-sites/imports'
 
     test('Should return 403 when user lacks admin.write scope', async () => {
-      getUserSession.mockReturnValue(readOnlySession)
+      vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
@@ -352,7 +352,7 @@ describe('ors-upload download integration', () => {
     })
 
     test('Should allow access when user has admin.write scope', async () => {
-      getUserSession.mockReturnValue(mockUserSession)
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
 
       mswServer.use(
         http.post(`${backendUrl}/v1/overseas-sites/imports`, () =>
@@ -388,7 +388,7 @@ describe('ors-upload download integration', () => {
 
     test('Should link back to /overseas-sites/imports on failure when user has admin.write', async () => {
       stubStatus('failed')
-      getUserSession.mockReturnValue(mockUserSession)
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -408,7 +408,7 @@ describe('ors-upload download integration', () => {
 
     test('Should link back to /overseas-sites on failure when user only has admin.read', async () => {
       stubStatus('failed')
-      getUserSession.mockReturnValue(readOnlySession)
+      vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
 
       const { result, statusCode } = await server.inject({
         method: 'GET',

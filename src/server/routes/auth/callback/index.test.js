@@ -4,14 +4,31 @@ import callbackRoute from './index.js'
 import { createUserSession } from '#server/common/helpers/auth/create-user-session.js'
 import { fetchAdminMe } from '#server/common/helpers/auth/fetch-admin-me.js'
 import { randomUUID } from 'node:crypto'
-import { verifyToken } from '#server/common/helpers/auth/verify-token.js'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
 
 vi.mock('#server/common/helpers/auth/create-user-session.js')
 vi.mock('#server/common/helpers/auth/fetch-admin-me.js')
-vi.mock('#server/common/helpers/auth/verify-token.js')
 vi.mock('#server/common/helpers/auditing/index.js')
 vi.mock('node:crypto')
+
+/** @typedef {import('#server/common/hapi-types.js').HapiRequest} HapiRequest */
+
+/**
+ * Cast a partial mock request to the full `HapiRequest` shape the handler
+ * signature requires. The handler only reads a narrow slice (auth.credentials,
+ * logger, yar) so the runtime mock is sufficient — the cast satisfies tsc.
+ * @param {unknown} obj
+ * @returns {HapiRequest}
+ */
+const asRequest = (obj) => /** @type {HapiRequest} */ (obj)
+
+/**
+ * Cast a partial mock toolkit to the full `ResponseToolkit` shape.
+ * @param {unknown} obj
+ * @returns {import('@hapi/hapi').ResponseToolkit}
+ */
+const asToolkit = (obj) =>
+  /** @type {import('@hapi/hapi').ResponseToolkit} */ (obj)
 
 const ADMIN_ME_DEFAULT = {
   scopes: ['admin.read', 'admin.write', 'admin.dlq.purge']
@@ -36,17 +53,19 @@ describe('#callback route', () => {
 
   const mockToken = 'mock-jwt-token'
   const mockRefreshToken = 'mock-refresh-token'
-  const mockSessionId = 'generated-session-id-456'
+  const mockSessionId =
+    /** @type {`${string}-${string}-${string}-${string}-${string}`} */ (
+      '00000000-0000-0000-0000-000000000456'
+    )
 
   beforeEach(() => {
     vi.clearAllMocks()
 
     mockToolkit.view.mockReturnValue('unauthorised-view-result')
     mockToolkit.redirect.mockReturnValue('redirect-result')
-    createUserSession.mockResolvedValue()
-    fetchAdminMe.mockResolvedValue(ADMIN_ME_DEFAULT)
-    verifyToken.mockResolvedValue()
-    randomUUID.mockReturnValue(mockSessionId)
+    vi.mocked(createUserSession).mockResolvedValue(undefined)
+    vi.mocked(fetchAdminMe).mockResolvedValue(ADMIN_ME_DEFAULT)
+    vi.mocked(randomUUID).mockReturnValue(mockSessionId)
   })
 
   afterEach(() => {
@@ -79,7 +98,10 @@ describe('#callback route', () => {
       }
     }
 
-    const result = await callbackRoute.handler(mockRequest, mockToolkit)
+    const result = await callbackRoute.handler(
+      asRequest(mockRequest),
+      asToolkit(mockToolkit)
+    )
 
     expect(mockToolkit.view).toHaveBeenCalledWith('unauthorised')
     expect(result).toBe('unauthorised-view-result')
@@ -112,7 +134,10 @@ describe('#callback route', () => {
           }
         }
 
-        const result = await callbackRoute.handler(mockRequest, mockToolkit)
+        const result = await callbackRoute.handler(
+          asRequest(mockRequest),
+          asToolkit(mockToolkit)
+        )
 
         expect(randomUUID).toHaveBeenCalledTimes(1)
         expect(createUserSession).toHaveBeenCalledWith(mockRequest, {
@@ -149,7 +174,7 @@ describe('#callback route', () => {
       }
     }
 
-    await callbackRoute.handler(mockRequest, mockToolkit)
+    await callbackRoute.handler(asRequest(mockRequest), asToolkit(mockToolkit))
 
     expect(createUserSession).toHaveBeenCalledWith(mockRequest, {
       userId: profileWithoutDisplayName.id,
@@ -176,7 +201,7 @@ describe('#callback route', () => {
       }
     }
 
-    await callbackRoute.handler(mockRequest, mockToolkit)
+    await callbackRoute.handler(asRequest(mockRequest), asToolkit(mockToolkit))
 
     expect(createUserSession).toHaveBeenCalledWith(mockRequest, {
       sessionId: mockSessionId,
@@ -189,8 +214,13 @@ describe('#callback route', () => {
   })
 
   test('Should generate unique session ID for each request', async () => {
-    const sessionIds = ['session-1', 'session-2', 'session-3']
-    randomUUID
+    const sessionIds =
+      /** @type {Array<`${string}-${string}-${string}-${string}-${string}`>} */ ([
+        '00000000-0000-0000-0000-000000000001',
+        '00000000-0000-0000-0000-000000000002',
+        '00000000-0000-0000-0000-000000000003'
+      ])
+    vi.mocked(randomUUID)
       .mockReturnValueOnce(sessionIds[0])
       .mockReturnValueOnce(sessionIds[1])
       .mockReturnValueOnce(sessionIds[2])
@@ -208,7 +238,10 @@ describe('#callback route', () => {
     }
 
     for (let i = 0; i < 3; i++) {
-      await callbackRoute.handler(mockRequest, mockToolkit)
+      await callbackRoute.handler(
+        asRequest(mockRequest),
+        asToolkit(mockToolkit)
+      )
 
       expect(createUserSession).toHaveBeenNthCalledWith(
         i + 1,
@@ -224,7 +257,7 @@ describe('#callback route', () => {
 
   test('Should handle createUserSession errors', async () => {
     const error = new Error('Failed to create session')
-    createUserSession.mockRejectedValue(error)
+    vi.mocked(createUserSession).mockRejectedValue(error)
 
     const mockRequest = {
       logger: mockLogger,
@@ -239,7 +272,7 @@ describe('#callback route', () => {
     }
 
     await expect(
-      callbackRoute.handler(mockRequest, mockToolkit)
+      callbackRoute.handler(asRequest(mockRequest), asToolkit(mockToolkit))
     ).rejects.toThrow('Failed to create session')
 
     expect(randomUUID).toHaveBeenCalled()
@@ -248,7 +281,7 @@ describe('#callback route', () => {
 
   test('Should handle randomUUID errors', async () => {
     const error = new Error('Failed to generate UUID')
-    randomUUID.mockImplementation(() => {
+    vi.mocked(randomUUID).mockImplementation(() => {
       throw error
     })
 
@@ -265,7 +298,7 @@ describe('#callback route', () => {
     }
 
     await expect(
-      callbackRoute.handler(mockRequest, mockToolkit)
+      callbackRoute.handler(asRequest(mockRequest), asToolkit(mockToolkit))
     ).rejects.toThrow('Failed to generate UUID')
 
     expect(createUserSession).not.toHaveBeenCalled()
@@ -285,7 +318,7 @@ describe('#callback route', () => {
       }
     }
 
-    await callbackRoute.handler(mockRequest, mockToolkit)
+    await callbackRoute.handler(asRequest(mockRequest), asToolkit(mockToolkit))
 
     const expectedUserSession = {
       userId: mockProfile.id,
@@ -314,7 +347,7 @@ describe('#callback route', () => {
     }
 
     await expect(
-      callbackRoute.handler(mockRequest, mockToolkit)
+      callbackRoute.handler(asRequest(mockRequest), asToolkit(mockToolkit))
     ).rejects.toThrow()
   })
 
@@ -330,7 +363,7 @@ describe('#callback route', () => {
     }
 
     await expect(
-      callbackRoute.handler(mockRequest, mockToolkit)
+      callbackRoute.handler(asRequest(mockRequest), asToolkit(mockToolkit))
     ).rejects.toThrow()
   })
 
@@ -345,7 +378,7 @@ describe('#callback route', () => {
       }
     }
 
-    await callbackRoute.handler(mockRequest, mockToolkit)
+    await callbackRoute.handler(asRequest(mockRequest), asToolkit(mockToolkit))
 
     expect(createUserSession).toHaveBeenCalledWith(
       mockRequest,
@@ -374,7 +407,7 @@ describe('#callback route', () => {
       }
     }
 
-    await callbackRoute.handler(mockRequest, mockToolkit)
+    await callbackRoute.handler(asRequest(mockRequest), asToolkit(mockToolkit))
 
     expect(createUserSession).toHaveBeenCalledWith(mockRequest, {
       userId: complexProfile.id,
@@ -391,17 +424,17 @@ describe('#callback route', () => {
   test('Should call functions in correct order for successful authentication', async () => {
     const callOrder = []
 
-    fetchAdminMe.mockImplementation(async () => {
+    vi.mocked(fetchAdminMe).mockImplementation(async () => {
       callOrder.push('fetchAdminMe')
       return ADMIN_ME_DEFAULT
     })
 
-    randomUUID.mockImplementation(() => {
+    vi.mocked(randomUUID).mockImplementation(() => {
       callOrder.push('randomUUID')
       return mockSessionId
     })
 
-    createUserSession.mockImplementation(async () => {
+    vi.mocked(createUserSession).mockImplementation(async () => {
       callOrder.push('createUserSession')
     })
 
@@ -421,7 +454,7 @@ describe('#callback route', () => {
       }
     }
 
-    await callbackRoute.handler(mockRequest, mockToolkit)
+    await callbackRoute.handler(asRequest(mockRequest), asToolkit(mockToolkit))
 
     expect(callOrder).toEqual([
       'fetchAdminMe',
@@ -447,7 +480,7 @@ describe('#callback route', () => {
       }
     }
 
-    await callbackRoute.handler(mockRequest, mockToolkit)
+    await callbackRoute.handler(asRequest(mockRequest), asToolkit(mockToolkit))
 
     expect(mockLogger.info).toHaveBeenCalledWith({
       message: 'User signed in',
@@ -477,7 +510,7 @@ describe('#callback route', () => {
       }
     }
 
-    await callbackRoute.handler(mockRequest, mockToolkit)
+    await callbackRoute.handler(asRequest(mockRequest), asToolkit(mockToolkit))
 
     expect(mockLogger.info).toHaveBeenCalledWith({
       message: 'Sign-in complete, redirecting user to /prn-activity'
@@ -500,7 +533,7 @@ describe('#callback route', () => {
       }
     }
 
-    await callbackRoute.handler(mockRequest, mockToolkit)
+    await callbackRoute.handler(asRequest(mockRequest), asToolkit(mockToolkit))
 
     expect(auditSignIn).toHaveBeenCalledWith({
       sessionId: mockSessionId,
@@ -522,7 +555,7 @@ describe('#callback route', () => {
       }
     }
 
-    await callbackRoute.handler(mockRequest, mockToolkit)
+    await callbackRoute.handler(asRequest(mockRequest), asToolkit(mockToolkit))
 
     expect(auditSignIn).not.toHaveBeenCalled()
   })
@@ -543,7 +576,7 @@ describe('#callback route', () => {
       }
     }
 
-    await callbackRoute.handler(mockRequest, mockToolkit)
+    await callbackRoute.handler(asRequest(mockRequest), asToolkit(mockToolkit))
 
     expect(createUserSession).toHaveBeenCalledWith(
       mockRequest,
@@ -559,7 +592,7 @@ describe('#callback route', () => {
         new Error('GET /v1/admin/me failed: 403 Forbidden'),
         { statusCode: 403 }
       )
-      fetchAdminMe.mockRejectedValue(error)
+      vi.mocked(fetchAdminMe).mockRejectedValue(error)
 
       const mockRequest = {
         logger: mockLogger,
@@ -573,7 +606,10 @@ describe('#callback route', () => {
         }
       }
 
-      const result = await callbackRoute.handler(mockRequest, mockToolkit)
+      const result = await callbackRoute.handler(
+        asRequest(mockRequest),
+        asToolkit(mockToolkit)
+      )
 
       expect(mockToolkit.view).toHaveBeenCalledWith('unauthorised')
       expect(result).toBe('unauthorised-view-result')
@@ -585,7 +621,7 @@ describe('#callback route', () => {
         new Error('GET /v1/admin/me failed: 500 Internal Server Error'),
         { statusCode: 500 }
       )
-      fetchAdminMe.mockRejectedValue(error)
+      vi.mocked(fetchAdminMe).mockRejectedValue(error)
 
       const mockRequest = {
         logger: mockLogger,
@@ -600,7 +636,7 @@ describe('#callback route', () => {
       }
 
       await expect(
-        callbackRoute.handler(mockRequest, mockToolkit)
+        callbackRoute.handler(asRequest(mockRequest), asToolkit(mockToolkit))
       ).rejects.toThrow('GET /v1/admin/me failed: 500')
 
       expect(createUserSession).not.toHaveBeenCalled()
@@ -620,7 +656,10 @@ describe('#callback route', () => {
         yar: { flash: vi.fn().mockReturnValue([]) }
       }
 
-      await callbackRoute.handler(mockRequest, mockToolkit)
+      await callbackRoute.handler(
+        asRequest(mockRequest),
+        asToolkit(mockToolkit)
+      )
 
       expect(fetchAdminMe).toHaveBeenCalledWith(mockToken)
     })
@@ -635,7 +674,7 @@ describe('#callback route', () => {
       }
     }
 
-    await callbackRoute.handler(mockRequest, mockToolkit)
+    await callbackRoute.handler(asRequest(mockRequest), asToolkit(mockToolkit))
 
     expect(mockLogger.error).toHaveBeenCalledWith({
       message: 'Sign-in failed'

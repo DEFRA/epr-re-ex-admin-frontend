@@ -19,7 +19,9 @@ const mock = {
 
 vi.mock('#server/common/helpers/metrics/index.js', async (importOriginal) => ({
   metrics: {
-    ...(await importOriginal()).metrics,
+    .../** @type {typeof import('#server/common/helpers/metrics/index.js')} */ (
+      await importOriginal()
+    ).metrics,
     signInFailure: () => mock.signInFailureMetric(),
     signInSuccess: () => mock.signInSuccessMetric()
   }

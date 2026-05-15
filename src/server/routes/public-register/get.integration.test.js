@@ -30,7 +30,7 @@ describe('public-register', () => {
   describe('GET /public-register', () => {
     describe('When user is unauthenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(null)
+        vi.mocked(getUserSession).mockResolvedValue(null)
       })
 
       test('Should return unauthorised status code', async () => {
@@ -46,7 +46,7 @@ describe('public-register', () => {
 
     describe('When user is authenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(mockUserSession)
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
       })
 
       test('Should return OK and render page with heading', async () => {
@@ -106,7 +106,7 @@ describe('public-register', () => {
           ...mockUserSession,
           scopes: ['admin.read']
         }
-        getUserSession.mockReturnValue(readOnlySession)
+        vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -147,7 +147,7 @@ describe('public-register', () => {
   describe('POST /public-register', () => {
     describe('When user is unauthenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(null)
+        vi.mocked(getUserSession).mockResolvedValue(null)
       })
 
       test('Should return unauthorised status code', async () => {
@@ -164,7 +164,7 @@ describe('public-register', () => {
 
     describe('When user is authenticated', () => {
       test('Should return CSV file on successful generation', async () => {
-        getUserSession.mockReturnValue(mockUserSession)
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
 
         const mockDownloadUrl =
           'https://epr-bucket.s3.eu-west-2.amazonaws.com/public-register.csv?signed=abc123'
@@ -219,7 +219,7 @@ describe('public-register', () => {
       })
 
       test('Should redirect back to GET with error on backend failure', async () => {
-        getUserSession.mockReturnValue(mockUserSession)
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
 
         mswServer.use(
           http.post(`${backendUrl}/v1/public-register/generate`, () => {
