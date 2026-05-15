@@ -41,7 +41,8 @@ export default {
 
     let scopes = []
     try {
-      ;({ scopes } = await fetchAdminMe(token))
+      const adminMe = await fetchAdminMe(token)
+      scopes = adminMe.scopes
     } catch (error) {
       const statusCode = /** @type {{ statusCode?: number }} */ (error)
         .statusCode
