@@ -19,62 +19,68 @@
         <h1 class="govuk-heading-xl">{{ heading }}</h1>
       </div>
 
-      <form id="jsoneditor-form" method="POST">
-        <input type="hidden" name="crumb" value="{{ crumb }}" />
-        {% if message === "success" %}
-          {% set html %}
-            <p id="organisation-success-message" class="govuk-body">Organisation record updated</p>
-          {% endset %}
+      {% if SCOPES.adminWrite in scopes %}
+        <form id="jsoneditor-form" method="POST">
+          <input type="hidden" name="crumb" value="{{ crumb }}" />
+          {% if message === "success" %}
+            {% set html %}
+              <p id="organisation-success-message" class="govuk-body">Organisation record updated</p>
+            {% endset %}
 
-          {{ govukNotificationBanner({
-            html: html,
-            type: "success"
+            {{ govukNotificationBanner({
+              html: html,
+              type: "success"
+            }) }}
+          {% endif %}
+
+          {% if errorList %}
+            {{ govukErrorSummary({
+              titleText: "Failed saving organisation",
+              errorList: errorList
+            }) }}
+          {% endif %}
+
+          <div id="stale-draft-warning-placeholder"></div>
+
+          <div id="jsoneditor" data-testid="organisation-jsoneditor"></div>
+          <script id="organisation-json" type="application/json">{{ organisationJson | safe }}</script>
+
+          <input id="jsoneditor-organisation-object" type="hidden" name="organisation" />
+
+          <div class="govuk-button-group govuk-!-margin-bottom-4">
+            {{ govukButton({
+              text: "Add registration",
+              type: "button",
+              classes: "govuk-button--secondary",
+              id: "add-registration-button"
+            }) }}
+
+            {{ govukButton({
+              text: "Add accreditation",
+              type: "button",
+              classes: "govuk-button--secondary",
+              id: "add-accreditation-button"
+            }) }}
+          </div>
+
+          {{ govukButton({
+            text: "Reset",
+            type: "button",
+            classes: "govuk-!-margin-right-2 govuk-button--secondary",
+            id: "jsoneditor-reset-button"
           }) }}
-        {% endif %}
 
-        {% if errorList %}
-          {{ govukErrorSummary({
-            titleText: "Failed saving organisation",
-            errorList: errorList
+          {{ govukButton({
+            text: "Save",
+            type: "submit",
+            id: "jsoneditor-save-button"
           }) }}
-        {% endif %}
-
-       <div id="stale-draft-warning-placeholder"></div>
-
-        <div id="jsoneditor" data-testid="organisation-jsoneditor"></div>
+        </form>
+      {% else %}
+        <div id="jsoneditor" data-testid="organisation-jsoneditor" data-readonly="true"></div>
         <script id="organisation-json" type="application/json">{{ organisationJson | safe }}</script>
-
-        <input  id="jsoneditor-organisation-object" type="hidden" name="organisation" />
-
-        <div class="govuk-button-group govuk-!-margin-bottom-4">
-          {{ govukButton({
-            text: "Add registration",
-            type: "button",
-            classes: "govuk-button--secondary",
-            id: "add-registration-button"
-          }) }}
-
-          {{ govukButton({
-            text: "Add accreditation",
-            type: "button",
-            classes: "govuk-button--secondary",
-            id: "add-accreditation-button"
-          }) }}
-        </div>
-
-        {{ govukButton({
-          text: "Reset",
-          type: "button",
-          classes: "govuk-!-margin-right-2 govuk-button--secondary",
-          id: "jsoneditor-reset-button"
-        }) }}
-
-        {{ govukButton({
-          text: "Save",
-          type: "submit",
-          id: "jsoneditor-save-button"
-        }) }}
-      </form>
+        <p class="govuk-body govuk-!-margin-top-4">You do not have permission to edit this organisation.</p>
+      {% endif %}
     </div>
 
 

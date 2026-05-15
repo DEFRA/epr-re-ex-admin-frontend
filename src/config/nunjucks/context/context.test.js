@@ -132,7 +132,8 @@ describe('context and cache', () => {
           serviceName: 'epr-re-ex-admin-frontend',
           serviceUrl: '/',
           userSession: mockUserSession,
-          isAuthenticated: true
+          isAuthenticated: true,
+          scopes: mockUserSession.scopes
         })
       })
 
@@ -328,7 +329,8 @@ describe('context and cache', () => {
           serviceName: 'epr-re-ex-admin-frontend',
           serviceUrl: '/',
           userSession: mockUserSession,
-          isAuthenticated: true
+          isAuthenticated: true,
+          scopes: mockUserSession.scopes
         })
       })
     })

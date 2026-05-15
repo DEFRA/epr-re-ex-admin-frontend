@@ -4,12 +4,29 @@ import Jwt from '@hapi/jwt'
 import { validateAndRefreshSession } from './validate-and-refresh-session.js'
 import { makeToken } from '#server/common/test-helpers/test-constants.js'
 
-const { mockRefreshTokens } = vi.hoisted(() => ({
-  mockRefreshTokens: vi.fn()
+/** @typedef {import('@hapi/jwt').HapiJwt.Artifacts} JwtArtifacts */
+
+/**
+ * Cast a partial decoded-token shape (just enough for the consumer's
+ * `decoded?.payload?.iat` access) to `Artifacts`. The runtime only reads a
+ * narrow slice of the value, but `Jwt.token.decode` is typed to return the
+ * full Artifacts, so test mocks must satisfy that.
+ * @param {unknown} obj
+ * @returns {JwtArtifacts}
+ */
+const asArtifacts = (obj) => /** @type {JwtArtifacts} */ (obj)
+
+const { mockRefreshTokens, mockFetchAdminMe } = vi.hoisted(() => ({
+  mockRefreshTokens: vi.fn(),
+  mockFetchAdminMe: vi.fn()
 }))
 
 vi.mock('./refresh-tokens.js', () => ({
   refreshTokens: mockRefreshTokens
+}))
+
+vi.mock('./fetch-admin-me.js', () => ({
+  fetchAdminMe: mockFetchAdminMe
 }))
 
 vi.mock('./create-user-session.js', () => ({
@@ -26,6 +43,9 @@ describe('#validateAndRefreshSession', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    mockFetchAdminMe.mockResolvedValue({
+      scopes: ['admin.read', 'admin.write', 'admin.dlq.purge']
+    })
   })
 
   afterEach(() => {
@@ -40,7 +60,9 @@ describe('#validateAndRefreshSession', () => {
         iat: nowSec - 1800
       }
     }
-    const decodeSpy = vi.spyOn(Jwt.token, 'decode').mockReturnValue(mockDecoded)
+    const decodeSpy = vi
+      .spyOn(Jwt.token, 'decode')
+      .mockReturnValue(asArtifacts(mockDecoded))
     const verifyTimeSpy = vi
       .spyOn(Jwt.token, 'verifyTime')
       .mockImplementation(() => {})
@@ -59,7 +81,9 @@ describe('#validateAndRefreshSession', () => {
         exp: nowSec + 3600
       }
     }
-    const decodeSpy = vi.spyOn(Jwt.token, 'decode').mockReturnValue(mockDecoded)
+    const decodeSpy = vi
+      .spyOn(Jwt.token, 'decode')
+      .mockReturnValue(asArtifacts(mockDecoded))
     const verifyTimeSpy = vi
       .spyOn(Jwt.token, 'verifyTime')
       .mockImplementation(() => {})
@@ -73,7 +97,9 @@ describe('#validateAndRefreshSession', () => {
 
   test('Should return original session when token has no payload', async () => {
     const mockDecoded = {}
-    const decodeSpy = vi.spyOn(Jwt.token, 'decode').mockReturnValue(mockDecoded)
+    const decodeSpy = vi
+      .spyOn(Jwt.token, 'decode')
+      .mockReturnValue(asArtifacts(mockDecoded))
     const verifyTimeSpy = vi
       .spyOn(Jwt.token, 'verifyTime')
       .mockImplementation(() => {})
@@ -119,16 +145,20 @@ describe('#validateAndRefreshSession', () => {
 
     expect(decodeSpy).toHaveBeenCalledWith(mockUserSession.token)
     expect(mockRefreshTokens).toHaveBeenCalledWith(mockUserSession.refreshToken)
+    expect(mockFetchAdminMe).toHaveBeenCalledWith(newTokens.access_token)
     expect(result).toEqual({
       ...mockUserSession,
       token: newTokens.access_token,
-      refreshToken: newTokens.refresh_token
+      refreshToken: newTokens.refresh_token,
+      scopes: ['admin.read', 'admin.write', 'admin.dlq.purge']
     })
   })
 
   test('Should refresh tokens when verifyTime throws error', async () => {
     const mockDecoded = { payload: { exp: Date.now() / 1000 - 3600 } }
-    const decodeSpy = vi.spyOn(Jwt.token, 'decode').mockReturnValue(mockDecoded)
+    const decodeSpy = vi
+      .spyOn(Jwt.token, 'decode')
+      .mockReturnValue(asArtifacts(mockDecoded))
     const verifyTimeSpy = vi
       .spyOn(Jwt.token, 'verifyTime')
       .mockImplementation(() => {
@@ -148,10 +178,12 @@ describe('#validateAndRefreshSession', () => {
     expect(decodeSpy).toHaveBeenCalledWith(mockUserSession.token)
     expect(verifyTimeSpy).toHaveBeenCalledWith(mockDecoded, { timeSkewSec: 60 })
     expect(mockRefreshTokens).toHaveBeenCalledWith(mockUserSession.refreshToken)
+    expect(mockFetchAdminMe).toHaveBeenCalledWith(newTokens.access_token)
     expect(result).toEqual({
       ...mockUserSession,
       token: newTokens.access_token,
-      refreshToken: newTokens.refresh_token
+      refreshToken: newTokens.refresh_token,
+      scopes: ['admin.read', 'admin.write', 'admin.dlq.purge']
     })
   })
 
@@ -163,7 +195,7 @@ describe('#validateAndRefreshSession', () => {
         iat: nowSec - 3400
       }
     }
-    vi.spyOn(Jwt.token, 'decode').mockReturnValue(mockDecoded)
+    vi.spyOn(Jwt.token, 'decode').mockReturnValue(asArtifacts(mockDecoded))
     vi.spyOn(Jwt.token, 'verifyTime').mockImplementation(() => {})
 
     const newTokens = {
@@ -177,10 +209,12 @@ describe('#validateAndRefreshSession', () => {
     const result = await validateAndRefreshSession({}, mockUserSession)
 
     expect(mockRefreshTokens).toHaveBeenCalledWith(mockUserSession.refreshToken)
+    expect(mockFetchAdminMe).toHaveBeenCalledWith(newTokens.access_token)
     expect(result).toEqual({
       ...mockUserSession,
       token: newTokens.access_token,
-      refreshToken: newTokens.refresh_token
+      refreshToken: newTokens.refresh_token,
+      scopes: ['admin.read', 'admin.write', 'admin.dlq.purge']
     })
   })
 })

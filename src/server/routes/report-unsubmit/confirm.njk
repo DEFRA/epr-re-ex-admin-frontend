@@ -17,16 +17,18 @@
         iconFallbackText: "Warning"
       }) }}
 
-      <form method="POST" action="{{ postUrl }}">
-        <input type="hidden" name="crumb" value="{{ crumb }}" />
-        {{ govukButton({
-          text: "Yes, unsubmit this report",
-          classes: "govuk-button--warning"
-        }) }}
-        <p class="govuk-body">
-          <a class="govuk-link" href="{{ overviewUrl }}">Cancel</a>
-        </p>
-      </form>
+      {% if SCOPES.adminWrite in scopes %}
+        <form method="POST" action="{{ postUrl }}">
+          <input type="hidden" name="crumb" value="{{ crumb }}" />
+          {{ govukButton({
+            text: "Yes, unsubmit this report",
+            classes: "govuk-button--warning"
+          }) }}
+          <p class="govuk-body">
+            <a class="govuk-link" href="{{ overviewUrl }}">Cancel</a>
+          </p>
+        </form>
+      {% endif %}
     </div>
   </div>
 {% endblock %}

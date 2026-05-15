@@ -1,6 +1,10 @@
 import { queueManagementGetController } from './controller.get.js'
 import { queueManagementConfirmClearGetController } from './controller.get-confirm.js'
 import { queueManagementPostController } from './controller.post.js'
+import { requireScope } from '#server/common/helpers/auth/require-scope.js'
+import { SCOPES } from '#server/common/helpers/auth/scopes.js'
+
+const requireDlqPurge = [requireScope(SCOPES.adminDlqPurge)]
 
 export const queueManagement = {
   plugin: {
@@ -20,13 +24,17 @@ export const queueManagement = {
           path: '/queue-management/confirm-clear',
           ...queueManagementConfirmClearGetController,
           options: {
+            pre: requireDlqPurge,
             app: { pageTitle: 'Confirm clear all messages' }
           }
         },
         {
           method: 'POST',
           path: '/queue-management/clear',
-          ...queueManagementPostController
+          ...queueManagementPostController,
+          options: {
+            pre: requireDlqPurge
+          }
         }
       ])
     }

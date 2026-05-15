@@ -2,10 +2,14 @@ import { config } from '#config/config.js'
 import { reportUnsubmitConfirmGetController } from './controller.get-confirm.js'
 import { reportUnsubmitPostController } from './controller.post.js'
 import { reportUnsubmitResultGetController } from './controller.get-result.js'
+import { requireScope } from '#server/common/helpers/auth/require-scope.js'
+import { SCOPES } from '#server/common/helpers/auth/scopes.js'
 import { FEATURE_FLAG_KEY, PAGE_TITLE } from './constants.js'
 
 const BASE =
   '/organisations/{organisationId}/registrations/{registrationId}/reports/{year}/{cadence}/{period}'
+
+const requireWrite = [requireScope(SCOPES.adminWrite)]
 
 export const reportUnsubmit = {
   plugin: {
@@ -20,12 +24,18 @@ export const reportUnsubmit = {
           method: 'GET',
           path: `${BASE}/unsubmit/confirm`,
           ...reportUnsubmitConfirmGetController,
-          options: { app: { pageTitle: PAGE_TITLE } }
+          options: {
+            pre: requireWrite,
+            app: { pageTitle: PAGE_TITLE }
+          }
         },
         {
           method: 'POST',
           path: `${BASE}/unsubmit`,
-          ...reportUnsubmitPostController
+          ...reportUnsubmitPostController,
+          options: {
+            pre: requireWrite
+          }
         },
         {
           method: 'GET',

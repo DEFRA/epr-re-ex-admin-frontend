@@ -19,6 +19,12 @@
         <span data-testid="app-login-username">
           {{ userSession.displayName }}
         </span>
+        {% set tierLabel = scopes | roleLabel %}
+        {% if tierLabel %}
+          <span class="govuk-tag govuk-tag--blue app-service-header__role-tag" data-testid="app-login-role">
+            {{ tierLabel }}
+          </span>
+        {% endif %}
       {% endif %}
 
       <span class="app-service-header__login{% if isAuthenticated %} app-service-header__login--logged-in{% endif %}">

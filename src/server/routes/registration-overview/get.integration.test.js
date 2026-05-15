@@ -36,6 +36,17 @@ describe('#registrationOverviewController', () => {
     vi.clearAllMocks()
   })
 
+  /**
+   * @type {{
+   *   id: string,
+   *   registrationNumber: string | undefined,
+   *   status: string,
+   *   processingType: string,
+   *   material: string,
+   *   site: string,
+   *   accreditation: { id: string, accreditationNumber: string, status: string } | null
+   * }}
+   */
   const mockRegistration = {
     id: registrationId,
     registrationNumber: 'REG-50030-001',
@@ -82,6 +93,24 @@ describe('#registrationOverviewController', () => {
     ]
   }
 
+  const mockCalendarWithSubmittedReport = {
+    cadence: 'monthly',
+    reportingPeriods: [
+      {
+        year: 2026,
+        period: 1,
+        startDate: '2026-01-01',
+        endDate: '2026-01-31',
+        dueDate: '2026-02-20',
+        report: {
+          id: 'b41148de-8a76-4214-b68d-4b786400fb90',
+          status: 'submitted',
+          submissionNumber: 1
+        }
+      }
+    ]
+  }
+
   const mockSubmittedSummaryLog = {
     summaryLogId: 'sl-submitted',
     filename: 'jan.xlsx',
@@ -102,7 +131,9 @@ describe('#registrationOverviewController', () => {
   const useMockBackend = (
     overviewResponse = mockOverview,
     calendarResponse = mockCalendar,
-    summaryLogsResponse = { summaryLogs: [] }
+    summaryLogsResponse = {
+      summaryLogs: /** @type {Array<typeof mockSubmittedSummaryLog>} */ ([])
+    }
   ) => {
     mswServer.use(
       http.get(
@@ -130,7 +161,7 @@ describe('#registrationOverviewController', () => {
 
   describe('When user is authenticated', () => {
     beforeAll(() => {
-      getUserSession.mockReturnValue(mockUserSession)
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
     })
 
     test('Should return OK', async () => {
@@ -473,6 +504,55 @@ describe('#registrationOverviewController', () => {
       expect(result).toEqual(
         expect.stringContaining('Sorry, there is a problem with the service')
       )
+    })
+
+    describe('Unsubmit link visibility', () => {
+      afterEach(() => {
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+      })
+
+      test('Should render the Unsubmit link for a submitted report when the user has admin.write scope', async () => {
+        useMockBackend(mockOverview, mockCalendarWithSubmittedReport)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const $ = cheerio.load(result)
+        const unsubmitLink = findReportsTable($)
+          .find('tbody tr td a')
+          .filter((_, el) => $(el).text().trim() === 'Unsubmit')
+
+        expect(unsubmitLink).toHaveLength(1)
+        expect(unsubmitLink.attr('href')).toEqual(
+          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/unsubmit/confirm`
+        )
+      })
+
+      test('Should not render the Unsubmit link when the user lacks admin.write scope', async () => {
+        const readOnlySession = {
+          ...mockUserSession,
+          scopes: ['admin.read']
+        }
+        vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
+        useMockBackend(mockOverview, mockCalendarWithSubmittedReport)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: readOnlySession }
+        })
+
+        const $ = cheerio.load(result)
+        const linkTexts = findReportsTable($)
+          .find('tbody tr td a')
+          .map((_, el) => $(el).text().trim())
+          .get()
+
+        expect(linkTexts).not.toContain('Unsubmit')
+      })
     })
   })
 })

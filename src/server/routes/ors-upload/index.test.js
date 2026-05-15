@@ -101,4 +101,23 @@ describe('#ors-upload routes plugin', () => {
     expect(orsUpload.plugin).toHaveProperty('register')
     expect(typeof orsUpload.plugin.register).toBe('function')
   })
+
+  test('Should guard GET upload route with admin.write scope', () => {
+    orsUpload.plugin.register(mockServer)
+
+    const registeredRoutes = mockServer.route.mock.calls[0][0]
+    const listRoute = registeredRoutes[0]
+    const downloadRoute = registeredRoutes[1]
+    const uploadRoute = registeredRoutes[2]
+    const statusRoute = registeredRoutes[3]
+
+    expect(uploadRoute.options.pre).toHaveLength(1)
+    expect(uploadRoute.options.pre[0]).toEqual(
+      expect.objectContaining({ method: expect.any(Function) })
+    )
+
+    expect(listRoute).not.toHaveProperty('options.pre')
+    expect(downloadRoute).not.toHaveProperty('options.pre')
+    expect(statusRoute).not.toHaveProperty('options.pre')
+  })
 })

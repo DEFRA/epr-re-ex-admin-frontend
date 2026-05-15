@@ -17,6 +17,7 @@ vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
 describe('ors-upload download integration', () => {
   const backendUrl = config.get('eprBackendUrl')
   const pagePath = '/overseas-sites'
+  const readOnlySession = { ...mockUserSession, scopes: ['admin.read'] }
   let server
 
   beforeAll(async () => {
@@ -95,7 +96,7 @@ describe('ors-upload download integration', () => {
   describe('GET /overseas-sites', () => {
     describe('When user is unauthenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(null)
+        vi.mocked(getUserSession).mockResolvedValue(null)
       })
 
       test('Should return unauthorised status code', async () => {
@@ -110,7 +111,7 @@ describe('ors-upload download integration', () => {
 
     describe('When user is authenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(mockUserSession)
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
       })
 
       test('Should render upload at the top and download below the table', async () => {
@@ -193,13 +194,33 @@ describe('ors-upload download integration', () => {
         expect(buttonGroup.text()).not.toContain('Download CSV')
         expect(buttonGroup.find('form[method="POST"]').length).toBe(0)
       })
+
+      test('Should hide the upload action when the user only has admin.read scope', async () => {
+        stubListResponse(mockRows)
+        vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: pagePath,
+          auth: {
+            strategy: 'session',
+            credentials: readOnlySession
+          }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const $ = cheerio.load(result)
+        expect(result).not.toContain('Upload ORS workbooks')
+        expect($('a[href="/overseas-sites/imports"]').length).toBe(0)
+      })
     })
   })
 
   describe('POST /overseas-sites', () => {
     describe('When user is unauthenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(null)
+        vi.mocked(getUserSession).mockResolvedValue(null)
       })
 
       test('Should return unauthorised status code', async () => {
@@ -215,7 +236,7 @@ describe('ors-upload download integration', () => {
 
     describe('When user is authenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(mockUserSession)
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
       })
 
       test('Should return CSV file on successful request', async () => {
@@ -308,6 +329,103 @@ describe('ors-upload download integration', () => {
 
         expect(statusCode).toBe(statusCodes.forbidden)
       })
+    })
+  })
+
+  describe('GET /overseas-sites/imports', () => {
+    const uploadPath = '/overseas-sites/imports'
+
+    test('Should return 403 when user lacks admin.write scope', async () => {
+      vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: uploadPath,
+        auth: {
+          strategy: 'session',
+          credentials: readOnlySession
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.forbidden)
+      expect(result).toContain('You do not have permission')
+    })
+
+    test('Should allow access when user has admin.write scope', async () => {
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+
+      mswServer.use(
+        http.post(`${backendUrl}/v1/overseas-sites/imports`, () =>
+          HttpResponse.json({ uploadUrl: 'https://example.test/upload/123' })
+        )
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: uploadPath,
+        auth: {
+          strategy: 'session',
+          credentials: mockUserSession
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('Upload ORS workbooks')
+      expect(result).toContain('example.test/upload/123')
+    })
+  })
+
+  describe('GET /overseas-sites/imports/{importId}', () => {
+    const importId = '8e76e280-dbd2-4d36-9679-c1f6adc31f6b'
+    const statusPath = `/overseas-sites/imports/${importId}`
+
+    const stubStatus = (status) =>
+      mswServer.use(
+        http.get(`${backendUrl}/v1/overseas-sites/imports/${importId}`, () =>
+          HttpResponse.json({ status, files: [] })
+        )
+      )
+
+    test('Should link back to /overseas-sites/imports on failure when user has admin.write', async () => {
+      stubStatus('failed')
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: statusPath,
+        auth: {
+          strategy: 'session',
+          credentials: mockUserSession
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const $ = cheerio.load(result)
+      expect($('a[href="/overseas-sites/imports"]').length).toBe(1)
+      expect(result).toContain('Return to ORS uploads')
+    })
+
+    test('Should link back to /overseas-sites on failure when user only has admin.read', async () => {
+      stubStatus('failed')
+      vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: statusPath,
+        auth: {
+          strategy: 'session',
+          credentials: readOnlySession
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const $ = cheerio.load(result)
+      expect($('a[href="/overseas-sites/imports"]').length).toBe(0)
+      expect($('a[href="/overseas-sites"]').length).toBeGreaterThanOrEqual(1)
+      expect(result).toContain('Back to overseas sites')
+      expect(result).not.toContain('Return to ORS uploads')
     })
   })
 })

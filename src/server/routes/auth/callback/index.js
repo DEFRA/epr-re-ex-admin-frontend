@@ -1,5 +1,7 @@
 import { createUserSession } from '#server/common/helpers/auth/create-user-session.js'
+import { fetchAdminMe } from '#server/common/helpers/auth/fetch-admin-me.js'
 import { randomUUID } from 'node:crypto'
+import { statusCodes } from '#server/common/constants/status-codes.js'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
 import { loggingEventActions } from '#server/common/enums/event.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
@@ -37,6 +39,29 @@ export default {
 
     const { displayName = '', id: userId, email, loginHint } = profile
 
+    let scopes = []
+    try {
+      const adminMe = await fetchAdminMe(token)
+      scopes = adminMe.scopes
+    } catch (error) {
+      const statusCode = /** @type {{ statusCode?: number }} */ (error)
+        .statusCode
+      if (statusCode === statusCodes.forbidden) {
+        request.logger.info({
+          message: `Sign-in denied: user ${email} has no admin tier`,
+          event: { action: loggingEventActions.signIn, reason: 'no_admin_tier' }
+        })
+        await metrics.signInFailure()
+        return h.view('unauthorised')
+      }
+      request.logger.error({
+        err: error,
+        message: 'Failed to resolve admin scopes from backend'
+      })
+      await metrics.signInFailure()
+      throw error
+    }
+
     const sessionId = randomUUID()
 
     const userSession = {
@@ -46,6 +71,7 @@ export default {
       email,
       loginHint,
       isAuthenticated: true,
+      scopes,
       token,
       refreshToken
     }

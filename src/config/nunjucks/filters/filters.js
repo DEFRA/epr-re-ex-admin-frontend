@@ -1,7 +1,5 @@
 /* v8 ignore file */
-import assign from 'lodash/assign.js'
-
-import { formatDate } from './format-date.js'
-import { formatCurrency } from './format-currency.js'
-
-export { assign, formatDate, formatCurrency }
+export { default as assign } from 'lodash/assign.js'
+export { formatDate } from './format-date.js'
+export { formatCurrency } from './format-currency.js'
+export { roleLabel } from './role-label.js'

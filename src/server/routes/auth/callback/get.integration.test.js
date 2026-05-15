@@ -19,7 +19,9 @@ const mock = {
 
 vi.mock('#server/common/helpers/metrics/index.js', async (importOriginal) => ({
   metrics: {
-    ...(await importOriginal()).metrics,
+    .../** @type {typeof import('#server/common/helpers/metrics/index.js')} */ (
+      await importOriginal()
+    ).metrics,
     signInFailure: () => mock.signInFailureMetric(),
     signInSuccess: () => mock.signInSuccessMetric()
   }
@@ -43,7 +45,7 @@ describe('GET /auth/callback', () => {
     vi.clearAllMocks()
   })
 
-  const performSignInFlow = async (accessToken) => {
+  const performSignInFlow = async (accessToken, adminMeOverride) => {
     const signInResponse = await server.inject({
       method: 'GET',
       url: '/auth/sign-in'
@@ -65,7 +67,15 @@ describe('GET /auth/callback', () => {
             { header: { kid: 'test-key-id' } }
           )
         })
-      })
+      }),
+      http.get(
+        `${config.get('eprBackendUrl')}/v1/admin/me`,
+        () =>
+          adminMeOverride ??
+          HttpResponse.json({
+            scopes: ['admin.read', 'admin.write', 'admin.dlq.purge']
+          })
+      )
     )
 
     const stateParam = ssoUrl.searchParams.get('state')
