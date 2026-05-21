@@ -267,14 +267,17 @@ describe('#registrationOverviewController', () => {
       const breadcrumbs = getByRole(body, 'navigation', { name: 'Breadcrumb' })
 
       expect(
-        getAllByRole(breadcrumbs, 'link').map((l) => l.textContent?.trim())
-      ).toEqual(['Organisations', 'Organisation overview'])
-      expect(
-        getByRole(breadcrumbs, 'link', { name: 'Organisations' })
-      ).toHaveAttribute('href', '/organisations')
-      expect(
-        getByRole(breadcrumbs, 'link', { name: 'Organisation overview' })
-      ).toHaveAttribute('href', `/organisations/${organisationId}/overview`)
+        getAllByRole(breadcrumbs, 'link').map((l) => ({
+          text: l.textContent?.trim(),
+          href: l.getAttribute('href')
+        }))
+      ).toEqual([
+        { text: 'Organisations', href: '/organisations' },
+        {
+          text: 'Organisation overview',
+          href: `/organisations/${organisationId}/overview`
+        }
+      ])
     })
 
     test('Should render summary list with status, processing type, material and site', async () => {
