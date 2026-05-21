@@ -141,7 +141,9 @@ describe('#registrationOverviewController', () => {
     summaryLogsResponse = {
       summaryLogs: /** @type {Array<typeof mockSubmittedSummaryLog>} */ ([])
     },
-    wasteBalanceResponse = { [accreditationId]: mockWasteBalance }
+    wasteBalanceResponse = /** @type {Record<string, typeof mockWasteBalance>} */ ({
+      [accreditationId]: mockWasteBalance
+    })
   ) => {
     mswServer.use(
       http.get(
