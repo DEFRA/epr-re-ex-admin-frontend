@@ -1,93 +1,99 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { transformSystemLog } from './transform-system-log.js'
 
+const FILTER_KEYS = ['referenceNumber', 'userId', 'subCategory']
+
 export const systemLogGetController = {
   async handler(request, h) {
-    const hasReferenceNumberQuery = Object.hasOwn(
-      request.query,
-      'referenceNumber'
-    )
-    const rawRef = request.query?.referenceNumber
-    const searchTermReferenceNumber =
-      typeof rawRef === 'string' ? rawRef.trim() : ''
-    const cursor = request.query?.cursor || null
-    const page = Number(request.query?.page) || 1
+    const query = request.query
 
-    if (!searchTermReferenceNumber) {
+    const searchTerms = {
+      referenceNumber: (query.referenceNumber ?? '').trim(),
+      userId: (query.userId ?? '').trim(),
+      subCategory: (query.subCategory ?? '').trim()
+    }
+    const cursor = query.cursor || ''
+    const direction = query.direction === 'prev' ? 'prev' : 'next'
+
+    const hasFilter = FILTER_KEYS.some((key) => searchTerms[key])
+    const wasSubmitted = FILTER_KEYS.some((key) => Object.hasOwn(query, key))
+
+    if (!hasFilter) {
       return h.view('routes/system-logs/index', {
         pageTitle: request.route.settings.app.pageTitle,
         systemLogs: [],
-        searchTerms: {
-          referenceNumber: '',
-          email: '',
-          subCategory: ''
-        },
-        error: hasReferenceNumberQuery
+        searchTerms,
+        error: wasSubmitted
           ? {
-              text: 'Enter an organisation reference number',
+              text: 'Enter an organisation reference number, user ID or event type',
               href: '#referenceNumber'
             }
           : null,
-        pagination: {},
-        page: 1
+        pagination: {}
       })
     }
 
-    const body = { organisationId: searchTermReferenceNumber }
-
+    const backendParams = new URLSearchParams()
+    if (searchTerms.referenceNumber) {
+      backendParams.set('organisationId', searchTerms.referenceNumber)
+    }
+    if (searchTerms.userId) {
+      backendParams.set('userId', searchTerms.userId)
+    }
+    if (searchTerms.subCategory) {
+      backendParams.set('subCategory', searchTerms.subCategory)
+    }
     if (cursor) {
-      body.cursor = cursor
+      backendParams.set('cursor', cursor)
+      backendParams.set('direction', direction)
     }
 
-    const data = await fetchJsonFromBackend(request, '/v1/system-logs/search', {
-      method: 'POST',
-      body: JSON.stringify(body)
-    })
-
-    const pagination = buildPagination({
-      data,
-      referenceNumber: searchTermReferenceNumber,
-      cursor,
-      page
-    })
+    const data = await fetchJsonFromBackend(
+      request,
+      `/v1/system-logs/search?${backendParams}`,
+      { method: 'GET' }
+    )
 
     return h.view('routes/system-logs/index', {
       pageTitle: request.route.settings.app.pageTitle,
       systemLogs: data.systemLogs.map(transformSystemLog),
-      searchTerms: {
-        referenceNumber: searchTermReferenceNumber,
-        email: '',
-        subCategory: ''
-      },
+      searchTerms,
       error: null,
-      pagination,
-      page
+      pagination: buildPagination(data, searchTerms)
     })
   }
 }
 
-function buildPagination({ data, referenceNumber, cursor, page }) {
+/**
+ * @param {{
+ *   hasNext?: boolean, hasPrev?: boolean,
+ *   nextCursor?: string, prevCursor?: string
+ * }} data
+ * @param {{ referenceNumber: string, userId: string, subCategory: string }} searchTerms
+ */
+function buildPagination(data, searchTerms) {
+  const link = (cursor, direction) => {
+    const params = new URLSearchParams()
+    if (searchTerms.referenceNumber) {
+      params.set('referenceNumber', searchTerms.referenceNumber)
+    }
+    if (searchTerms.userId) {
+      params.set('userId', searchTerms.userId)
+    }
+    if (searchTerms.subCategory) {
+      params.set('subCategory', searchTerms.subCategory)
+    }
+    params.set('cursor', cursor)
+    params.set('direction', direction)
+    return { href: `/system-logs?${params}` }
+  }
+
   const pagination = {}
-
-  if (data?.hasMore && data?.nextCursor) {
-    const nextParams = new URLSearchParams({
-      referenceNumber,
-      cursor: data.nextCursor,
-      page: String(page + 1)
-    })
-
-    pagination.next = {
-      href: `/system-logs?${nextParams.toString()}`
-    }
+  if (data?.hasNext && data?.nextCursor) {
+    pagination.next = link(data.nextCursor, 'next')
   }
-
-  if (cursor && page > 1) {
-    const prevParams = new URLSearchParams({ referenceNumber })
-
-    pagination.previous = {
-      href: `/system-logs?${prevParams.toString()}`
-    }
+  if (data?.hasPrev && data?.prevCursor) {
+    pagination.previous = link(data.prevCursor, 'prev')
   }
-
   return pagination
 }

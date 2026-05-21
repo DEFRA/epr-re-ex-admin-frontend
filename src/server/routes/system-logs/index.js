@@ -1,6 +1,5 @@
 import Joi from 'joi'
 import { systemLogGetController } from './controller.get.js'
-import { systemLogPostController } from './controller.post.js'
 import { systemLogDownloadController } from './controller.download.js'
 
 const idParam = Joi.string()
@@ -31,15 +30,16 @@ export const systemLogs = {
           path: '/system-logs',
           ...systemLogGetController,
           options: {
-            app: { pageTitle: 'System logs' }
-          }
-        },
-        {
-          method: 'POST',
-          path: '/system-logs',
-          ...systemLogPostController,
-          options: {
-            app: { pageTitle: 'System logs' }
+            app: { pageTitle: 'System logs' },
+            validate: {
+              query: Joi.object({
+                referenceNumber: Joi.string().allow('').optional(),
+                userId: Joi.string().allow('').optional(),
+                subCategory: Joi.string().allow('').optional(),
+                cursor: Joi.string().hex().length(24).optional(),
+                direction: Joi.string().valid('next', 'prev').optional()
+              })
+            }
           }
         }
       ])
