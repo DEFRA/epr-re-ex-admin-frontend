@@ -265,16 +265,16 @@ describe('#registrationOverviewController', () => {
 
       const body = renderPage(result)
       const breadcrumbs = getByRole(body, 'navigation', { name: 'Breadcrumb' })
-      const links = getAllByRole(breadcrumbs, 'link')
 
-      expect(links).toHaveLength(2)
-      expect(links[0]).toHaveTextContent('Organisations')
-      expect(links[0]).toHaveAttribute('href', '/organisations')
-      expect(links[1]).toHaveTextContent('Organisation overview')
-      expect(links[1]).toHaveAttribute(
-        'href',
-        `/organisations/${organisationId}/overview`
-      )
+      expect(
+        getAllByRole(breadcrumbs, 'link').map((l) => l.textContent?.trim())
+      ).toEqual(['Organisations', 'Organisation overview'])
+      expect(
+        getByRole(breadcrumbs, 'link', { name: 'Organisations' })
+      ).toHaveAttribute('href', '/organisations')
+      expect(
+        getByRole(breadcrumbs, 'link', { name: 'Organisation overview' })
+      ).toHaveAttribute('href', `/organisations/${organisationId}/overview`)
     })
 
     test('Should render summary list with status, processing type, material and site', async () => {
@@ -352,35 +352,29 @@ describe('#registrationOverviewController', () => {
 
       const body = renderPage(result)
       const reportsTable = getReportsTable(body)
-      const headers = getAllByRole(reportsTable, 'columnheader')
 
-      expect(headers[0]).toHaveTextContent('Period')
-      expect(headers[1]).toHaveTextContent('Due')
-      expect(headers[2]).toHaveTextContent('Status')
-      expect(headers[3]).toHaveTextContent('Actions')
+      expect(
+        getAllByRole(reportsTable, 'columnheader').map((h) =>
+          h.textContent?.trim()
+        )
+      ).toEqual(['Period', 'Due', 'Status', 'Actions'])
 
-      const dataRows = getDataRows(reportsTable)
-      expect(dataRows).toHaveLength(2)
+      const [firstRow, secondRow] = getDataRows(reportsTable)
 
-      const firstRowCells = getAllByRole(dataRows[0], 'cell')
-      expect(firstRowCells[0]).toHaveTextContent('January')
-      expect(firstRowCells[1]).toHaveTextContent('2026-02-20')
-      expect(within(firstRowCells[2]).getByText('ready_to_submit')).toHaveClass(
+      expect(within(firstRow).getByText('January')).toBeInTheDocument()
+      expect(within(firstRow).getByText('2026-02-20')).toBeInTheDocument()
+      expect(within(firstRow).getByText('ready_to_submit')).toHaveClass(
         'govuk-tag'
       )
-      const viewLink = within(firstRowCells[3]).getByRole('link', {
-        name: 'View'
-      })
-      expect(viewLink).toHaveAttribute(
+      expect(
+        within(firstRow).getByRole('link', { name: 'View' })
+      ).toHaveAttribute(
         'href',
         `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1`
       )
 
-      const secondRowCells = getAllByRole(dataRows[1], 'cell')
-      expect(within(secondRowCells[2]).getByText('Due')).toHaveClass(
-        'govuk-tag'
-      )
-      expect(within(secondRowCells[3]).queryByRole('link')).toBeNull()
+      expect(within(secondRow).getByText('Due')).toHaveClass('govuk-tag')
+      expect(within(secondRow).queryByRole('link')).toBeNull()
     })
 
     test('Should render the Summary logs table with column headers when summary logs exist', async () => {
@@ -395,11 +389,12 @@ describe('#registrationOverviewController', () => {
       })
 
       const body = renderPage(result)
-      const headers = getAllByRole(getSummaryLogsTable(body), 'columnheader')
 
-      expect(headers[0]).toHaveTextContent('Uploaded at')
-      expect(headers[1]).toHaveTextContent('Status')
-      expect(headers[2]).toHaveTextContent('Actions')
+      expect(
+        getAllByRole(getSummaryLogsTable(body), 'columnheader').map((h) =>
+          h.textContent?.trim()
+        )
+      ).toEqual(['Uploaded at', 'Status', 'Actions'])
     })
 
     test('Should render a green Success tag and Download link for a submitted log', async () => {
@@ -414,20 +409,18 @@ describe('#registrationOverviewController', () => {
       })
 
       const body = renderPage(result)
-      const cells = getAllByRole(
-        getDataRows(getSummaryLogsTable(body))[0],
-        'cell'
+      const [firstRow] = getDataRows(getSummaryLogsTable(body))
+
+      expect(
+        within(firstRow).getByText('2026-01-01T11:00:00.000Z')
+      ).toBeInTheDocument()
+      expect(within(firstRow).getByText('Success')).toHaveClass(
+        'govuk-tag',
+        'govuk-tag--green'
       )
-
-      expect(cells[0]).toHaveTextContent('2026-01-01T11:00:00.000Z')
-
-      const tag = within(cells[1]).getByText('Success')
-      expect(tag).toHaveClass('govuk-tag', 'govuk-tag--green')
-
-      const downloadLink = within(cells[2]).getByRole('link', {
-        name: 'Download'
-      })
-      expect(downloadLink).toHaveAttribute(
+      expect(
+        within(firstRow).getByRole('link', { name: 'Download' })
+      ).toHaveAttribute(
         'href',
         `/system-logs/download/${organisationId}/${registrationId}/${mockSubmittedSummaryLog.summaryLogId}`
       )
@@ -474,12 +467,12 @@ describe('#registrationOverviewController', () => {
       const dataRows = getDataRows(getSummaryLogsTable(body))
 
       expect(dataRows).toHaveLength(2)
-      expect(getAllByRole(dataRows[0], 'cell')[0]).toHaveTextContent(
-        '2026-01-01T11:00:00.000Z'
-      )
-      expect(getAllByRole(dataRows[1], 'cell')[0]).toHaveTextContent(
-        '2026-01-04T11:00:00.000Z'
-      )
+      expect(
+        within(dataRows[0]).getByText('2026-01-01T11:00:00.000Z')
+      ).toBeInTheDocument()
+      expect(
+        within(dataRows[1]).getByText('2026-01-04T11:00:00.000Z')
+      ).toBeInTheDocument()
     })
 
     test('Should render "No summary logs" when the summary-logs list is empty', async () => {
