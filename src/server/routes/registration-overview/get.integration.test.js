@@ -36,6 +36,8 @@ describe('#registrationOverviewController', () => {
     vi.clearAllMocks()
   })
 
+  const accreditationId = '69c3b4f0abda9efa68dd6698'
+
   /**
    * @type {{
    *   id: string,
@@ -55,10 +57,15 @@ describe('#registrationOverviewController', () => {
     material: 'glass',
     site: 'Site A',
     accreditation: {
-      id: '69c3b4f0abda9efa68dd6698',
+      id: accreditationId,
       accreditationNumber: 'ACC-50030-001',
       status: 'approved'
     }
+  }
+
+  const mockWasteBalance = {
+    amount: 1500,
+    availableAmount: 1200
   }
 
   const mockOverview = {
@@ -133,7 +140,8 @@ describe('#registrationOverviewController', () => {
     calendarResponse = mockCalendar,
     summaryLogsResponse = {
       summaryLogs: /** @type {Array<typeof mockSubmittedSummaryLog>} */ ([])
-    }
+    },
+    wasteBalanceResponse = { [accreditationId]: mockWasteBalance }
   ) => {
     mswServer.use(
       http.get(
@@ -147,6 +155,10 @@ describe('#registrationOverviewController', () => {
       http.get(
         `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs`,
         () => HttpResponse.json(summaryLogsResponse)
+      ),
+      http.get(
+        `${backendUrl}/v1/organisations/${organisationId}/waste-balances`,
+        () => HttpResponse.json(wasteBalanceResponse)
       )
     )
   }
@@ -504,6 +516,94 @@ describe('#registrationOverviewController', () => {
       expect(result).toEqual(
         expect.stringContaining('Sorry, there is a problem with the service')
       )
+    })
+
+    describe('Waste balance section', () => {
+      const findWasteBalanceSection = ($) => $('#waste-balance')
+
+      test('Should render the waste balance table with amount and available amount when accredited', async () => {
+        useMockBackend()
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const $ = cheerio.load(result)
+        const section = findWasteBalanceSection($)
+        expect(section).toHaveLength(1)
+
+        const headers = section.find('thead tr th')
+        expect($(headers[0]).text().trim()).toEqual('Amount (tonnes)')
+        expect($(headers[1]).text().trim()).toEqual('Available amount (tonnes)')
+
+        const cells = section.find('tbody tr td')
+        expect($(cells[0]).text().trim()).toEqual('1500')
+        expect($(cells[1]).text().trim()).toEqual('1200')
+      })
+
+      test('Should not render the waste balance section when the registration has no accreditation', async () => {
+        useMockBackend({
+          ...mockOverview,
+          registrations: [{ ...mockRegistration, accreditation: null }]
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const $ = cheerio.load(result)
+        expect(findWasteBalanceSection($)).toHaveLength(0)
+      })
+
+      test('Should not render the waste balance section when the backend returns no balance', async () => {
+        useMockBackend(mockOverview, mockCalendar, { summaryLogs: [] }, {})
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const $ = cheerio.load(result)
+        expect(findWasteBalanceSection($)).toHaveLength(0)
+      })
+
+      test('Should still render the page when the waste balance endpoint errors', async () => {
+        mswServer.use(
+          http.get(
+            `${backendUrl}/v1/organisations/${organisationId}/overview`,
+            () => HttpResponse.json(mockOverview)
+          ),
+          http.get(
+            `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
+            () => HttpResponse.json(mockCalendar)
+          ),
+          http.get(
+            `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs`,
+            () => HttpResponse.json({ summaryLogs: [] })
+          ),
+          http.get(
+            `${backendUrl}/v1/organisations/${organisationId}/waste-balances`,
+            () => {
+              throw HttpResponse.text('', { status: 500 })
+            }
+          )
+        )
+
+        const { statusCode, result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        const $ = cheerio.load(result)
+        expect(findWasteBalanceSection($)).toHaveLength(0)
+      })
     })
 
     describe('Unsubmit link visibility', () => {
