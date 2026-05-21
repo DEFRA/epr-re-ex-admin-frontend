@@ -33,6 +33,20 @@ const toSummaryLogTableRow =
     ]
   }
 
+const fetchWasteBalance = async (request, organisationId, accreditationId) => {
+  try {
+    const balanceMap = await fetchJsonFromBackend(
+      request,
+      `/v1/organisations/${organisationId}/waste-balances?accreditationIds=${accreditationId}`,
+      {}
+    )
+    return balanceMap[accreditationId] ?? null
+  } catch (err) {
+    request.logger.warn({ message: 'Failed to fetch waste balance', err })
+    return null
+  }
+}
+
 export const registrationOverviewGETController = {
   async handler(request, h) {
     const { organisationId, registrationId } = request.params
@@ -56,6 +70,14 @@ export const registrationOverviewGETController = {
       organisationId,
       registrationId
     )
+
+    const wasteBalance = registration.accreditation
+      ? await fetchWasteBalance(
+          request,
+          organisationId,
+          registration.accreditation.id
+        )
+      : null
 
     const pageTitle = request.route.settings.app.pageTitle
 
@@ -83,7 +105,8 @@ export const registrationOverviewGETController = {
         ...rp,
         formattedPeriod: formatPeriod(rp.period, calendar.cadence)
       })),
-      summaryLogRows
+      summaryLogRows,
+      wasteBalance
     })
   }
 }
