@@ -38,7 +38,7 @@ export const systemLogs = {
                 subCategory: Joi.string().allow('').optional(),
                 cursor: Joi.string().hex().length(24).optional(),
                 direction: Joi.string().valid('next', 'prev').optional()
-              })
+              }).with('direction', 'cursor')
             }
           }
         }
