@@ -7,11 +7,7 @@ export const systemLogGetController = {
   async handler(request, h) {
     const query = request.query
 
-    const searchTerms = {
-      referenceNumber: (query.referenceNumber ?? '').trim(),
-      userId: (query.userId ?? '').trim(),
-      subCategory: (query.subCategory ?? '').trim()
-    }
+    const searchTerms = normaliseSearchTerms(query)
     const cursor = query.cursor || ''
     const direction = query.direction === 'prev' ? 'prev' : 'next'
 
@@ -33,20 +29,7 @@ export const systemLogGetController = {
       })
     }
 
-    const backendParams = new URLSearchParams()
-    if (searchTerms.referenceNumber) {
-      backendParams.set('organisationId', searchTerms.referenceNumber)
-    }
-    if (searchTerms.userId) {
-      backendParams.set('userId', searchTerms.userId)
-    }
-    if (searchTerms.subCategory) {
-      backendParams.set('subCategory', searchTerms.subCategory)
-    }
-    if (cursor) {
-      backendParams.set('cursor', cursor)
-      backendParams.set('direction', direction)
-    }
+    const backendParams = buildBackendParams(searchTerms, cursor, direction)
 
     const data = await fetchJsonFromBackend(
       request,
@@ -62,6 +45,42 @@ export const systemLogGetController = {
       pagination: buildPagination(data, searchTerms)
     })
   }
+}
+
+/**
+ * @param {Record<string, string>} query
+ * @returns {{ referenceNumber: string, userId: string, subCategory: string }}
+ */
+function normaliseSearchTerms(query) {
+  return {
+    referenceNumber: (query.referenceNumber ?? '').trim(),
+    userId: (query.userId ?? '').trim(),
+    subCategory: (query.subCategory ?? '').trim()
+  }
+}
+
+/**
+ * @param {{ referenceNumber: string, userId: string, subCategory: string }} searchTerms
+ * @param {string} cursor
+ * @param {'next' | 'prev'} direction
+ * @returns {URLSearchParams}
+ */
+function buildBackendParams(searchTerms, cursor, direction) {
+  const params = new URLSearchParams()
+  if (searchTerms.referenceNumber) {
+    params.set('organisationId', searchTerms.referenceNumber)
+  }
+  if (searchTerms.userId) {
+    params.set('userId', searchTerms.userId)
+  }
+  if (searchTerms.subCategory) {
+    params.set('subCategory', searchTerms.subCategory)
+  }
+  if (cursor) {
+    params.set('cursor', cursor)
+    params.set('direction', direction)
+  }
+  return params
 }
 
 /**
