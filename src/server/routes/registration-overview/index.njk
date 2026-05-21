@@ -84,5 +84,28 @@
         {% endif %}
       </div>
     </div>
+    {% if registration.accreditation %}
+      <div class="govuk-grid-row">
+        <div id="waste-balance" class="govuk-grid-column-two-thirds">
+          {% if wasteBalance %}
+            {{ govukTable({
+              caption: "Waste balance",
+              captionClasses: "govuk-table__caption--m",
+              head: [
+                { text: "Amount (tonnes)" },
+                { text: "Available amount (tonnes)" }
+              ],
+              rows: [[
+                { text: wasteBalance.amount },
+                { text: wasteBalance.availableAmount }
+              ]]
+            }) }}
+          {% else %}
+            <h2 class="govuk-heading-m">Waste balance</h2>
+            <p class="govuk-body">No waste balance data</p>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
   </div>
 {% endblock %}
