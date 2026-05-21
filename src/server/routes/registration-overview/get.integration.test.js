@@ -559,7 +559,7 @@ describe('#registrationOverviewController', () => {
         expect(findWasteBalanceSection($)).toHaveLength(0)
       })
 
-      test('Should not render the waste balance section when the backend returns no balance', async () => {
+      test('Should render "No waste balance data" when the backend returns no balance for the accreditation', async () => {
         useMockBackend(mockOverview, mockCalendar, { summaryLogs: [] }, {})
 
         const { result } = await server.inject({
@@ -569,10 +569,13 @@ describe('#registrationOverviewController', () => {
         })
 
         const $ = cheerio.load(result)
-        expect(findWasteBalanceSection($)).toHaveLength(0)
+        const section = findWasteBalanceSection($)
+        expect(section).toHaveLength(1)
+        expect(section.find('table')).toHaveLength(0)
+        expect(result).toContain('No waste balance data')
       })
 
-      test('Should still render the page when the waste balance endpoint errors', async () => {
+      test('Should still render the page with "No waste balance data" when the waste balance endpoint errors', async () => {
         mswServer.use(
           http.get(
             `${backendUrl}/v1/organisations/${organisationId}/overview`,
@@ -602,7 +605,10 @@ describe('#registrationOverviewController', () => {
 
         expect(statusCode).toBe(statusCodes.ok)
         const $ = cheerio.load(result)
-        expect(findWasteBalanceSection($)).toHaveLength(0)
+        const section = findWasteBalanceSection($)
+        expect(section).toHaveLength(1)
+        expect(section.find('table')).toHaveLength(0)
+        expect(result).toContain('No waste balance data')
       })
     })
 
