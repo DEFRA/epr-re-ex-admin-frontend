@@ -521,9 +521,7 @@ describe('#registrationOverviewController', () => {
     })
 
     describe('Waste balance section', () => {
-      const findWasteBalanceSection = ($) => $('#waste-balance')
-
-      test('Should render the waste balance table with amount and available amount when accredited', async () => {
+      test('Should render waste balance rows in summary list when accredited', async () => {
         useMockBackend()
 
         const { result } = await server.inject({
@@ -533,19 +531,18 @@ describe('#registrationOverviewController', () => {
         })
 
         const $ = cheerio.load(result)
-        const section = findWasteBalanceSection($)
-        expect(section).toHaveLength(1)
+        const keys = $('.govuk-summary-list__key')
+        const values = $('.govuk-summary-list__value')
 
-        const headers = section.find('thead tr th')
-        expect($(headers[0]).text().trim()).toEqual('Amount (tonnes)')
-        expect($(headers[1]).text().trim()).toEqual('Available amount (tonnes)')
-
-        const cells = section.find('tbody tr td')
-        expect($(cells[0]).text().trim()).toEqual('1500')
-        expect($(cells[1]).text().trim()).toEqual('1200')
+        expect($(keys[6]).text().trim()).toEqual('Waste balance (tonnes)')
+        expect($(values[6]).text().trim()).toEqual('1500')
+        expect($(keys[7]).text().trim()).toEqual(
+          'Waste balance available (tonnes)'
+        )
+        expect($(values[7]).text().trim()).toEqual('1200')
       })
 
-      test('Should not render the waste balance section when the registration has no accreditation', async () => {
+      test('Should not render waste balance rows when the registration has no accreditation', async () => {
         useMockBackend({
           ...mockOverview,
           registrations: [{ ...mockRegistration, accreditation: null }]
@@ -558,10 +555,10 @@ describe('#registrationOverviewController', () => {
         })
 
         const $ = cheerio.load(result)
-        expect(findWasteBalanceSection($)).toHaveLength(0)
+        expect($('.govuk-summary-list__key')).toHaveLength(4)
       })
 
-      test('Should render "No waste balance data" when the backend returns no balance for the accreditation', async () => {
+      test('Should render "No data" in waste balance rows when the backend returns no balance', async () => {
         useMockBackend(mockOverview, mockCalendar, { summaryLogs: [] }, {})
 
         const { result } = await server.inject({
@@ -571,13 +568,18 @@ describe('#registrationOverviewController', () => {
         })
 
         const $ = cheerio.load(result)
-        const section = findWasteBalanceSection($)
-        expect(section).toHaveLength(1)
-        expect(section.find('table')).toHaveLength(0)
-        expect(result).toContain('No waste balance data')
+        const keys = $('.govuk-summary-list__key')
+        const values = $('.govuk-summary-list__value')
+
+        expect($(keys[6]).text().trim()).toEqual('Waste balance (tonnes)')
+        expect($(values[6]).text().trim()).toEqual('No data')
+        expect($(keys[7]).text().trim()).toEqual(
+          'Waste balance available (tonnes)'
+        )
+        expect($(values[7]).text().trim()).toEqual('No data')
       })
 
-      test('Should still render the page with "No waste balance data" when the waste balance endpoint errors', async () => {
+      test('Should still render the page with "No data" in waste balance rows when the waste balance endpoint errors', async () => {
         mswServer.use(
           http.get(
             `${backendUrl}/v1/organisations/${organisationId}/overview`,
@@ -607,10 +609,15 @@ describe('#registrationOverviewController', () => {
 
         expect(statusCode).toBe(statusCodes.ok)
         const $ = cheerio.load(result)
-        const section = findWasteBalanceSection($)
-        expect(section).toHaveLength(1)
-        expect(section.find('table')).toHaveLength(0)
-        expect(result).toContain('No waste balance data')
+        const keys = $('.govuk-summary-list__key')
+        const values = $('.govuk-summary-list__value')
+
+        expect($(keys[6]).text().trim()).toEqual('Waste balance (tonnes)')
+        expect($(values[6]).text().trim()).toEqual('No data')
+        expect($(keys[7]).text().trim()).toEqual(
+          'Waste balance available (tonnes)'
+        )
+        expect($(values[7]).text().trim()).toEqual('No data')
       })
     })
 
