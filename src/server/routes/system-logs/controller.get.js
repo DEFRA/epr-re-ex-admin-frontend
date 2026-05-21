@@ -70,6 +70,7 @@ export const systemLogGetController = {
  *   nextCursor?: string, prevCursor?: string
  * }} data
  * @param {{ referenceNumber: string, userId: string, subCategory: string }} searchTerms
+ * @returns {{ next?: { href: string }, previous?: { href: string } }}
  */
 function buildPagination(data, searchTerms) {
   const link = (cursor, direction) => {
