@@ -4,9 +4,17 @@ import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/server.js'
-import { vi } from 'vitest'
 import { http, HttpResponse, server as mswServer } from '#vite/setup-msw.js'
-import * as cheerio from 'cheerio'
+import {
+  getAllByRole,
+  getByRole,
+  getByText,
+  queryByRole,
+  queryByText,
+  within
+} from '@testing-library/dom'
+import { Window } from 'happy-dom'
+import { vi } from 'vitest'
 
 vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
   getUserSession: vi.fn().mockReturnValue(null)
@@ -132,8 +140,29 @@ describe('#registrationOverviewController', () => {
     status: 'validation_failed'
   }
 
-  const findReportsTable = ($) => $('#reports table')
-  const findSummaryLogsTable = ($) => $('#summary-logs table')
+  const renderPage = (html) => {
+    const window = new Window()
+    window.document.body.innerHTML = html
+    return /** @type {HTMLElement} */ (
+      /** @type {unknown} */ (window.document.body)
+    )
+  }
+
+  const getReportsTable = (container) =>
+    getByRole(container, 'table', { name: 'Reports' })
+
+  const getSummaryLogsTable = (container) =>
+    getByRole(container, 'table', { name: 'Summary logs' })
+
+  const getDataRows = (table) => getAllByRole(table, 'row').slice(1)
+
+  const getSummaryRowValue = (container, label) => {
+    const term = getByText(container, label, { selector: 'dt' })
+    const row = /** @type {HTMLElement} */ (
+      term.closest('.govuk-summary-list__row')
+    )
+    return within(row).getByRole('definition')
+  }
 
   const useMockBackend = (
     overviewResponse = mockOverview,
@@ -199,8 +228,11 @@ describe('#registrationOverviewController', () => {
         auth: { strategy: 'session', credentials: mockUserSession }
       })
 
-      const $ = cheerio.load(result)
-      expect($('h1').text().trim()).toEqual('ACME ltd - REG-50030-001')
+      const body = renderPage(result)
+
+      expect(getByRole(body, 'heading', { level: 1 })).toHaveTextContent(
+        'ACME ltd - REG-50030-001'
+      )
     })
 
     test('Should fall back to registration id in heading when registrationNumber is missing', async () => {
@@ -215,8 +247,11 @@ describe('#registrationOverviewController', () => {
         auth: { strategy: 'session', credentials: mockUserSession }
       })
 
-      const $ = cheerio.load(result)
-      expect($('h1').text().trim()).toEqual(`ACME ltd - ${registrationId}`)
+      const body = renderPage(result)
+
+      expect(getByRole(body, 'heading', { level: 1 })).toHaveTextContent(
+        `ACME ltd - ${registrationId}`
+      )
     })
 
     test('Should render breadcrumbs for Organisations and Overview', async () => {
@@ -228,13 +263,16 @@ describe('#registrationOverviewController', () => {
         auth: { strategy: 'session', credentials: mockUserSession }
       })
 
-      const $ = cheerio.load(result)
-      const breadcrumbLinks = $('.govuk-breadcrumbs__link')
-      expect(breadcrumbLinks).toHaveLength(2)
-      expect($(breadcrumbLinks[0]).text()).toEqual('Organisations')
-      expect($(breadcrumbLinks[0]).attr('href')).toEqual('/organisations')
-      expect($(breadcrumbLinks[1]).text()).toEqual('Organisation overview')
-      expect($(breadcrumbLinks[1]).attr('href')).toEqual(
+      const body = renderPage(result)
+      const breadcrumbs = getByRole(body, 'navigation', { name: 'Breadcrumb' })
+      const links = getAllByRole(breadcrumbs, 'link')
+
+      expect(links).toHaveLength(2)
+      expect(links[0]).toHaveTextContent('Organisations')
+      expect(links[0]).toHaveAttribute('href', '/organisations')
+      expect(links[1]).toHaveTextContent('Organisation overview')
+      expect(links[1]).toHaveAttribute(
+        'href',
         `/organisations/${organisationId}/overview`
       )
     })
@@ -248,20 +286,16 @@ describe('#registrationOverviewController', () => {
         auth: { strategy: 'session', credentials: mockUserSession }
       })
 
-      const $ = cheerio.load(result)
-      const keys = $('.govuk-summary-list__key')
-      const values = $('.govuk-summary-list__value')
+      const body = renderPage(result)
 
-      expect($(keys[0]).text().trim()).toEqual('Status')
-      expect($(values[0]).find('strong.govuk-tag').text().trim()).toEqual(
-        'approved'
+      expect(
+        within(getSummaryRowValue(body, 'Status')).getByText('approved')
+      ).toHaveClass('govuk-tag')
+      expect(getSummaryRowValue(body, 'Processing type')).toHaveTextContent(
+        'reprocessing'
       )
-      expect($(keys[1]).text().trim()).toEqual('Processing type')
-      expect($(values[1]).text().trim()).toEqual('reprocessing')
-      expect($(keys[2]).text().trim()).toEqual('Material')
-      expect($(values[2]).text().trim()).toEqual('glass')
-      expect($(keys[3]).text().trim()).toEqual('Site')
-      expect($(values[3]).text().trim()).toEqual('Site A')
+      expect(getSummaryRowValue(body, 'Material')).toHaveTextContent('glass')
+      expect(getSummaryRowValue(body, 'Site')).toHaveTextContent('Site A')
     })
 
     test('Should render accreditation rows in summary list when accreditation exists', async () => {
@@ -273,16 +307,16 @@ describe('#registrationOverviewController', () => {
         auth: { strategy: 'session', credentials: mockUserSession }
       })
 
-      const $ = cheerio.load(result)
-      const keys = $('.govuk-summary-list__key')
-      const values = $('.govuk-summary-list__value')
+      const body = renderPage(result)
 
-      expect($(keys[4]).text().trim()).toEqual('Accreditation number')
-      expect($(values[4]).text().trim()).toEqual('ACC-50030-001')
-      expect($(keys[5]).text().trim()).toEqual('Accreditation status')
-      expect($(values[5]).find('strong.govuk-tag').text().trim()).toEqual(
-        'approved'
-      )
+      expect(
+        getSummaryRowValue(body, 'Accreditation number')
+      ).toHaveTextContent('ACC-50030-001')
+      expect(
+        within(getSummaryRowValue(body, 'Accreditation status')).getByText(
+          'approved'
+        )
+      ).toHaveClass('govuk-tag')
     })
 
     test('Should not render accreditation rows in summary list when accreditation is absent', async () => {
@@ -297,12 +331,14 @@ describe('#registrationOverviewController', () => {
         auth: { strategy: 'session', credentials: mockUserSession }
       })
 
-      const $ = cheerio.load(result)
-      const keys = $('.govuk-summary-list__key')
-      const keyTexts = keys.map((_, el) => $(el).text().trim()).get()
+      const body = renderPage(result)
 
-      expect(keyTexts).not.toContain('Accreditation number')
-      expect(keyTexts).not.toContain('Accreditation status')
+      expect(
+        queryByText(body, 'Accreditation number', { selector: 'dt' })
+      ).toBeNull()
+      expect(
+        queryByText(body, 'Accreditation status', { selector: 'dt' })
+      ).toBeNull()
     })
 
     test('Should render the reporting periods table', async () => {
@@ -314,33 +350,37 @@ describe('#registrationOverviewController', () => {
         auth: { strategy: 'session', credentials: mockUserSession }
       })
 
-      const $ = cheerio.load(result)
-      const headers = findReportsTable($).find('thead tr th')
-      expect($(headers[0]).text()).toEqual('Period')
-      expect($(headers[1]).text()).toEqual('Due')
-      expect($(headers[2]).text()).toEqual('Status')
-      expect($(headers[3]).text()).toEqual('Actions')
+      const body = renderPage(result)
+      const reportsTable = getReportsTable(body)
+      const headers = getAllByRole(reportsTable, 'columnheader')
 
-      const rows = findReportsTable($).find('tbody tr')
-      expect(rows).toHaveLength(2)
+      expect(headers[0]).toHaveTextContent('Period')
+      expect(headers[1]).toHaveTextContent('Due')
+      expect(headers[2]).toHaveTextContent('Status')
+      expect(headers[3]).toHaveTextContent('Actions')
 
-      const firstRowCells = $(rows[0]).find('td')
-      expect($(firstRowCells[0]).text().trim()).toEqual('January')
-      expect($(firstRowCells[1]).text().trim()).toEqual('2026-02-20')
-      expect(
-        $(firstRowCells[2]).find('strong.govuk-tag').text().trim()
-      ).toEqual('ready_to_submit')
-      const viewLink = $(firstRowCells[3]).find('a')
-      expect(viewLink.text()).toEqual('View')
-      expect(viewLink.attr('href')).toEqual(
+      const dataRows = getDataRows(reportsTable)
+      expect(dataRows).toHaveLength(2)
+
+      const firstRowCells = getAllByRole(dataRows[0], 'cell')
+      expect(firstRowCells[0]).toHaveTextContent('January')
+      expect(firstRowCells[1]).toHaveTextContent('2026-02-20')
+      expect(within(firstRowCells[2]).getByText('ready_to_submit')).toHaveClass(
+        'govuk-tag'
+      )
+      const viewLink = within(firstRowCells[3]).getByRole('link', {
+        name: 'View'
+      })
+      expect(viewLink).toHaveAttribute(
+        'href',
         `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1`
       )
 
-      const secondRowCells = $(rows[1]).find('td')
-      expect(
-        $(secondRowCells[2]).find('strong.govuk-tag').text().trim()
-      ).toEqual('Due')
-      expect($(secondRowCells[3]).find('a')).toHaveLength(0)
+      const secondRowCells = getAllByRole(dataRows[1], 'cell')
+      expect(within(secondRowCells[2]).getByText('Due')).toHaveClass(
+        'govuk-tag'
+      )
+      expect(within(secondRowCells[3]).queryByRole('link')).toBeNull()
     })
 
     test('Should render the Summary logs table with column headers when summary logs exist', async () => {
@@ -354,14 +394,12 @@ describe('#registrationOverviewController', () => {
         auth: { strategy: 'session', credentials: mockUserSession }
       })
 
-      const $ = cheerio.load(result)
-      const slTable = findSummaryLogsTable($)
-      expect(slTable).toHaveLength(1)
+      const body = renderPage(result)
+      const headers = getAllByRole(getSummaryLogsTable(body), 'columnheader')
 
-      const headers = slTable.find('thead tr th')
-      expect($(headers[0]).text().trim()).toEqual('Uploaded at')
-      expect($(headers[1]).text().trim()).toEqual('Status')
-      expect($(headers[2]).text().trim()).toEqual('Actions')
+      expect(headers[0]).toHaveTextContent('Uploaded at')
+      expect(headers[1]).toHaveTextContent('Status')
+      expect(headers[2]).toHaveTextContent('Actions')
     })
 
     test('Should render a green Success tag and Download link for a submitted log', async () => {
@@ -375,19 +413,22 @@ describe('#registrationOverviewController', () => {
         auth: { strategy: 'session', credentials: mockUserSession }
       })
 
-      const $ = cheerio.load(result)
-      const slTable = findSummaryLogsTable($)
-      const cells = slTable.find('tbody tr').first().find('td')
+      const body = renderPage(result)
+      const cells = getAllByRole(
+        getDataRows(getSummaryLogsTable(body))[0],
+        'cell'
+      )
 
-      expect($(cells[0]).text().trim()).toEqual('2026-01-01T11:00:00.000Z')
+      expect(cells[0]).toHaveTextContent('2026-01-01T11:00:00.000Z')
 
-      const tag = $(cells[1]).find('strong.govuk-tag')
-      expect(tag.text().trim()).toEqual('Success')
-      expect(tag.hasClass('govuk-tag--green')).toBe(true)
+      const tag = within(cells[1]).getByText('Success')
+      expect(tag).toHaveClass('govuk-tag', 'govuk-tag--green')
 
-      const downloadLink = $(cells[2]).find('a')
-      expect(downloadLink.text().trim()).toEqual('Download')
-      expect(downloadLink.attr('href')).toEqual(
+      const downloadLink = within(cells[2]).getByRole('link', {
+        name: 'Download'
+      })
+      expect(downloadLink).toHaveAttribute(
+        'href',
         `/system-logs/download/${organisationId}/${registrationId}/${mockSubmittedSummaryLog.summaryLogId}`
       )
     })
@@ -410,12 +451,11 @@ describe('#registrationOverviewController', () => {
           auth: { strategy: 'session', credentials: mockUserSession }
         })
 
-        const $ = cheerio.load(result)
-        const slTable = findSummaryLogsTable($)
-        const tag = slTable.find('tbody tr').first().find('strong.govuk-tag')
+        const body = renderPage(result)
+        const firstRow = getDataRows(getSummaryLogsTable(body))[0]
+        const tag = within(firstRow).getByText(expectedLabel)
 
-        expect(tag.text().trim()).toEqual(expectedLabel)
-        expect(tag.hasClass('govuk-tag--red')).toBe(true)
+        expect(tag).toHaveClass('govuk-tag', 'govuk-tag--red')
       }
     )
 
@@ -430,15 +470,14 @@ describe('#registrationOverviewController', () => {
         auth: { strategy: 'session', credentials: mockUserSession }
       })
 
-      const $ = cheerio.load(result)
-      const slTable = findSummaryLogsTable($)
-      const rows = slTable.find('tbody tr')
-      expect(rows).toHaveLength(2)
+      const body = renderPage(result)
+      const dataRows = getDataRows(getSummaryLogsTable(body))
 
-      expect($(rows[0]).find('td').first().text().trim()).toEqual(
+      expect(dataRows).toHaveLength(2)
+      expect(getAllByRole(dataRows[0], 'cell')[0]).toHaveTextContent(
         '2026-01-01T11:00:00.000Z'
       )
-      expect($(rows[1]).find('td').first().text().trim()).toEqual(
+      expect(getAllByRole(dataRows[1], 'cell')[0]).toHaveTextContent(
         '2026-01-04T11:00:00.000Z'
       )
     })
@@ -452,10 +491,10 @@ describe('#registrationOverviewController', () => {
         auth: { strategy: 'session', credentials: mockUserSession }
       })
 
-      const $ = cheerio.load(result)
-      const slTable = findSummaryLogsTable($)
-      expect(slTable).toHaveLength(0)
-      expect(result).toContain('No summary logs')
+      const body = renderPage(result)
+
+      expect(queryByRole(body, 'table', { name: 'Summary logs' })).toBeNull()
+      expect(getByText(body, 'No summary logs')).toBeInTheDocument()
     })
 
     test('Should show 500 error page when the summary-logs backend returns a non-OK response', async () => {
@@ -482,9 +521,11 @@ describe('#registrationOverviewController', () => {
         auth: { strategy: 'session', credentials: mockUserSession }
       })
 
-      expect(result).toEqual(
-        expect.stringContaining('Sorry, there is a problem with the service')
-      )
+      const body = renderPage(result)
+
+      expect(
+        getByText(body, 'Sorry, there is a problem with the service')
+      ).toBeInTheDocument()
     })
 
     test('Should return 404 when registration is not found', async () => {
@@ -515,9 +556,11 @@ describe('#registrationOverviewController', () => {
         auth: { strategy: 'session', credentials: mockUserSession }
       })
 
-      expect(result).toEqual(
-        expect.stringContaining('Sorry, there is a problem with the service')
-      )
+      const body = renderPage(result)
+
+      expect(
+        getByText(body, 'Sorry, there is a problem with the service')
+      ).toBeInTheDocument()
     })
 
     describe('Waste balance section', () => {
@@ -530,16 +573,14 @@ describe('#registrationOverviewController', () => {
           auth: { strategy: 'session', credentials: mockUserSession }
         })
 
-        const $ = cheerio.load(result)
-        const keys = $('.govuk-summary-list__key')
-        const values = $('.govuk-summary-list__value')
+        const body = renderPage(result)
 
-        expect($(keys[6]).text().trim()).toEqual('Waste balance (tonnes)')
-        expect($(values[6]).text().trim()).toEqual('1500')
-        expect($(keys[7]).text().trim()).toEqual(
-          'Waste balance available (tonnes)'
-        )
-        expect($(values[7]).text().trim()).toEqual('1200')
+        expect(
+          getSummaryRowValue(body, 'Waste balance (tonnes)')
+        ).toHaveTextContent('1500')
+        expect(
+          getSummaryRowValue(body, 'Waste balance available (tonnes)')
+        ).toHaveTextContent('1200')
       })
 
       test('Should not render waste balance rows when the registration has no accreditation', async () => {
@@ -554,8 +595,16 @@ describe('#registrationOverviewController', () => {
           auth: { strategy: 'session', credentials: mockUserSession }
         })
 
-        const $ = cheerio.load(result)
-        expect($('.govuk-summary-list__key')).toHaveLength(4)
+        const body = renderPage(result)
+
+        expect(
+          queryByText(body, 'Waste balance (tonnes)', { selector: 'dt' })
+        ).toBeNull()
+        expect(
+          queryByText(body, 'Waste balance available (tonnes)', {
+            selector: 'dt'
+          })
+        ).toBeNull()
       })
 
       test('Should render "No data" in waste balance rows when the backend returns no balance', async () => {
@@ -567,16 +616,14 @@ describe('#registrationOverviewController', () => {
           auth: { strategy: 'session', credentials: mockUserSession }
         })
 
-        const $ = cheerio.load(result)
-        const keys = $('.govuk-summary-list__key')
-        const values = $('.govuk-summary-list__value')
+        const body = renderPage(result)
 
-        expect($(keys[6]).text().trim()).toEqual('Waste balance (tonnes)')
-        expect($(values[6]).text().trim()).toEqual('No data')
-        expect($(keys[7]).text().trim()).toEqual(
-          'Waste balance available (tonnes)'
-        )
-        expect($(values[7]).text().trim()).toEqual('No data')
+        expect(
+          getSummaryRowValue(body, 'Waste balance (tonnes)')
+        ).toHaveTextContent('No data')
+        expect(
+          getSummaryRowValue(body, 'Waste balance available (tonnes)')
+        ).toHaveTextContent('No data')
       })
 
       test('Should still render the page with "No data" in waste balance rows when the waste balance endpoint errors', async () => {
@@ -608,16 +655,15 @@ describe('#registrationOverviewController', () => {
         })
 
         expect(statusCode).toBe(statusCodes.ok)
-        const $ = cheerio.load(result)
-        const keys = $('.govuk-summary-list__key')
-        const values = $('.govuk-summary-list__value')
 
-        expect($(keys[6]).text().trim()).toEqual('Waste balance (tonnes)')
-        expect($(values[6]).text().trim()).toEqual('No data')
-        expect($(keys[7]).text().trim()).toEqual(
-          'Waste balance available (tonnes)'
-        )
-        expect($(values[7]).text().trim()).toEqual('No data')
+        const body = renderPage(result)
+
+        expect(
+          getSummaryRowValue(body, 'Waste balance (tonnes)')
+        ).toHaveTextContent('No data')
+        expect(
+          getSummaryRowValue(body, 'Waste balance available (tonnes)')
+        ).toHaveTextContent('No data')
       })
     })
 
@@ -635,13 +681,13 @@ describe('#registrationOverviewController', () => {
           auth: { strategy: 'session', credentials: mockUserSession }
         })
 
-        const $ = cheerio.load(result)
-        const unsubmitLink = findReportsTable($)
-          .find('tbody tr td a')
-          .filter((_, el) => $(el).text().trim() === 'Unsubmit')
+        const body = renderPage(result)
+        const unsubmitLink = within(getReportsTable(body)).getByRole('link', {
+          name: 'Unsubmit'
+        })
 
-        expect(unsubmitLink).toHaveLength(1)
-        expect(unsubmitLink.attr('href')).toEqual(
+        expect(unsubmitLink).toHaveAttribute(
+          'href',
           `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/unsubmit/confirm`
         )
       })
@@ -660,13 +706,13 @@ describe('#registrationOverviewController', () => {
           auth: { strategy: 'session', credentials: readOnlySession }
         })
 
-        const $ = cheerio.load(result)
-        const linkTexts = findReportsTable($)
-          .find('tbody tr td a')
-          .map((_, el) => $(el).text().trim())
-          .get()
+        const body = renderPage(result)
 
-        expect(linkTexts).not.toContain('Unsubmit')
+        expect(
+          within(getReportsTable(body)).queryByRole('link', {
+            name: 'Unsubmit'
+          })
+        ).toBeNull()
       })
     })
   })
