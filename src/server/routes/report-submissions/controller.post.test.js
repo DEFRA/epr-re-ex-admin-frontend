@@ -34,6 +34,7 @@ const buildRow = (overrides = {}) => ({
   tonnageSentOnToExporter: '',
   tonnageSentOnToOtherFacilities: '',
   tonnagePrnsPernsIssued: '',
+  freeTonnagePrnsPerns: '',
   totalRevenuePrnsPerns: '',
   averagePrnPernPricePerTonne: '',
   tonnageReceivedButNotRecycled: '',
@@ -196,7 +197,7 @@ describe('reportSubmissionsPostController', () => {
     expect(csv).toContain("'=SUM(A1)")
   })
 
-  test('CSV includes the 16 tonnage column headers', async () => {
+  test('CSV includes the 17 tonnage column headers', async () => {
     fetchJsonFromBackend.mockResolvedValue({
       reportSubmissions: [],
       generatedAt: '2026-04-17T10:00:00.000Z'
@@ -213,6 +214,7 @@ describe('reportSubmissionsPostController', () => {
     expect(csv).toContain('Tonnage sent on to an exporter')
     expect(csv).toContain('Tonnage sent on to other facilities')
     expect(csv).toContain('Tonnage of PRNs/PERNs issued')
+    expect(csv).toContain('Self-issued (free) tonnage')
     expect(csv).toContain('Total revenue from PRNs/PERNs')
     expect(csv).toContain('Average PRN/PERN price per tonne')
     expect(csv).toContain('Tonnage received but not recycled')
@@ -235,6 +237,7 @@ describe('reportSubmissionsPostController', () => {
           tonnageSentOnToExporter: '7',
           tonnageSentOnToOtherFacilities: '3',
           tonnagePrnsPernsIssued: '90',
+          freeTonnagePrnsPerns: '10',
           totalRevenuePrnsPerns: '4500',
           averagePrnPernPricePerTonne: '50',
           tonnageReceivedButNotRecycled: '19.5',
@@ -254,6 +257,7 @@ describe('reportSubmissionsPostController', () => {
     expect(csv).toContain('100.5')
     expect(csv).toContain('80')
     expect(csv).toContain('20.25')
+    expect(csv).toContain('10')
     expect(csv).toContain('All good')
   })
 
