@@ -27,8 +27,7 @@
 
         <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
 
-        <form method="post" action="/system-logs" class="app-filters">
-          <input type="hidden" name="crumb" value="{{ crumb }}" />
+        <form method="get" action="/system-logs" class="app-filters">
           <h2 class="govuk-heading-m">Search system logs by</h2>
           <div class="govuk-form-group">
             {{ govukInput({
@@ -49,13 +48,13 @@
           <div class="govuk-form-group">
             {{ govukInput({
               label: {
-                text: "User email",
+                text: "User ID",
                 classes: "govuk-label--s"
               },
-              id: "email",
-              name: "email",
-              type: "email",
-              value: searchTerms.email,
+              id: "userId",
+              name: "userId",
+              type: "search",
+              value: searchTerms.userId,
               errorMessage: error if error,
               autocomplete: "off",
               classes: "govuk-input--width-20"
@@ -165,7 +164,6 @@
         {% endfor %}
 
         {% if pagination.previous or pagination.next %}
-          <p class="govuk-body">Showing page {{ page }}</p>
           {{ govukPagination({
             previous: pagination.previous,
             next: pagination.next
