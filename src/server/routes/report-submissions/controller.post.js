@@ -7,6 +7,46 @@ import { createLogger } from '#server/common/helpers/logging/logger.js'
 const logger = createLogger()
 
 /**
+ * @param {import('./types.js').ReportSubmissionsRow} row
+ * @returns {string[]}
+ */
+function buildDataRow(row) {
+  return [
+    row.regulator,
+    sanitizeFormulaInjection(row.organisationName),
+    row.approvedPersonsPhone,
+    row.approvedPersonsEmail,
+    row.submitterPhone,
+    row.submitterEmail,
+    row.material,
+    row.accreditationNumber,
+    row.registrationNumber,
+    row.reportType,
+    row.reportingPeriod,
+    row.dueDate,
+    row.submittedDate,
+    sanitizeFormulaInjection(row.submittedBy),
+    row.tonnageReceivedForRecycling,
+    row.tonnageRecycled,
+    row.tonnageExportedForRecycling,
+    row.tonnageSentOnTotal,
+    row.tonnageSentOnToReprocessor,
+    row.tonnageSentOnToExporter,
+    row.tonnageSentOnToOtherFacilities,
+    row.tonnagePrnsPernsIssued,
+    row.freeTonnagePrnsPerns,
+    row.totalRevenuePrnsPerns,
+    row.averagePrnPernPricePerTonne,
+    row.tonnageReceivedButNotRecycled,
+    row.tonnageReceivedButNotExported,
+    row.tonnageExportedThatWasStopped,
+    row.tonnageExportedThatWasRefused,
+    row.tonnageRepatriated,
+    sanitizeFormulaInjection(row.noteToRegulator)
+  ]
+}
+
+/**
  * @param {import('./types.js').ReportSubmissionsRow[]} reportSubmissions
  * @param {string} generatedAt
  * @returns {Promise<string>}
@@ -53,39 +93,7 @@ function generateCsv(reportSubmissions, generatedAt) {
   ]
 
   for (const row of reportSubmissions) {
-    rows.push([
-      row.regulator,
-      sanitizeFormulaInjection(row.organisationName),
-      row.approvedPersonsPhone,
-      row.approvedPersonsEmail,
-      row.submitterPhone,
-      row.submitterEmail,
-      row.material,
-      row.accreditationNumber,
-      row.registrationNumber,
-      row.reportType,
-      row.reportingPeriod,
-      row.dueDate,
-      row.submittedDate,
-      sanitizeFormulaInjection(row.submittedBy),
-      row.tonnageReceivedForRecycling,
-      row.tonnageRecycled,
-      row.tonnageExportedForRecycling,
-      row.tonnageSentOnTotal,
-      row.tonnageSentOnToReprocessor,
-      row.tonnageSentOnToExporter,
-      row.tonnageSentOnToOtherFacilities,
-      row.tonnagePrnsPernsIssued,
-      row.freeTonnagePrnsPerns,
-      row.totalRevenuePrnsPerns,
-      row.averagePrnPernPricePerTonne,
-      row.tonnageReceivedButNotRecycled,
-      row.tonnageReceivedButNotExported,
-      row.tonnageExportedThatWasStopped,
-      row.tonnageExportedThatWasRefused,
-      row.tonnageRepatriated,
-      sanitizeFormulaInjection(row.noteToRegulator)
-    ])
+    rows.push(buildDataRow(row))
   }
 
   return writeToString(rows, { headers: false, quoteColumns: true })

@@ -6,6 +6,11 @@ vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
 }))
 
+const mockFetchJsonFromBackend =
+  /** @type {import('vitest').MockedFunction<typeof fetchJsonFromBackend>} */ (
+    fetchJsonFromBackend
+  )
+
 const { mockLoggerError } = vi.hoisted(() => ({ mockLoggerError: vi.fn() }))
 vi.mock('#server/common/helpers/logging/logger.js', () => ({
   createLogger: () => ({ error: mockLoggerError })
@@ -71,7 +76,7 @@ describe('reportSubmissionsPostController', () => {
   })
 
   test('fetches data from the correct backend path', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       reportSubmissions: [],
       generatedAt: '2026-04-17T10:00:00.000Z'
     })
@@ -85,7 +90,7 @@ describe('reportSubmissionsPostController', () => {
   })
 
   test('sets Content-Type and Content-Disposition headers', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       reportSubmissions: [],
       generatedAt: '2026-04-17T10:00:00.000Z'
     })
@@ -100,7 +105,7 @@ describe('reportSubmissionsPostController', () => {
   })
 
   test('CSV includes title row as first line', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       reportSubmissions: [],
       generatedAt: '2026-04-17T10:00:00.000Z'
     })
@@ -113,7 +118,7 @@ describe('reportSubmissionsPostController', () => {
   })
 
   test('CSV includes the non-tonnage column headers', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       reportSubmissions: [],
       generatedAt: '2026-04-17T10:00:00.000Z'
     })
@@ -140,7 +145,7 @@ describe('reportSubmissionsPostController', () => {
   })
 
   test('Regulator is the first column header', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       reportSubmissions: [],
       generatedAt: '2026-04-17T10:00:00.000Z'
     })
@@ -155,7 +160,7 @@ describe('reportSubmissionsPostController', () => {
   })
 
   test('regulator value appears as the first cell of a data row', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       reportSubmissions: [buildRow({ regulator: 'NIEA' })],
       generatedAt: '2026-04-17T10:00:00.000Z'
     })
@@ -170,7 +175,7 @@ describe('reportSubmissionsPostController', () => {
   })
 
   test('CSV includes data rows', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       reportSubmissions: [buildRow()],
       generatedAt: '2026-04-17T10:00:00.000Z'
     })
@@ -186,7 +191,7 @@ describe('reportSubmissionsPostController', () => {
   })
 
   test('sanitizes formula injection on organisationName', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       reportSubmissions: [buildRow({ organisationName: '=SUM(A1)' })],
       generatedAt: '2026-04-17T10:00:00.000Z'
     })
@@ -198,7 +203,7 @@ describe('reportSubmissionsPostController', () => {
   })
 
   test('CSV includes the 17 tonnage column headers', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       reportSubmissions: [],
       generatedAt: '2026-04-17T10:00:00.000Z'
     })
@@ -226,7 +231,7 @@ describe('reportSubmissionsPostController', () => {
   })
 
   test('CSV maps tonnage field values into data row', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       reportSubmissions: [
         buildRow({
           tonnageReceivedForRecycling: '100.5',
@@ -262,7 +267,7 @@ describe('reportSubmissionsPostController', () => {
   })
 
   test('sanitizes formula injection on noteToRegulator', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       reportSubmissions: [buildRow({ noteToRegulator: '=HYPERLINK("evil")' })],
       generatedAt: '2026-04-17T10:00:00.000Z'
     })
@@ -275,7 +280,7 @@ describe('reportSubmissionsPostController', () => {
   })
 
   test('sanitizes formula injection on submittedBy', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       reportSubmissions: [buildRow({ submittedBy: '+DANGEROUS()' })],
       generatedAt: '2026-04-17T10:00:00.000Z'
     })
@@ -288,7 +293,7 @@ describe('reportSubmissionsPostController', () => {
 
   test('redirects with error message when fetch fails', async () => {
     const error = new Error('Network error')
-    fetchJsonFromBackend.mockRejectedValue(error)
+    mockFetchJsonFromBackend.mockRejectedValue(error)
 
     const result = await reportSubmissionsPostController.handler(
       mockRequest,
@@ -308,9 +313,9 @@ describe('reportSubmissionsPostController', () => {
   })
 
   test('uses error message from backend payload when available', async () => {
-    const error = new Error('Backend error')
+    const error = /** @type {any} */ (new Error('Backend error'))
     error.output = { payload: { message: 'Custom backend error' } }
-    fetchJsonFromBackend.mockRejectedValue(error)
+    mockFetchJsonFromBackend.mockRejectedValue(error)
 
     await reportSubmissionsPostController.handler(mockRequest, mockH)
 
@@ -321,7 +326,7 @@ describe('reportSubmissionsPostController', () => {
   })
 
   test('handles empty reportSubmissions array', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       reportSubmissions: [],
       generatedAt: '2026-04-17T10:00:00.000Z'
     })
