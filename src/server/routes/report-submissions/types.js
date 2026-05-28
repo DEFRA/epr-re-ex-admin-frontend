@@ -7,6 +7,7 @@
  *   approvedPersonsPhone: string
  *   averagePrnPernPricePerTonne: string
  *   dueDate: string
+ *   freeTonnagePrnsPerns: string
  *   material: string
  *   noteToRegulator: string
  *   organisationName: string
