@@ -14,11 +14,13 @@
       { key: { text: "Site" }, value: { text: registration.site } }
     ] %}
     {% if registration.accreditation %}
+      {% set wasteBalanceEventsUrl = '/organisations/' ~ organisationId ~ '/accreditations/' ~ registration.accreditation.id ~ '/waste-balance-events' %}
       {% set summaryRows = summaryRows.concat([
         { key: { text: "Accreditation number" }, value: { text: registration.accreditation.accreditationNumber } },
         { key: { text: "Accreditation status" }, value: { html: govukTag({ text: registration.accreditation.status }) } },
         { key: { text: "Waste balance (tonnes)" }, value: { text: wasteBalance.amount if wasteBalance else "No data" } },
-        { key: { text: "Waste balance available (tonnes)" }, value: { text: wasteBalance.availableAmount if wasteBalance else "No data" } }
+        { key: { text: "Waste balance available (tonnes)" }, value: { text: wasteBalance.availableAmount if wasteBalance else "No data" } },
+        { key: { text: "Waste balance events" }, value: { html: '<a class="govuk-link govuk-link--no-visited-state" href="' ~ wasteBalanceEventsUrl ~ '">View</a>' } }
       ]) %}
     {% endif %}
 

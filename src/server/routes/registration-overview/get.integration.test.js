@@ -322,6 +322,27 @@ describe('#registrationOverviewController', () => {
       ).toHaveClass('govuk-tag')
     })
 
+    test('Should render a waste balance events link when accreditation exists', async () => {
+      useMockBackend()
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+      const eventsValue = getSummaryRowValue(body, 'Waste balance events')
+      const link = within(eventsValue).getByRole('link', {
+        name: 'View'
+      })
+
+      expect(link).toHaveAttribute(
+        'href',
+        `/organisations/${organisationId}/accreditations/${accreditationId}/waste-balance-events`
+      )
+    })
+
     test('Should not render accreditation rows in summary list when accreditation is absent', async () => {
       useMockBackend({
         ...mockOverview,
