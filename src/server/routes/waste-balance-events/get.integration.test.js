@@ -42,6 +42,7 @@ describe('#wasteBalanceEventsController', () => {
     vi.clearAllMocks()
   })
 
+  /** @type {{ id: string, companyName: string, registrations: Array<{ id: string, registrationNumber: string, status: string, processingType: string, material: string, site: string, accreditation: { id: string, accreditationNumber: string, status: string } | null }> }} */
   const mockOverview = {
     id: organisationId,
     companyName: 'ACME ltd',
