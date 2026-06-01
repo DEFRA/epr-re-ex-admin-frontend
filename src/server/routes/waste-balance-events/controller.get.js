@@ -17,7 +17,7 @@ export const wasteBalanceEventsGETController = {
       fetchOrganisationOverview(request, organisationId),
       fetchJsonFromBackend(
         request,
-        `/v1/admin/organisations/${organisationId}/accreditations/${accreditationId}/stream-events`,
+        `/v1/admin/organisations/${organisationId}/accreditations/${accreditationId}/waste-balance-events`,
         {}
       )
     ])

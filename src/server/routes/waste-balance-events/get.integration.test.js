@@ -130,7 +130,7 @@ describe('#wasteBalanceEventsController', () => {
         () => HttpResponse.json(overviewResponse)
       ),
       http.get(
-        `${backendUrl}/v1/admin/organisations/${organisationId}/accreditations/${accreditationId}/stream-events`,
+        `${backendUrl}/v1/admin/organisations/${organisationId}/accreditations/${accreditationId}/waste-balance-events`,
         () => HttpResponse.json(eventsResponse)
       )
     )
