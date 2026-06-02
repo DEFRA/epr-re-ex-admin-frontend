@@ -22,7 +22,7 @@ export const wasteBalanceEventsGETController = {
       accreditationId
     )
 
-    if (!registration) {
+    if (!registration?.accreditation) {
       throw notFound(
         'Accreditation not found',
         errorCodes.accreditationNotFound,
