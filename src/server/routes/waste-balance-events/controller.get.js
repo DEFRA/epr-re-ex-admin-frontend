@@ -15,14 +15,7 @@ export const wasteBalanceEventsGETController = {
   async handler(request, h) {
     const { organisationId, accreditationId } = request.params
 
-    const [overview, events] = await Promise.all([
-      fetchOrganisationOverview(request, organisationId),
-      fetchJsonFromBackend(
-        request,
-        `/v1/admin/organisations/${organisationId}/accreditations/${accreditationId}/waste-balance-events`,
-        {}
-      )
-    ])
+    const overview = await fetchOrganisationOverview(request, organisationId)
 
     const registration = findRegistrationByAccreditation(
       overview,
@@ -41,6 +34,12 @@ export const wasteBalanceEventsGETController = {
         }
       )
     }
+
+    const events = await fetchJsonFromBackend(
+      request,
+      `/v1/admin/registrations/${registration.id}/accreditations/${accreditationId}/waste-balance-events`,
+      {}
+    )
 
     const heading = `${overview.companyName} - ${registration.accreditation.accreditationNumber}`
 
