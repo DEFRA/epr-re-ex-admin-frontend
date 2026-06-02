@@ -178,20 +178,16 @@ describe('#wasteBalanceEventsController', () => {
       )
     })
 
-    test('Should fall back to accreditationId in heading when no registration links to it', async () => {
+    test('Should return 404 when no registration links to the accreditation', async () => {
       useMockBackend(mockOverviewNoAccreditationLink)
 
-      const { result } = await server.inject({
+      const { statusCode } = await server.inject({
         method: 'GET',
         url,
         auth: { strategy: 'session', credentials: mockUserSession }
       })
 
-      const body = renderPage(result)
-
-      expect(getByRole(body, 'heading', { level: 1 })).toHaveTextContent(
-        `ACME ltd - ${accreditationId}`
-      )
+      expect(statusCode).toBe(statusCodes.notFound)
     })
 
     test('Should render breadcrumbs back to registration overview', async () => {
@@ -222,34 +218,6 @@ describe('#wasteBalanceEventsController', () => {
         {
           text: 'Registration overview',
           href: `/organisations/${organisationId}/registrations/reg-001/overview`
-        }
-      ])
-    })
-
-    test('Should omit registration breadcrumb when no registration links to the accreditation', async () => {
-      useMockBackend(mockOverviewNoAccreditationLink)
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
-
-      const body = renderPage(result)
-      const breadcrumbs = getByRole(body, 'navigation', {
-        name: 'Breadcrumb'
-      })
-
-      expect(
-        getAllByRole(breadcrumbs, 'link').map((l) => ({
-          text: l.textContent?.trim(),
-          href: l.getAttribute('href')
-        }))
-      ).toEqual([
-        { text: 'Organisations', href: '/organisations' },
-        {
-          text: 'Organisation overview',
-          href: `/organisations/${organisationId}/overview`
         }
       ])
     })

@@ -1,5 +1,7 @@
+import { errorCodes } from '#server/common/enums/error-codes.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { fetchOrganisationOverview } from '#server/common/helpers/fetch-organisation-overview.js'
+import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 
 /**
  * Find the registration linked to the given accreditation.
@@ -27,10 +29,20 @@ export const wasteBalanceEventsGETController = {
       accreditationId
     )
 
-    const accreditationLabel =
-      registration?.accreditation?.accreditationNumber ?? accreditationId
+    if (!registration) {
+      throw notFound(
+        'Accreditation not found',
+        errorCodes.accreditationNotFound,
+        {
+          event: {
+            action: 'fetch_waste_balance_events',
+            reason: `organisationId=${organisationId} accreditationId=${accreditationId}`
+          }
+        }
+      )
+    }
 
-    const heading = `${overview.companyName} - ${accreditationLabel}`
+    const heading = `${overview.companyName} - ${registration.accreditation.accreditationNumber}`
 
     const eventRows = events.map((event) => [
       { text: event.number },
@@ -48,14 +60,10 @@ export const wasteBalanceEventsGETController = {
           text: 'Organisation overview',
           href: `/organisations/${organisationId}/overview`
         },
-        ...(registration
-          ? [
-              {
-                text: 'Registration overview',
-                href: `/organisations/${organisationId}/registrations/${registration.id}/overview`
-              }
-            ]
-          : [])
+        {
+          text: 'Registration overview',
+          href: `/organisations/${organisationId}/registrations/${registration.id}/overview`
+        }
       ],
       pageTitle: request.route.settings.app.pageTitle,
       heading,

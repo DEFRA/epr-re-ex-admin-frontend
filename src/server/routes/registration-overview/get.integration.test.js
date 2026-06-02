@@ -363,6 +363,9 @@ describe('#registrationOverviewController', () => {
       expect(
         queryByText(body, 'Accreditation status', { selector: 'dt' })
       ).toBeNull()
+      expect(
+        queryByText(body, 'Waste balance events', { selector: 'dt' })
+      ).toBeNull()
     })
 
     test('Should render the reporting periods table', async () => {
