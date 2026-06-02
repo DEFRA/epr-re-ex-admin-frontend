@@ -22,6 +22,7 @@ import { reportSubmissions } from './routes/report-submissions/index.js'
 import { wasteRecordsExport } from './routes/waste-records-export/index.js'
 import { queueManagement } from './routes/queue-management/index.js'
 import { reportUnsubmit } from './routes/report-unsubmit/index.js'
+import { wasteBalanceEvents } from './routes/waste-balance-events/index.js'
 
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
 
@@ -56,7 +57,8 @@ export const router = {
         reportSubmissions,
         wasteRecordsExport,
         queueManagement,
-        reportUnsubmit
+        reportUnsubmit,
+        wasteBalanceEvents
       ])
 
       await server.register([serveStaticFiles])

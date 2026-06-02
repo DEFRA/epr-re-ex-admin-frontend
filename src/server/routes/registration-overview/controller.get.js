@@ -106,7 +106,10 @@ export const registrationOverviewGETController = {
         formattedPeriod: formatPeriod(rp.period, calendar.cadence)
       })),
       summaryLogRows,
-      wasteBalance
+      wasteBalance,
+      wasteBalanceEventsUrl: registration.accreditation
+        ? `/organisations/${organisationId}/accreditations/${registration.accreditation.id}/waste-balance-events`
+        : null
     })
   }
 }

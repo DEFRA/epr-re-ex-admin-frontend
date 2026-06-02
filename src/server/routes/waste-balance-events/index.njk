@@ -1,0 +1,30 @@
+{% extends 'layout.njk' %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+
+{% block content %}
+  <div class="govuk-width-container">
+    <h1 class="govuk-heading-xl">{{ heading }}</h1>
+
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-full">
+        {% if eventRows and eventRows.length %}
+          {{ govukTable({
+            caption: "Waste balance events",
+            captionClasses: "govuk-table__caption--m",
+            head: [
+              { text: "Number" },
+              { text: "Kind" },
+              { text: "Date" },
+              { text: "Payload" },
+              { text: "Closing balance" },
+              { text: "Closing available" }
+            ],
+            rows: eventRows
+          }) }}
+        {% else %}
+          <p class="govuk-body">No waste balance events</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}
