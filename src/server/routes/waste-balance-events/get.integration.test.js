@@ -241,6 +241,7 @@ describe('#wasteBalanceEventsController', () => {
         'Number',
         'Kind',
         'Date',
+        'Created by',
         'Payload',
         'Closing balance',
         'Closing available'
@@ -264,14 +265,16 @@ describe('#wasteBalanceEventsController', () => {
       const firstCells = getAllByRole(rows[0], 'cell')
       expect(firstCells[0]).toHaveTextContent('1')
       expect(firstCells[1]).toHaveTextContent('SUMMARY_LOG_SUBMITTED')
-      expect(firstCells[4]).toHaveTextContent('100')
+      expect(firstCells[3]).toHaveTextContent('Test User')
       expect(firstCells[5]).toHaveTextContent('100')
+      expect(firstCells[6]).toHaveTextContent('100')
 
       const secondCells = getAllByRole(rows[1], 'cell')
       expect(secondCells[0]).toHaveTextContent('2')
       expect(secondCells[1]).toHaveTextContent('PRN_CREATED')
-      expect(secondCells[4]).toHaveTextContent('100')
-      expect(secondCells[5]).toHaveTextContent('50')
+      expect(secondCells[3]).toHaveTextContent('Test User')
+      expect(secondCells[5]).toHaveTextContent('100')
+      expect(secondCells[6]).toHaveTextContent('50')
     })
 
     test('Should render "No waste balance events" when events list is empty', async () => {
