@@ -27,7 +27,8 @@ export const wasteBalanceEventsGETController = {
       { text: event.number },
       { text: event.kind },
       { text: event.createdAt },
-      { text: event.createdBy.name },
+      { text: event.createdBy.name ?? '' },
+      { text: event.createdBy.email ?? '' },
       { html: `<code>${JSON.stringify(event.payload)}</code>` },
       { text: event.closingBalance.amount },
       { text: event.closingBalance.availableAmount }

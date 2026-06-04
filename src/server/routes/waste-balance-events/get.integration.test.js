@@ -82,7 +82,11 @@ describe('#wasteBalanceEventsController', () => {
       openingBalance: { amount: 0, availableAmount: 0 },
       closingBalance: { amount: 100, availableAmount: 100 },
       createdAt: '2026-01-15T10:00:00.000Z',
-      createdBy: { id: 'user-1', name: 'Test User' }
+      createdBy: {
+        id: 'user-1',
+        name: 'Test User',
+        email: 'test.user@example.com'
+      }
     },
     {
       id: 'evt-2',
@@ -233,6 +237,7 @@ describe('#wasteBalanceEventsController', () => {
         'Kind',
         'Date',
         'Created by',
+        'Email',
         'Payload',
         'Closing balance',
         'Closing available'
@@ -257,15 +262,48 @@ describe('#wasteBalanceEventsController', () => {
       expect(firstCells[0]).toHaveTextContent('1')
       expect(firstCells[1]).toHaveTextContent('SUMMARY_LOG_SUBMITTED')
       expect(firstCells[3]).toHaveTextContent('Test User')
-      expect(firstCells[5]).toHaveTextContent('100')
+      expect(firstCells[4]).toHaveTextContent('test.user@example.com')
       expect(firstCells[6]).toHaveTextContent('100')
+      expect(firstCells[7]).toHaveTextContent('100')
 
       const secondCells = getAllByRole(rows[1], 'cell')
       expect(secondCells[0]).toHaveTextContent('2')
       expect(secondCells[1]).toHaveTextContent('PRN_CREATED')
       expect(secondCells[3]).toHaveTextContent('Test User')
-      expect(secondCells[5]).toHaveTextContent('100')
-      expect(secondCells[6]).toHaveTextContent('50')
+      expect(secondCells[4]).toBeEmptyDOMElement()
+      expect(secondCells[6]).toHaveTextContent('100')
+      expect(secondCells[7]).toHaveTextContent('50')
+    })
+
+    test('Should render empty string for name and email when createdBy fields are absent', async () => {
+      useMockBackend(mockOverview, [
+        {
+          id: 'evt-3',
+          registrationId: 'reg-001',
+          accreditationId,
+          organisationId,
+          number: 3,
+          kind: 'PRN_CREATED',
+          payload: { prnId: 'prn-2', amount: 10 },
+          openingBalance: { amount: 50, availableAmount: 50 },
+          closingBalance: { amount: 50, availableAmount: 40 },
+          createdAt: '2026-01-17T09:00:00.000Z',
+          createdBy: { id: 'user-2' }
+        }
+      ])
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+      const rows = getDataRows(getEventsTable(body))
+      const cells = getAllByRole(rows[0], 'cell')
+
+      expect(cells[3]).toBeEmptyDOMElement()
+      expect(cells[4]).toBeEmptyDOMElement()
     })
 
     test('Should render "No waste balance events" when events list is empty', async () => {
