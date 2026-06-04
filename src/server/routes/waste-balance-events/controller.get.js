@@ -4,6 +4,19 @@ import {
   findRegistration
 } from '#server/common/helpers/fetch-organisation-overview.js'
 
+/**
+ * Format an actor for display: "Name (email)", "Name", "email", or "".
+ * @param {{ id: string, name?: string, email?: string }} actor
+ * @returns {string}
+ */
+const formatActor = (actor) => {
+  const { name, email } = actor
+  if (name && email) {
+    return `${name} (${email})`
+  }
+  return name ?? email ?? ''
+}
+
 export const wasteBalanceEventsGETController = {
   async handler(request, h) {
     const { organisationId, registrationId, accreditationId } = request.params
@@ -27,7 +40,7 @@ export const wasteBalanceEventsGETController = {
       { text: event.number },
       { text: event.kind },
       { text: event.createdAt },
-      { text: event.createdBy.name },
+      { text: formatActor(event.createdBy) },
       { html: `<code>${JSON.stringify(event.payload)}</code>` },
       { text: event.closingBalance.amount },
       { text: event.closingBalance.availableAmount }
