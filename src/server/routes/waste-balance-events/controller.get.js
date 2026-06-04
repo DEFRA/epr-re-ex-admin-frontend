@@ -11,7 +11,9 @@ import {
  */
 const formatActor = (actor) => {
   const { name, email } = actor
-  if (name && email) return `${name} (${email})`
+  if (name && email) {
+    return `${name} (${email})`
+  }
   return name ?? email ?? ''
 }
 
