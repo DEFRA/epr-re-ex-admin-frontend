@@ -237,7 +237,6 @@ describe('#wasteBalanceEventsController', () => {
         'Kind',
         'Date',
         'Created by',
-        'Email',
         'Payload',
         'Closing balance',
         'Closing available'
@@ -261,21 +260,21 @@ describe('#wasteBalanceEventsController', () => {
       const firstCells = getAllByRole(rows[0], 'cell')
       expect(firstCells[0]).toHaveTextContent('1')
       expect(firstCells[1]).toHaveTextContent('SUMMARY_LOG_SUBMITTED')
-      expect(firstCells[3]).toHaveTextContent('Test User')
-      expect(firstCells[4]).toHaveTextContent('test.user@example.com')
+      expect(firstCells[3]).toHaveTextContent(
+        'Test User (test.user@example.com)'
+      )
+      expect(firstCells[5]).toHaveTextContent('100')
       expect(firstCells[6]).toHaveTextContent('100')
-      expect(firstCells[7]).toHaveTextContent('100')
 
       const secondCells = getAllByRole(rows[1], 'cell')
       expect(secondCells[0]).toHaveTextContent('2')
       expect(secondCells[1]).toHaveTextContent('PRN_CREATED')
       expect(secondCells[3]).toHaveTextContent('Test User')
-      expect(secondCells[4]).toBeEmptyDOMElement()
-      expect(secondCells[6]).toHaveTextContent('100')
-      expect(secondCells[7]).toHaveTextContent('50')
+      expect(secondCells[5]).toHaveTextContent('100')
+      expect(secondCells[6]).toHaveTextContent('50')
     })
 
-    test('Should render empty string for name and email when createdBy fields are absent', async () => {
+    test('Should render empty Created by when actor has only id', async () => {
       useMockBackend(mockOverview, [
         {
           id: 'evt-3',
@@ -303,7 +302,39 @@ describe('#wasteBalanceEventsController', () => {
       const cells = getAllByRole(rows[0], 'cell')
 
       expect(cells[3]).toBeEmptyDOMElement()
-      expect(cells[4]).toBeEmptyDOMElement()
+    })
+
+    test('Should render email as Created by when actor has no name', async () => {
+      useMockBackend(mockOverview, [
+        {
+          id: 'evt-4',
+          registrationId: 'reg-001',
+          accreditationId,
+          organisationId,
+          number: 4,
+          kind: 'PRN_ISSUED',
+          payload: { prnId: 'prn-3', amount: 20 },
+          openingBalance: { amount: 50, availableAmount: 40 },
+          closingBalance: { amount: 50, availableAmount: 40 },
+          createdAt: '2026-01-18T11:00:00.000Z',
+          createdBy: /** @type {any} */ ({
+            id: 'user-3',
+            email: 'only@example.com'
+          })
+        }
+      ])
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+      const rows = getDataRows(getEventsTable(body))
+      const cells = getAllByRole(rows[0], 'cell')
+
+      expect(cells[3]).toHaveTextContent('only@example.com')
     })
 
     test('Should render "No waste balance events" when events list is empty', async () => {
