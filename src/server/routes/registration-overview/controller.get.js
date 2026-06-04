@@ -108,7 +108,7 @@ export const registrationOverviewGETController = {
       summaryLogRows,
       wasteBalance,
       wasteBalanceEventsUrl: registration.accreditation
-        ? `/organisations/${organisationId}/accreditations/${registration.accreditation.id}/waste-balance-events`
+        ? `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${registration.accreditation.id}/waste-balance-events`
         : null
     })
   }

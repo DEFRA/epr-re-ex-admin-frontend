@@ -339,7 +339,7 @@ describe('#registrationOverviewController', () => {
 
       expect(link).toHaveAttribute(
         'href',
-        `/organisations/${organisationId}/accreditations/${accreditationId}/waste-balance-events`
+        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/waste-balance-events`
       )
     })
 
