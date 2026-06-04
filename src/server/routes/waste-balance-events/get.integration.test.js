@@ -288,7 +288,7 @@ describe('#wasteBalanceEventsController', () => {
           openingBalance: { amount: 50, availableAmount: 50 },
           closingBalance: { amount: 50, availableAmount: 40 },
           createdAt: '2026-01-17T09:00:00.000Z',
-          createdBy: { id: 'user-2' }
+          createdBy: { id: 'user-2', name: undefined, email: undefined }
         }
       ])
 
