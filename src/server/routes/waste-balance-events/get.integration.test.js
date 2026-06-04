@@ -22,8 +22,9 @@ describe('#wasteBalanceEventsController', () => {
   const originalBackendUrl = config.get('eprBackendUrl')
   const backendUrl = 'http://mock-backend'
   const organisationId = '69c3b4f0abda9efa68dd6697'
+  const registrationId = 'reg-001'
   const accreditationId = '69c3b4f0abda9efa68dd6698'
-  const url = `/organisations/${organisationId}/accreditations/${accreditationId}/waste-balance-events`
+  const url = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/waste-balance-events`
   let server
 
   beforeAll(async () => {
@@ -63,20 +64,10 @@ describe('#wasteBalanceEventsController', () => {
     ]
   }
 
-  const mockOverviewNoAccreditationLink = {
+  const mockOverviewNoMatchingRegistration = {
     id: organisationId,
     companyName: 'ACME ltd',
-    registrations: [
-      {
-        id: 'reg-001',
-        registrationNumber: 'REG-50030-001',
-        status: 'approved',
-        processingType: 'reprocessing',
-        material: 'glass',
-        site: 'Site A',
-        accreditation: null
-      }
-    ]
+    registrations: []
   }
 
   const mockEvents = [
@@ -178,8 +169,8 @@ describe('#wasteBalanceEventsController', () => {
       )
     })
 
-    test('Should return 404 when no registration links to the accreditation', async () => {
-      useMockBackend(mockOverviewNoAccreditationLink)
+    test('Should return 404 when registration is not found', async () => {
+      useMockBackend(mockOverviewNoMatchingRegistration)
 
       const { statusCode } = await server.inject({
         method: 'GET',

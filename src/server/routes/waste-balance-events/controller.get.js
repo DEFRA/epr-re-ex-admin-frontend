@@ -1,47 +1,27 @@
-import { errorCodes } from '#server/common/enums/error-codes.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
-import { fetchOrganisationOverview } from '#server/common/helpers/fetch-organisation-overview.js'
-import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
-
-/**
- * Find the registration linked to the given accreditation.
- * @param {import('#server/common/helpers/fetch-organisation-overview.js').OrganisationOverview} overview
- * @param {string} accreditationId
- */
-const findRegistrationByAccreditation = (overview, accreditationId) =>
-  overview.registrations.find((r) => r.accreditation?.id === accreditationId)
+import {
+  fetchOrganisationOverview,
+  findRegistration
+} from '#server/common/helpers/fetch-organisation-overview.js'
 
 export const wasteBalanceEventsGETController = {
   async handler(request, h) {
-    const { organisationId, accreditationId } = request.params
+    const { organisationId, registrationId, accreditationId } = request.params
 
     const overview = await fetchOrganisationOverview(request, organisationId)
-
-    const registration = findRegistrationByAccreditation(
+    const registration = findRegistration(
       overview,
-      accreditationId
+      organisationId,
+      registrationId
     )
-
-    if (!registration?.accreditation) {
-      throw notFound(
-        'Accreditation not found',
-        errorCodes.accreditationNotFound,
-        {
-          event: {
-            action: 'fetch_waste_balance_events',
-            reason: `organisationId=${organisationId} accreditationId=${accreditationId}`
-          }
-        }
-      )
-    }
 
     const events = await fetchJsonFromBackend(
       request,
-      `/v1/admin/registrations/${registration.id}/accreditations/${accreditationId}/waste-balance-events`,
+      `/v1/admin/registrations/${registrationId}/accreditations/${accreditationId}/waste-balance-events`,
       {}
     )
 
-    const heading = `${overview.companyName} - ${registration.accreditation.accreditationNumber}`
+    const heading = `${overview.companyName} - ${registration.accreditation?.accreditationNumber}`
 
     const eventRows = events.map((event) => [
       { text: event.number },
@@ -62,7 +42,7 @@ export const wasteBalanceEventsGETController = {
         },
         {
           text: 'Registration overview',
-          href: `/organisations/${organisationId}/registrations/${registration.id}/overview`
+          href: `/organisations/${organisationId}/registrations/${registrationId}/overview`
         }
       ],
       pageTitle: request.route.settings.app.pageTitle,
