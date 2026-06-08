@@ -224,6 +224,69 @@ describe('#organisationOverviewController', () => {
       expect($(cells[6]).text().trim()).toEqual('-')
     })
 
+    describe('Defra ID link section', () => {
+      const readOnlySession = { ...mockUserSession, scopes: ['admin.read'] }
+      const linkedOverview = {
+        ...mockOverview,
+        linkedDefraOrganisation: {
+          orgId: '550e8400-e29b-41d4-a716-446655440001',
+          orgName: 'Lost Ark Adventures Ltd',
+          linkedAt: '2026-05-01T12:00:00.000Z',
+          linkedBy: { email: 'linker@example.com' }
+        }
+      }
+
+      const stubOverview = (overview) =>
+        mswServer.use(
+          http.get(
+            `${backendUrl}/v1/organisations/${organisationId}/overview`,
+            () => HttpResponse.json(overview)
+          )
+        )
+
+      const getOverview = (credentials) =>
+        server.inject({
+          method: 'GET',
+          url: `/organisations/${organisationId}/overview`,
+          auth: { strategy: 'session', credentials }
+        })
+
+      test('shows the linked Defra ID org and unlink button for a write admin', async () => {
+        getUserSession.mockReturnValue(mockUserSession)
+        stubOverview(linkedOverview)
+
+        const { result } = await getOverview(mockUserSession)
+
+        expect(result).toContain('Lost Ark Adventures Ltd')
+        const $ = cheerio.load(result)
+        expect($('a:contains("Unlink organisation")').attr('href')).toEqual(
+          `/organisations/${organisationId}/unlink-defra-id/confirm`
+        )
+      })
+
+      test('shows the linked Defra ID org but no unlink button for a read-only admin', async () => {
+        getUserSession.mockReturnValue(readOnlySession)
+        stubOverview(linkedOverview)
+
+        const { result } = await getOverview(readOnlySession)
+
+        expect(result).toContain('Lost Ark Adventures Ltd')
+        const $ = cheerio.load(result)
+        expect($('a:contains("Unlink organisation")')).toHaveLength(0)
+      })
+
+      test('shows "No linked organisation" when the org is not linked', async () => {
+        getUserSession.mockReturnValue(mockUserSession)
+        stubOverview(mockOverview)
+
+        const { result } = await getOverview(mockUserSession)
+
+        expect(result).toContain('No linked organisation')
+        const $ = cheerio.load(result)
+        expect($('a:contains("Unlink organisation")')).toHaveLength(0)
+      })
+    })
+
     test('Should show 500 error page when backend returns a non-OK response', async () => {
       mswServer.use(
         http.get(

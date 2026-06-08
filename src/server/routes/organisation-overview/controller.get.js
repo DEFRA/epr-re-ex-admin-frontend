@@ -6,6 +6,9 @@ export const organisationOverviewGETController = {
 
     const data = await fetchOrganisationOverview(request, id)
 
+    const unlinkResult = request.yar.get('unlinkResult')
+    request.yar.clear('unlinkResult')
+
     const pageTitle = request.route.settings.app.pageTitle
 
     return h.view('routes/organisation-overview/index', {
@@ -13,7 +16,9 @@ export const organisationOverviewGETController = {
       pageTitle,
       heading: data.companyName,
       organisationId: id,
-      registrations: data.registrations
+      registrations: data.registrations,
+      linkedDefraOrganisation: data.linkedDefraOrganisation,
+      unlinkResult
     })
   }
 }
