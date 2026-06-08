@@ -109,7 +109,7 @@ describe('unlink-organisation', () => {
   })
 
   test('confirm page returns 403 for a read-only admin', async () => {
-    getUserSession.mockReturnValue(readOnlySession)
+    vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
     const { statusCode } = await server.inject({
       method: 'GET',
       url: confirmUrl,
@@ -119,7 +119,7 @@ describe('unlink-organisation', () => {
   })
 
   test('confirm page shows the organisation and Defra ID org names', async () => {
-    getUserSession.mockReturnValue(mockUserSession)
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
     stubOverview(linkedOverview)
 
     const { result, statusCode } = await server.inject({
@@ -138,7 +138,7 @@ describe('unlink-organisation', () => {
   })
 
   test('confirm page redirects to overview when the org is not linked', async () => {
-    getUserSession.mockReturnValue(mockUserSession)
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
     stubOverview(unlinkedOverview)
 
     const { statusCode, headers } = await server.inject({
@@ -160,7 +160,7 @@ describe('unlink-organisation', () => {
   })
 
   test('successful unlink redirects to overview and shows a success banner', async () => {
-    getUserSession.mockReturnValue(mockUserSession)
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
     stubOverview(linkedOverview)
     stubDeleteSuccess()
 
@@ -183,7 +183,7 @@ describe('unlink-organisation', () => {
   })
 
   test('failed unlink redirects to overview and shows an error banner', async () => {
-    getUserSession.mockReturnValue(mockUserSession)
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
     stubOverview(linkedOverview)
     stubDeleteFailure()
 

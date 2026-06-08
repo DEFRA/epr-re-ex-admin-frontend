@@ -48,7 +48,7 @@ describe('#organisationOverviewController', () => {
 
   describe('When user is authenticated', () => {
     beforeAll(() => {
-      getUserSession.mockReturnValue(mockUserSession)
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
     })
 
     const mockOverview = {
@@ -252,7 +252,7 @@ describe('#organisationOverviewController', () => {
         })
 
       test('shows the linked Defra ID org and unlink button for a write admin', async () => {
-        getUserSession.mockReturnValue(mockUserSession)
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
         stubOverview(linkedOverview)
 
         const { result } = await getOverview(mockUserSession)
@@ -265,7 +265,7 @@ describe('#organisationOverviewController', () => {
       })
 
       test('shows the linked Defra ID org but no unlink button for a read-only admin', async () => {
-        getUserSession.mockReturnValue(readOnlySession)
+        vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
         stubOverview(linkedOverview)
 
         const { result } = await getOverview(readOnlySession)
@@ -276,7 +276,7 @@ describe('#organisationOverviewController', () => {
       })
 
       test('shows "No linked organisation" when the org is not linked', async () => {
-        getUserSession.mockReturnValue(mockUserSession)
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
         stubOverview(mockOverview)
 
         const { result } = await getOverview(mockUserSession)
