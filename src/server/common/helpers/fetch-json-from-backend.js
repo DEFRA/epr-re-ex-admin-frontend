@@ -52,6 +52,10 @@ export const fetchJsonFromBackend = async (request, path, options) => {
       throw error
     }
 
+    if (response.status === 204) {
+      return null
+    }
+
     return await response.json()
   } catch (error) {
     // If it's already a Boom error, re-throw it

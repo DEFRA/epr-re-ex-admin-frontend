@@ -80,6 +80,19 @@ describe('#fetchJsonFromBackend', () => {
       expect(result).toEqual(mockOrganisations)
     })
 
+    test('returns null when backend responds with 204 No Content', async () => {
+      const path = '/v1/organisations/org-1/link'
+      const url = `${backendUrl}${path}`
+      const deleteHandler = http.delete(url, () => {
+        return new HttpResponse(null, { status: 204 })
+      })
+      mswServer.use(deleteHandler)
+
+      const result = await fetchJsonFromBackend({}, path, { method: 'DELETE' })
+
+      expect(result).toBeNull()
+    })
+
     test('adds the authorisation header with the user token', async () => {
       let capturedHeaders = null
 
