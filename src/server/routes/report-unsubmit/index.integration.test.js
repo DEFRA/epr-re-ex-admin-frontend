@@ -46,14 +46,12 @@ describe('report-unsubmit', () => {
   let server
 
   beforeAll(async () => {
-    config.set('featureFlagReportUnsubmit', true)
     createMockOidcServer()
     server = await createServer()
     await server.initialize()
   })
 
   afterAll(async () => {
-    config.set('featureFlagReportUnsubmit', false)
     await server.stop({ timeout: 0 })
   })
 
@@ -128,9 +126,9 @@ describe('report-unsubmit', () => {
   })
 
   test('confirm page shows report details and unsubmit action', async () => {
-    getUserSession.mockReturnValue(mockUserSession)
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
     stubOverview()
-    stubReport({ currentStatus: 'submitted', unsubmittedAt: null })
+    stubReport({ currentStatus: 'submitted', unsubmittedAt: undefined })
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
@@ -148,14 +146,14 @@ describe('report-unsubmit', () => {
   })
 
   test('confirm page returns 404 when the registration is missing from the overview', async () => {
-    getUserSession.mockReturnValue(mockUserSession)
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
     mswServer.use(
       http.get(
         `${backendUrl}/v1/organisations/${organisationId}/overview`,
         () => HttpResponse.json({ ...mockOverview, registrations: [] })
       )
     )
-    stubReport({ currentStatus: 'submitted', unsubmittedAt: null })
+    stubReport({ currentStatus: 'submitted', unsubmittedAt: undefined })
 
     const { statusCode } = await server.inject({
       method: 'GET',
@@ -167,9 +165,9 @@ describe('report-unsubmit', () => {
   })
 
   test('confirm page redirects to overview for a non-submitted report', async () => {
-    getUserSession.mockReturnValue(mockUserSession)
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
     stubOverview()
-    stubReport({ currentStatus: 'ready_to_submit', unsubmittedAt: null })
+    stubReport({ currentStatus: 'ready_to_submit', unsubmittedAt: undefined })
 
     const { statusCode, headers } = await server.inject({
       method: 'GET',
@@ -182,9 +180,9 @@ describe('report-unsubmit', () => {
   })
 
   test('submitting the confirmation redirects to the success page', async () => {
-    getUserSession.mockReturnValue(mockUserSession)
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
     stubOverview()
-    stubReport({ currentStatus: 'submitted', unsubmittedAt: null })
+    stubReport({ currentStatus: 'submitted', unsubmittedAt: undefined })
     stubUnsubmitSuccess()
 
     const { statusCode, headers } = await postUnsubmit()
@@ -194,9 +192,9 @@ describe('report-unsubmit', () => {
   })
 
   test('backend failure shows the unsubmit failed page', async () => {
-    getUserSession.mockReturnValue(mockUserSession)
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
     stubOverview()
-    stubReport({ currentStatus: 'submitted', unsubmittedAt: null })
+    stubReport({ currentStatus: 'submitted', unsubmittedAt: undefined })
     stubUnsubmitFailure()
 
     const { result, statusCode } = await postUnsubmit()
@@ -207,7 +205,7 @@ describe('report-unsubmit', () => {
   })
 
   test('success page confirms the report was unsubmitted', async () => {
-    getUserSession.mockReturnValue(mockUserSession)
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
     stubOverview()
     stubReport()
 
@@ -227,9 +225,9 @@ describe('report-unsubmit', () => {
   })
 
   test('result page redirects to overview when accessed without completing unsubmit', async () => {
-    getUserSession.mockReturnValue(mockUserSession)
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
     stubOverview()
-    stubReport({ currentStatus: 'submitted', unsubmittedAt: null })
+    stubReport({ currentStatus: 'submitted', unsubmittedAt: undefined })
 
     const { statusCode, headers } = await server.inject({
       method: 'GET',
@@ -239,42 +237,5 @@ describe('report-unsubmit', () => {
 
     expect(statusCode).toBe(statusCodes.found)
     expect(headers.location).toBe(overviewUrl)
-  })
-
-  describe('when feature flag is disabled', () => {
-    let serverWithFlagOff
-
-    beforeAll(async () => {
-      config.set('featureFlagReportUnsubmit', false)
-      serverWithFlagOff = await createServer()
-      await serverWithFlagOff.initialize()
-    })
-
-    afterAll(async () => {
-      await serverWithFlagOff.stop({ timeout: 0 })
-      config.set('featureFlagReportUnsubmit', true)
-    })
-
-    beforeEach(() => {
-      getUserSession.mockReturnValue(mockUserSession)
-    })
-
-    test('unsubmit routes are not registered and return 404', async () => {
-      const [confirmRes, resultRes] = await Promise.all([
-        serverWithFlagOff.inject({
-          method: 'GET',
-          url: confirmUrl,
-          auth: authOptions
-        }),
-        serverWithFlagOff.inject({
-          method: 'GET',
-          url: resultUrl,
-          auth: authOptions
-        })
-      ])
-
-      expect(confirmRes.statusCode).toBe(statusCodes.notFound)
-      expect(resultRes.statusCode).toBe(statusCodes.notFound)
-    })
   })
 })
