@@ -46,14 +46,12 @@ describe('report-unsubmit', () => {
   let server
 
   beforeAll(async () => {
-    config.set('featureFlagReportUnsubmit', true)
     createMockOidcServer()
     server = await createServer()
     await server.initialize()
   })
 
   afterAll(async () => {
-    config.set('featureFlagReportUnsubmit', false)
     await server.stop({ timeout: 0 })
   })
 
@@ -239,42 +237,5 @@ describe('report-unsubmit', () => {
 
     expect(statusCode).toBe(statusCodes.found)
     expect(headers.location).toBe(overviewUrl)
-  })
-
-  describe('when feature flag is disabled', () => {
-    let serverWithFlagOff
-
-    beforeAll(async () => {
-      config.set('featureFlagReportUnsubmit', false)
-      serverWithFlagOff = await createServer()
-      await serverWithFlagOff.initialize()
-    })
-
-    afterAll(async () => {
-      await serverWithFlagOff.stop({ timeout: 0 })
-      config.set('featureFlagReportUnsubmit', true)
-    })
-
-    beforeEach(() => {
-      getUserSession.mockReturnValue(mockUserSession)
-    })
-
-    test('unsubmit routes are not registered and return 404', async () => {
-      const [confirmRes, resultRes] = await Promise.all([
-        serverWithFlagOff.inject({
-          method: 'GET',
-          url: confirmUrl,
-          auth: authOptions
-        }),
-        serverWithFlagOff.inject({
-          method: 'GET',
-          url: resultUrl,
-          auth: authOptions
-        })
-      ])
-
-      expect(confirmRes.statusCode).toBe(statusCodes.notFound)
-      expect(resultRes.statusCode).toBe(statusCodes.notFound)
-    })
   })
 })

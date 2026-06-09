@@ -290,12 +290,6 @@ export const config = convict({
     default: 'http://localhost:3001',
     env: 'EPR_BACKEND_URL'
   },
-  featureFlagReportUnsubmit: {
-    doc: 'Feature Flag: Enable admin unsubmit UI for reports',
-    format: Boolean,
-    default: true,
-    env: 'FEATURE_FLAG_REPORT_UNSUBMIT'
-  },
   cdpUploaderUrl: {
     doc: 'CDP Uploader service URL (browser-visible, used in CSP form-action)',
     format: String,

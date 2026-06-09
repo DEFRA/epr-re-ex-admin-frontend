@@ -1,10 +1,9 @@
-import { config } from '#config/config.js'
 import { reportUnsubmitConfirmGetController } from './controller.get-confirm.js'
 import { reportUnsubmitPostController } from './controller.post.js'
 import { reportUnsubmitResultGetController } from './controller.get-result.js'
 import { requireScope } from '#server/common/helpers/auth/require-scope.js'
 import { SCOPES } from '#server/common/helpers/auth/scopes.js'
-import { FEATURE_FLAG_KEY, PAGE_TITLE } from './constants.js'
+import { PAGE_TITLE } from './constants.js'
 
 const BASE =
   '/organisations/{organisationId}/registrations/{registrationId}/reports/{year}/{cadence}/{period}'
@@ -15,10 +14,6 @@ export const reportUnsubmit = {
   plugin: {
     name: 'report-unsubmit',
     register(server) {
-      if (!config.get(FEATURE_FLAG_KEY)) {
-        return
-      }
-
       server.route([
         {
           method: 'GET',
