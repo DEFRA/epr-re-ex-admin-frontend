@@ -70,13 +70,12 @@ describe('#accreditationOverseasSitesController', () => {
   }
 
   /**
-   * @typedef {import('./controller.get.js').OverseasSite} OverseasSite
+   * @typedef {import('./controller.get.js').OverseasSites} OverseasSites
    */
 
-  /** @type {OverseasSite[]} */
-  const mockSites = [
-    {
-      orsId: '001',
+  /** @type {OverseasSites} */
+  const mockSites = {
+    '001': {
       name: 'Beta Reprocessor',
       country: 'Germany',
       address: {
@@ -89,8 +88,7 @@ describe('#accreditationOverseasSitesController', () => {
       coordinates: '52.5200,13.4050',
       validFrom: '2024-01-01T00:00:00.000Z'
     },
-    {
-      orsId: '002',
+    '002': {
       name: 'Gamma Recycling',
       country: 'France',
       address: {
@@ -100,7 +98,7 @@ describe('#accreditationOverseasSitesController', () => {
       coordinates: null,
       validFrom: '2024-06-15T00:00:00.000Z'
     }
-  ]
+  }
 
   const renderPage = (html) => {
     const window = new Window()
@@ -117,7 +115,7 @@ describe('#accreditationOverseasSitesController', () => {
 
   /**
    * @param {typeof mockOverview} [overviewResponse]
-   * @param {OverseasSite[]} [sitesResponse]
+   * @param {OverseasSites} [sitesResponse]
    */
   const useMockBackend = (
     overviewResponse = mockOverview,
@@ -220,7 +218,7 @@ describe('#accreditationOverseasSitesController', () => {
       ])
     })
 
-    test('Should render the same columns as the overseas sites list', async () => {
+    test('Should render the site columns without the constant identifier columns', async () => {
       useMockBackend()
 
       const { result } = await server.inject({
@@ -236,9 +234,6 @@ describe('#accreditationOverseasSitesController', () => {
           h.textContent?.trim()
         )
       ).toEqual([
-        'Org ID',
-        'Registration Number',
-        'Accreditation Number',
         'ORS ID',
         'Packaging waste category',
         'Destination country',
@@ -253,7 +248,7 @@ describe('#accreditationOverseasSitesController', () => {
       ])
     })
 
-    test('Should render a site row with its accreditation context and site detail', async () => {
+    test('Should render a site row keyed by its ORS id with site detail', async () => {
       useMockBackend()
 
       const { result } = await server.inject({
@@ -271,9 +266,6 @@ describe('#accreditationOverseasSitesController', () => {
         cell.textContent?.trim()
       )
       expect(cells).toEqual([
-        organisationId,
-        'REG-50030-001',
-        'ACC-50030-001',
         '001',
         'glass',
         'Germany',
@@ -300,20 +292,19 @@ describe('#accreditationOverseasSitesController', () => {
       const body = renderPage(result)
       const cells = getAllByRole(getDataRows(getSitesTable(body))[0], 'cell')
 
-      expect(cells[13]).toHaveTextContent('1 January 2024')
+      expect(cells[10]).toHaveTextContent('1 January 2024')
     })
 
     test('Should show a dash valid-from for an unapproved site', async () => {
-      useMockBackend(mockOverview, [
-        {
-          orsId: '004',
+      useMockBackend(mockOverview, {
+        '004': {
           name: 'Delta Processing',
           country: 'Spain',
           address: { line1: '9 Calle Test', townOrCity: 'Madrid' },
           coordinates: null,
           validFrom: null
         }
-      ])
+      })
 
       const { result } = await server.inject({
         method: 'GET',
@@ -324,29 +315,27 @@ describe('#accreditationOverseasSitesController', () => {
       const body = renderPage(result)
       const cells = getAllByRole(getDataRows(getSitesTable(body))[0], 'cell')
 
-      expect(cells[6]).toHaveTextContent('Delta Processing')
-      expect(cells[13]).toHaveTextContent('-')
+      expect(cells[3]).toHaveTextContent('Delta Processing')
+      expect(cells[10]).toHaveTextContent('-')
     })
 
     test('Should distinguish approved from unapproved sites by their valid-from date', async () => {
-      useMockBackend(mockOverview, [
-        {
-          orsId: '001',
+      useMockBackend(mockOverview, {
+        '001': {
           name: 'Beta Reprocessor',
           country: 'Germany',
           address: { line1: '2 Teststrasse', townOrCity: 'Berlin' },
           coordinates: null,
           validFrom: '2024-01-01T00:00:00.000Z'
         },
-        {
-          orsId: '004',
+        '004': {
           name: 'Delta Processing',
           country: 'Spain',
           address: { line1: '9 Calle Test', townOrCity: 'Madrid' },
           coordinates: null,
           validFrom: null
         }
-      ])
+      })
 
       const { result } = await server.inject({
         method: 'GET',
@@ -357,10 +346,10 @@ describe('#accreditationOverseasSitesController', () => {
       const body = renderPage(result)
       const rows = getDataRows(getSitesTable(body))
 
-      expect(getAllByRole(rows[0], 'cell')[13]).toHaveTextContent(
+      expect(getAllByRole(rows[0], 'cell')[10]).toHaveTextContent(
         '1 January 2024'
       )
-      expect(getAllByRole(rows[1], 'cell')[13]).toHaveTextContent('-')
+      expect(getAllByRole(rows[1], 'cell')[10]).toHaveTextContent('-')
     })
 
     test('Should render a dash for absent address lines', async () => {
@@ -375,25 +364,24 @@ describe('#accreditationOverseasSitesController', () => {
       const body = renderPage(result)
       const cells = getAllByRole(getDataRows(getSitesTable(body))[1], 'cell')
 
-      expect(cells[7]).toHaveTextContent('5 Rue de Test')
+      expect(cells[4]).toHaveTextContent('5 Rue de Test')
+      expect(cells[5]).toHaveTextContent('-')
+      expect(cells[6]).toHaveTextContent('Lyon')
+      expect(cells[7]).toHaveTextContent('-')
       expect(cells[8]).toHaveTextContent('-')
-      expect(cells[9]).toHaveTextContent('Lyon')
-      expect(cells[10]).toHaveTextContent('-')
-      expect(cells[11]).toHaveTextContent('-')
-      expect(cells[12]).toHaveTextContent('-')
+      expect(cells[9]).toHaveTextContent('-')
     })
 
     test('Should render an unresolved site with its id, dashes for unknown detail and dash valid-from', async () => {
-      useMockBackend(mockOverview, [
-        {
-          orsId: '003',
+      useMockBackend(mockOverview, {
+        '003': {
           name: null,
           country: null,
           address: null,
           coordinates: null,
           validFrom: null
         }
-      ])
+      })
 
       const { result } = await server.inject({
         method: 'GET',
@@ -404,16 +392,16 @@ describe('#accreditationOverseasSitesController', () => {
       const body = renderPage(result)
       const cells = getAllByRole(getDataRows(getSitesTable(body))[0], 'cell')
 
-      expect(cells[3]).toHaveTextContent('003')
-      expect(cells[5]).toHaveTextContent('-')
-      expect(cells[6]).toHaveTextContent('-')
-      expect(cells[7]).toHaveTextContent('-')
-      expect(cells[12]).toHaveTextContent('-')
-      expect(cells[13]).toHaveTextContent('-')
+      expect(cells[0]).toHaveTextContent('003')
+      expect(cells[2]).toHaveTextContent('-')
+      expect(cells[3]).toHaveTextContent('-')
+      expect(cells[4]).toHaveTextContent('-')
+      expect(cells[9]).toHaveTextContent('-')
+      expect(cells[10]).toHaveTextContent('-')
     })
 
     test('Should render empty-state when there are no overseas sites', async () => {
-      useMockBackend(mockOverview, [])
+      useMockBackend(mockOverview, {})
 
       const { result } = await server.inject({
         method: 'GET',
