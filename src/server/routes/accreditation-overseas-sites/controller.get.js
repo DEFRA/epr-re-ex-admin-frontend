@@ -1,9 +1,12 @@
-import { formatDate } from '#config/nunjucks/filters/format-date.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import {
   fetchOrganisationOverview,
   findRegistration
 } from '#server/common/helpers/fetch-organisation-overview.js'
+import {
+  toDisplayValue,
+  toValidFromDisplayValue
+} from '#server/common/helpers/overseas-site-display.js'
 
 /**
  * @typedef {{
@@ -35,44 +38,6 @@ import {
  * @typedef {ResolvedOverseasSite | UnresolvedOverseasSite} OverseasSite
  */
 
-const GREEN_TAG = 'govuk-tag--green'
-const GREY_TAG = 'govuk-tag--grey'
-const APPROVED_FROM_FORMAT = 'd MMMM yyyy'
-
-/**
- * @param {OverseasSiteAddress | null} address
- * @returns {string}
- */
-const formatAddress = (address) =>
-  address
-    ? [
-        address.line1,
-        address.line2,
-        address.townOrCity,
-        address.stateOrRegion,
-        address.postcode
-      ]
-        .filter(Boolean)
-        .join(', ')
-    : ''
-
-/**
- * A site is approved once it has an approved-from date; an unapproved or
- * unresolved site has none.
- * @param {string | null} validFrom
- * @returns {{ statusHtml: string, approvedFrom: string }}
- */
-const approvalCells = (validFrom) =>
-  validFrom
-    ? {
-        statusHtml: `<strong class="govuk-tag ${GREEN_TAG}">Approved</strong>`,
-        approvedFrom: formatDate(new Date(validFrom), APPROVED_FROM_FORMAT)
-      }
-    : {
-        statusHtml: `<strong class="govuk-tag ${GREY_TAG}">Unapproved</strong>`,
-        approvedFrom: ''
-      }
-
 export const accreditationOverseasSitesGETController = {
   async handler(request, h) {
     const { organisationId, registrationId, accreditationId } = request.params
@@ -93,17 +58,29 @@ export const accreditationOverseasSitesGETController = {
 
     const heading = `${overview.companyName} - ${registration.accreditation?.accreditationNumber}`
 
-    const siteRows = sites.map((site) => {
-      const { statusHtml, approvedFrom } = approvalCells(site.validFrom)
-      return [
-        { text: site.orsId },
-        { text: site.name ?? '' },
-        { text: site.country ?? '' },
-        { text: formatAddress(site.address) },
-        { html: statusHtml },
-        { text: approvedFrom }
-      ]
-    })
+    const orgId = toDisplayValue(organisationId)
+    const registrationNumber = toDisplayValue(registration.registrationNumber)
+    const accreditationNumber = toDisplayValue(
+      registration.accreditation?.accreditationNumber
+    )
+    const packagingWasteCategory = toDisplayValue(registration.material)
+
+    const siteRows = sites.map((site) => [
+      { text: orgId },
+      { text: registrationNumber },
+      { text: accreditationNumber },
+      { text: toDisplayValue(site.orsId) },
+      { text: packagingWasteCategory },
+      { text: toDisplayValue(site.country) },
+      { text: toDisplayValue(site.name) },
+      { text: toDisplayValue(site.address?.line1) },
+      { text: toDisplayValue(site.address?.line2) },
+      { text: toDisplayValue(site.address?.townOrCity) },
+      { text: toDisplayValue(site.address?.stateOrRegion) },
+      { text: toDisplayValue(site.address?.postcode) },
+      { text: toDisplayValue(site.coordinates) },
+      { text: toValidFromDisplayValue(site.validFrom) }
+    ])
 
     return h.view('routes/accreditation-overseas-sites/index', {
       breadcrumbs: [

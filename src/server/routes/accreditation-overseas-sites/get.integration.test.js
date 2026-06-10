@@ -220,7 +220,7 @@ describe('#accreditationOverseasSitesController', () => {
       ])
     })
 
-    test('Should render sites table with correct columns', async () => {
+    test('Should render the same columns as the overseas sites list', async () => {
       useMockBackend()
 
       const { result } = await server.inject({
@@ -236,16 +236,24 @@ describe('#accreditationOverseasSitesController', () => {
           h.textContent?.trim()
         )
       ).toEqual([
+        'Org ID',
+        'Registration Number',
+        'Accreditation Number',
         'ORS ID',
-        'Name',
-        'Country',
-        'Address',
-        'Status',
-        'Approved from'
+        'Packaging waste category',
+        'Destination country',
+        'Overseas reprocessor name',
+        'Address line 1',
+        'Address line 2',
+        'City or town',
+        'State, province or region',
+        'Postcode or similar',
+        'Coordinates',
+        'Valid from'
       ])
     })
 
-    test('Should render site rows with id, name, country and full address', async () => {
+    test('Should render a site row with its accreditation context and site detail', async () => {
       useMockBackend()
 
       const { result } = await server.inject({
@@ -259,16 +267,28 @@ describe('#accreditationOverseasSitesController', () => {
 
       expect(rows).toHaveLength(2)
 
-      const firstCells = getAllByRole(rows[0], 'cell')
-      expect(firstCells[0]).toHaveTextContent('001')
-      expect(firstCells[1]).toHaveTextContent('Beta Reprocessor')
-      expect(firstCells[2]).toHaveTextContent('Germany')
-      expect(firstCells[3]).toHaveTextContent(
-        '2 Teststrasse, Zone 2, Berlin, Berlin-Mitte, 10115'
+      const cells = getAllByRole(rows[0], 'cell').map((cell) =>
+        cell.textContent?.trim()
       )
+      expect(cells).toEqual([
+        organisationId,
+        'REG-50030-001',
+        'ACC-50030-001',
+        '001',
+        'glass',
+        'Germany',
+        'Beta Reprocessor',
+        '2 Teststrasse',
+        'Zone 2',
+        'Berlin',
+        'Berlin-Mitte',
+        '10115',
+        '52.5200,13.4050',
+        '1 January 2024'
+      ])
     })
 
-    test('Should mark an approved site with an Approved tag and its approved-from date', async () => {
+    test('Should show the valid-from date for an approved site', async () => {
       useMockBackend()
 
       const { result } = await server.inject({
@@ -280,11 +300,10 @@ describe('#accreditationOverseasSitesController', () => {
       const body = renderPage(result)
       const cells = getAllByRole(getDataRows(getSitesTable(body))[0], 'cell')
 
-      expect(cells[4]).toHaveTextContent('Approved')
-      expect(cells[5]).toHaveTextContent('1 January 2024')
+      expect(cells[13]).toHaveTextContent('1 January 2024')
     })
 
-    test('Should mark a resolved but unapproved site as Unapproved with a blank approved-from', async () => {
+    test('Should show a dash valid-from for an unapproved site', async () => {
       useMockBackend(mockOverview, [
         {
           orsId: '004',
@@ -305,12 +324,11 @@ describe('#accreditationOverseasSitesController', () => {
       const body = renderPage(result)
       const cells = getAllByRole(getDataRows(getSitesTable(body))[0], 'cell')
 
-      expect(cells[1]).toHaveTextContent('Delta Processing')
-      expect(cells[4]).toHaveTextContent('Unapproved')
-      expect(cells[5]).toBeEmptyDOMElement()
+      expect(cells[6]).toHaveTextContent('Delta Processing')
+      expect(cells[13]).toHaveTextContent('-')
     })
 
-    test('Should render a mix of approved and unapproved sites, distinguishing each', async () => {
+    test('Should distinguish approved from unapproved sites by their valid-from date', async () => {
       useMockBackend(mockOverview, [
         {
           orsId: '001',
@@ -339,11 +357,13 @@ describe('#accreditationOverseasSitesController', () => {
       const body = renderPage(result)
       const rows = getDataRows(getSitesTable(body))
 
-      expect(getAllByRole(rows[0], 'cell')[4]).toHaveTextContent('Approved')
-      expect(getAllByRole(rows[1], 'cell')[4]).toHaveTextContent('Unapproved')
+      expect(getAllByRole(rows[0], 'cell')[13]).toHaveTextContent(
+        '1 January 2024'
+      )
+      expect(getAllByRole(rows[1], 'cell')[13]).toHaveTextContent('-')
     })
 
-    test('Should render only the present address lines when optional keys are omitted', async () => {
+    test('Should render a dash for absent address lines', async () => {
       useMockBackend()
 
       const { result } = await server.inject({
@@ -353,13 +373,17 @@ describe('#accreditationOverseasSitesController', () => {
       })
 
       const body = renderPage(result)
-      const rows = getDataRows(getSitesTable(body))
-      const secondCells = getAllByRole(rows[1], 'cell')
+      const cells = getAllByRole(getDataRows(getSitesTable(body))[1], 'cell')
 
-      expect(secondCells[3]).toHaveTextContent('5 Rue de Test, Lyon')
+      expect(cells[7]).toHaveTextContent('5 Rue de Test')
+      expect(cells[8]).toHaveTextContent('-')
+      expect(cells[9]).toHaveTextContent('Lyon')
+      expect(cells[10]).toHaveTextContent('-')
+      expect(cells[11]).toHaveTextContent('-')
+      expect(cells[12]).toHaveTextContent('-')
     })
 
-    test('Should render an unresolved site with its id, blank details and Unapproved status', async () => {
+    test('Should render an unresolved site with its id, dashes for unknown detail and dash valid-from', async () => {
       useMockBackend(mockOverview, [
         {
           orsId: '003',
@@ -378,15 +402,14 @@ describe('#accreditationOverseasSitesController', () => {
       })
 
       const body = renderPage(result)
-      const rows = getDataRows(getSitesTable(body))
-      const cells = getAllByRole(rows[0], 'cell')
+      const cells = getAllByRole(getDataRows(getSitesTable(body))[0], 'cell')
 
-      expect(cells[0]).toHaveTextContent('003')
-      expect(cells[1]).toBeEmptyDOMElement()
-      expect(cells[2]).toBeEmptyDOMElement()
-      expect(cells[3]).toBeEmptyDOMElement()
-      expect(cells[4]).toHaveTextContent('Unapproved')
-      expect(cells[5]).toBeEmptyDOMElement()
+      expect(cells[3]).toHaveTextContent('003')
+      expect(cells[5]).toHaveTextContent('-')
+      expect(cells[6]).toHaveTextContent('-')
+      expect(cells[7]).toHaveTextContent('-')
+      expect(cells[12]).toHaveTextContent('-')
+      expect(cells[13]).toHaveTextContent('-')
     })
 
     test('Should render empty-state when there are no overseas sites', async () => {
