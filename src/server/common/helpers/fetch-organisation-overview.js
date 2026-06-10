@@ -20,9 +20,17 @@ import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
  * }} Registration
  *
  * @typedef {{
+ *   orgId: string,
+ *   orgName: string,
+ *   linkedAt: string,
+ *   linkedBy: { email: string }
+ * }} LinkedDefraOrganisation
+ *
+ * @typedef {{
  *   id: string,
  *   companyName: string,
- *   registrations: Registration[]
+ *   registrations: Registration[],
+ *   linkedDefraOrganisation?: LinkedDefraOrganisation
  * }} OrganisationOverview
  */
 
