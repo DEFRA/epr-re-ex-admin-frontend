@@ -61,7 +61,7 @@ describe('#registrationOverviewController', () => {
     id: registrationId,
     registrationNumber: 'REG-50030-001',
     status: 'approved',
-    processingType: 'reprocessing',
+    processingType: 'reprocessor',
     material: 'glass',
     site: 'Site A',
     accreditation: {
@@ -295,7 +295,7 @@ describe('#registrationOverviewController', () => {
         within(getSummaryRowValue(body, 'Status')).getByText('approved')
       ).toHaveClass('govuk-tag')
       expect(getSummaryRowValue(body, 'Processing type')).toHaveTextContent(
-        'reprocessing'
+        'reprocessor'
       )
       expect(getSummaryRowValue(body, 'Material')).toHaveTextContent('glass')
       expect(getSummaryRowValue(body, 'Site')).toHaveTextContent('Site A')
@@ -343,8 +343,11 @@ describe('#registrationOverviewController', () => {
       )
     })
 
-    test('Should render an overseas sites link when accreditation exists', async () => {
-      useMockBackend()
+    test('Should render an overseas sites link for an exporter accreditation', async () => {
+      useMockBackend({
+        ...mockOverview,
+        registrations: [{ ...mockRegistration, processingType: 'exporter' }]
+      })
 
       const { result } = await server.inject({
         method: 'GET',
@@ -362,6 +365,20 @@ describe('#registrationOverviewController', () => {
         'href',
         `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/overseas-sites`
       )
+    })
+
+    test('Should not render an overseas sites link for a reprocessor accreditation', async () => {
+      useMockBackend()
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+
+      expect(queryByText(body, 'Overseas sites', { selector: 'dt' })).toBeNull()
     })
 
     test('Should not render accreditation rows in summary list when accreditation is absent', async () => {
