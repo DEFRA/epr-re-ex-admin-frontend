@@ -1,0 +1,28 @@
+{% extends 'layout.njk' %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+
+{% block content %}
+  <div class="govuk-width-container">
+    <h1 class="govuk-heading-xl">{{ heading }}</h1>
+
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-full">
+        {% if siteRows and siteRows.length %}
+          {{ govukTable({
+            caption: "Approved overseas sites",
+            captionClasses: "govuk-table__caption--m",
+            head: [
+              { text: "ORS ID" },
+              { text: "Name" },
+              { text: "Country" },
+              { text: "Address" }
+            ],
+            rows: siteRows
+          }) }}
+        {% else %}
+          <p class="govuk-body">No approved overseas sites</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}
