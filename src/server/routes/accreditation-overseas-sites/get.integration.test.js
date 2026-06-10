@@ -85,7 +85,9 @@ describe('#accreditationOverseasSitesController', () => {
         townOrCity: 'Berlin',
         stateOrRegion: 'Berlin-Mitte',
         postcode: '10115'
-      }
+      },
+      coordinates: '52.5200,13.4050',
+      validFrom: '2024-01-01T00:00:00.000Z'
     },
     {
       orsId: '002',
@@ -94,7 +96,9 @@ describe('#accreditationOverseasSitesController', () => {
       address: {
         line1: '5 Rue de Test',
         townOrCity: 'Lyon'
-      }
+      },
+      coordinates: null,
+      validFrom: '2024-06-15T00:00:00.000Z'
     }
   ]
 
@@ -107,7 +111,7 @@ describe('#accreditationOverseasSitesController', () => {
   }
 
   const getSitesTable = (container) =>
-    getByRole(container, 'table', { name: 'Approved overseas sites' })
+    getByRole(container, 'table', { name: 'Overseas sites' })
 
   const getDataRows = (table) => getAllByRole(table, 'row').slice(1)
 
@@ -231,7 +235,14 @@ describe('#accreditationOverseasSitesController', () => {
         getAllByRole(getSitesTable(body), 'columnheader').map((h) =>
           h.textContent?.trim()
         )
-      ).toEqual(['ORS ID', 'Name', 'Country', 'Address'])
+      ).toEqual([
+        'ORS ID',
+        'Name',
+        'Country',
+        'Address',
+        'Status',
+        'Approved from'
+      ])
     })
 
     test('Should render site rows with id, name, country and full address', async () => {
@@ -257,6 +268,81 @@ describe('#accreditationOverseasSitesController', () => {
       )
     })
 
+    test('Should mark an approved site with an Approved tag and its approved-from date', async () => {
+      useMockBackend()
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+      const cells = getAllByRole(getDataRows(getSitesTable(body))[0], 'cell')
+
+      expect(cells[4]).toHaveTextContent('Approved')
+      expect(cells[5]).toHaveTextContent('1 January 2024')
+    })
+
+    test('Should mark a resolved but unapproved site as Unapproved with a blank approved-from', async () => {
+      useMockBackend(mockOverview, [
+        {
+          orsId: '004',
+          name: 'Delta Processing',
+          country: 'Spain',
+          address: { line1: '9 Calle Test', townOrCity: 'Madrid' },
+          coordinates: null,
+          validFrom: null
+        }
+      ])
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+      const cells = getAllByRole(getDataRows(getSitesTable(body))[0], 'cell')
+
+      expect(cells[1]).toHaveTextContent('Delta Processing')
+      expect(cells[4]).toHaveTextContent('Unapproved')
+      expect(cells[5]).toBeEmptyDOMElement()
+    })
+
+    test('Should render a mix of approved and unapproved sites, distinguishing each', async () => {
+      useMockBackend(mockOverview, [
+        {
+          orsId: '001',
+          name: 'Beta Reprocessor',
+          country: 'Germany',
+          address: { line1: '2 Teststrasse', townOrCity: 'Berlin' },
+          coordinates: null,
+          validFrom: '2024-01-01T00:00:00.000Z'
+        },
+        {
+          orsId: '004',
+          name: 'Delta Processing',
+          country: 'Spain',
+          address: { line1: '9 Calle Test', townOrCity: 'Madrid' },
+          coordinates: null,
+          validFrom: null
+        }
+      ])
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+      const rows = getDataRows(getSitesTable(body))
+
+      expect(getAllByRole(rows[0], 'cell')[4]).toHaveTextContent('Approved')
+      expect(getAllByRole(rows[1], 'cell')[4]).toHaveTextContent('Unapproved')
+    })
+
     test('Should render only the present address lines when optional keys are omitted', async () => {
       useMockBackend()
 
@@ -273,9 +359,16 @@ describe('#accreditationOverseasSitesController', () => {
       expect(secondCells[3]).toHaveTextContent('5 Rue de Test, Lyon')
     })
 
-    test('Should render an unresolved site with its id and blank details', async () => {
+    test('Should render an unresolved site with its id, blank details and Unapproved status', async () => {
       useMockBackend(mockOverview, [
-        { orsId: '003', name: null, country: null, address: null }
+        {
+          orsId: '003',
+          name: null,
+          country: null,
+          address: null,
+          coordinates: null,
+          validFrom: null
+        }
       ])
 
       const { result } = await server.inject({
@@ -292,9 +385,11 @@ describe('#accreditationOverseasSitesController', () => {
       expect(cells[1]).toBeEmptyDOMElement()
       expect(cells[2]).toBeEmptyDOMElement()
       expect(cells[3]).toBeEmptyDOMElement()
+      expect(cells[4]).toHaveTextContent('Unapproved')
+      expect(cells[5]).toBeEmptyDOMElement()
     })
 
-    test('Should render empty-state when there are no approved overseas sites', async () => {
+    test('Should render empty-state when there are no overseas sites', async () => {
       useMockBackend(mockOverview, [])
 
       const { result } = await server.inject({
@@ -305,10 +400,8 @@ describe('#accreditationOverseasSitesController', () => {
 
       const body = renderPage(result)
 
-      expect(
-        queryByRole(body, 'table', { name: 'Approved overseas sites' })
-      ).toBeNull()
-      expect(getByText(body, 'No approved overseas sites')).toBeInTheDocument()
+      expect(queryByRole(body, 'table', { name: 'Overseas sites' })).toBeNull()
+      expect(getByText(body, 'No overseas sites')).toBeInTheDocument()
     })
 
     test('Should show 500 error page when backend returns a non-OK response', async () => {

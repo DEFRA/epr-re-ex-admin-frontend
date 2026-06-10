@@ -9,18 +9,20 @@
       <div class="govuk-grid-column-full">
         {% if siteRows and siteRows.length %}
           {{ govukTable({
-            caption: "Approved overseas sites",
+            caption: "Overseas sites",
             captionClasses: "govuk-table__caption--m",
             head: [
               { text: "ORS ID" },
               { text: "Name" },
               { text: "Country" },
-              { text: "Address" }
+              { text: "Address" },
+              { text: "Status" },
+              { text: "Approved from" }
             ],
             rows: siteRows
           }) }}
         {% else %}
-          <p class="govuk-body">No approved overseas sites</p>
+          <p class="govuk-body">No overseas sites</p>
         {% endif %}
       </div>
     </div>

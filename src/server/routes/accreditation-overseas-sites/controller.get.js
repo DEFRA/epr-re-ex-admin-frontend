@@ -1,3 +1,4 @@
+import { formatDate } from '#config/nunjucks/filters/format-date.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import {
   fetchOrganisationOverview,
@@ -17,18 +18,26 @@ import {
  *   orsId: string,
  *   name: string,
  *   country: string,
- *   address: OverseasSiteAddress
+ *   address: OverseasSiteAddress,
+ *   coordinates: string | null,
+ *   validFrom: string | null
  * }} ResolvedOverseasSite
  *
  * @typedef {{
  *   orsId: string,
  *   name: null,
  *   country: null,
- *   address: null
+ *   address: null,
+ *   coordinates: null,
+ *   validFrom: null
  * }} UnresolvedOverseasSite
  *
  * @typedef {ResolvedOverseasSite | UnresolvedOverseasSite} OverseasSite
  */
+
+const GREEN_TAG = 'govuk-tag--green'
+const GREY_TAG = 'govuk-tag--grey'
+const APPROVED_FROM_FORMAT = 'd MMMM yyyy'
 
 /**
  * @param {OverseasSiteAddress | null} address
@@ -46,6 +55,23 @@ const formatAddress = (address) =>
         .filter(Boolean)
         .join(', ')
     : ''
+
+/**
+ * A site is approved once it has an approved-from date; an unapproved or
+ * unresolved site has none.
+ * @param {string | null} validFrom
+ * @returns {{ statusHtml: string, approvedFrom: string }}
+ */
+const approvalCells = (validFrom) =>
+  validFrom
+    ? {
+        statusHtml: `<strong class="govuk-tag ${GREEN_TAG}">Approved</strong>`,
+        approvedFrom: formatDate(new Date(validFrom), APPROVED_FROM_FORMAT)
+      }
+    : {
+        statusHtml: `<strong class="govuk-tag ${GREY_TAG}">Unapproved</strong>`,
+        approvedFrom: ''
+      }
 
 export const accreditationOverseasSitesGETController = {
   async handler(request, h) {
@@ -67,12 +93,17 @@ export const accreditationOverseasSitesGETController = {
 
     const heading = `${overview.companyName} - ${registration.accreditation?.accreditationNumber}`
 
-    const siteRows = sites.map((site) => [
-      { text: site.orsId },
-      { text: site.name ?? '' },
-      { text: site.country ?? '' },
-      { text: formatAddress(site.address) }
-    ])
+    const siteRows = sites.map((site) => {
+      const { statusHtml, approvedFrom } = approvalCells(site.validFrom)
+      return [
+        { text: site.orsId },
+        { text: site.name ?? '' },
+        { text: site.country ?? '' },
+        { text: formatAddress(site.address) },
+        { html: statusHtml },
+        { text: approvedFrom }
+      ]
+    })
 
     return h.view('routes/accreditation-overseas-sites/index', {
       breadcrumbs: [
