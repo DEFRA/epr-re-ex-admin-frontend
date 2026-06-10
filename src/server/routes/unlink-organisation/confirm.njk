@@ -1,0 +1,32 @@
+{% extends 'layout.njk' %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/warning-text/macro.njk" import govukWarningText %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-xl">{{ heading }}</h1>
+
+      <p class="govuk-body">
+        You are about to unlink <strong>{{ companyName }}</strong> from the Defra ID
+        organisation <strong>{{ defraOrgName }}</strong>.
+      </p>
+
+      {{ govukWarningText({
+        text: "The organisation will no longer be linked to this Defra ID organisation. The user can re-link it by signing in to the service again.",
+        iconFallbackText: "Warning"
+      }) }}
+
+      <form method="POST" action="{{ postUrl }}">
+        <input type="hidden" name="crumb" value="{{ crumb }}" />
+        {{ govukButton({
+          text: "Unlink organisation",
+          classes: "govuk-button--warning"
+        }) }}
+        <p class="govuk-body">
+          <a class="govuk-link" href="{{ overviewUrl }}">Cancel</a>
+        </p>
+      </form>
+    </div>
+  </div>
+{% endblock %}

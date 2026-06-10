@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
+import { statusCodes } from '../constants/status-codes.js'
 import { classifierTail, internal } from './logging/cdp-boom.js'
 import { getUserSession } from './auth/get-user-session.js'
 import { withTraceId } from '@defra/hapi-tracing'
@@ -50,6 +51,10 @@ export const fetchJsonFromBackend = async (request, path, options) => {
       }
 
       throw error
+    }
+
+    if (response.status === statusCodes.noContent) {
+      return null
     }
 
     return await response.json()

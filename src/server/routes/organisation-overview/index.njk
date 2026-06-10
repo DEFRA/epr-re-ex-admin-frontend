@@ -1,10 +1,46 @@
 {% extends 'layout.njk' %}
 {% from "govuk/components/table/macro.njk" import govukTable %}
 {% from "govuk/components/tag/macro.njk" import govukTag %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
 
 {% block content %}
   <div class="govuk-width-container">
     <h1 class="govuk-heading-xl">{{ heading }}</h1>
+
+    {% if unlinkResult === 'success' %}
+      {% set unlinkSuccessHtml %}
+        <p class="govuk-body">Organisation unlinked from Defra ID.</p>
+      {% endset %}
+      {{ govukNotificationBanner({ html: unlinkSuccessHtml, type: "success" }) }}
+    {% elif unlinkResult === 'error' %}
+      {% set unlinkErrorHtml %}
+        <p class="govuk-body">The organisation could not be unlinked. Please try again.</p>
+      {% endset %}
+      {{ govukNotificationBanner({ titleText: "There is a problem", html: unlinkErrorHtml }) }}
+    {% endif %}
+
+    <h2 class="govuk-heading-l">Defra ID link</h2>
+    {% if linkedDefraOrganisation %}
+      {{ govukSummaryList({
+        rows: [
+          { key: { text: "Defra ID organisation" }, value: { text: linkedDefraOrganisation.orgName } },
+          { key: { text: "Defra organisation ID" }, value: { text: linkedDefraOrganisation.orgId } },
+          { key: { text: "Linked on" }, value: { text: linkedDefraOrganisation.linkedAt } },
+          { key: { text: "Linked by" }, value: { text: linkedDefraOrganisation.linkedBy.email } }
+        ]
+      }) }}
+      {% if SCOPES.adminWrite in scopes %}
+        {{ govukButton({
+          text: "Unlink organisation",
+          href: "/organisations/" ~ organisationId ~ "/unlink-defra-id/confirm",
+          classes: "govuk-button--warning"
+        }) }}
+      {% endif %}
+    {% else %}
+      <p class="govuk-body">No linked organisation</p>
+    {% endif %}
 
     {% set tableRows = [] %}
     {% for registration in registrations %}

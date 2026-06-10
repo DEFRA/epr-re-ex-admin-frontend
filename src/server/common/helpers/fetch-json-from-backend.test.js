@@ -14,6 +14,15 @@ import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 import { http, HttpResponse, server as mswServer } from '#vite/setup-msw.js'
 
+/** @typedef {import('#server/common/hapi-types.js').HapiRequest} HapiRequest */
+
+/**
+ * The helper reads the request only via the mocked `getUserSession`, so an
+ * empty object cast to `HapiRequest` is sufficient for these tests.
+ * @type {HapiRequest}
+ */
+const mockRequest = /** @type {HapiRequest} */ ({})
+
 vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
   getUserSession: vi.fn().mockReturnValue(null)
 }))
@@ -31,7 +40,7 @@ vi.mock(import('@defra/hapi-tracing'), () => ({
 describe('#fetchJsonFromBackend', () => {
   const originalBackendUrl = config.get('eprBackendUrl')
   const backendUrl = 'http://mock-backend'
-  getUserSession.mockReturnValue(mockUserSession)
+  vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
 
   beforeAll(() => {
     config.set('eprBackendUrl', backendUrl)
@@ -72,12 +81,27 @@ describe('#fetchJsonFromBackend', () => {
       }
 
       const result = await fetchJsonFromBackend(
-        {},
+        mockRequest,
         '/v1/organisations',
         options
       )
 
       expect(result).toEqual(mockOrganisations)
+    })
+
+    test('returns null when backend responds with 204 No Content', async () => {
+      const path = '/v1/organisations/org-1/link'
+      const url = `${backendUrl}${path}`
+      const deleteHandler = http.delete(url, () => {
+        return new HttpResponse(null, { status: 204 })
+      })
+      mswServer.use(deleteHandler)
+
+      const result = await fetchJsonFromBackend(mockRequest, path, {
+        method: 'DELETE'
+      })
+
+      expect(result).toBeNull()
     })
 
     test('adds the authorisation header with the user token', async () => {
@@ -90,7 +114,9 @@ describe('#fetchJsonFromBackend', () => {
       })
       mswServer.use(getOrganisationsHandler)
 
-      await fetchJsonFromBackend({}, '/v1/organisations', { method: 'GET' })
+      await fetchJsonFromBackend(mockRequest, '/v1/organisations', {
+        method: 'GET'
+      })
 
       expect(capturedHeaders).toEqual(
         expect.objectContaining({
@@ -112,7 +138,7 @@ describe('#fetchJsonFromBackend', () => {
     mswServer.use(unauthorisedHandler)
 
     await expect(
-      fetchJsonFromBackend({}, '/secure', { method: 'GET' })
+      fetchJsonFromBackend(mockRequest, '/secure', { method: 'GET' })
     ).rejects.toMatchObject({
       isBoom: true,
       output: {
@@ -136,7 +162,7 @@ describe('#fetchJsonFromBackend', () => {
     mswServer.use(errorHandler)
 
     await expect(
-      fetchJsonFromBackend({}, path, { method: 'GET' })
+      fetchJsonFromBackend(mockRequest, path, { method: 'GET' })
     ).rejects.toMatchObject({
       isBoom: true,
       output: {
@@ -157,7 +183,7 @@ describe('#fetchJsonFromBackend', () => {
     mswServer.use(networkErrorHandler)
 
     await expect(
-      fetchJsonFromBackend({}, path, { method: 'GET' })
+      fetchJsonFromBackend(mockRequest, path, { method: 'GET' })
     ).rejects.toMatchObject({
       isBoom: true,
       output: {
@@ -191,7 +217,7 @@ describe('#fetchJsonFromBackend', () => {
     mswServer.use(errorHandler)
 
     await expect(
-      fetchJsonFromBackend({}, path, { method: 'GET' })
+      fetchJsonFromBackend(mockRequest, path, { method: 'GET' })
     ).rejects.toMatchObject({
       isBoom: true,
       output: {
@@ -220,7 +246,7 @@ describe('#fetchJsonFromBackend', () => {
     mswServer.use(errorHandler)
 
     await expect(
-      fetchJsonFromBackend({}, path, { method: 'GET' })
+      fetchJsonFromBackend(mockRequest, path, { method: 'GET' })
     ).rejects.toMatchObject({
       isBoom: true,
       output: {
@@ -243,7 +269,7 @@ describe('#fetchJsonFromBackend', () => {
     })
     mswServer.use(handler)
 
-    await fetchJsonFromBackend({}, path, { method: 'GET' })
+    await fetchJsonFromBackend(mockRequest, path, { method: 'GET' })
 
     expect(capturedHeaders['x-cdp-request-id']).toBe('mock-trace-id-1')
   })
