@@ -439,7 +439,7 @@ describe('#registrationOverviewController', () => {
         within(firstRow).getByRole('link', { name: 'View' })
       ).toHaveAttribute(
         'href',
-        `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/1`
+        `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1`
       )
 
       expect(within(secondRow).getByText('Due')).toHaveClass('govuk-tag')
@@ -750,7 +750,7 @@ describe('#registrationOverviewController', () => {
 
         expect(unsubmitLink).toHaveAttribute(
           'href',
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/1/unsubmit/confirm`
+          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/unsubmit/confirm`
         )
       })
 

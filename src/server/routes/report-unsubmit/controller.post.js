@@ -17,12 +17,12 @@ export const reportUnsubmitPostController = {
     } = request.params
 
     const overviewUrl = `/organisations/${organisationId}/registrations/${registrationId}/overview`
-    const resultUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/${submissionNumber}/unsubmit/result`
+    const resultUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/unsubmit/result`
 
     try {
       await fetchJsonFromBackend(
         request,
-        `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/${submissionNumber}/unsubmit`,
+        `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/unsubmit`,
         { method: 'POST' }
       )
       return h.redirect(resultUrl)

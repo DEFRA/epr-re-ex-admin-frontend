@@ -21,7 +21,7 @@ export const reportUnsubmitConfirmGetController = {
 
     const report = await fetchJsonFromBackend(
       request,
-      `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/${submissionNumber}`,
+      `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`,
       {}
     )
 
@@ -51,7 +51,7 @@ export const reportUnsubmitConfirmGetController = {
         }
       ],
       overviewUrl,
-      postUrl: `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/${submissionNumber}/unsubmit`,
+      postUrl: `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/unsubmit`,
       registrationNumber: registration.registrationNumber,
       formattedPeriod: formatPeriod(period, cadence),
       year

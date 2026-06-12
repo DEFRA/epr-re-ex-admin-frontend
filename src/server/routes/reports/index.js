@@ -7,7 +7,7 @@ export const reports = {
       server.route([
         {
           method: 'GET',
-          path: '/organisations/{organisationId}/registrations/{registrationId}/reports/{year}/{cadence}/{period}/{submissionNumber}',
+          path: '/organisations/{organisationId}/registrations/{registrationId}/reports/{year}/{cadence}/{period}/submissions/{submissionNumber}',
           ...reportDetailGETController,
           options: {
             app: { pageTitle: 'Report' }

@@ -22,7 +22,7 @@ describe('report-unsubmit', () => {
   const period = '1'
   const submissionNumber = '1'
 
-  const BASE_URL = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/${submissionNumber}`
+  const BASE_URL = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`
   const confirmUrl = `${BASE_URL}/unsubmit/confirm`
   const postUrl = `${BASE_URL}/unsubmit`
   const resultUrl = `${BASE_URL}/unsubmit/result`
@@ -74,7 +74,7 @@ describe('report-unsubmit', () => {
   } = {}) =>
     mswServer.use(
       http.get(
-        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/${submissionNumber}`,
+        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`,
         () =>
           HttpResponse.json({
             status: {
@@ -88,7 +88,7 @@ describe('report-unsubmit', () => {
   const stubUnsubmitSuccess = () =>
     mswServer.use(
       http.post(
-        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/${submissionNumber}/unsubmit`,
+        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/unsubmit`,
         () => HttpResponse.json({ status: 'ready_to_submit' })
       )
     )
@@ -96,7 +96,7 @@ describe('report-unsubmit', () => {
   const stubUnsubmitFailure = (status = 409) =>
     mswServer.use(
       http.post(
-        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/${submissionNumber}/unsubmit`,
+        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/unsubmit`,
         () => HttpResponse.json({ error: 'Conflict' }, { status })
       )
     )
