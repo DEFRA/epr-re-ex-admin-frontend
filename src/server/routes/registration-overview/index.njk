@@ -21,6 +21,11 @@
         { key: { text: "Waste balance available (tonnes)" }, value: { text: wasteBalance.availableAmount if wasteBalance else "No data" } },
         { key: { text: "Waste balance events" }, value: { html: '<a class="govuk-link govuk-link--no-visited-state" href="' ~ wasteBalanceEventsUrl ~ '">View</a>' } }
       ]) %}
+      {% if overseasSitesUrl %}
+        {% set summaryRows = summaryRows.concat([
+          { key: { text: "Overseas sites" }, value: { html: '<a class="govuk-link govuk-link--no-visited-state" href="' ~ overseasSitesUrl ~ '">View</a>' } }
+        ]) %}
+      {% endif %}
     {% endif %}
 
     <div class="govuk-grid-row">

@@ -8,6 +8,8 @@ import { formatPeriod } from '#server/common/helpers/format-reporting-period.js'
 const GREEN_TAG = 'govuk-tag--green'
 const RED_TAG = 'govuk-tag--red'
 
+const EXPORTER_PROCESSING_TYPE = 'exporter'
+
 const STATUS_DISPLAY = {
   submitted: { label: 'Success', className: GREEN_TAG },
   rejected: { label: 'Failed (Rejected)', className: RED_TAG },
@@ -109,7 +111,12 @@ export const registrationOverviewGETController = {
       wasteBalance,
       wasteBalanceEventsUrl: registration.accreditation
         ? `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${registration.accreditation.id}/waste-balance-events`
-        : null
+        : null,
+      overseasSitesUrl:
+        registration.accreditation &&
+        registration.processingType === EXPORTER_PROCESSING_TYPE
+          ? `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${registration.accreditation.id}/overseas-sites`
+          : null
     })
   }
 }
