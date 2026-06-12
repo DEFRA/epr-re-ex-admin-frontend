@@ -57,7 +57,7 @@ describe('#reportDetailController', () => {
 
   describe('When user is authenticated', () => {
     beforeAll(() => {
-      getUserSession.mockReturnValue(mockUserSession)
+      vi.mocked(getUserSession).mockReturnValue(mockUserSession)
     })
 
     test('Should return OK', async () => {
