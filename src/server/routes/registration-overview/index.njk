@@ -40,14 +40,14 @@
           {% for period in reportingPeriods %}
             {% set statusText = period.report.status if period.report else 'Due' %}
             {% if period.report %}
-              {% set reportUrl = '/organisations/' ~ organisationId ~ '/registrations/' ~ registrationId ~ '/reports/' ~ period.year ~ '/' ~ cadence ~ '/' ~ period.period %}
+              {% set reportUrl = '/organisations/' ~ organisationId ~ '/registrations/' ~ registrationId ~ '/reports/' ~ period.year ~ '/' ~ cadence ~ '/' ~ period.period ~ '/' ~ period.submissionNumber %}
             {% endif %}
             {% set actionsHtml %}
               {% if period.report %}
                 <a class="govuk-link govuk-link--no-visited-state" href="{{ reportUrl }}">View</a>
               {% endif %}
               {% if period.report and period.report.status === 'submitted' and SCOPES.adminWrite in scopes %}
-                {% set unsubmitUrl = '/organisations/' ~ organisationId ~ '/registrations/' ~ registrationId ~ '/reports/' ~ period.year ~ '/' ~ cadence ~ '/' ~ period.period ~ '/unsubmit/confirm' %}
+                {% set unsubmitUrl = '/organisations/' ~ organisationId ~ '/registrations/' ~ registrationId ~ '/reports/' ~ period.year ~ '/' ~ cadence ~ '/' ~ period.period ~ '/' ~ period.submissionNumber ~ '/unsubmit/confirm' %}
                 <br><a class="govuk-link govuk-link--no-visited-state" href="{{ unsubmitUrl }}">Unsubmit</a>
               {% endif %}
             {% endset %}

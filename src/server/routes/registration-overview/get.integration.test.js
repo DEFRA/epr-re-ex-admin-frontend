@@ -88,6 +88,7 @@ describe('#registrationOverviewController', () => {
       {
         year: 2026,
         period: 1,
+        submissionNumber: 1,
         startDate: '2026-01-01',
         endDate: '2026-01-31',
         dueDate: '2026-02-20',
@@ -100,6 +101,7 @@ describe('#registrationOverviewController', () => {
       {
         year: 2026,
         period: 2,
+        submissionNumber: 1,
         startDate: '2026-02-01',
         endDate: '2026-02-28',
         dueDate: '2026-03-20',
@@ -114,6 +116,7 @@ describe('#registrationOverviewController', () => {
       {
         year: 2026,
         period: 1,
+        submissionNumber: 1,
         startDate: '2026-01-01',
         endDate: '2026-01-31',
         dueDate: '2026-02-20',
@@ -436,7 +439,7 @@ describe('#registrationOverviewController', () => {
         within(firstRow).getByRole('link', { name: 'View' })
       ).toHaveAttribute(
         'href',
-        `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1`
+        `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/1`
       )
 
       expect(within(secondRow).getByText('Due')).toHaveClass('govuk-tag')
@@ -747,7 +750,7 @@ describe('#registrationOverviewController', () => {
 
         expect(unsubmitLink).toHaveAttribute(
           'href',
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/unsubmit/confirm`
+          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/1/unsubmit/confirm`
         )
       })
 

@@ -6,7 +6,7 @@ import { SCOPES } from '#server/common/helpers/auth/scopes.js'
 import { PAGE_TITLE } from './constants.js'
 
 const BASE =
-  '/organisations/{organisationId}/registrations/{registrationId}/reports/{year}/{cadence}/{period}'
+  '/organisations/{organisationId}/registrations/{registrationId}/reports/{year}/{cadence}/{period}/{submissionNumber}'
 
 const requireWrite = [requireScope(SCOPES.adminWrite)]
 

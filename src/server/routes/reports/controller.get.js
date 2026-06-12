@@ -2,12 +2,18 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
 
 export const reportDetailGETController = {
   async handler(request, h) {
-    const { organisationId, registrationId, year, cadence, period } =
-      request.params
+    const {
+      organisationId,
+      registrationId,
+      year,
+      cadence,
+      period,
+      submissionNumber
+    } = request.params
 
     const data = await fetchJsonFromBackend(
       request,
-      `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`,
+      `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/${submissionNumber}`,
       {}
     )
 

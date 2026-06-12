@@ -20,8 +20,9 @@ describe('report-unsubmit', () => {
   const year = '2026'
   const cadence = 'monthly'
   const period = '1'
+  const submissionNumber = '1'
 
-  const BASE_URL = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
+  const BASE_URL = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/${submissionNumber}`
   const confirmUrl = `${BASE_URL}/unsubmit/confirm`
   const postUrl = `${BASE_URL}/unsubmit`
   const resultUrl = `${BASE_URL}/unsubmit/result`
@@ -73,7 +74,7 @@ describe('report-unsubmit', () => {
   } = {}) =>
     mswServer.use(
       http.get(
-        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`,
+        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/${submissionNumber}`,
         () =>
           HttpResponse.json({
             status: {
@@ -87,7 +88,7 @@ describe('report-unsubmit', () => {
   const stubUnsubmitSuccess = () =>
     mswServer.use(
       http.post(
-        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/unsubmit`,
+        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/${submissionNumber}/unsubmit`,
         () => HttpResponse.json({ status: 'ready_to_submit' })
       )
     )
@@ -95,7 +96,7 @@ describe('report-unsubmit', () => {
   const stubUnsubmitFailure = (status = 409) =>
     mswServer.use(
       http.post(
-        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/unsubmit`,
+        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/${submissionNumber}/unsubmit`,
         () => HttpResponse.json({ error: 'Conflict' }, { status })
       )
     )

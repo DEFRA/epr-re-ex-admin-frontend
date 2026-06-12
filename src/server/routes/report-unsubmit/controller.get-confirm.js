@@ -8,14 +8,20 @@ import { formatPeriod } from '#server/common/helpers/format-reporting-period.js'
 
 export const reportUnsubmitConfirmGetController = {
   async handler(request, h) {
-    const { organisationId, registrationId, year, cadence, period } =
-      request.params
+    const {
+      organisationId,
+      registrationId,
+      year,
+      cadence,
+      period,
+      submissionNumber
+    } = request.params
 
     const overviewUrl = `/organisations/${organisationId}/registrations/${registrationId}/overview`
 
     const report = await fetchJsonFromBackend(
       request,
-      `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`,
+      `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/${submissionNumber}`,
       {}
     )
 
@@ -45,7 +51,7 @@ export const reportUnsubmitConfirmGetController = {
         }
       ],
       overviewUrl,
-      postUrl: `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/unsubmit`,
+      postUrl: `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/${submissionNumber}/unsubmit`,
       registrationNumber: registration.registrationNumber,
       formattedPeriod: formatPeriod(period, cadence),
       year

@@ -20,8 +20,9 @@ describe('#reportDetailController', () => {
   const year = '2026'
   const cadence = 'monthly'
   const period = '1'
-  const url = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
-  const backendReportUrl = `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
+  const submissionNumber = '1'
+  const url = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/${submissionNumber}`
+  const backendReportUrl = `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/${submissionNumber}`
   let server
 
   beforeAll(async () => {
