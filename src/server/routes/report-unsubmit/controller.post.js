@@ -7,16 +7,22 @@ import { formatPeriod } from '#server/common/helpers/format-reporting-period.js'
 
 export const reportUnsubmitPostController = {
   async handler(request, h) {
-    const { organisationId, registrationId, year, cadence, period } =
-      request.params
+    const {
+      organisationId,
+      registrationId,
+      year,
+      cadence,
+      period,
+      submissionNumber
+    } = request.params
 
     const overviewUrl = `/organisations/${organisationId}/registrations/${registrationId}/overview`
-    const resultUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/unsubmit/result`
+    const resultUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/unsubmit/result`
 
     try {
       await fetchJsonFromBackend(
         request,
-        `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/unsubmit`,
+        `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/unsubmit`,
         { method: 'POST' }
       )
       return h.redirect(resultUrl)
