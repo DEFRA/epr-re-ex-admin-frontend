@@ -1,6 +1,7 @@
 /**
  * @import { Request, Server } from '@hapi/hapi'
  * @import { Yar } from '@hapi/yar'
+ * @import { Metrics } from '@defra/cdp-metrics'
  * @import { TypedLogger } from './helpers/logging/logger.js'
  */
 
@@ -36,7 +37,8 @@
 /**
  * @typedef {Omit<Request, 'logger' | 'yar'> & {
  *   logger: TypedLogger,
- *   yar: HapiYar
+ *   yar: HapiYar,
+ *   metrics?: Metrics
  * }} HapiRequest
  */
 

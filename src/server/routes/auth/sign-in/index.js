@@ -1,13 +1,11 @@
-import { metrics } from '#server/common/helpers/metrics/index.js'
-
 export default {
   method: 'GET',
   path: '/auth/sign-in',
   options: {
     ext: {
       onPreAuth: {
-        method: async (_request, h) => {
-          await metrics.signInAttempted()
+        method: async (request, h) => {
+          await request.metrics?.counter('signInAttempted')
           return h.continue
         }
       }

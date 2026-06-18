@@ -15,6 +15,7 @@ import { requestTracing } from './common/helpers/request-tracing.js'
 import { requestLogger } from './common/helpers/logging/request-logger.js'
 import { sessionCache } from './common/helpers/session-cache/session-cache.js'
 import { getCacheEngine } from './common/helpers/session-cache/cache-engine.js'
+import { metrics } from '@defra/cdp-metrics'
 import { secureContext } from '@defra/hapi-secure-context'
 import { contentSecurityPolicy } from './common/helpers/content-security-policy.js'
 import { userAgentProtection } from './common/helpers/useragent-protection.js'
@@ -61,6 +62,7 @@ export async function createServer() {
   await server.register([
     requestLogger,
     requestTracing,
+    metrics,
     secureContext,
     pulse,
     sessionCache,

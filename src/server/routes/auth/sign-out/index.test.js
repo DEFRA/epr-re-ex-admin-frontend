@@ -13,6 +13,22 @@ vi.mock('#server/common/helpers/auth/get-user-session.js')
 vi.mock('#server/common/helpers/auth/get-oidc-config.js')
 vi.mock('#server/common/helpers/auditing/index.js')
 
+/** @typedef {import('#server/common/hapi-types.js').HapiRequest} HapiRequest */
+
+/**
+ * Attach a no-op metrics decoration (added at runtime by the cdp-metrics
+ * plugin) to a mock request, mutating it so identity-based assertions hold.
+ * @param {object} obj
+ * @returns {HapiRequest}
+ */
+const asRequest = (obj) => {
+  const request = /** @type {HapiRequest} */ (obj)
+  request.metrics = /** @type {HapiRequest['metrics']} */ (
+    /** @type {unknown} */ ({ counter: vi.fn() })
+  )
+  return request
+}
+
 describe('#signOut route', () => {
   const mockOidcConfig = {
     end_session_endpoint: 'https://example-oidc.test/oauth/logout'
@@ -73,7 +89,10 @@ describe('#signOut route', () => {
       }
     }
 
-    const result = await signOutRoute.handler(mockRequest, mockToolkit)
+    const result = await signOutRoute.handler(
+      asRequest(mockRequest),
+      mockToolkit
+    )
 
     expect(clearUserSession).toHaveBeenCalledWith(mockRequest)
     expect(getOidcConfig).toHaveBeenCalledTimes(1)
@@ -103,7 +122,7 @@ describe('#signOut route', () => {
       }
     }
 
-    await signOutRoute.handler(mockRequest, mockToolkit)
+    await signOutRoute.handler(asRequest(mockRequest), mockToolkit)
 
     const expectedParams = new URLSearchParams()
     expectedParams.set('logout_hint', mockUserSession.email)
@@ -132,7 +151,7 @@ describe('#signOut route', () => {
       auth: { isAuthenticated: true }
     }
 
-    await signOutRoute.handler(mockRequest, mockToolkit)
+    await signOutRoute.handler(asRequest(mockRequest), mockToolkit)
 
     expect(mockToolkit.view).toHaveBeenCalledWith(
       'routes/auth/sign-out/index',
@@ -154,7 +173,7 @@ describe('#signOut route', () => {
       auth: { isAuthenticated: true }
     }
 
-    await signOutRoute.handler(mockRequest, mockToolkit)
+    await signOutRoute.handler(asRequest(mockRequest), mockToolkit)
 
     expect(mockToolkit.view).toHaveBeenCalledWith(
       'routes/auth/sign-out/index',
@@ -184,7 +203,7 @@ describe('#signOut route', () => {
         }
       }
 
-      await signOutRoute.handler(mockRequest, mockToolkit)
+      await signOutRoute.handler(asRequest(mockRequest), mockToolkit)
 
       const expectedParams = new URLSearchParams()
       expectedParams.set('logout_hint', mockUserSession.email)
@@ -229,7 +248,7 @@ describe('#signOut route', () => {
     }
 
     await expect(
-      signOutRoute.handler(mockRequest, mockToolkit)
+      signOutRoute.handler(asRequest(mockRequest), mockToolkit)
     ).rejects.toThrow('Failed to clear session')
 
     expect(mockToolkit.view).not.toHaveBeenCalled()
@@ -259,7 +278,7 @@ describe('#signOut route', () => {
       }
     }
 
-    await signOutRoute.handler(mockRequest, mockToolkit)
+    await signOutRoute.handler(asRequest(mockRequest), mockToolkit)
 
     expect(callOrder).toEqual(['getOidcConfig', 'clearUserSession', 'view'])
   })
@@ -274,7 +293,7 @@ describe('#signOut route', () => {
       }
     }
 
-    await signOutRoute.handler(mockRequest, mockToolkit)
+    await signOutRoute.handler(asRequest(mockRequest), mockToolkit)
 
     const expectedParams = new URLSearchParams()
     expectedParams.set('logout_hint', mockUserSession.email)
@@ -300,7 +319,7 @@ describe('#signOut route', () => {
       }
     }
 
-    await signOutRoute.handler(mockRequest, mockToolkit)
+    await signOutRoute.handler(asRequest(mockRequest), mockToolkit)
 
     expect(auditSignOut).toHaveBeenCalledWith(mockUserSession)
   })
@@ -321,7 +340,7 @@ describe('#signOut route', () => {
       }
     }
 
-    await signOutRoute.handler(mockRequest, mockToolkit)
+    await signOutRoute.handler(asRequest(mockRequest), mockToolkit)
 
     expect(mockLogger.info).toHaveBeenCalledWith({
       message: 'User signed out',

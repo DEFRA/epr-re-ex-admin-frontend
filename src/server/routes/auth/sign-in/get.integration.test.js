@@ -1,4 +1,5 @@
 import { beforeEach, vi } from 'vitest'
+import { Metrics } from '@defra/cdp-metrics'
 import { createServer } from '#server/server.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import {
@@ -6,14 +7,7 @@ import {
   mockOidcResponse
 } from '#server/common/test-helpers/mock-oidc.js'
 
-const mockSignInAttemptedMetric = vi.fn()
-
-vi.mock('#server/common/helpers/metrics/index.js', async (importOriginal) => ({
-  metrics: {
-    ...(await importOriginal()).metrics,
-    signInAttempted: () => mockSignInAttemptedMetric()
-  }
-}))
+const counterSpy = vi.spyOn(Metrics.prototype, 'counter').mockResolvedValue()
 
 describe('GET /auth/sign-in', () => {
   let server
@@ -47,7 +41,7 @@ describe('GET /auth/sign-in', () => {
     })
 
     it('records sign in attempt metric', () => {
-      expect(mockSignInAttemptedMetric).toHaveBeenCalledTimes(1)
+      expect(counterSpy).toHaveBeenCalledWith('signInAttempted')
     })
   })
 })
