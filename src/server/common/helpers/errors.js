@@ -1,7 +1,7 @@
 import { statusCodes } from '../constants/status-codes.js'
 
 /**
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { Request } from '@hapi/hapi'
  */
 
 function storeRedirectPath(request) {
@@ -11,7 +11,7 @@ function storeRedirectPath(request) {
   }
 }
 
-/** @param {HapiRequest} request */
+/** @param {Request} request */
 export function catchAll(request, h) {
   const { response } = request
 

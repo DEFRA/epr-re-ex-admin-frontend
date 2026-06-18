@@ -25,7 +25,7 @@ export default {
   handler: async function (request, h) {
     if (request.auth.error) {
       request.logger.error({ message: 'Sign-in failed' })
-      await request.metrics?.counter('signInFailure')
+      await request.metrics.counter('signInFailure')
     }
 
     if (!request.auth.isAuthenticated) {
@@ -50,14 +50,14 @@ export default {
           message: `Sign-in denied: user ${email} has no admin tier`,
           event: { action: loggingEventActions.signIn, reason: 'no_admin_tier' }
         })
-        await request.metrics?.counter('signInFailure')
+        await request.metrics.counter('signInFailure')
         return h.view('unauthorised')
       }
       request.logger.error({
         err: error,
         message: 'Failed to resolve admin scopes from backend'
       })
-      await request.metrics?.counter('signInFailure')
+      await request.metrics.counter('signInFailure')
       throw error
     }
 
@@ -88,7 +88,7 @@ export default {
       }
     })
     auditSignIn(userSession)
-    await request.metrics?.counter('signInSuccess')
+    await request.metrics.counter('signInSuccess')
 
     request.logger.info({
       message: `Sign-in complete, redirecting user to ${safeRedirect}`

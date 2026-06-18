@@ -38,7 +38,7 @@
  * @typedef {Omit<Request, 'logger' | 'yar'> & {
  *   logger: TypedLogger,
  *   yar: HapiYar,
- *   metrics?: Metrics
+ *   metrics: Metrics
  * }} HapiRequest
  */
 

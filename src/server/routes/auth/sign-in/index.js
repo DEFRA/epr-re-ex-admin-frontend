@@ -5,7 +5,7 @@ export default {
     ext: {
       onPreAuth: {
         method: async (request, h) => {
-          await request.metrics?.counter('signInAttempted')
+          await request.metrics.counter('signInAttempted')
           return h.continue
         }
       }
