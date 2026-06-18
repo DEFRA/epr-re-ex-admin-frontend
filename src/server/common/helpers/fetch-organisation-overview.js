@@ -3,6 +3,10 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 
 /**
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ */
+
+/**
  * @typedef {{
  *   id: string,
  *   accreditationNumber: string,
@@ -35,7 +39,7 @@ import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
  */
 
 /**
- * @param {import('@hapi/hapi').Request} request
+ * @param {HapiRequest} request
  * @param {string} organisationId
  * @returns {Promise<OrganisationOverview>}
  */
