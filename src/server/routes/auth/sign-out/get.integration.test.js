@@ -39,7 +39,7 @@ describe('GET /auth/sign-out', () => {
     let response
 
     beforeEach(async () => {
-      getUserSession.mockReturnValue(mockUserSession)
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
 
       response = await server.inject({
         method: 'GET',
