@@ -7,6 +7,7 @@ import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { http, server as mswServer, HttpResponse } from '#vite/setup-msw.js'
 import { createServer } from '#server/server.js'
+import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 
 vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
   getUserSession: vi.fn().mockReturnValue(null)
@@ -21,6 +22,7 @@ describe('grant-registration', () => {
   const confirmUrl = `${BASE_URL}/approve/confirm`
   const postUrl = `${BASE_URL}/approve`
   const overviewUrl = `${BASE_URL}/overview`
+  const statusHistoryPath = `/v1/organisations/${organisationId}/registrations/${registrationId}/status-history`
 
   const orgWith = (status) => ({
     id: organisationId,
@@ -132,5 +134,110 @@ describe('grant-registration', () => {
     })
 
     expect(statusCode).toBe(statusCodes.notFound)
+  })
+
+  const stubGrantFailure = (status, payload) =>
+    mswServer.use(
+      http.post(`${backendUrl}${statusHistoryPath}`, () =>
+        HttpResponse.json(payload, { status })
+      )
+    )
+
+  const postApprove = async (payload) => {
+    const { cookie, crumb } = await getCsrfToken(
+      server,
+      confirmUrl,
+      authOptions
+    )
+    return server.inject({
+      method: 'POST',
+      url: postUrl,
+      auth: authOptions,
+      headers: { cookie },
+      payload: { crumb, ...payload }
+    })
+  }
+
+  test('a valid grant calls the status-history endpoint and redirects to the overview', async () => {
+    getUserSession.mockReturnValue(mockUserSession)
+    stubOrg('created')
+
+    let captured
+    mswServer.use(
+      http.post(`${backendUrl}${statusHistoryPath}`, async ({ request }) => {
+        captured = await request.json()
+        return HttpResponse.json({ id: organisationId, version: 8 })
+      })
+    )
+
+    const { statusCode, headers } = await postApprove({
+      version: '7',
+      reason: 'Documentation verified'
+    })
+
+    expect(statusCode).toBe(statusCodes.found)
+    expect(headers.location).toBe(overviewUrl)
+    expect(captured).toEqual({
+      status: 'approved',
+      reason: 'Documentation verified',
+      version: 7
+    })
+  })
+
+  test('an empty reason re-renders the confirm page with an error and makes no grant call', async () => {
+    getUserSession.mockReturnValue(mockUserSession)
+    stubOrg('created')
+    let grantCalled = false
+    mswServer.use(
+      http.post(`${backendUrl}${statusHistoryPath}`, () => {
+        grantCalled = true
+        return HttpResponse.json({})
+      })
+    )
+
+    const { statusCode, result } = await postApprove({
+      version: '7',
+      reason: '   '
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(grantCalled).toBe(false)
+    const $ = cheerio.load(result)
+    expect($('.govuk-error-summary').length).toBe(1)
+    expect(result).toContain('Enter a reason')
+  })
+
+  test('a version conflict re-renders the confirm page with a reload message', async () => {
+    getUserSession.mockReturnValue(mockUserSession)
+    stubOrg('created')
+    stubGrantFailure(statusCodes.conflict, { message: 'Version conflict' })
+
+    const { statusCode, result } = await postApprove({
+      version: '6',
+      reason: 'Docs verified'
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    const $ = cheerio.load(result)
+    expect($('.govuk-error-summary').length).toBe(1)
+    expect(result).toContain('changed since you opened it')
+  })
+
+  test('a backend rejection surfaces the backend message', async () => {
+    getUserSession.mockReturnValue(mockUserSession)
+    stubOrg('created')
+    stubGrantFailure(statusCodes.badRequest, {
+      message: 'Multiple approved registrations found with duplicate keys'
+    })
+
+    const { statusCode, result } = await postApprove({
+      version: '7',
+      reason: 'Docs verified'
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(result).toContain(
+      'Multiple approved registrations found with duplicate keys'
+    )
   })
 })

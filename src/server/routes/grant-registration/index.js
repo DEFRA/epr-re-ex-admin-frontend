@@ -1,4 +1,5 @@
 import { grantRegistrationConfirmGetController } from './controller.get-confirm.js'
+import { grantRegistrationPostController } from './controller.post.js'
 import { requireScope } from '#server/common/helpers/auth/require-scope.js'
 import { SCOPES } from '#server/common/helpers/auth/scopes.js'
 import { PAGE_TITLE } from './constants.js'
@@ -18,6 +19,14 @@ export const grantRegistration = {
           options: {
             pre: requireWrite,
             app: { pageTitle: PAGE_TITLE }
+          }
+        },
+        {
+          method: 'POST',
+          path: `${BASE}/approve`,
+          ...grantRegistrationPostController,
+          options: {
+            pre: requireWrite
           }
         }
       ])
