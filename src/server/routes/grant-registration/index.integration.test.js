@@ -76,7 +76,7 @@ describe('grant-registration', () => {
   })
 
   test('read-only users get a 403', async () => {
-    getUserSession.mockReturnValue(readOnlySession)
+    vi.mocked(getUserSession).mockReturnValue(readOnlySession)
     const { statusCode } = await server.inject({
       method: 'GET',
       url: confirmUrl,
@@ -86,7 +86,7 @@ describe('grant-registration', () => {
   })
 
   test('confirm page shows the status change, reason field and hidden version', async () => {
-    getUserSession.mockReturnValue(mockUserSession)
+    vi.mocked(getUserSession).mockReturnValue(mockUserSession)
     stubOrg('created')
 
     const { result, statusCode } = await server.inject({
@@ -106,7 +106,7 @@ describe('grant-registration', () => {
   })
 
   test('confirm page redirects to overview when status is not created', async () => {
-    getUserSession.mockReturnValue(mockUserSession)
+    vi.mocked(getUserSession).mockReturnValue(mockUserSession)
     stubOrg('approved')
 
     const { statusCode, headers } = await server.inject({
@@ -120,7 +120,7 @@ describe('grant-registration', () => {
   })
 
   test('confirm page returns 404 when the registration is missing', async () => {
-    getUserSession.mockReturnValue(mockUserSession)
+    vi.mocked(getUserSession).mockReturnValue(mockUserSession)
     mswServer.use(
       http.get(`${backendUrl}/v1/organisations/${organisationId}`, () =>
         HttpResponse.json({ ...orgWith('created'), registrations: [] })
@@ -159,7 +159,7 @@ describe('grant-registration', () => {
   }
 
   test('a valid grant calls the status-history endpoint and redirects to the overview', async () => {
-    getUserSession.mockReturnValue(mockUserSession)
+    vi.mocked(getUserSession).mockReturnValue(mockUserSession)
     stubOrg('created')
 
     let captured
@@ -185,7 +185,7 @@ describe('grant-registration', () => {
   })
 
   test('an empty reason re-renders the confirm page with an error and makes no grant call', async () => {
-    getUserSession.mockReturnValue(mockUserSession)
+    vi.mocked(getUserSession).mockReturnValue(mockUserSession)
     stubOrg('created')
     let grantCalled = false
     mswServer.use(
@@ -208,7 +208,7 @@ describe('grant-registration', () => {
   })
 
   test('a version conflict re-renders the confirm page with a reload message', async () => {
-    getUserSession.mockReturnValue(mockUserSession)
+    vi.mocked(getUserSession).mockReturnValue(mockUserSession)
     stubOrg('created')
     stubGrantFailure(statusCodes.conflict, { message: 'Version conflict' })
 
@@ -224,7 +224,7 @@ describe('grant-registration', () => {
   })
 
   test('a backend rejection surfaces the backend message', async () => {
-    getUserSession.mockReturnValue(mockUserSession)
+    vi.mocked(getUserSession).mockReturnValue(mockUserSession)
     stubOrg('created')
     stubGrantFailure(statusCodes.badRequest, {
       message: 'Multiple approved registrations found with duplicate keys'
@@ -242,7 +242,7 @@ describe('grant-registration', () => {
   })
 
   test('a POST with no reason field re-renders with an error and makes no grant call', async () => {
-    getUserSession.mockReturnValue(mockUserSession)
+    vi.mocked(getUserSession).mockReturnValue(mockUserSession)
     stubOrg('created')
     let grantCalled = false
     mswServer.use(
@@ -262,7 +262,7 @@ describe('grant-registration', () => {
   })
 
   test('a backend rejection with no message key surfaces the generic fallback message', async () => {
-    getUserSession.mockReturnValue(mockUserSession)
+    vi.mocked(getUserSession).mockReturnValue(mockUserSession)
     stubOrg('created')
     stubGrantFailure(statusCodes.badRequest, {})
 

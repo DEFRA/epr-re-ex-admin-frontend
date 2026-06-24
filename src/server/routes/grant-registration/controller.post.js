@@ -1,7 +1,7 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { findRegistration } from '#server/common/helpers/fetch-organisation-overview.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { PAGE_TITLE } from './constants.js'
+import { renderConfirm } from './render-confirm.js'
 
 const CONFLICT_MESSAGE =
   'This record changed since you opened it. Reload the page and try again.'
@@ -10,6 +10,11 @@ const GENERIC_MESSAGE = 'The registration could not be approved. Try again.'
 /**
  * Re-render the confirm page with an error summary, re-reading the org for a
  * fresh version and the registration number.
+ *
+ * @param {import('@hapi/hapi').Request} request
+ * @param {import('@hapi/hapi').ResponseToolkit} h
+ * @param {{ organisationId: string, registrationId: string, reason: string, reasonError: object | null, summaryErrors: Array<{text: string, href?: string}> }} options
+ * @returns {Promise<import('@hapi/hapi').ResponseObject>}
  */
 const renderConfirmWithError = async (
   request,
@@ -28,19 +33,10 @@ const renderConfirmWithError = async (
     registrationId
   )
 
-  return h.view('routes/grant-registration/confirm', {
-    pageTitle: PAGE_TITLE,
-    heading: PAGE_TITLE,
-    breadcrumbs: [
-      { text: 'Organisations', href: '/organisations' },
-      {
-        text: 'Organisation overview',
-        href: `/organisations/${organisationId}/overview`
-      },
-      { text: 'Registration overview', href: overviewUrl }
-    ],
+  return renderConfirm(h, {
+    organisationId,
+    registrationId,
     overviewUrl,
-    postUrl: `/organisations/${organisationId}/registrations/${registrationId}/approve`,
     registrationNumber: registration.registrationNumber,
     version: organisation.version,
     reason,
@@ -99,7 +95,7 @@ export const grantRegistrationPostController = {
         registrationId,
         reason: trimmedReason,
         reasonError: null,
-        summaryErrors: [{ text: message }]
+        summaryErrors: message.split('; ').map((text) => ({ text }))
       })
     }
   }
