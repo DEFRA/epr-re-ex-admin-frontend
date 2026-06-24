@@ -1,0 +1,35 @@
+{% extends 'layout.njk' %}
+{% from "overseas-sites-table/macro.njk" import overseasSitesTable %}
+
+{% block content %}
+  <div class="govuk-width-container">
+    <h1 class="govuk-heading-xl">{{ heading }}</h1>
+
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-full">
+        {% if siteRows and siteRows.length %}
+          {{ overseasSitesTable({
+            caption: "Overseas sites",
+            captionClasses: "govuk-table__caption--m",
+            head: [
+              { text: "ORS ID" },
+              { text: "Packaging waste category" },
+              { text: "Destination country" },
+              { text: "Overseas reprocessor name" },
+              { text: "Address line 1" },
+              { text: "Address line 2" },
+              { text: "City or town" },
+              { text: "State, province or region" },
+              { text: "Postcode or similar" },
+              { text: "Coordinates" },
+              { text: "Valid from" }
+            ],
+            rows: siteRows
+          }) }}
+        {% else %}
+          <p class="govuk-body">No overseas sites</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

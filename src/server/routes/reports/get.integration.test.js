@@ -20,8 +20,9 @@ describe('#reportDetailController', () => {
   const year = '2026'
   const cadence = 'monthly'
   const period = '1'
-  const url = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
-  const backendReportUrl = `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
+  const submissionNumber = '1'
+  const url = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`
+  const backendReportUrl = `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`
   let server
 
   beforeAll(async () => {
@@ -56,7 +57,7 @@ describe('#reportDetailController', () => {
 
   describe('When user is authenticated', () => {
     beforeAll(() => {
-      getUserSession.mockReturnValue(mockUserSession)
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
     })
 
     test('Should return OK', async () => {

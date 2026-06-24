@@ -1,7 +1,9 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
-import { formatDate } from '#config/nunjucks/filters/format-date.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
-import { isNil } from '#server/common/helpers/is-nil.js'
+import {
+  toDisplayValue,
+  toValidFromDisplayValue
+} from '#server/common/helpers/overseas-site-display.js'
 import {
   buildBackendPath,
   buildPageHref,
@@ -10,22 +12,6 @@ import {
 } from './helpers.js'
 
 const logger = createLogger()
-
-function toDisplayValue(value) {
-  return isNil(value) || value === '' ? '-' : value
-}
-
-function toValidFromDisplayValue(value) {
-  if (isNil(value) || value === '') {
-    return '-'
-  }
-
-  try {
-    return formatDate(value, 'd MMMM yyyy')
-  } catch {
-    return '-'
-  }
-}
 
 function mapSiteRows(rows = []) {
   const safeRows = Array.isArray(rows) ? rows : []
