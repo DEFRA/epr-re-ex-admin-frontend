@@ -1,9 +1,9 @@
 {% extends 'layout.njk' %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
-{% from "govuk/components/warning-text/macro.njk" import govukWarningText %}
 {% from "govuk/components/character-count/macro.njk" import govukCharacterCount %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "govuk/components/tag/macro.njk" import govukTag %}
 
 {% block content %}
@@ -17,15 +17,11 @@
 
       {{ govukSummaryList({
         rows: [
-          { key: { text: "Registration number" }, value: { text: registrationNumber } },
           { key: { text: "Status change" }, value: { html: govukTag({ text: "Created" }) ~ ' &rarr; ' ~ govukTag({ text: "Approved", classes: "govuk-tag--green" }) } }
         ]
       }) }}
 
-      {{ govukWarningText({
-        text: "Approving makes this registration appear on the public register. This takes effect immediately.",
-        iconFallbackText: "Warning"
-      }) }}
+      {{ govukInsetText({ text: "Registration number will be created on approval" }) }}
 
       {% if SCOPES.adminWrite in scopes %}
         <form method="POST" action="{{ postUrl }}">
@@ -37,7 +33,6 @@
             name: "reason",
             maxlength: 500,
             label: { text: "Reason for this change", classes: "govuk-label--m" },
-            hint: { text: "Recorded in the audit trail." },
             value: reason,
             errorMessage: reasonError
           }) }}

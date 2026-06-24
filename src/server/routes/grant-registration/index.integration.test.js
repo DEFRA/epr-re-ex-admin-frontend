@@ -31,7 +31,7 @@ describe('grant-registration', () => {
     registrations: [
       {
         id: registrationId,
-        registrationNumber: 'E25SR500020912PA',
+        registrationNumber: status === 'created' ? null : 'E25SR500020912PA',
         status,
         material: 'paper',
         site: 'Site A',
@@ -98,7 +98,7 @@ describe('grant-registration', () => {
     expect(statusCode).toBe(statusCodes.ok)
     const $ = cheerio.load(result)
     expect($('h1').text().trim()).toBe('Approve registration')
-    expect(result).toContain('E25SR500020912PA')
+    expect(result).toContain('Registration number will be created on approval')
     expect($('form').attr('action')).toBe(postUrl)
     expect($('input[name="version"]').attr('value')).toBe('7')
     expect($('#reason').length).toBe(1)

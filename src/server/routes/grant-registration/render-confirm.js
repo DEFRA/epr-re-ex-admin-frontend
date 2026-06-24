@@ -4,7 +4,7 @@ import { PAGE_TITLE } from './constants.js'
  * Build and return the "Approve registration" confirm view.
  *
  * @param {import('@hapi/hapi').ResponseToolkit} h - Hapi response toolkit
- * @param {{ organisationId: string, registrationId: string, overviewUrl: string, registrationNumber: string, version: number, reason: string, reasonError: object | null, errors: Array<{text: string, href?: string}> | null }} options
+ * @param {{ organisationId: string, registrationId: string, overviewUrl: string, version: number, reason: string, reasonError: object | null, errors: Array<{text: string, href?: string}> | null }} options
  * @returns {import('@hapi/hapi').ResponseObject}
  */
 export const renderConfirm = (
@@ -13,7 +13,6 @@ export const renderConfirm = (
     organisationId,
     registrationId,
     overviewUrl,
-    registrationNumber,
     version,
     reason,
     reasonError,
@@ -33,7 +32,6 @@ export const renderConfirm = (
     ],
     overviewUrl,
     postUrl: `/organisations/${organisationId}/registrations/${registrationId}/approve`,
-    registrationNumber,
     version,
     reason,
     reasonError,

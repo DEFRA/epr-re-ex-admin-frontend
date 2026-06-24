@@ -24,6 +24,9 @@
       { key: { text: "Material" }, value: { text: registration.material } },
       { key: { text: "Site" }, value: { text: registration.site } }
     ] %}
+    {% if registration.registrationNumber %}
+      {% set summaryRows = [{ key: { text: "Registration number" }, value: { text: registration.registrationNumber } }].concat(summaryRows) %}
+    {% endif %}
     {% if registration.accreditation %}
       {% set summaryRows = summaryRows.concat([
         { key: { text: "Accreditation number" }, value: { text: registration.accreditation.accreditationNumber } },

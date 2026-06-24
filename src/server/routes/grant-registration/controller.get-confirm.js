@@ -32,7 +32,6 @@ export const grantRegistrationConfirmGetController = {
       organisationId,
       registrationId,
       overviewUrl,
-      registrationNumber: registration.registrationNumber,
       version: organisation.version,
       reason: '',
       reasonError: null,

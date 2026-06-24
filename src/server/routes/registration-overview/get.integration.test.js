@@ -306,6 +306,47 @@ describe('#registrationOverviewController', () => {
       expect(getSummaryRowValue(body, 'Site')).toHaveTextContent('Site A')
     })
 
+    test('Should render the registration number in the summary list when present', async () => {
+      useMockBackend()
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+
+      expect(getSummaryRowValue(body, 'Registration number')).toHaveTextContent(
+        'REG-50030-001'
+      )
+    })
+
+    test('Should not render the registration number row when the registration has no number', async () => {
+      useMockBackend({
+        ...mockOverview,
+        registrations: [
+          {
+            ...mockRegistration,
+            registrationNumber: undefined,
+            status: 'created'
+          }
+        ]
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+
+      expect(
+        queryByText(body, 'Registration number', { selector: 'dt' })
+      ).toBeNull()
+    })
+
     test('Should render accreditation rows in summary list when accreditation exists', async () => {
       useMockBackend()
 

@@ -1,5 +1,4 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
-import { findRegistration } from '#server/common/helpers/fetch-organisation-overview.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { renderConfirm } from './render-confirm.js'
 
@@ -9,7 +8,7 @@ const GENERIC_MESSAGE = 'The registration could not be approved. Try again.'
 
 /**
  * Re-render the confirm page with an error summary, re-reading the org for a
- * fresh version and the registration number.
+ * fresh version.
  *
  * @param {import('@hapi/hapi').Request} request
  * @param {import('@hapi/hapi').ResponseToolkit} h
@@ -27,17 +26,11 @@ const renderConfirmWithError = async (
     `/v1/organisations/${organisationId}`,
     {}
   )
-  const registration = findRegistration(
-    organisation,
-    organisationId,
-    registrationId
-  )
 
   return renderConfirm(h, {
     organisationId,
     registrationId,
     overviewUrl,
-    registrationNumber: registration.registrationNumber,
     version: organisation.version,
     reason,
     reasonError,
