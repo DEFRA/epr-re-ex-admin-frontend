@@ -1,6 +1,7 @@
 import { writeToString } from '@fast-csv/format'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { formatDate } from '#config/nunjucks/filters/format-date.js'
+import { toCsvNumber } from '#server/common/helpers/to-csv-number.js'
 import { formatTonnage, materialRowHeading } from './formatters.js'
 import { buildMaterialRowData } from '#server/routes/tonnage-monitoring/helper.js'
 
@@ -40,13 +41,13 @@ async function generateCsv(data) {
     }
 
     for (const monthName of monthNames) {
-      row.push(formatTonnage(item.monthValues[monthName]))
+      row.push(toCsvNumber(item.monthValues[monthName]))
     }
-    row.push(formatTonnage(item.total))
+    row.push(toCsvNumber(item.total))
     rows.push(row)
   }
 
-  return writeToString(rows, { headers: false, quoteColumns: true })
+  return writeToString(rows, { headers: false })
 }
 
 export const tonnageMonitoringPostController = {

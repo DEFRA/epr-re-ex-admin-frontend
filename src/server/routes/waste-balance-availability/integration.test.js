@@ -281,9 +281,9 @@ describe('waste-balance-availability', () => {
           'attachment; filename="waste-balance-availability.csv"'
         )
         expect(payload).toContain('Waste balance availability by material')
-        expect(payload).toContain('"Aluminium","1234.56"')
-        expect(payload).toContain('"Glass re-melt","5678.90"')
-        expect(payload).toContain('"Total","6913.46"')
+        expect(payload).toContain('Aluminium,1234.56')
+        expect(payload).toContain('Glass re-melt,5678.9')
+        expect(payload).toContain('Total,6913.46')
       })
 
       test('Should include formatted date in CSV', async () => {

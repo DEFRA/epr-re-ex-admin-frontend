@@ -295,12 +295,10 @@ describe('tonnage-monitoring', () => {
           'attachment; filename="tonnage-monitoring.csv"'
         )
         expect(payload).toContain('Tonnage by material')
-        expect(payload).toContain('"Material","Type","Jan","Feb"')
-        expect(payload).toContain('"Aluminium","Exporter","1234.56","0.00"')
-        expect(payload).toContain(
-          '"Glass re-melt","Reprocessor","0.00","5678.90"'
-        )
-        expect(payload).toContain('"Total: 6913.46"')
+        expect(payload).toContain('Material,Type,Jan,Feb')
+        expect(payload).toContain('Aluminium,Exporter,1234.56,0')
+        expect(payload).toContain('Glass re-melt,Reprocessor,0,5678.9')
+        expect(payload).toContain('Total: 6913.46')
       })
 
       test('Should include formatted date in CSV', async () => {

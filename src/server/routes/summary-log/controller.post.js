@@ -2,6 +2,7 @@ import { writeToString } from '@fast-csv/format'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { formatDateTime } from '#server/common/helpers/formatters.js'
 import { sanitizeFormulaInjection } from '#server/common/helpers/sanitize-formula-injection.js'
+import { toCsvNumber } from '#server/common/helpers/to-csv-number.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
 
 const logger = createLogger()
@@ -44,12 +45,12 @@ function generateCsv(data, generatedAt) {
       row.packagingWasteCategory,
       formatDateTime(row.lastSuccessfulUpload),
       formatDateTime(row.lastFailedUpload),
-      row.successfulUploads,
-      row.failedUploads
+      toCsvNumber(row.successfulUploads),
+      toCsvNumber(row.failedUploads)
     ])
   }
 
-  return writeToString(rows, { headers: false, quoteColumns: true })
+  return writeToString(rows, { headers: false })
 }
 
 export const summaryLogUploadsReportPostController = {

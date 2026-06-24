@@ -57,14 +57,14 @@ describe('prn-tonnage POST controller', () => {
     )
 
     const expectedCsv = [
-      '"PRN tonnage"',
+      'PRN tonnage',
       '',
       '"Tonnage of PRNs per accreditation, broken down by current PRN status. Includes awaiting authorisation, awaiting acceptance, awaiting cancellation, accepted and cancelled."',
       '',
-      '"Data generated at: 20 February 2026 at 2:30pm"',
+      'Data generated at: 20 February 2026 at 2:30pm',
       '',
-      '"Organisation Name","Organisation ID","Accreditation Number","Material","Tonnage Band","Awaiting authorisation","Awaiting acceptance","Awaiting cancellation","Accepted","Cancelled"',
-      '"Acme Recycling","ORG001","ACC-100","Aluminium","Up to 500 tonnes","100","20","2","10","1"'
+      'Organisation Name,Organisation ID,Accreditation Number,Material,Tonnage Band,Awaiting authorisation,Awaiting acceptance,Awaiting cancellation,Accepted,Cancelled',
+      'Acme Recycling,ORG001,ACC-100,Aluminium,Up to 500 tonnes,100,20,2,10,1'
     ].join('\n')
 
     expect(mockH.response).toHaveBeenCalledWith(expectedCsv)
@@ -84,9 +84,9 @@ describe('prn-tonnage POST controller', () => {
     await prnTonnagePostController.handler(mockRequest, mockH)
 
     const csvContent = mockH.response.mock.calls[0][0]
-    expect(csvContent).toContain('"PRN tonnage"')
+    expect(csvContent).toContain('PRN tonnage')
     expect(csvContent).toContain(
-      '"Organisation Name","Organisation ID","Accreditation Number","Material","Tonnage Band","Awaiting authorisation","Awaiting acceptance","Awaiting cancellation","Accepted","Cancelled"'
+      'Organisation Name,Organisation ID,Accreditation Number,Material,Tonnage Band,Awaiting authorisation,Awaiting acceptance,Awaiting cancellation,Accepted,Cancelled'
     )
     expect(csvContent).not.toContain('"Acme Recycling"')
   })

@@ -71,11 +71,14 @@ describe('prn-activity download controller', () => {
     const csvContent = mockH.response.mock.calls[0][0]
     const lines = csvContent.split('\n')
     expect(lines[0]).toBe(
-      '"PRN Number","Status","Issued To","Tonnage","Material","Process To Be Used","December Waste","Issued Date","Issued By","Position","Accreditation Number","Accreditation Year","Submitted To Regulator","Organisation Name","Waste Processing Type"'
+      'PRN Number,Status,Issued To,Tonnage,Material,Process To Be Used,December Waste,Issued Date,Issued By,Position,Accreditation Number,Accreditation Year,Submitted To Regulator,Organisation Name,Waste Processing Type'
     )
     expect(csvContent).toContain('PRN-001')
     expect(csvContent).toContain('Glass')
     expect(csvContent).toContain('Reprocessor Ltd')
+    expect(lines[1]).toBe(
+      'PRN-001,awaiting_acceptance,Org A,100,Glass,R3,Yes,15/06/2025,John,Manager,ACC-2025-001,2025,,Reprocessor Ltd,reprocessor'
+    )
   })
 
   test('Should set correct Content-Type and Content-Disposition headers', async () => {
@@ -127,8 +130,8 @@ describe('prn-activity download controller', () => {
 
     const csvContent = mockH.response.mock.calls[0][0]
     const lines = csvContent.split('\n')
-    expect(lines[1]).toContain('"Yes"')
-    expect(lines[2]).toContain('"No"')
+    expect(lines[1]).toContain(',Yes,')
+    expect(lines[2]).toContain(',No,')
   })
 
   test('Should use tradingName over name for issuedToOrganisation', async () => {
@@ -180,7 +183,7 @@ describe('prn-activity download controller', () => {
     const csvContent = mockH.response.mock.calls[0][0]
     const lines = csvContent.split('\n')
     expect(lines).toHaveLength(2)
-    expect(lines[1]).toContain('"No"')
+    expect(lines[1]).toContain(',No,')
   })
 
   test('Should return empty string when org has no name or tradingName', async () => {

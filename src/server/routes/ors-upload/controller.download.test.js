@@ -70,7 +70,7 @@ describe('orsDownloadController', () => {
     const lines = csvContent.split('\n')
 
     expect(lines[0]).toBe(
-      '\uFEFF"Org ID","Registration Number","Accreditation Number","ORS ID","Packaging waste category","Destination country","Overseas reprocessor name","Address line 1","Address line 2","City or town","State, province or region","Postcode or similar","Coordinates","Valid from"'
+      '\uFEFFOrg ID,Registration Number,Accreditation Number,ORS ID,Packaging waste category,Destination country,Overseas reprocessor name,Address line 1,Address line 2,City or town,"State, province or region",Postcode or similar,Coordinates,Valid from'
     )
     expect(csvContent).toContain('500001')
     expect(csvContent).toContain('Alpha Reprocessor')
@@ -157,8 +157,8 @@ describe('orsDownloadController', () => {
     await orsDownloadController.handler(mockRequest, mockH)
 
     const csvContent = mockH.response.mock.calls[0][0]
-    expect(csvContent).toContain('"","","","001"')
-    expect(csvContent.trimEnd().endsWith('""')).toBe(true)
+    expect(csvContent).toContain(',,,001')
+    expect(csvContent.trimEnd().endsWith(',')).toBe(true)
   })
 
   test('Should prefix formula-like string values', async () => {

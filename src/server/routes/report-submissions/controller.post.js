@@ -1,6 +1,7 @@
 import { writeToString } from '@fast-csv/format'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { sanitizeFormulaInjection } from '#server/common/helpers/sanitize-formula-injection.js'
+import { toCsvNumber } from '#server/common/helpers/to-csv-number.js'
 import { formatDateTime } from '#server/common/helpers/formatters.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
 
@@ -8,7 +9,7 @@ const logger = createLogger()
 
 /**
  * @param {import('./types.js').ReportSubmissionsRow} row
- * @returns {string[]}
+ * @returns {(string | number)[]}
  */
 function buildDataRow(row) {
   return [
@@ -26,22 +27,22 @@ function buildDataRow(row) {
     row.dueDate,
     row.submittedDate,
     sanitizeFormulaInjection(row.submittedBy),
-    row.tonnageReceivedForRecycling,
-    row.tonnageRecycled,
-    row.tonnageExportedForRecycling,
-    row.tonnageSentOnTotal,
-    row.tonnageSentOnToReprocessor,
-    row.tonnageSentOnToExporter,
-    row.tonnageSentOnToOtherFacilities,
-    row.tonnagePrnsPernsIssued,
-    row.freeTonnagePrnsPerns,
-    row.totalRevenuePrnsPerns,
-    row.averagePrnPernPricePerTonne,
-    row.tonnageReceivedButNotRecycled,
-    row.tonnageReceivedButNotExported,
-    row.tonnageExportedThatWasStopped,
-    row.tonnageExportedThatWasRefused,
-    row.tonnageRepatriated,
+    toCsvNumber(row.tonnageReceivedForRecycling),
+    toCsvNumber(row.tonnageRecycled),
+    toCsvNumber(row.tonnageExportedForRecycling),
+    toCsvNumber(row.tonnageSentOnTotal),
+    toCsvNumber(row.tonnageSentOnToReprocessor),
+    toCsvNumber(row.tonnageSentOnToExporter),
+    toCsvNumber(row.tonnageSentOnToOtherFacilities),
+    toCsvNumber(row.tonnagePrnsPernsIssued),
+    toCsvNumber(row.freeTonnagePrnsPerns),
+    toCsvNumber(row.totalRevenuePrnsPerns),
+    toCsvNumber(row.averagePrnPernPricePerTonne),
+    toCsvNumber(row.tonnageReceivedButNotRecycled),
+    toCsvNumber(row.tonnageReceivedButNotExported),
+    toCsvNumber(row.tonnageExportedThatWasStopped),
+    toCsvNumber(row.tonnageExportedThatWasRefused),
+    toCsvNumber(row.tonnageRepatriated),
     sanitizeFormulaInjection(row.noteToRegulator)
   ]
 }
@@ -52,6 +53,7 @@ function buildDataRow(row) {
  * @returns {Promise<string>}
  */
 function generateCsv(reportSubmissions, generatedAt) {
+  /** @type {(string | number)[][]} */
   const rows = [
     ['Report submissions'],
     [],
@@ -96,7 +98,7 @@ function generateCsv(reportSubmissions, generatedAt) {
     rows.push(buildDataRow(row))
   }
 
-  return writeToString(rows, { headers: false, quoteColumns: true })
+  return writeToString(rows, { headers: false })
 }
 
 export const reportSubmissionsPostController = {

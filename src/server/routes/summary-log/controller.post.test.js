@@ -109,16 +109,16 @@ describe('summaryLogUploadsReportPostController', () => {
 
     // Verify entire CSV structure and content (note: no trailing newline after last row)
     const expectedCSV =
-      '"Summary log uploads report"\n' +
+      'Summary log uploads report\n' +
       '\n' +
-      '"Report showing summary log upload activity for all registered operators with uploads."\n' +
+      'Report showing summary log upload activity for all registered operators with uploads.\n' +
       '\n' +
-      '"Data generated at: 6 February 2026 at 2:30pm"\n' +
+      'Data generated at: 6 February 2026 at 2:30pm\n' +
       '\n' +
-      '"Appropriate Agency","Type","Business Name","Org ID","Registration Number","Accreditation Number","Registered Reprocessing Site (UK)","Packaging Waste Category","Last Successful Upload","Last Failed Upload","Successful Uploads","Failed Uploads"\n' +
-      '"EA","reprocessor","ACME Ltd","12345","REG1","ACC1","7 Glass processing site, London, SW2A 0AA","glass","6 February 2026 at 2:30pm","","5","0"\n' +
-      '"NRW","exporter","Test Co","99999","REG2","-","-","plastic","","15 January 2026 at 10:00am","0","3"\n' +
-      '"SEPA","reprocessor","Pending Reg Ltd","55555","-","-","10 Processing Lane, Glasgow, G1 1AA","paper","6 February 2026 at 2:30pm","","2","0"'
+      'Appropriate Agency,Type,Business Name,Org ID,Registration Number,Accreditation Number,Registered Reprocessing Site (UK),Packaging Waste Category,Last Successful Upload,Last Failed Upload,Successful Uploads,Failed Uploads\n' +
+      'EA,reprocessor,ACME Ltd,12345,REG1,ACC1,"7 Glass processing site, London, SW2A 0AA",glass,6 February 2026 at 2:30pm,,5,0\n' +
+      'NRW,exporter,Test Co,99999,REG2,-,-,plastic,,15 January 2026 at 10:00am,0,3\n' +
+      'SEPA,reprocessor,Pending Reg Ltd,55555,-,-,"10 Processing Lane, Glasgow, G1 1AA",paper,6 February 2026 at 2:30pm,,2,0'
 
     expect(csv).toBe(expectedCSV)
 

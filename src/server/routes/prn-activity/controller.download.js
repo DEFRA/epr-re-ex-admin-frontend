@@ -2,6 +2,7 @@ import { writeToString } from '@fast-csv/format'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { formatDate } from '#config/nunjucks/filters/format-date.js'
 import { sanitizeFormulaInjection } from '#server/common/helpers/sanitize-formula-injection.js'
+import { toCsvNumber } from '#server/common/helpers/to-csv-number.js'
 import { buildPrnApiUrl } from './controller.js'
 
 const dateFormat = 'dd/MM/yyyy'
@@ -53,7 +54,7 @@ function generateCsv(items) {
       sanitizeFormulaInjection(prn.prnNumber || ''),
       sanitizeFormulaInjection(prn.status || ''),
       sanitizeFormulaInjection(getDisplayName(prn.issuedToOrganisation)),
-      prn.tonnage,
+      toCsvNumber(prn.tonnage),
       sanitizeFormulaInjection(prn.material || ''),
       sanitizeFormulaInjection(prn.processToBeUsed || ''),
       prn.isDecemberWaste ? 'Yes' : 'No',
@@ -61,14 +62,14 @@ function generateCsv(items) {
       sanitizeFormulaInjection(prn.issuedBy?.name || ''),
       sanitizeFormulaInjection(prn.issuedBy?.position || ''),
       sanitizeFormulaInjection(prn.accreditationNumber || ''),
-      prn.accreditationYear ?? '',
+      toCsvNumber(prn.accreditationYear),
       sanitizeFormulaInjection(prn.submittedToRegulator || ''),
       sanitizeFormulaInjection(prn.organisationName || ''),
       sanitizeFormulaInjection(prn.wasteProcessingType || '')
     ])
   }
 
-  return writeToString(rows, { headers: false, quoteColumns: true })
+  return writeToString(rows, { headers: false })
 }
 
 export const prnActivityDownloadController = {

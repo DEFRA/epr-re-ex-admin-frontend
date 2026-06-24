@@ -1,11 +1,13 @@
 import { writeToString } from '@fast-csv/format'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { formatDate } from '#config/nunjucks/filters/format-date.js'
-import { formatMaterialName, formatAmount } from './formatters.js'
+import { toCsvNumber } from '#server/common/helpers/to-csv-number.js'
+import { formatMaterialName } from './formatters.js'
 
 const dateFormat = "d MMMM yyyy 'at' h:mmaaa"
 
 async function generateCsv(data) {
+  /** @type {(string | number)[][]} */
   const rows = [
     ['Waste balance availability by material'],
     [],
@@ -19,13 +21,13 @@ async function generateCsv(data) {
   for (const item of data.materials) {
     rows.push([
       formatMaterialName(item.material),
-      formatAmount(item.availableAmount)
+      toCsvNumber(item.availableAmount)
     ])
   }
 
-  rows.push(['Total', formatAmount(data.total)])
+  rows.push(['Total', toCsvNumber(data.total)])
 
-  return writeToString(rows, { headers: false, quoteColumns: true })
+  return writeToString(rows, { headers: false })
 }
 
 export const wasteBalanceAvailabilityPostController = {
