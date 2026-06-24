@@ -1,5 +1,7 @@
 import { isNil } from './is-nil.js'
 
+const significantDigits = 15
+
 /**
  * Coerces a numeric CSV cell to a genuine number so it serialises unquoted.
  * Blank, nil or non-numeric values become an empty string (an empty cell).
@@ -16,5 +18,9 @@ export function toCsvNumber(value) {
 
   const number = Number(value)
 
-  return Number.isNaN(number) ? '' : Number(number.toPrecision(15))
+  if (Number.isNaN(number)) {
+    return ''
+  }
+
+  return Number(number.toPrecision(significantDigits))
 }
