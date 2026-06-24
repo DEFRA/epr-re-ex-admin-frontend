@@ -234,6 +234,69 @@ describe('GET /system-logs', () => {
       })
     })
 
+    describe('user scope and role rendering', () => {
+      it('renders the scopes under "Scopes" and the role under "Role"', async () => {
+        stubBackendResponse(
+          HttpResponse.json({
+            systemLogs: [
+              {
+                createdBy: { scope: ['admin'], role: 'super-admin' },
+                event: {},
+                context: {}
+              }
+            ]
+          })
+        )
+
+        const { $, statusCode } = await loadPage(
+          new URLSearchParams({ referenceNumber: 'ORG-123' })
+        )
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const scopesRow = $('.govuk-summary-card .govuk-summary-list__row').has(
+          'dt:contains("Scopes")'
+        )
+        expect(
+          scopesRow.find('dd.govuk-summary-list__value').text().trim()
+        ).toBe('admin')
+
+        const roleRow = $('.govuk-summary-card .govuk-summary-list__row').has(
+          'dt:contains("Role")'
+        )
+        expect(roleRow.find('dd.govuk-summary-list__value').text().trim()).toBe(
+          'super-admin'
+        )
+      })
+
+      it('renders an empty "Role" value when role is null', async () => {
+        stubBackendResponse(
+          HttpResponse.json({
+            systemLogs: [
+              {
+                createdBy: { scope: ['admin'], role: null },
+                event: {},
+                context: {}
+              }
+            ]
+          })
+        )
+
+        const { $, statusCode } = await loadPage(
+          new URLSearchParams({ referenceNumber: 'ORG-123' })
+        )
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const roleRow = $('.govuk-summary-card .govuk-summary-list__row').has(
+          'dt:contains("Role")'
+        )
+        expect(roleRow.find('dd.govuk-summary-list__value').text().trim()).toBe(
+          ''
+        )
+      })
+    })
+
     describe('system log with previous & next rendering', () => {
       it('includes context.previous and context.next in <details> elements', async () => {
         stubBackendResponse(
