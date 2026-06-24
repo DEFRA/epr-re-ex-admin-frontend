@@ -5,6 +5,7 @@ import { PAGE_TITLE } from './constants.js'
 
 const CONFLICT_MESSAGE =
   'This record changed since you opened it. Reload the page and try again.'
+const GENERIC_MESSAGE = 'The registration could not be approved. Try again.'
 
 /**
  * Re-render the confirm page with an error summary, re-reading the org for a
@@ -56,7 +57,7 @@ export const grantRegistrationPostController = {
     const { organisationId, registrationId } = request.params
     const overviewUrl = `/organisations/${organisationId}/registrations/${registrationId}/overview`
     const { reason, version } = request.payload
-    const trimmedReason = reason.trim()
+    const trimmedReason = (reason ?? '').trim()
 
     if (!trimmedReason) {
       return renderConfirmWithError(request, h, {
@@ -91,7 +92,7 @@ export const grantRegistrationPostController = {
       const isConflict = error.output.statusCode === statusCodes.conflict
       const message = isConflict
         ? CONFLICT_MESSAGE
-        : error.output.payload.message
+        : (error.output.payload?.message ?? GENERIC_MESSAGE)
 
       return renderConfirmWithError(request, h, {
         organisationId,

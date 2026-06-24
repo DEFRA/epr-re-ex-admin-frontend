@@ -240,4 +240,40 @@ describe('grant-registration', () => {
       'Multiple approved registrations found with duplicate keys'
     )
   })
+
+  test('a POST with no reason field re-renders with an error and makes no grant call', async () => {
+    getUserSession.mockReturnValue(mockUserSession)
+    stubOrg('created')
+    let grantCalled = false
+    mswServer.use(
+      http.post(`${backendUrl}${statusHistoryPath}`, () => {
+        grantCalled = true
+        return HttpResponse.json({})
+      })
+    )
+
+    const { statusCode, result } = await postApprove({ version: '7' })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(grantCalled).toBe(false)
+    const $ = cheerio.load(result)
+    expect($('.govuk-error-summary').length).toBe(1)
+    expect(result).toContain('Enter a reason')
+  })
+
+  test('a backend rejection with no message key surfaces the generic fallback message', async () => {
+    getUserSession.mockReturnValue(mockUserSession)
+    stubOrg('created')
+    stubGrantFailure(statusCodes.badRequest, {})
+
+    const { statusCode, result } = await postApprove({
+      version: '7',
+      reason: 'Docs verified'
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(result).toContain(
+      'The registration could not be approved. Try again.'
+    )
+  })
 })
