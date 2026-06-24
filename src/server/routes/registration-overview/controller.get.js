@@ -79,6 +79,9 @@ export const registrationOverviewGETController = {
         )
       : null
 
+    const grantResult = request.yar.get('grantResult')
+    request.yar.clear('grantResult')
+
     const pageTitle = request.route.settings.app.pageTitle
 
     const heading = `${overview.companyName} - ${registration.registrationNumber ?? registration.id}`
@@ -100,6 +103,7 @@ export const registrationOverviewGETController = {
       organisationId,
       registrationId,
       registration,
+      grantResult,
       cadence: calendar.cadence,
       reportingPeriods: calendar.reportingPeriods.map((rp) => ({
         ...rp,
