@@ -1,11 +1,12 @@
 import { writeToString } from '@fast-csv/format'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { formatDate } from '#config/nunjucks/filters/format-date.js'
-import { toCsvNumber } from '#server/common/helpers/to-csv-number.js'
+import { roundForCsv } from '#server/common/helpers/round-for-csv.js'
 import { formatTonnage, materialRowHeading } from './formatters.js'
 import { buildMaterialRowData } from '#server/routes/tonnage-monitoring/helper.js'
 
 const dateFormat = "d MMMM yyyy 'at' h:mmaaa"
+const tonnageDecimals = 2
 
 async function generateCsv(data) {
   const {
@@ -41,9 +42,9 @@ async function generateCsv(data) {
     }
 
     for (const monthName of monthNames) {
-      row.push(toCsvNumber(item.monthValues[monthName]))
+      row.push(roundForCsv(item.monthValues[monthName], tonnageDecimals))
     }
-    row.push(toCsvNumber(item.total))
+    row.push(roundForCsv(item.total, tonnageDecimals))
     rows.push(row)
   }
 

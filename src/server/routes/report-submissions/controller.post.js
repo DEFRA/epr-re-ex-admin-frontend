@@ -1,7 +1,6 @@
 import { writeToString } from '@fast-csv/format'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { sanitizeFormulaInjection } from '#server/common/helpers/sanitize-formula-injection.js'
-import { toCsvNumber } from '#server/common/helpers/to-csv-number.js'
 import { formatDateTime } from '#server/common/helpers/formatters.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
 
@@ -27,22 +26,22 @@ function buildDataRow(row) {
     row.dueDate,
     row.submittedDate,
     sanitizeFormulaInjection(row.submittedBy),
-    toCsvNumber(row.tonnageReceivedForRecycling),
-    toCsvNumber(row.tonnageRecycled),
-    toCsvNumber(row.tonnageExportedForRecycling),
-    toCsvNumber(row.tonnageSentOnTotal),
-    toCsvNumber(row.tonnageSentOnToReprocessor),
-    toCsvNumber(row.tonnageSentOnToExporter),
-    toCsvNumber(row.tonnageSentOnToOtherFacilities),
-    toCsvNumber(row.tonnagePrnsPernsIssued),
-    toCsvNumber(row.freeTonnagePrnsPerns),
-    toCsvNumber(row.totalRevenuePrnsPerns),
-    toCsvNumber(row.averagePrnPernPricePerTonne),
-    toCsvNumber(row.tonnageReceivedButNotRecycled),
-    toCsvNumber(row.tonnageReceivedButNotExported),
-    toCsvNumber(row.tonnageExportedThatWasStopped),
-    toCsvNumber(row.tonnageExportedThatWasRefused),
-    toCsvNumber(row.tonnageRepatriated),
+    row.tonnageReceivedForRecycling,
+    row.tonnageRecycled,
+    row.tonnageExportedForRecycling,
+    row.tonnageSentOnTotal,
+    row.tonnageSentOnToReprocessor,
+    row.tonnageSentOnToExporter,
+    row.tonnageSentOnToOtherFacilities,
+    row.tonnagePrnsPernsIssued,
+    row.freeTonnagePrnsPerns,
+    row.totalRevenuePrnsPerns,
+    row.averagePrnPernPricePerTonne,
+    row.tonnageReceivedButNotRecycled,
+    row.tonnageReceivedButNotExported,
+    row.tonnageExportedThatWasStopped,
+    row.tonnageExportedThatWasRefused,
+    row.tonnageRepatriated,
     sanitizeFormulaInjection(row.noteToRegulator)
   ]
 }

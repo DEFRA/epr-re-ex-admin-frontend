@@ -1,10 +1,11 @@
 import { writeToString } from '@fast-csv/format'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { formatDate } from '#config/nunjucks/filters/format-date.js'
-import { toCsvNumber } from '#server/common/helpers/to-csv-number.js'
+import { roundForCsv } from '#server/common/helpers/round-for-csv.js'
 import { formatMaterialName } from './formatters.js'
 
 const dateFormat = "d MMMM yyyy 'at' h:mmaaa"
+const amountDecimals = 2
 
 async function generateCsv(data) {
   /** @type {(string | number)[][]} */
@@ -21,11 +22,11 @@ async function generateCsv(data) {
   for (const item of data.materials) {
     rows.push([
       formatMaterialName(item.material),
-      toCsvNumber(item.availableAmount)
+      roundForCsv(item.availableAmount, amountDecimals)
     ])
   }
 
-  rows.push(['Total', toCsvNumber(data.total)])
+  rows.push(['Total', roundForCsv(data.total, amountDecimals)])
 
   return writeToString(rows, { headers: false })
 }
