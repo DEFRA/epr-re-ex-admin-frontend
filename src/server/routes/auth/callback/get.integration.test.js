@@ -1,4 +1,5 @@
 import { vi } from 'vitest'
+import { Metrics } from '@defra/cdp-metrics'
 import { config } from '#config/config.js'
 import { createServer } from '#server/server.js'
 import { randomUUID } from 'node:crypto'
@@ -12,20 +13,10 @@ import { http, server as mswServer, HttpResponse } from '#vite/setup-msw.js'
 import Jwt from '@hapi/jwt'
 
 const mock = {
-  cdpAuditing: vi.fn(),
-  signInSuccessMetric: vi.fn(),
-  signInFailureMetric: vi.fn()
+  cdpAuditing: vi.fn()
 }
 
-vi.mock('#server/common/helpers/metrics/index.js', async (importOriginal) => ({
-  metrics: {
-    .../** @type {typeof import('#server/common/helpers/metrics/index.js')} */ (
-      await importOriginal()
-    ).metrics,
-    signInFailure: () => mock.signInFailureMetric(),
-    signInSuccess: () => mock.signInSuccessMetric()
-  }
-}))
+const counterSpy = vi.spyOn(Metrics.prototype, 'counter').mockResolvedValue()
 
 vi.mock('@defra/cdp-auditing', () => ({
   audit: (...args) => mock.cdpAuditing(...args)
@@ -105,7 +96,7 @@ describe('GET /auth/callback', () => {
 
     it('records sign in success metric', async () => {
       await performSignInFlow(accessToken)
-      expect(mock.signInSuccessMetric).toHaveBeenCalledTimes(1)
+      expect(counterSpy).toHaveBeenCalledWith('signInSuccess')
     })
 
     it('audits a successful sign in attempt', async () => {
@@ -179,7 +170,7 @@ describe('GET /auth/callback', () => {
     })
 
     it('records sign in failure metric', () => {
-      expect(mock.signInFailureMetric).toHaveBeenCalledTimes(1)
+      expect(counterSpy).toHaveBeenCalledWith('signInFailure')
     })
   })
 
@@ -203,7 +194,7 @@ describe('GET /auth/callback', () => {
     })
 
     it('records sign in failure metric', () => {
-      expect(mock.signInFailureMetric).toHaveBeenCalledTimes(1)
+      expect(counterSpy).toHaveBeenCalledWith('signInFailure')
     })
   })
 })

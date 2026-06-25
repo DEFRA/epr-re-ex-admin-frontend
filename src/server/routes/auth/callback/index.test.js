@@ -20,7 +20,13 @@ vi.mock('node:crypto')
  * @param {unknown} obj
  * @returns {HapiRequest}
  */
-const asRequest = (obj) => /** @type {HapiRequest} */ (obj)
+const asRequest = (obj) => {
+  const request = /** @type {HapiRequest} */ (obj)
+  request.metrics = /** @type {HapiRequest['metrics']} */ (
+    /** @type {unknown} */ ({ counter: vi.fn() })
+  )
+  return request
+}
 
 /**
  * Cast a partial mock toolkit to the full `ResponseToolkit` shape.
