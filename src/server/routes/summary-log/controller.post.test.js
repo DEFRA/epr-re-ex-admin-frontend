@@ -96,7 +96,7 @@ describe('summaryLogUploadsReportPostController', () => {
       generatedAt: '2026-02-06T14:30:00.000Z'
     }
 
-    fetchJsonFromBackend.mockResolvedValue(mockData)
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockData)
 
     await summaryLogUploadsReportPostController.handler(mockRequest, mockH)
 
@@ -133,7 +133,7 @@ describe('summaryLogUploadsReportPostController', () => {
     const fetchError = new Error('Network error')
     fetchError.stack = 'Error stack trace...'
 
-    fetchJsonFromBackend.mockRejectedValue(fetchError)
+    vi.mocked(fetchJsonFromBackend).mockRejectedValue(fetchError)
 
     await summaryLogUploadsReportPostController.handler(mockRequest, mockH)
 
