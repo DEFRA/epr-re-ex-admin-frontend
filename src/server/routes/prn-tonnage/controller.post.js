@@ -1,13 +1,11 @@
 import { writeToString } from '@fast-csv/format'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { formatDate } from '#config/nunjucks/filters/format-date.js'
-import {
-  formatMaterialName,
-  formatTonnageBand,
-  formatTonnage
-} from './formatters.js'
+import { roundForCsv } from '#server/common/helpers/round-for-csv.js'
+import { formatMaterialName, formatTonnageBand } from './formatters.js'
 
 const dateFormat = "d MMMM yyyy 'at' h:mmaaa"
+const tonnageDecimals = 0
 
 async function generateCsv(data) {
   const rows = [
@@ -41,15 +39,15 @@ async function generateCsv(data) {
       row.accreditationNumber,
       formatMaterialName(row.material),
       formatTonnageBand(row.tonnageBand),
-      formatTonnage(row.awaitingAuthorisationTonnage),
-      formatTonnage(row.awaitingAcceptanceTonnage),
-      formatTonnage(row.awaitingCancellationTonnage),
-      formatTonnage(row.acceptedTonnage),
-      formatTonnage(row.cancelledTonnage)
+      roundForCsv(row.awaitingAuthorisationTonnage, tonnageDecimals),
+      roundForCsv(row.awaitingAcceptanceTonnage, tonnageDecimals),
+      roundForCsv(row.awaitingCancellationTonnage, tonnageDecimals),
+      roundForCsv(row.acceptedTonnage, tonnageDecimals),
+      roundForCsv(row.cancelledTonnage, tonnageDecimals)
     ])
   }
 
-  return writeToString(rows, { headers: false, quoteColumns: true })
+  return writeToString(rows, { headers: false })
 }
 
 export const prnTonnagePostController = {

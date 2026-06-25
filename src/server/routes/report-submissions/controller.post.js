@@ -8,7 +8,7 @@ const logger = createLogger()
 
 /**
  * @param {import('./types.js').ReportSubmissionsRow} row
- * @returns {string[]}
+ * @returns {(string | number)[]}
  */
 function buildDataRow(row) {
   return [
@@ -52,6 +52,7 @@ function buildDataRow(row) {
  * @returns {Promise<string>}
  */
 function generateCsv(reportSubmissions, generatedAt) {
+  /** @type {(string | number)[][]} */
   const rows = [
     ['Report submissions'],
     [],
@@ -96,7 +97,7 @@ function generateCsv(reportSubmissions, generatedAt) {
     rows.push(buildDataRow(row))
   }
 
-  return writeToString(rows, { headers: false, quoteColumns: true })
+  return writeToString(rows, { headers: false })
 }
 
 export const reportSubmissionsPostController = {

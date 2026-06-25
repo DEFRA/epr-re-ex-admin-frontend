@@ -67,7 +67,7 @@ describe('tonnage-monitoring', () => {
   describe('GET /tonnage-monitoring', () => {
     describe('When user is unauthenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(null)
+        vi.mocked(getUserSession).mockResolvedValue(null)
       })
 
       test('Should return unauthorised status code', async () => {
@@ -83,7 +83,7 @@ describe('tonnage-monitoring', () => {
 
     describe('When user is authenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(mockUserSession)
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
       })
 
       test('Should return OK and render page with heading', async () => {
@@ -249,7 +249,7 @@ describe('tonnage-monitoring', () => {
   describe('POST /tonnage-monitoring', () => {
     describe('When user is unauthenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(null)
+        vi.mocked(getUserSession).mockResolvedValue(null)
       })
 
       test('Should return unauthorised status code', async () => {
@@ -266,7 +266,7 @@ describe('tonnage-monitoring', () => {
 
     describe('When user is authenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(mockUserSession)
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
       })
 
       test('Should return CSV file on successful request', async () => {
@@ -295,12 +295,10 @@ describe('tonnage-monitoring', () => {
           'attachment; filename="tonnage-monitoring.csv"'
         )
         expect(payload).toContain('Tonnage by material')
-        expect(payload).toContain('"Material","Type","Jan","Feb"')
-        expect(payload).toContain('"Aluminium","Exporter","1234.56","0.00"')
-        expect(payload).toContain(
-          '"Glass re-melt","Reprocessor","0.00","5678.90"'
-        )
-        expect(payload).toContain('"Total: 6913.46"')
+        expect(payload).toContain('Material,Type,Jan,Feb')
+        expect(payload).toContain('Aluminium,Exporter,1234.56,0')
+        expect(payload).toContain('Glass re-melt,Reprocessor,0,5678.9')
+        expect(payload).toContain('Total: 6913.46')
       })
 
       test('Should include formatted date in CSV', async () => {

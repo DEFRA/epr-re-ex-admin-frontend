@@ -51,7 +51,7 @@ describe('waste-balance-availability', () => {
   describe('GET /waste-balance-availability', () => {
     describe('When user is unauthenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(null)
+        vi.mocked(getUserSession).mockResolvedValue(null)
       })
 
       test('Should return unauthorised status code', async () => {
@@ -67,7 +67,7 @@ describe('waste-balance-availability', () => {
 
     describe('When user is authenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(mockUserSession)
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
       })
 
       test('Should return OK and render page with heading', async () => {
@@ -235,7 +235,7 @@ describe('waste-balance-availability', () => {
   describe('POST /waste-balance-availability', () => {
     describe('When user is unauthenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(null)
+        vi.mocked(getUserSession).mockResolvedValue(null)
       })
 
       test('Should return unauthorised status code', async () => {
@@ -252,7 +252,7 @@ describe('waste-balance-availability', () => {
 
     describe('When user is authenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(mockUserSession)
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
       })
 
       test('Should return CSV file on successful request', async () => {
@@ -281,9 +281,9 @@ describe('waste-balance-availability', () => {
           'attachment; filename="waste-balance-availability.csv"'
         )
         expect(payload).toContain('Waste balance availability by material')
-        expect(payload).toContain('"Aluminium","1234.56"')
-        expect(payload).toContain('"Glass re-melt","5678.90"')
-        expect(payload).toContain('"Total","6913.46"')
+        expect(payload).toContain('Aluminium,1234.56')
+        expect(payload).toContain('Glass re-melt,5678.9')
+        expect(payload).toContain('Total,6913.46')
       })
 
       test('Should include formatted date in CSV', async () => {

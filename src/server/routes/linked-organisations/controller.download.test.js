@@ -1,4 +1,5 @@
 import { vi } from 'vitest'
+import Boom from '@hapi/boom'
 import { linkedOrganisationsDownloadController } from './controller.download.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { mockLinkedOrg } from './test-fixtures.js'
@@ -33,7 +34,7 @@ describe('linked-organisations download controller', () => {
   })
 
   test('Should generate CSV with correct headers and data', async () => {
-    fetchJsonFromBackend.mockResolvedValue([mockLinkedOrg])
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue([mockLinkedOrg])
 
     await linkedOrganisationsDownloadController.handler(mockRequest, mockH)
 
@@ -45,7 +46,7 @@ describe('linked-organisations download controller', () => {
     const csvContent = mockH.response.mock.calls[0][0]
     const lines = csvContent.split('\n')
     expect(lines[0]).toBe(
-      '"EPR Organisation Name","EPR Organisation ID","Defra ID Organisation Name","Defra ID Organisation ID","Date Linked","Linked By"'
+      'EPR Organisation Name,EPR Organisation ID,Defra ID Organisation Name,Defra ID Organisation ID,Date Linked,Linked By'
     )
     expect(csvContent).toContain('Acme Ltd')
     expect(csvContent).toContain('101')
@@ -54,7 +55,7 @@ describe('linked-organisations download controller', () => {
   })
 
   test('Should set correct Content-Type and Content-Disposition headers', async () => {
-    fetchJsonFromBackend.mockResolvedValue([mockLinkedOrg])
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue([mockLinkedOrg])
 
     await linkedOrganisationsDownloadController.handler(mockRequest, mockH)
 
@@ -66,7 +67,7 @@ describe('linked-organisations download controller', () => {
   })
 
   test('Should handle empty linked organisations', async () => {
-    fetchJsonFromBackend.mockResolvedValue([])
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue([])
 
     await linkedOrganisationsDownloadController.handler(mockRequest, mockH)
 
@@ -77,7 +78,7 @@ describe('linked-organisations download controller', () => {
   })
 
   test('Should handle backend returning non-array data', async () => {
-    fetchJsonFromBackend.mockResolvedValue({})
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue({})
 
     await linkedOrganisationsDownloadController.handler(mockRequest, mockH)
 
@@ -92,7 +93,7 @@ describe('linked-organisations download controller', () => {
       ...mockLinkedOrg,
       orgId: null
     }
-    fetchJsonFromBackend.mockResolvedValue([orgWithNullField])
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue([orgWithNullField])
 
     await linkedOrganisationsDownloadController.handler(mockRequest, mockH)
 
@@ -105,7 +106,7 @@ describe('linked-organisations download controller', () => {
       ...mockLinkedOrg,
       companyDetails: { name: 'Acme, Ltd' }
     }
-    fetchJsonFromBackend.mockResolvedValue([orgWithComma])
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue([orgWithComma])
 
     await linkedOrganisationsDownloadController.handler(mockRequest, mockH)
 
@@ -120,7 +121,7 @@ describe('linked-organisations download controller', () => {
         name: 'Acme "Best" Ltd'
       }
     }
-    fetchJsonFromBackend.mockResolvedValue([orgWithQuote])
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue([orgWithQuote])
 
     await linkedOrganisationsDownloadController.handler(mockRequest, mockH)
 
@@ -133,7 +134,7 @@ describe('linked-organisations download controller', () => {
       ...mockLinkedOrg,
       companyDetails: { name: '=SUM(A1)' }
     }
-    fetchJsonFromBackend.mockResolvedValue([orgWithFormulaValue])
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue([orgWithFormulaValue])
 
     await linkedOrganisationsDownloadController.handler(mockRequest, mockH)
 
@@ -142,7 +143,9 @@ describe('linked-organisations download controller', () => {
   })
 
   test('Should redirect with error message on fetch failure', async () => {
-    fetchJsonFromBackend.mockRejectedValue(new Error('Network error'))
+    vi.mocked(fetchJsonFromBackend).mockRejectedValue(
+      new Error('Network error')
+    )
 
     const result = await linkedOrganisationsDownloadController.handler(
       mockRequest,
@@ -158,9 +161,8 @@ describe('linked-organisations download controller', () => {
   })
 
   test('Should use error message from backend when available', async () => {
-    const error = new Error('Backend error')
-    error.output = { payload: { message: 'Custom backend error message' } }
-    fetchJsonFromBackend.mockRejectedValue(error)
+    const error = Boom.badRequest('Custom backend error message')
+    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
 
     await linkedOrganisationsDownloadController.handler(mockRequest, mockH)
 
@@ -171,7 +173,7 @@ describe('linked-organisations download controller', () => {
   })
 
   test('Should format linked date in CSV', async () => {
-    fetchJsonFromBackend.mockResolvedValue([mockLinkedOrg])
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue([mockLinkedOrg])
 
     await linkedOrganisationsDownloadController.handler(mockRequest, mockH)
 
@@ -181,7 +183,7 @@ describe('linked-organisations download controller', () => {
 
   test('Should pass search term as query param to backend', async () => {
     mockRequest.payload = { search: ' acme ' }
-    fetchJsonFromBackend.mockResolvedValue([mockLinkedOrg])
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue([mockLinkedOrg])
 
     await linkedOrganisationsDownloadController.handler(mockRequest, mockH)
 
@@ -193,7 +195,7 @@ describe('linked-organisations download controller', () => {
 
   test('Should fetch all when no search term in payload', async () => {
     mockRequest.payload = {}
-    fetchJsonFromBackend.mockResolvedValue([mockLinkedOrg])
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue([mockLinkedOrg])
 
     await linkedOrganisationsDownloadController.handler(mockRequest, mockH)
 

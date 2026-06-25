@@ -263,7 +263,7 @@ describe('ors-upload download integration', () => {
         expect(headers['content-disposition']).toBe(
           'attachment; filename="overseas-reprocessing-sites.csv"'
         )
-        expect(payload).toContain('"Org ID","Registration Number"')
+        expect(payload).toContain('Org ID,Registration Number')
         expect(payload).toContain('Alpha Reprocessor')
         expect(payload).toContain('1 April 2025')
       })
