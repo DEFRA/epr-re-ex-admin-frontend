@@ -1,4 +1,5 @@
 import { vi } from 'vitest'
+import Boom from '@hapi/boom'
 import { wasteBalanceAvailabilityPostController } from './controller.post.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
@@ -31,7 +32,7 @@ describe('waste-balance-availability POST controller', () => {
   })
 
   test('Should generate CSV with correct headers and formatting', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
       generatedAt: '2026-01-29T14:30:00.000Z',
       materials: [
         { material: 'aluminium', availableAmount: 1234.56 },
@@ -48,16 +49,16 @@ describe('waste-balance-availability POST controller', () => {
     )
 
     const expectedCsv = [
-      '"Waste balance availability by material"',
+      'Waste balance availability by material',
       '',
       '"Available waste balance by material, after PRN and sent-on deductions."',
       '',
-      '"Data generated at: 29 January 2026 at 2:30pm"',
+      'Data generated at: 29 January 2026 at 2:30pm',
       '',
-      '"Material","Available amount"',
-      '"Aluminium","1234.56"',
-      '"Glass re-melt","5678.90"',
-      '"Total","6913.46"'
+      'Material,Available amount',
+      'Aluminium,1234.56',
+      'Glass re-melt,5678.9',
+      'Total,6913.46'
     ].join('\n')
 
     expect(mockH.response).toHaveBeenCalledWith(expectedCsv)
@@ -69,7 +70,7 @@ describe('waste-balance-availability POST controller', () => {
   })
 
   test('Should format material names to display names', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
       generatedAt: '2026-01-29T09:00:00.000Z',
       materials: [
         { material: 'plastic', availableAmount: 100 },
@@ -81,12 +82,12 @@ describe('waste-balance-availability POST controller', () => {
     await wasteBalanceAvailabilityPostController.handler(mockRequest, mockH)
 
     const csvContent = mockH.response.mock.calls[0][0]
-    expect(csvContent).toContain('"Plastic","100.00"')
-    expect(csvContent).toContain('"Paper and board","200.00"')
+    expect(csvContent).toContain('Plastic,100')
+    expect(csvContent).toContain('Paper and board,200')
   })
 
-  test('Should format amount values to 2 decimal places', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+  test('Should emit amount values as unquoted numbers', async () => {
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
       generatedAt: '2026-01-29T12:00:00.000Z',
       materials: [
         { material: 'wood', availableAmount: 1000 },
@@ -98,13 +99,13 @@ describe('waste-balance-availability POST controller', () => {
     await wasteBalanceAvailabilityPostController.handler(mockRequest, mockH)
 
     const csvContent = mockH.response.mock.calls[0][0]
-    expect(csvContent).toContain('"Wood","1000.00"')
-    expect(csvContent).toContain('"Fibre based composite","99.10"')
-    expect(csvContent).toContain('"Total","1099.10"')
+    expect(csvContent).toContain('Wood,1000')
+    expect(csvContent).toContain('Fibre based composite,99.1')
+    expect(csvContent).toContain('Total,1099.1')
   })
 
   test('Should format morning times correctly', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
       generatedAt: '2026-06-15T09:05:00.000Z',
       materials: [],
       total: 0
@@ -117,7 +118,7 @@ describe('waste-balance-availability POST controller', () => {
   })
 
   test('Should handle empty materials array', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
       generatedAt: '2026-01-29T12:00:00.000Z',
       materials: [],
       total: 0
@@ -126,21 +127,23 @@ describe('waste-balance-availability POST controller', () => {
     await wasteBalanceAvailabilityPostController.handler(mockRequest, mockH)
 
     const expectedCsv = [
-      '"Waste balance availability by material"',
+      'Waste balance availability by material',
       '',
       '"Available waste balance by material, after PRN and sent-on deductions."',
       '',
-      '"Data generated at: 29 January 2026 at 12:00pm"',
+      'Data generated at: 29 January 2026 at 12:00pm',
       '',
-      '"Material","Available amount"',
-      '"Total","0.00"'
+      'Material,Available amount',
+      'Total,0'
     ].join('\n')
 
     expect(mockH.response).toHaveBeenCalledWith(expectedCsv)
   })
 
   test('Should redirect with error message on fetch failure', async () => {
-    fetchJsonFromBackend.mockRejectedValue(new Error('Network error'))
+    vi.mocked(fetchJsonFromBackend).mockRejectedValue(
+      new Error('Network error')
+    )
 
     const result = await wasteBalanceAvailabilityPostController.handler(
       mockRequest,
@@ -156,9 +159,8 @@ describe('waste-balance-availability POST controller', () => {
   })
 
   test('Should use error message from backend when available', async () => {
-    const error = new Error('Backend error')
-    error.output = { payload: { message: 'Custom backend error message' } }
-    fetchJsonFromBackend.mockRejectedValue(error)
+    const error = Boom.badRequest('Custom backend error message')
+    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
 
     await wasteBalanceAvailabilityPostController.handler(mockRequest, mockH)
 
