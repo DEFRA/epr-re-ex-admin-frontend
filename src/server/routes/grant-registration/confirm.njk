@@ -1,0 +1,48 @@
+{% extends 'layout.njk' %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/character-count/macro.njk" import govukCharacterCount %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/tag/macro.njk" import govukTag %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if errors %}
+        {{ govukErrorSummary({ titleText: "There is a problem", errorList: errors }) }}
+      {% endif %}
+
+      <h1 class="govuk-heading-xl">{{ heading }}</h1>
+
+      {{ govukSummaryList({
+        rows: [
+          { key: { text: "Status change" }, value: { html: govukTag({ text: "Created" }) ~ ' &rarr; ' ~ govukTag({ text: "Approved", classes: "govuk-tag--green" }) } }
+        ]
+      }) }}
+
+      {{ govukInsetText({ text: "Registration number will be created on approval" }) }}
+
+      {% if SCOPES.adminWrite in scopes %}
+        <form method="POST" action="{{ postUrl }}">
+          <input type="hidden" name="crumb" value="{{ crumb }}" />
+          <input type="hidden" name="version" value="{{ version }}" />
+
+          {{ govukCharacterCount({
+            id: "reason",
+            name: "reason",
+            maxlength: 500,
+            label: { text: "Reason for this change", classes: "govuk-label--m" },
+            value: reason,
+            errorMessage: reasonError
+          }) }}
+
+          {{ govukButton({ text: "Approve registration" }) }}
+          <p class="govuk-body">
+            <a class="govuk-link" href="{{ overviewUrl }}">Cancel</a>
+          </p>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}
