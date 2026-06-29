@@ -30,25 +30,28 @@ const buildHapiH = () => {
     header: vi.fn().mockReturnThis()
   }
   const h = {
-    response: vi.fn(() => responseBuilder),
+    response: vi.fn().mockReturnValue(responseBuilder),
     redirect: vi.fn().mockReturnValue('redirect-response')
   }
   return { h, responseBuilder }
 }
 
-const buildRequest = () => ({
-  params: { organisationId: 'org-1', registrationId: 'reg-1' },
-  yar: { set: vi.fn() }
-})
+const buildRequest = () =>
+  /** @type {any} */ ({
+    params: { organisationId: 'org-1', registrationId: 'reg-1' },
+    yar: { set: vi.fn() }
+  })
 
 describe('wasteRecordsRegistrationDownloadController', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('streams the export scoped to the organisation and registration', async () => {
-    streamFromBackend.mockResolvedValue({
-      body: buildWebStream(['header\n']),
-      headers: new Headers({ 'content-type': 'text/csv; charset=utf-8' })
-    })
+    vi.mocked(streamFromBackend).mockResolvedValue(
+      /** @type {any} */ ({
+        body: buildWebStream(['header\n']),
+        headers: new Headers({ 'content-type': 'text/csv; charset=utf-8' })
+      })
+    )
 
     const { h } = buildHapiH()
     const request = buildRequest()
@@ -64,7 +67,7 @@ describe('wasteRecordsRegistrationDownloadController', () => {
 
   it('redirects back to the registration overview with a flash error on failure', async () => {
     const error = new Error('boom')
-    streamFromBackend.mockRejectedValue(error)
+    vi.mocked(streamFromBackend).mockRejectedValue(error)
 
     const { h } = buildHapiH()
     const request = buildRequest()
@@ -86,9 +89,9 @@ describe('wasteRecordsRegistrationDownloadController', () => {
   })
 
   it('uses the Boom payload message when available', async () => {
-    const error = new Error('upstream')
+    const error = /** @type {any} */ (new Error('upstream'))
     error.output = { payload: { message: 'Backend exploded' } }
-    streamFromBackend.mockRejectedValue(error)
+    vi.mocked(streamFromBackend).mockRejectedValue(error)
 
     const { h } = buildHapiH()
     const request = buildRequest()
