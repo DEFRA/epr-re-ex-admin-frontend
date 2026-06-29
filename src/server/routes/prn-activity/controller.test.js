@@ -335,4 +335,16 @@ describe('buildPrnApiUrl', () => {
     const url = buildPrnApiUrl('abc 123')
     expect(url).toContain('cursor=abc%20123')
   })
+
+  test('Should append accreditationId when provided', () => {
+    const url = buildPrnApiUrl(null, 'acc-9')
+    expect(url).toBe(
+      `/v1/admin/packaging-recycling-notes?statuses=${expectedStatuses}&accreditationId=acc-9`
+    )
+  })
+
+  test('Should encode the accreditationId value', () => {
+    const url = buildPrnApiUrl(null, 'acc 9')
+    expect(url).toContain('accreditationId=acc%209')
+  })
 })

@@ -31,10 +31,13 @@ function mapPrns(data) {
   }))
 }
 
-export function buildPrnApiUrl(cursor) {
+export function buildPrnApiUrl(cursor, accreditationId) {
   let url = `/v1/admin/packaging-recycling-notes?statuses=${statuses}`
   if (cursor) {
     url += `&cursor=${encodeURIComponent(cursor)}`
+  }
+  if (accreditationId) {
+    url += `&accreditationId=${encodeURIComponent(accreditationId)}`
   }
   return url
 }

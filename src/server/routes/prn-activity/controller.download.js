@@ -11,12 +11,12 @@ function getDisplayName(org) {
   return org.tradingName || org.name || ''
 }
 
-async function fetchAllPrns(request) {
+export async function fetchAllPrns(request, accreditationId) {
   const allItems = []
   let cursor = null
 
   do {
-    const url = buildPrnApiUrl(cursor)
+    const url = buildPrnApiUrl(cursor, accreditationId)
     const data = await fetchJsonFromBackend(request, url)
     const items = data?.items || []
     allItems.push(...items)
@@ -27,7 +27,7 @@ async function fetchAllPrns(request) {
   return allItems
 }
 
-function generateCsv(items) {
+export function generateCsv(items) {
   const rows = [
     [
       'PRN Number',
