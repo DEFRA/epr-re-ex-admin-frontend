@@ -410,6 +410,66 @@ describe('#registrationOverviewController', () => {
       expect(queryByText(body, 'Overseas sites', { selector: 'dt' })).toBeNull()
     })
 
+    test('Should render a waste records download link', async () => {
+      useMockBackend()
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+      const value = getSummaryRowValue(body, 'Waste records')
+      const link = within(value).getByRole('link', { name: 'Download' })
+
+      expect(link).toHaveAttribute(
+        'href',
+        `/organisations/${organisationId}/registrations/${registrationId}/waste-records/download`
+      )
+    })
+
+    test('Should render a PRN activity download link when accreditation exists', async () => {
+      useMockBackend()
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+      const value = getSummaryRowValue(body, 'PRN activity')
+      const link = within(value).getByRole('link', { name: 'Download' })
+
+      expect(link).toHaveAttribute(
+        'href',
+        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/prn-activity/download`
+      )
+    })
+
+    test('Should render the waste records link but no PRN activity link when accreditation is absent', async () => {
+      useMockBackend({
+        ...mockOverview,
+        registrations: [{ ...mockRegistration, accreditation: null }]
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+
+      expect(
+        within(getSummaryRowValue(body, 'Waste records')).getByRole('link', {
+          name: 'Download'
+        })
+      ).toBeInTheDocument()
+      expect(queryByText(body, 'PRN activity', { selector: 'dt' })).toBeNull()
+    })
+
     test('Should render the reporting periods table', async () => {
       useMockBackend()
 

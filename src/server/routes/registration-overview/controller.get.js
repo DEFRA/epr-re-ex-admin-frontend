@@ -53,6 +53,9 @@ export const registrationOverviewGETController = {
   async handler(request, h) {
     const { organisationId, registrationId } = request.params
 
+    const errorMessage = request.yar.get('error')
+    await request.yar.clear('error')
+
     const [overview, calendar, { summaryLogs }] = await Promise.all([
       fetchOrganisationOverview(request, organisationId),
       fetchJsonFromBackend(
@@ -109,6 +112,7 @@ export const registrationOverviewGETController = {
       })),
       summaryLogRows,
       wasteBalance,
+      error: errorMessage,
       wasteBalanceEventsUrl: registration.accreditation
         ? `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${registration.accreditation.id}/waste-balance-events`
         : null,
@@ -116,7 +120,11 @@ export const registrationOverviewGETController = {
         registration.accreditation &&
         registration.processingType === EXPORTER_PROCESSING_TYPE
           ? `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${registration.accreditation.id}/overseas-sites`
-          : null
+          : null,
+      wasteRecordsDownloadUrl: `/organisations/${organisationId}/registrations/${registrationId}/waste-records/download`,
+      prnActivityDownloadUrl: registration.accreditation
+        ? `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${registration.accreditation.id}/prn-activity/download`
+        : null
     })
   }
 }
