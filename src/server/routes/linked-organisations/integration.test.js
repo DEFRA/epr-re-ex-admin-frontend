@@ -43,7 +43,7 @@ describe('linked-organisations', () => {
   describe('GET /linked-organisations', () => {
     describe('When user is unauthenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(null)
+        vi.mocked(getUserSession).mockResolvedValue(null)
       })
 
       test('Should return unauthorised status code', async () => {
@@ -59,7 +59,7 @@ describe('linked-organisations', () => {
 
     describe('When user is authenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(mockUserSession)
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
       })
 
       test('Should return OK and render page with heading', async () => {
@@ -160,7 +160,7 @@ describe('linked-organisations', () => {
         })
 
         const $ = cheerio.load(result)
-        expect($('form.app-filters input[name="search"]').length).toBe(1)
+        expect($('form.app-filters input[name="search"]')).toHaveLength(1)
         expect($('form.app-filters button.govuk-button').text().trim()).toBe(
           'Search'
         )
@@ -196,7 +196,7 @@ describe('linked-organisations', () => {
 
         const $ = cheerio.load(result)
         const downloadForm = $('form[action="/linked-organisations/download"]')
-        expect(downloadForm.length).toBe(1)
+        expect(downloadForm).toHaveLength(1)
         expect(downloadForm.find('button.govuk-button').text().trim()).toBe(
           'Download CSV'
         )
@@ -243,7 +243,7 @@ describe('linked-organisations', () => {
   describe('GET /linked-organisations?search= (search)', () => {
     describe('When user is authenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(mockUserSession)
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
       })
 
       test('Should render page with search results', async () => {
@@ -297,7 +297,7 @@ describe('linked-organisations', () => {
         const clearLink = $(
           'a[href="/linked-organisations"].govuk-button--inverse'
         )
-        expect(clearLink.length).toBe(1)
+        expect(clearLink).toHaveLength(1)
         expect(clearLink.text()).toContain('Clear search')
       })
 
@@ -325,7 +325,7 @@ describe('linked-organisations', () => {
   describe('POST /linked-organisations/download', () => {
     describe('When user is unauthenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(null)
+        vi.mocked(getUserSession).mockResolvedValue(null)
       })
 
       test('Should return unauthorised status code', async () => {
@@ -342,7 +342,7 @@ describe('linked-organisations', () => {
 
     describe('When user is authenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(mockUserSession)
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
       })
 
       test('Should return CSV file on successful request', async () => {

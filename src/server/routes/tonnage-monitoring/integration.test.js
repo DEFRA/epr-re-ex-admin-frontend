@@ -86,7 +86,11 @@ describe('tonnage-monitoring', () => {
         vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
       })
 
-      test('Should return OK and render page with heading', async () => {
+      test.each([
+        ['h1', 'Tonnage monitoring'],
+        ['.govuk-body', 'Cumulative total of incoming tonnage'],
+        ['.govuk-body', 'Data generated at:']
+      ])('Should render %s containing "%s"', async (selector, expectedText) => {
         stubBackendResponse(mockTonnageData)
 
         const { result, statusCode } = await server.inject({
@@ -101,27 +105,7 @@ describe('tonnage-monitoring', () => {
         expect(statusCode).toBe(statusCodes.ok)
 
         const $ = cheerio.load(result)
-        expect($('h1').text()).toContain('Tonnage monitoring')
-      })
-
-      test('Should render page with description text', async () => {
-        stubBackendResponse(mockTonnageData)
-
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url: '/tonnage-monitoring',
-          auth: {
-            strategy: 'session',
-            credentials: mockUserSession
-          }
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-
-        const $ = cheerio.load(result)
-        expect($('.govuk-body').text()).toContain(
-          'Cumulative total of incoming tonnage'
-        )
+        expect($(selector).text()).toContain(expectedText)
       })
 
       test('Should render materials table with formatted data', async () => {
@@ -144,24 +128,6 @@ describe('tonnage-monitoring', () => {
         expect(tableText).toContain('1234.56')
         expect(tableText).toContain('Glass re-melt')
         expect(tableText).toContain('5678.90')
-      })
-
-      test('Should render generated at timestamp', async () => {
-        stubBackendResponse(mockTonnageData)
-
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url: '/tonnage-monitoring',
-          auth: {
-            strategy: 'session',
-            credentials: mockUserSession
-          }
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-
-        const $ = cheerio.load(result)
-        expect($('.govuk-body').text()).toContain('Data generated at:')
       })
 
       test('Should render download button', async () => {
