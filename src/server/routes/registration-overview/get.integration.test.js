@@ -669,6 +669,14 @@ describe('#registrationOverviewController', () => {
           () => {
             throw HttpResponse.text('', { status: 500 })
           }
+        ),
+        http.get(
+          `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
+          () => HttpResponse.json(mockCalendar)
+        ),
+        http.get(
+          `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs`,
+          () => HttpResponse.json({ summaryLogs: [] })
         )
       )
 
