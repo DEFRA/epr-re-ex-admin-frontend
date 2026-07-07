@@ -241,53 +241,25 @@ describe('JSONEditor Helpers', () => {
   })
 
   describe('isNodeEditable', () => {
-    it('should return { field: false, value: true } for object types', () => {
-      const node = { path: ['address'], type: 'object' }
-      expect(isNodeEditable(node)).toEqual({
-        field: false,
-        value: true
-      })
+    it.each([
+      ['an object type', { path: ['address'], type: 'object' }],
+      [
+        'a node with a field name',
+        { path: ['name'], field: 'name', type: 'string' }
+      ],
+      [
+        'an object node with a field name',
+        { path: ['address'], type: 'object', field: 'address' }
+      ]
+    ])('should lock the key but allow the value for %s', (_label, node) => {
+      expect(isNodeEditable(node)).toEqual({ field: false, value: true })
     })
 
-    it('should return { field: false, value: true } when node has field property', () => {
-      const node = { path: ['name'], field: 'name', type: 'string' }
-      expect(isNodeEditable(node)).toEqual({
-        field: false,
-        value: true
-      })
-    })
-
-    it('should return true for editable fields', () => {
-      const node = { path: ['name'], type: 'string' }
-      expect(isNodeEditable(node)).toBe(true)
-    })
-
-    it('should return true for editable number fields', () => {
-      const node = { path: ['age'], type: 'number' }
-      expect(isNodeEditable(node)).toBe(true)
-    })
-
-    it('should handle nested paths correctly', () => {
-      const node = { path: ['address', 'street'], type: 'string' }
-      expect(isNodeEditable(node)).toBe(true)
-    })
-
-    it('should handle object nodes with field property correctly', () => {
-      // When node.field is truthy (e.g., a key name), it should lock the field
-      const node = { path: ['address'], type: 'object', field: 'address' }
-      expect(isNodeEditable(node)).toEqual({
-        field: false,
-        value: true
-      })
-    })
-
-    it('should handle when subschema is a non-object primitive value', () => {
-      const node = { path: ['primitive'], type: 'string' }
-      expect(isNodeEditable(node)).toBe(true)
-    })
-
-    it('should return true for fields with not constraint that has other properties', () => {
-      const node = { path: ['otherNot'], type: 'string' }
+    it.each([
+      ['a string field', { path: ['name'], type: 'string' }],
+      ['a number field', { path: ['age'], type: 'number' }],
+      ['a nested field', { path: ['address', 'street'], type: 'string' }]
+    ])('should be fully editable for %s', (_label, node) => {
       expect(isNodeEditable(node)).toBe(true)
     })
   })
