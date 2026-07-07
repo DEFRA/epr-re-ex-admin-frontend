@@ -139,7 +139,7 @@ describe('#sign-out', () => {
   test('Should setup via DOMContentLoaded when document is loading', async () => {
     mockDocument.readyState = 'loading'
 
-    let domContentLoadedHandler = null
+    let domContentLoadedHandler = () => {}
     mockDocument.addEventListener.mockImplementation((event, handler) => {
       if (event === 'DOMContentLoaded') {
         domContentLoadedHandler = handler

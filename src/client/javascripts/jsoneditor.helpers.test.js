@@ -13,6 +13,9 @@ import {
   validateJSON
 } from './jsoneditor.validation.js'
 
+/** @import { ErrorObject, ValidateFunction } from 'ajv' */
+/** @import { Mock } from 'vitest' */
+
 // Use vi.hoisted to ensure these are available when mocks are set up
 const { mockSet, mockGet, MockJSONEditorConstructor } = vi.hoisted(() => {
   const mockSet = vi.fn()
@@ -120,7 +123,9 @@ describe('JSONEditor Helpers', () => {
 
     it('should return null for invalid inputs', () => {
       expect(findSchemaNode(null, ['name'])).toBeNull()
+      // @ts-expect-error - deliberately passing a non-array path to test the guard
       expect(findSchemaNode(schema, null)).toBeNull()
+      // @ts-expect-error - deliberately passing a non-array path to test the guard
       expect(findSchemaNode(schema, 'not-array')).toBeNull()
     })
 
@@ -215,6 +220,7 @@ describe('JSONEditor Helpers', () => {
 
     it('should handle invalid inputs', () => {
       expect(getValueAtPath(null, ['name'])).toBeUndefined()
+      // @ts-expect-error - deliberately passing a non-array path to test the guard
       expect(getValueAtPath(testObj, null)).toBeUndefined()
       expect(getValueAtPath(testObj, [])).toEqual(testObj)
     })
@@ -235,28 +241,9 @@ describe('JSONEditor Helpers', () => {
   })
 
   describe('isNodeEditable', () => {
-    const schema = {
-      type: 'object',
-      properties: {
-        id: { type: 'string', readOnly: true },
-        locked: { type: 'string', not: {} },
-        constLocked: { type: 'string', not: { const: 'value' } },
-        typeLocked: { type: 'string', not: { type: 'number' } },
-        name: { type: 'string' },
-        age: { type: 'number' },
-        address: {
-          type: 'object',
-          properties: {
-            street: { type: 'string' },
-            city: { type: 'string' }
-          }
-        }
-      }
-    }
-
     it('should return { field: false, value: true } for object types', () => {
       const node = { path: ['address'], type: 'object' }
-      expect(isNodeEditable(node, schema)).toEqual({
+      expect(isNodeEditable(node)).toEqual({
         field: false,
         value: true
       })
@@ -264,7 +251,7 @@ describe('JSONEditor Helpers', () => {
 
     it('should return { field: false, value: true } when node has field property', () => {
       const node = { path: ['name'], field: 'name', type: 'string' }
-      expect(isNodeEditable(node, schema)).toEqual({
+      expect(isNodeEditable(node)).toEqual({
         field: false,
         value: true
       })
@@ -272,52 +259,36 @@ describe('JSONEditor Helpers', () => {
 
     it('should return true for editable fields', () => {
       const node = { path: ['name'], type: 'string' }
-      expect(isNodeEditable(node, schema)).toBe(true)
+      expect(isNodeEditable(node)).toBe(true)
     })
 
     it('should return true for editable number fields', () => {
       const node = { path: ['age'], type: 'number' }
-      expect(isNodeEditable(node, schema)).toBe(true)
+      expect(isNodeEditable(node)).toBe(true)
     })
 
     it('should handle nested paths correctly', () => {
       const node = { path: ['address', 'street'], type: 'string' }
-      expect(isNodeEditable(node, schema)).toBe(true)
+      expect(isNodeEditable(node)).toBe(true)
     })
 
     it('should handle object nodes with field property correctly', () => {
       // When node.field is truthy (e.g., a key name), it should lock the field
       const node = { path: ['address'], type: 'object', field: 'address' }
-      expect(isNodeEditable(node, schema)).toEqual({
+      expect(isNodeEditable(node)).toEqual({
         field: false,
         value: true
       })
     })
 
     it('should handle when subschema is a non-object primitive value', () => {
-      // Edge case: if schema node is somehow a primitive (shouldn't happen in valid schemas)
-      // but we test defensive code
-      const weirdSchema = {
-        type: 'object',
-        properties: {
-          primitive: 'string' // Invalid schema, but tests the defensive check
-        }
-      }
       const node = { path: ['primitive'], type: 'string' }
-      // Should skip the object type check and continue to field/value check
-      expect(isNodeEditable(node, weirdSchema)).toBe(true)
+      expect(isNodeEditable(node)).toBe(true)
     })
 
     it('should return true for fields with not constraint that has other properties', () => {
-      // Test case where "not" exists but doesn't have const or type
-      const schemaWithOtherNot = {
-        type: 'object',
-        properties: {
-          otherNot: { type: 'string', not: { enum: ['foo', 'bar'] } }
-        }
-      }
       const node = { path: ['otherNot'], type: 'string' }
-      expect(isNodeEditable(node, schemaWithOtherNot)).toBe(true)
+      expect(isNodeEditable(node)).toBe(true)
     })
   })
 
@@ -673,16 +644,21 @@ describe('JSONEditor Helpers', () => {
       }
     }
 
-    const mockValidate = vi.fn()
+    const mockValidate = /** @type {ValidateFunction & Mock} */ (vi.fn())
+
+    /** @param {Array<Partial<ErrorObject>>} errors */
+    const setValidateErrors = (errors) => {
+      mockValidate.errors = /** @type {ErrorObject[]} */ (errors)
+    }
 
     beforeEach(() => {
       mockValidate.mockReset()
-      mockValidate.errors = []
+      setValidateErrors([])
     })
 
     it('should return empty array for valid JSON', () => {
       mockValidate.mockReturnValue(true)
-      mockValidate.errors = []
+      setValidateErrors([])
 
       const json = { id: '123', name: 'John', age: 30 }
       const original = { id: '123', name: 'John', age: 30 }
@@ -695,12 +671,12 @@ describe('JSONEditor Helpers', () => {
 
     it('should return AJV validation errors', () => {
       mockValidate.mockReturnValue(false)
-      mockValidate.errors = [
+      setValidateErrors([
         {
           instancePath: '/age',
           message: 'must be number'
         }
-      ]
+      ])
 
       const json = { id: '123', name: 'John', age: 'invalid' }
       const original = { id: '123', name: 'John', age: 30 }
@@ -716,14 +692,14 @@ describe('JSONEditor Helpers', () => {
 
     it('should customise enum error messages', () => {
       mockValidate.mockReturnValue(false)
-      mockValidate.errors = [
+      setValidateErrors([
         {
           instancePath: '/name',
           keyword: 'enum',
           params: { allowedValues: ['John', 'Jane'] },
           message: 'must be equal to one of the allowed values'
         }
-      ]
+      ])
 
       const json = { id: '123', name: 'Bob', age: 30 }
       const original = { id: '123', name: 'John', age: 30 }
@@ -736,11 +712,11 @@ describe('JSONEditor Helpers', () => {
 
     it('should handle errors without instancePath', () => {
       mockValidate.mockReturnValue(false)
-      mockValidate.errors = [
+      setValidateErrors([
         {
           message: 'Root level error'
         }
-      ]
+      ])
 
       const json = { id: '123', name: 'John', age: 30 }
       const original = { id: '123', name: 'Jane', age: 25 }
@@ -752,11 +728,11 @@ describe('JSONEditor Helpers', () => {
 
     it('should handle errors without message', () => {
       mockValidate.mockReturnValue(false)
-      mockValidate.errors = [
+      setValidateErrors([
         {
           instancePath: '/age'
         }
-      ]
+      ])
 
       const json = { id: '123', name: 'John', age: 'invalid' }
       const original = { id: '123', name: 'John', age: 30 }
@@ -768,7 +744,7 @@ describe('JSONEditor Helpers', () => {
 
     it('should add readOnly change errors', () => {
       mockValidate.mockReturnValue(true)
-      mockValidate.errors = []
+      setValidateErrors([])
 
       const json = { id: '456', name: 'John', age: 30 }
       const original = { id: '123', name: 'John', age: 30 }
@@ -782,7 +758,7 @@ describe('JSONEditor Helpers', () => {
 
     it('should filter errors to only show changed fields', () => {
       mockValidate.mockReturnValue(false)
-      mockValidate.errors = [
+      setValidateErrors([
         {
           instancePath: '/name',
           message: 'Invalid name'
@@ -791,7 +767,7 @@ describe('JSONEditor Helpers', () => {
           instancePath: '/age',
           message: 'Invalid age'
         }
-      ]
+      ])
 
       // Only name changed, age is the same
       const json = { id: '123', name: 'Bob', age: 30 }
@@ -806,12 +782,12 @@ describe('JSONEditor Helpers', () => {
 
     it('should handle URL-encoded paths correctly', () => {
       mockValidate.mockReturnValue(false)
-      mockValidate.errors = [
+      setValidateErrors([
         {
           instancePath: '/field%20with%20space',
           message: 'Error in encoded field'
         }
-      ]
+      ])
 
       const json = { 'field with space': 'invalid' }
       const original = { 'field with space': 'valid' }
@@ -823,12 +799,12 @@ describe('JSONEditor Helpers', () => {
 
     it('should combine AJV errors and readOnly errors', () => {
       mockValidate.mockReturnValue(false)
-      mockValidate.errors = [
+      setValidateErrors([
         {
           instancePath: '/name',
           message: 'Invalid name'
         }
-      ]
+      ])
 
       const json = { id: '456', name: 'Bob', age: 30 }
       const original = { id: '123', name: 'John', age: 30 }
@@ -844,14 +820,14 @@ describe('JSONEditor Helpers', () => {
 
     it('should handle additionalProperties errors correctly', () => {
       mockValidate.mockReturnValue(false)
-      mockValidate.errors = [
+      setValidateErrors([
         {
           instancePath: '/address',
           keyword: 'additionalProperties',
           params: { additionalProperty: 'invalidField' },
           message: 'must NOT have additional properties'
         }
-      ]
+      ])
 
       const json = {
         id: '123',
@@ -1257,13 +1233,17 @@ describe('JSONEditor Helpers', () => {
         addEventListener: vi.fn()
       }
 
-      document.getElementById = vi.fn((id) => {
-        if (id === 'custom-container') return customContainer
-        if (id === 'custom-payload') return customPayload
-        if (id === 'custom-input') return customInput
-        if (id === 'custom-button') return customButton
-        return null
-      })
+      document.getElementById = /** @type {typeof document.getElementById} */ (
+        /** @type {unknown} */ (
+          vi.fn((id) => {
+            if (id === 'custom-container') return customContainer
+            if (id === 'custom-payload') return customPayload
+            if (id === 'custom-input') return customInput
+            if (id === 'custom-button') return customButton
+            return null
+          })
+        )
+      )
 
       initJSONEditor({
         schema: testSchema,
@@ -1490,7 +1470,7 @@ describe('JSONEditor Helpers', () => {
         storageKey: 'test-storage-key'
       })
 
-      globalThis.confirm.mockReturnValue(true)
+      vi.mocked(globalThis.confirm).mockReturnValue(true)
 
       const clickHandler = resetButtonListeners.find((l) => l.event === 'click')
       expect(clickHandler).toBeDefined()
@@ -1512,7 +1492,7 @@ describe('JSONEditor Helpers', () => {
         storageKey: 'test-storage-key'
       })
 
-      globalThis.confirm.mockReturnValue(false)
+      vi.mocked(globalThis.confirm).mockReturnValue(false)
 
       const clickHandler = resetButtonListeners.find((l) => l.event === 'click')
       expect(clickHandler).toBeDefined()
@@ -1832,7 +1812,9 @@ describe('JSONEditor Helpers', () => {
           addRegistrationButton.addEventListener.mock.calls[0][1]
         clickHandler()
 
-        const editorInstance = MockJSONEditorConstructor.mock.instances[0]
+        const editorInstance = /** @type {{ update: Mock }} */ (
+          /** @type {unknown} */ (MockJSONEditorConstructor.mock.instances[0])
+        )
         expect(editorInstance.update).toHaveBeenCalledTimes(1)
 
         const updatedData = editorInstance.update.mock.calls[0][0]
@@ -1860,7 +1842,9 @@ describe('JSONEditor Helpers', () => {
           addAccreditationButton.addEventListener.mock.calls[0][1]
         clickHandler()
 
-        const editorInstance = MockJSONEditorConstructor.mock.instances[0]
+        const editorInstance = /** @type {{ update: Mock }} */ (
+          /** @type {unknown} */ (MockJSONEditorConstructor.mock.instances[0])
+        )
         const updatedData = editorInstance.update.mock.calls[0][0]
         expect(updatedData.accreditations).toHaveLength(1)
         expect(updatedData.accreditations[0]).toEqual({
@@ -1910,7 +1894,9 @@ describe('JSONEditor Helpers', () => {
           addRegistrationButton.addEventListener.mock.calls[0][1]
         clickHandler()
 
-        const editorInstance = MockJSONEditorConstructor.mock.instances[0]
+        const editorInstance = /** @type {{ update: Mock }} */ (
+          /** @type {unknown} */ (MockJSONEditorConstructor.mock.instances[0])
+        )
         const updatedData = editorInstance.update.mock.calls[0][0]
         expect(hiddenInput.value).toBe(JSON.stringify(updatedData))
       })
@@ -1995,7 +1981,9 @@ describe('JSONEditor Helpers', () => {
           addRegistrationButton.addEventListener.mock.calls[0][1]
         clickHandler()
 
-        const editorInstance = MockJSONEditorConstructor.mock.instances[0]
+        const editorInstance = /** @type {{ update: Mock }} */ (
+          /** @type {unknown} */ (MockJSONEditorConstructor.mock.instances[0])
+        )
         expect(editorInstance.update).not.toHaveBeenCalled()
       })
     })

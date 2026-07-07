@@ -38,7 +38,7 @@ describe('orsUploadGetController', () => {
   })
 
   test('initiates ORS upload and renders upload page', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
       uploadUrl: 'http://cdp-uploader/upload-123'
     })
 
@@ -64,7 +64,7 @@ describe('orsUploadGetController', () => {
 
   test('handles upload initiation failure and renders error message', async () => {
     const error = new Error('Backend unavailable')
-    fetchJsonFromBackend.mockRejectedValue(error)
+    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
 
     await orsUploadGetController.handler(mockRequest, mockH)
 
@@ -110,7 +110,7 @@ describe('orsUploadGetController', () => {
       }
     }
 
-    fetchJsonFromBackend.mockRejectedValue(error)
+    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
 
     await orsUploadGetController.handler(mockRequest, mockH)
 
