@@ -70,7 +70,7 @@ describe('tonnage-monitoring GET controller', () => {
     expect(viewCall[1].monthNames).toEqual(['Jan', 'Feb'])
     expect(viewCall[1].hasMultipleYears).toBe(false)
     expect(viewCall[1].total).toBe('2190.00')
-    expect(viewCall[1].error).toBe(null)
+    expect(viewCall[1].error).toBeNull()
   })
 
   test('Should format material names and types correctly', async () => {

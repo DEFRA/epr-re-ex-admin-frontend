@@ -114,14 +114,14 @@ describe('JSONEditor Helpers', () => {
     })
 
     it('should return null for invalid path', () => {
-      expect(findSchemaNode(schema, ['nonexistent'])).toBe(null)
-      expect(findSchemaNode(schema, ['address', 'nonexistent'])).toBe(null)
+      expect(findSchemaNode(schema, ['nonexistent'])).toBeNull()
+      expect(findSchemaNode(schema, ['address', 'nonexistent'])).toBeNull()
     })
 
     it('should return null for invalid inputs', () => {
-      expect(findSchemaNode(null, ['name'])).toBe(null)
-      expect(findSchemaNode(schema, null)).toBe(null)
-      expect(findSchemaNode(schema, 'not-array')).toBe(null)
+      expect(findSchemaNode(null, ['name'])).toBeNull()
+      expect(findSchemaNode(schema, null)).toBeNull()
+      expect(findSchemaNode(schema, 'not-array')).toBeNull()
     })
 
     it('should return null when node becomes null during path traversal', () => {
@@ -134,7 +134,7 @@ describe('JSONEditor Helpers', () => {
         }
       }
       // This will make node null on the second iteration
-      expect(findSchemaNode(schema, ['nullProp', 'nonexistent'])).toBe(null)
+      expect(findSchemaNode(schema, ['nullProp', 'nonexistent'])).toBeNull()
     })
 
     it('should find property inside union-typed object', () => {
@@ -207,15 +207,15 @@ describe('JSONEditor Helpers', () => {
     })
 
     it('should return undefined for invalid path', () => {
-      expect(getValueAtPath(testObj, ['nonexistent'])).toBe(undefined)
-      expect(getValueAtPath(testObj, ['address', 'nonexistent'])).toBe(
-        undefined
-      )
+      expect(getValueAtPath(testObj, ['nonexistent'])).toBeUndefined()
+      expect(
+        getValueAtPath(testObj, ['address', 'nonexistent'])
+      ).toBeUndefined()
     })
 
     it('should handle invalid inputs', () => {
-      expect(getValueAtPath(null, ['name'])).toBe(undefined)
-      expect(getValueAtPath(testObj, null)).toBe(undefined)
+      expect(getValueAtPath(null, ['name'])).toBeUndefined()
+      expect(getValueAtPath(testObj, null)).toBeUndefined()
       expect(getValueAtPath(testObj, [])).toEqual(testObj)
     })
 
@@ -230,7 +230,7 @@ describe('JSONEditor Helpers', () => {
       expect(getValueAtPath(obj, ['count'])).toBe(0)
       expect(getValueAtPath(obj, ['label'])).toBe('')
       expect(getValueAtPath(obj, ['active'])).toBe(false)
-      expect(getValueAtPath(obj, ['data'])).toBe(null)
+      expect(getValueAtPath(obj, ['data'])).toBeNull()
     })
   })
 
@@ -578,7 +578,7 @@ describe('JSONEditor Helpers', () => {
 
     it('should return null when no data exists', () => {
       localStorageMock.getItem.mockReturnValue(null)
-      expect(manager.load()).toBe(null)
+      expect(manager.load()).toBeNull()
     })
 
     it('should clear data successfully', () => {
@@ -606,7 +606,7 @@ describe('JSONEditor Helpers', () => {
       localStorageMock.getItem.mockReturnValue('invalid-json{')
 
       const result = manager.load()
-      expect(result).toBe(null)
+      expect(result).toBeNull()
       consoleSpy.mockRestore()
     })
 
@@ -1292,7 +1292,9 @@ describe('JSONEditor Helpers', () => {
         storageKey: 'test-storage-key'
       })
 
-      expect(MockJSONEditorConstructor.mock.calls.length).toBe(initialCallCount)
+      expect(MockJSONEditorConstructor.mock.calls).toHaveLength(
+        initialCallCount
+      )
     })
 
     it('should not initialise when payload element does not exist', () => {
@@ -1310,7 +1312,9 @@ describe('JSONEditor Helpers', () => {
         storageKey: 'test-storage-key'
       })
 
-      expect(MockJSONEditorConstructor.mock.calls.length).toBe(initialCallCount)
+      expect(MockJSONEditorConstructor.mock.calls).toHaveLength(
+        initialCallCount
+      )
     })
 
     it('should fail initialization on errors', () => {

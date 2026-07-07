@@ -81,11 +81,32 @@ describe('orsUploadGetController', () => {
     })
   })
 
-  test('shows backend-not-enabled message when initiate route is missing', async () => {
+  test.each([
+    [
+      'shows backend-not-enabled message when initiate route is missing',
+      404,
+      'ORS upload is not available yet because the backend initiate-import endpoint is not enabled.'
+    ],
+    [
+      'shows redirect-config message when backend rejects invalid redirect',
+      400,
+      'ORS upload could not be started due to invalid upload redirect configuration.'
+    ],
+    [
+      'shows session-expired message when backend returns 401',
+      401,
+      'Your session has expired. Please sign in again and retry.'
+    ],
+    [
+      'shows permission-denied message when backend returns 403',
+      403,
+      'You do not have permission to start ORS uploads.'
+    ]
+  ])('%s', async (_label, statusCode, expectedError) => {
     const error = {
       isBoom: true,
       output: {
-        statusCode: 404
+        statusCode
       }
     }
 
@@ -96,66 +117,7 @@ describe('orsUploadGetController', () => {
     expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/upload', {
       pageTitle: 'Upload ORS workbooks',
       uploadUrl: null,
-      error:
-        'ORS upload is not available yet because the backend initiate-import endpoint is not enabled.'
-    })
-  })
-
-  test('shows redirect-config message when backend rejects invalid redirect', async () => {
-    const error = {
-      isBoom: true,
-      output: {
-        statusCode: 400
-      }
-    }
-
-    fetchJsonFromBackend.mockRejectedValue(error)
-
-    await orsUploadGetController.handler(mockRequest, mockH)
-
-    expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/upload', {
-      pageTitle: 'Upload ORS workbooks',
-      uploadUrl: null,
-      error:
-        'ORS upload could not be started due to invalid upload redirect configuration.'
-    })
-  })
-
-  test('shows session-expired message when backend returns 401', async () => {
-    const error = {
-      isBoom: true,
-      output: {
-        statusCode: 401
-      }
-    }
-
-    fetchJsonFromBackend.mockRejectedValue(error)
-
-    await orsUploadGetController.handler(mockRequest, mockH)
-
-    expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/upload', {
-      pageTitle: 'Upload ORS workbooks',
-      uploadUrl: null,
-      error: 'Your session has expired. Please sign in again and retry.'
-    })
-  })
-
-  test('shows permission-denied message when backend returns 403', async () => {
-    const error = {
-      isBoom: true,
-      output: {
-        statusCode: 403
-      }
-    }
-
-    fetchJsonFromBackend.mockRejectedValue(error)
-
-    await orsUploadGetController.handler(mockRequest, mockH)
-
-    expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/upload', {
-      pageTitle: 'Upload ORS workbooks',
-      uploadUrl: null,
-      error: 'You do not have permission to start ORS uploads.'
+      error: expectedError
     })
   })
 })

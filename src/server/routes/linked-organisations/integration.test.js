@@ -160,7 +160,7 @@ describe('linked-organisations', () => {
         })
 
         const $ = cheerio.load(result)
-        expect($('form.app-filters input[name="search"]').length).toBe(1)
+        expect($('form.app-filters input[name="search"]')).toHaveLength(1)
         expect($('form.app-filters button.govuk-button').text().trim()).toBe(
           'Search'
         )
@@ -196,7 +196,7 @@ describe('linked-organisations', () => {
 
         const $ = cheerio.load(result)
         const downloadForm = $('form[action="/linked-organisations/download"]')
-        expect(downloadForm.length).toBe(1)
+        expect(downloadForm).toHaveLength(1)
         expect(downloadForm.find('button.govuk-button').text().trim()).toBe(
           'Download CSV'
         )
@@ -297,7 +297,7 @@ describe('linked-organisations', () => {
         const clearLink = $(
           'a[href="/linked-organisations"].govuk-button--inverse'
         )
-        expect(clearLink.length).toBe(1)
+        expect(clearLink).toHaveLength(1)
         expect(clearLink.text()).toContain('Clear search')
       })
 
