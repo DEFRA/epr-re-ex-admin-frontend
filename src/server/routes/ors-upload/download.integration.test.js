@@ -136,16 +136,16 @@ describe('ors-upload download integration', () => {
         expect(buttonGroup.text()).toContain('Upload ORS workbooks')
         expect(buttonGroup.text()).not.toContain('Download CSV')
         expect(
-          buttonGroup.find('a[href="/overseas-sites/imports"]').length
-        ).toBe(1)
-        expect(buttonGroup.find('form[method="POST"]').length).toBe(0)
+          buttonGroup.find('a[href="/overseas-sites/imports"]')
+        ).toHaveLength(1)
+        expect(buttonGroup.find('form[method="POST"]')).toHaveLength(0)
 
-        expect(table.length).toBe(1)
-        expect(downloadForm.length).toBe(1)
+        expect(table).toHaveLength(1)
+        expect(downloadForm).toHaveLength(1)
         expect(downloadForm.text()).toContain('Download CSV')
-        expect(downloadForm.find('button.govuk-button--secondary').length).toBe(
-          0
-        )
+        expect(
+          downloadForm.find('button.govuk-button--secondary')
+        ).toHaveLength(0)
         expect(result.indexOf('</table>')).toBeLessThan(
           result.indexOf('<form method="POST">')
         )
@@ -192,7 +192,7 @@ describe('ors-upload download integration', () => {
 
         expect(buttonGroup.text()).toContain('Upload ORS workbooks')
         expect(buttonGroup.text()).not.toContain('Download CSV')
-        expect(buttonGroup.find('form[method="POST"]').length).toBe(0)
+        expect(buttonGroup.find('form[method="POST"]')).toHaveLength(0)
       })
 
       test('Should hide the upload action when the user only has admin.read scope', async () => {
@@ -212,7 +212,7 @@ describe('ors-upload download integration', () => {
 
         const $ = cheerio.load(result)
         expect(result).not.toContain('Upload ORS workbooks')
-        expect($('a[href="/overseas-sites/imports"]').length).toBe(0)
+        expect($('a[href="/overseas-sites/imports"]')).toHaveLength(0)
       })
     })
   })
@@ -402,7 +402,7 @@ describe('ors-upload download integration', () => {
       expect(statusCode).toBe(statusCodes.ok)
 
       const $ = cheerio.load(result)
-      expect($('a[href="/overseas-sites/imports"]').length).toBe(1)
+      expect($('a[href="/overseas-sites/imports"]')).toHaveLength(1)
       expect(result).toContain('Return to ORS uploads')
     })
 
@@ -422,7 +422,7 @@ describe('ors-upload download integration', () => {
       expect(statusCode).toBe(statusCodes.ok)
 
       const $ = cheerio.load(result)
-      expect($('a[href="/overseas-sites/imports"]').length).toBe(0)
+      expect($('a[href="/overseas-sites/imports"]')).toHaveLength(0)
       expect($('a[href="/overseas-sites"]').length).toBeGreaterThanOrEqual(1)
       expect(result).toContain('Back to overseas sites')
       expect(result).not.toContain('Return to ORS uploads')

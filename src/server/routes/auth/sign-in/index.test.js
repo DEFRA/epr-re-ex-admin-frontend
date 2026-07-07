@@ -71,7 +71,7 @@ describe('#signIn route', () => {
   })
 
   test('Should handler accept exactly two parameters', () => {
-    expect(signInRoute.handler.length).toBe(2)
+    expect(signInRoute.handler).toHaveLength(2)
   })
 
   test('Should maintain consistent route configuration', () => {
