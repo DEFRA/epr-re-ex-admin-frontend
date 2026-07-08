@@ -92,6 +92,7 @@ describe('#registrationOverviewController', () => {
         startDate: '2026-01-01',
         endDate: '2026-01-31',
         dueDate: '2026-02-20',
+        periodStatus: 'ready_to_submit',
         report: {
           id: 'b41148de-8a76-4214-b68d-4b786400fb90',
           status: 'ready_to_submit',
@@ -105,6 +106,7 @@ describe('#registrationOverviewController', () => {
         startDate: '2026-02-01',
         endDate: '2026-02-28',
         dueDate: '2026-03-20',
+        periodStatus: 'due',
         report: null
       }
     ]
@@ -120,11 +122,98 @@ describe('#registrationOverviewController', () => {
         startDate: '2026-01-01',
         endDate: '2026-01-31',
         dueDate: '2026-02-20',
+        periodStatus: 'submitted',
         report: {
           id: 'b41148de-8a76-4214-b68d-4b786400fb90',
           status: 'submitted',
           submissionNumber: 1
         }
+      }
+    ]
+  }
+
+  const mockCalendarWithHistory = {
+    cadence: 'monthly',
+    reportingPeriods: [
+      {
+        year: 2026,
+        period: 1,
+        submissionNumber: 1,
+        startDate: '2026-01-01',
+        endDate: '2026-01-31',
+        dueDate: '2026-02-20',
+        periodStatus: 'submitted',
+        report: {
+          id: 'b41148de-8a76-4214-b68d-4b786400fb90',
+          status: 'submitted',
+          submissionNumber: 1,
+          submittedAt: '2026-02-10T09:00:00.000Z',
+          submittedBy: 'Alice Regulator'
+        }
+      },
+      {
+        year: 2026,
+        period: 1,
+        submissionNumber: 2,
+        startDate: '2026-01-01',
+        endDate: '2026-01-31',
+        dueDate: '2026-02-20',
+        periodStatus: 'submitted',
+        report: {
+          id: 'c52259ef-9b87-4325-c79e-5c897511gc01',
+          status: 'submitted',
+          submissionNumber: 2,
+          submittedAt: '2026-03-05T09:00:00.000Z',
+          submittedBy: 'Bob Regulator'
+        }
+      }
+    ]
+  }
+
+  const mockCalendarWithSkeleton = {
+    cadence: 'monthly',
+    reportingPeriods: [
+      {
+        year: 2026,
+        period: 1,
+        submissionNumber: 1,
+        startDate: '2026-01-01',
+        endDate: '2026-01-31',
+        dueDate: '2026-02-20',
+        periodStatus: 'submitted',
+        report: {
+          id: 'b41148de-8a76-4214-b68d-4b786400fb90',
+          status: 'submitted',
+          submissionNumber: 1,
+          submittedAt: '2026-02-10T09:00:00.000Z',
+          submittedBy: 'Alice Regulator'
+        }
+      },
+      {
+        year: 2026,
+        period: 1,
+        submissionNumber: 2,
+        startDate: '2026-01-01',
+        endDate: '2026-01-31',
+        dueDate: '2026-02-20',
+        periodStatus: 'requires_resubmission',
+        report: null
+      }
+    ]
+  }
+
+  const mockCalendarNotYetEnded = {
+    cadence: 'monthly',
+    reportingPeriods: [
+      {
+        year: 2026,
+        period: 1,
+        submissionNumber: 1,
+        startDate: '2026-01-01',
+        endDate: '2026-01-31',
+        dueDate: '2026-02-20',
+        periodStatus: null,
+        report: null
       }
     ]
   }
@@ -502,8 +591,110 @@ describe('#registrationOverviewController', () => {
         `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1`
       )
 
-      expect(within(secondRow).getByText('Due')).toHaveClass('govuk-tag')
+      expect(within(secondRow).getByText('due')).toHaveClass('govuk-tag')
       expect(within(secondRow).queryByRole('link')).toBeNull()
+    })
+
+    test('Should request the reports calendar with the expand=submissions arg', async () => {
+      /** @type {URL | undefined} */
+      let calendarRequestUrl
+      useMockBackend()
+      mswServer.use(
+        http.get(
+          `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
+          ({ request }) => {
+            calendarRequestUrl = new URL(request.url)
+            return HttpResponse.json(mockCalendar)
+          }
+        )
+      )
+
+      await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      expect(calendarRequestUrl?.searchParams.get('expand')).toBe('submissions')
+    })
+
+    test('Should render every submission for a period as its own reachable row', async () => {
+      useMockBackend()
+      mswServer.use(
+        http.get(
+          `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
+          () => HttpResponse.json(mockCalendarWithHistory)
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+      const dataRows = getDataRows(getReportsTable(body))
+
+      expect(dataRows).toHaveLength(2)
+      expect(
+        within(dataRows[0]).getByRole('link', { name: 'View' })
+      ).toHaveAttribute(
+        'href',
+        `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1`
+      )
+      expect(
+        within(dataRows[1]).getByRole('link', { name: 'View' })
+      ).toHaveAttribute(
+        'href',
+        `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/2`
+      )
+    })
+
+    test('Should show requires_resubmission status for a skeleton resubmission row', async () => {
+      useMockBackend()
+      mswServer.use(
+        http.get(
+          `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
+          () => HttpResponse.json(mockCalendarWithSkeleton)
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+      const [, skeletonRow] = getDataRows(getReportsTable(body))
+
+      expect(
+        within(skeletonRow).getByText('requires_resubmission')
+      ).toHaveClass('govuk-tag')
+    })
+
+    test('Should render a blank status cell when periodStatus is null and there is no report', async () => {
+      useMockBackend()
+      mswServer.use(
+        http.get(
+          `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
+          () => HttpResponse.json(mockCalendarNotYetEnded)
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+      const [onlyRow] = getDataRows(getReportsTable(body))
+      const statusCell = getAllByRole(onlyRow, 'cell')[2]
+
+      expect(statusCell.querySelector('.govuk-tag')).toBeNull()
+      expect(statusCell.textContent?.trim()).toBe('')
     })
 
     test('Should render the Summary logs table with column headers when summary logs exist', async () => {

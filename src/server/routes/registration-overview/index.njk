@@ -61,7 +61,7 @@
         {% if reportingPeriods and reportingPeriods.length %}
           {% set tableRows = [] %}
           {% for period in reportingPeriods %}
-            {% set statusText = period.report.status if period.report else 'Due' %}
+            {% set statusText = period.report.status if period.report else period.periodStatus %}
             {% if period.report %}
               {% set reportUrl = '/organisations/' ~ organisationId ~ '/registrations/' ~ registrationId ~ '/reports/' ~ period.year ~ '/' ~ cadence ~ '/' ~ period.period ~ '/submissions/' ~ period.submissionNumber %}
             {% endif %}
@@ -74,10 +74,11 @@
                 <br><a class="govuk-link govuk-link--no-visited-state" href="{{ unsubmitUrl }}">Unsubmit</a>
               {% endif %}
             {% endset %}
+            {% set statusCell = { html: govukTag({ text: statusText }) } if statusText else { text: "" } %}
             {% set row = [
               { text: period.formattedPeriod },
               { text: period.dueDate },
-              { html: govukTag({ text: statusText }) },
+              statusCell,
               { html: actionsHtml }
             ] %}
             {% set tableRows = tableRows.concat([row]) %}

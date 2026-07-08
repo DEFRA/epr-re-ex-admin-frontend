@@ -54,7 +54,8 @@ export const reportUnsubmitConfirmGetController = {
       postUrl: `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/unsubmit`,
       registrationNumber: registration.registrationNumber,
       formattedPeriod: formatPeriod(period, cadence),
-      year
+      year,
+      submissionNumber
     })
   }
 }

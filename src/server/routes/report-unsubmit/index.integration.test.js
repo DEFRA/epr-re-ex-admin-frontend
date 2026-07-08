@@ -142,6 +142,7 @@ describe('report-unsubmit', () => {
     expect($('h1').text().trim()).toBe('Unsubmit report')
     expect(result).toContain('E25SR500020912PA')
     expect(result).toContain('January')
+    expect($('body').text()).toMatch(/Submission:\s*1/)
     expect($('form').attr('action')).toBe(postUrl)
     expect($('a:contains("Cancel")').attr('href')).toBe(overviewUrl)
   })
@@ -203,6 +204,7 @@ describe('report-unsubmit', () => {
     expect(statusCode).toBe(statusCodes.ok)
     const $ = cheerio.load(result)
     expect($('.govuk-panel__title').text().trim()).toBe('Unsubmit failed')
+    expect($('body').text()).toMatch(/Submission:\s*1/)
   })
 
   test('success page confirms the report was unsubmitted', async () => {
@@ -220,6 +222,7 @@ describe('report-unsubmit', () => {
     const $ = cheerio.load(result)
     expect($('.govuk-panel__title').text().trim()).toBe('Report unsubmitted')
     expect(result).toContain('E25SR500020912PA')
+    expect($('body').text()).toMatch(/Submission:\s*1/)
     expect($('a:contains("Back to registration overview")').attr('href')).toBe(
       overviewUrl
     )
