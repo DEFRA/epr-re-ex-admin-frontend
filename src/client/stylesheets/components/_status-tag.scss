@@ -1,0 +1,5 @@
+// Keep long period-status tokens (e.g. requires_resubmission) on a single line
+// rather than breaking mid-word inside the narrow reports Status column.
+.app-status-tag {
+  white-space: nowrap;
+}

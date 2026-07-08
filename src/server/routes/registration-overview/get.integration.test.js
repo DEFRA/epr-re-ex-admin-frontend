@@ -675,7 +675,7 @@ describe('#registrationOverviewController', () => {
       expect(getAllByRole(skeletonRow, 'cell')[1].textContent?.trim()).toBe('')
       expect(
         within(skeletonRow).getByText('requires_resubmission')
-      ).toHaveClass('govuk-tag')
+      ).toHaveClass('govuk-tag', 'app-status-tag')
     })
 
     test('Should render a blank status cell when periodStatus is null and there is no report', async () => {
