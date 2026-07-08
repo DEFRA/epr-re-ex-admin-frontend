@@ -575,7 +575,7 @@ describe('#registrationOverviewController', () => {
         getAllByRole(reportsTable, 'columnheader').map((h) =>
           h.textContent?.trim()
         )
-      ).toEqual(['Period', 'Due', 'Status', 'Actions'])
+      ).toEqual(['Period', 'Submission', 'Due', 'Status', 'Actions'])
 
       const [firstRow, secondRow] = getDataRows(reportsTable)
 
@@ -637,6 +637,8 @@ describe('#registrationOverviewController', () => {
       const dataRows = getDataRows(getReportsTable(body))
 
       expect(dataRows).toHaveLength(2)
+      expect(getAllByRole(dataRows[0], 'cell')[1]).toHaveTextContent('1')
+      expect(getAllByRole(dataRows[1], 'cell')[1]).toHaveTextContent('2')
       expect(
         within(dataRows[0]).getByRole('link', { name: 'View' })
       ).toHaveAttribute(
@@ -691,7 +693,7 @@ describe('#registrationOverviewController', () => {
 
       const body = renderPage(result)
       const [onlyRow] = getDataRows(getReportsTable(body))
-      const statusCell = getAllByRole(onlyRow, 'cell')[2]
+      const statusCell = getAllByRole(onlyRow, 'cell')[3]
 
       expect(statusCell.querySelector('.govuk-tag')).toBeNull()
       expect(statusCell.textContent?.trim()).toBe('')

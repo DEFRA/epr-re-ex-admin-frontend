@@ -77,6 +77,7 @@
             {% set statusCell = { html: govukTag({ text: statusText }) } if statusText else { text: "" } %}
             {% set row = [
               { text: period.formattedPeriod },
+              { text: period.submissionNumber },
               { text: period.dueDate },
               statusCell,
               { html: actionsHtml }
@@ -89,6 +90,7 @@
             captionClasses: "govuk-table__caption--m",
             head: [
               { text: "Period" },
+              { text: "Submission" },
               { text: "Due" },
               { text: "Status" },
               { text: "Actions" }
