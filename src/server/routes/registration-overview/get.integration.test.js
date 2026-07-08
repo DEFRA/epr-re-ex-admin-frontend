@@ -669,8 +669,10 @@ describe('#registrationOverviewController', () => {
       })
 
       const body = renderPage(result)
-      const [, skeletonRow] = getDataRows(getReportsTable(body))
+      const [submittedRow, skeletonRow] = getDataRows(getReportsTable(body))
 
+      expect(getAllByRole(submittedRow, 'cell')[1]).toHaveTextContent('1')
+      expect(getAllByRole(skeletonRow, 'cell')[1].textContent?.trim()).toBe('')
       expect(
         within(skeletonRow).getByText('requires_resubmission')
       ).toHaveClass('govuk-tag')
@@ -695,6 +697,7 @@ describe('#registrationOverviewController', () => {
       const [onlyRow] = getDataRows(getReportsTable(body))
       const statusCell = getAllByRole(onlyRow, 'cell')[3]
 
+      expect(getAllByRole(onlyRow, 'cell')[1].textContent?.trim()).toBe('')
       expect(statusCell.querySelector('.govuk-tag')).toBeNull()
       expect(statusCell.textContent?.trim()).toBe('')
     })

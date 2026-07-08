@@ -75,9 +75,10 @@
               {% endif %}
             {% endset %}
             {% set statusCell = { html: govukTag({ text: statusText }) } if statusText else { text: "" } %}
+            {% set submissionCell = { text: period.submissionNumber } if period.report else { text: "" } %}
             {% set row = [
               { text: period.formattedPeriod },
-              { text: period.submissionNumber },
+              submissionCell,
               { text: period.dueDate },
               statusCell,
               { html: actionsHtml }
