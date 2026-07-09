@@ -60,7 +60,7 @@ export const registrationOverviewGETController = {
       fetchOrganisationOverview(request, organisationId),
       fetchJsonFromBackend(
         request,
-        `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
+        `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar?expand=submissions`,
         {}
       ),
       fetchJsonFromBackend(
