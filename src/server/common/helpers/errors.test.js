@@ -5,6 +5,16 @@ import { createServer } from '#server/server.js'
 import { statusCodes } from '../constants/status-codes.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 
+/** @import { HapiRequest } from '#server/common/hapi-types.js' */
+/** @import { Mock } from 'vitest' */
+
+/**
+ * Cast a partial mock request to the full `HapiRequest` shape `catchAll` reads.
+ * @param {unknown} req
+ * @returns {HapiRequest}
+ */
+const asRequest = (req) => /** @type {HapiRequest} */ (req)
+
 describe('#errors integration', () => {
   let server
 
@@ -41,10 +51,10 @@ describe('#catchAll unit tests', () => {
       data: { stack: mockStack },
       output: { statusCode, headers }
     }
-    return {
+    return asRequest({
       response,
       logger: { error: mockLoggerError }
-    }
+    })
   }
 
   const mockToolkitView = vi.fn()
@@ -68,9 +78,9 @@ describe('#catchAll unit tests', () => {
   })
 
   test('Should return early if response does not have isBoom property', () => {
-    const nonBoomRequest = {
+    const nonBoomRequest = asRequest({
       response: {}
-    }
+    })
 
     const result = catchAll(nonBoomRequest, mockToolkit)
 
@@ -171,7 +181,7 @@ describe('#catchAll unit tests', () => {
   })
 
   test('Should handle missing headers gracefully', () => {
-    const request = {
+    const request = asRequest({
       response: {
         isBoom: true,
         message: mockMessage,
@@ -179,7 +189,7 @@ describe('#catchAll unit tests', () => {
         output: { statusCode: statusCodes.notFound }
       },
       logger: { error: mockLoggerError }
-    }
+    })
 
     catchAll(request, mockToolkit)
 
@@ -190,7 +200,7 @@ describe('#catchAll unit tests', () => {
   })
 
   test('Should pass pageTitle from route settings to view context', () => {
-    const request = {
+    const request = asRequest({
       response: {
         isBoom: true,
         message: mockMessage,
@@ -203,7 +213,7 @@ describe('#catchAll unit tests', () => {
         }
       },
       logger: { error: mockLoggerError }
-    }
+    })
 
     catchAll(request, mockToolkit)
 
@@ -214,16 +224,25 @@ describe('#catchAll unit tests', () => {
   })
 
   describe('Redirect after sign-in', () => {
+    /**
+     * @param {{
+     *   statusCode?: number,
+     *   path?: string,
+     *   url?: { search: string },
+     *   yar?: { flash: Mock }
+     * }} [overrides]
+     */
     const mockRedirectRequest = ({
       statusCode = statusCodes.unauthorised,
       ...overrides
-    } = {}) => ({
-      ...mockRequest(statusCode),
-      path: '/organisations',
-      url: { search: '' },
-      yar: { flash: vi.fn() },
-      ...overrides
-    })
+    } = {}) =>
+      asRequest({
+        ...mockRequest(statusCode),
+        path: '/organisations',
+        url: { search: '' },
+        yar: { flash: vi.fn() },
+        ...overrides
+      })
 
     test('Should store request path in referrer flash on 401 error', () => {
       const request = mockRedirectRequest()
