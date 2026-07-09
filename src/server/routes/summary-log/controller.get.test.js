@@ -78,7 +78,7 @@ describe('summaryLogUploadsReportGetController', () => {
       generatedAt: '2026-02-06T14:30:00.000Z'
     }
 
-    fetchJsonFromBackend.mockResolvedValue(mockData)
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockData)
     mockRequest.yar.get.mockReturnValue(null)
 
     await summaryLogUploadsReportGetController.handler(mockRequest, mockH)
@@ -136,7 +136,7 @@ describe('summaryLogUploadsReportGetController', () => {
       generatedAt: '2026-01-15T10:00:00.000Z'
     }
 
-    fetchJsonFromBackend.mockResolvedValue(mockData)
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockData)
     mockRequest.yar.get.mockReturnValue(null)
 
     await summaryLogUploadsReportGetController.handler(mockRequest, mockH)
@@ -155,7 +155,7 @@ describe('summaryLogUploadsReportGetController', () => {
     const fetchError = new Error('Network error')
     fetchError.stack = 'Error stack trace...'
 
-    fetchJsonFromBackend.mockRejectedValue(fetchError)
+    vi.mocked(fetchJsonFromBackend).mockRejectedValue(fetchError)
     mockRequest.yar.get.mockReturnValue(null)
 
     await summaryLogUploadsReportGetController.handler(mockRequest, mockH)

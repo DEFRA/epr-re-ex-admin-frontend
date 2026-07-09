@@ -31,7 +31,7 @@ describe('waste-balance-availability GET controller', () => {
   })
 
   test('Should fetch balance data from backend and render page', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
       generatedAt: '2026-01-29T12:00:00.000Z',
       materials: [
         { material: 'aluminium', availableAmount: 1234.56 },
@@ -63,7 +63,7 @@ describe('waste-balance-availability GET controller', () => {
   })
 
   test('Should format material names to display names', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
       generatedAt: '2026-01-29T12:00:00.000Z',
       materials: [
         { material: 'plastic', availableAmount: 100 },
@@ -88,7 +88,7 @@ describe('waste-balance-availability GET controller', () => {
   })
 
   test('Should format amount values to 2 decimal places', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
       generatedAt: '2026-01-29T12:00:00.000Z',
       materials: [
         { material: 'wood', availableAmount: 1000 },
@@ -112,7 +112,7 @@ describe('waste-balance-availability GET controller', () => {
   })
 
   test('Should treat null availableAmount as zero', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
       generatedAt: '2026-01-29T12:00:00.000Z',
       materials: [{ material: 'plastic', availableAmount: null }],
       total: null
@@ -130,7 +130,7 @@ describe('waste-balance-availability GET controller', () => {
   })
 
   test('Should throw for unknown material names', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
       generatedAt: '2026-01-29T12:00:00.000Z',
       materials: [{ material: 'unknown_material', availableAmount: 100 }],
       total: 100
@@ -142,7 +142,7 @@ describe('waste-balance-availability GET controller', () => {
   })
 
   test('Should handle empty materials array', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
       generatedAt: '2026-01-29T12:00:00.000Z',
       materials: [],
       total: 0
@@ -165,7 +165,7 @@ describe('waste-balance-availability GET controller', () => {
   test('Should display error message from session and clear it', async () => {
     mockRequest.yar.get.mockReturnValue('Download failed')
 
-    fetchJsonFromBackend.mockResolvedValue({
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
       generatedAt: '2026-01-29T12:00:00.000Z',
       materials: [],
       total: 0
