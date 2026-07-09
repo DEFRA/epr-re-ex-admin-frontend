@@ -14,10 +14,14 @@ vi.mock(import('aws-embedded-metrics'), async (importOriginal) => {
 
   return {
     ...original,
-    createMetricsLogger: () => ({
-      putMetric: mockPutMetric,
-      flush: mockFlush
-    })
+    createMetricsLogger: /** @type {typeof original.createMetricsLogger} */ (
+      /** @type {unknown} */ (
+        () => ({
+          putMetric: mockPutMetric,
+          flush: mockFlush
+        })
+      )
+    )
   }
 })
 

@@ -55,8 +55,8 @@ describe('#buildRedisClient', () => {
     })
 
     test('Should log info message when connect event fires', () => {
-      const connectCall = mockOn.mock.calls.find(
-        (call) => call[0] === 'connect'
+      const connectCall = /** @type {[string, () => void]} */ (
+        mockOn.mock.calls.find((call) => call[0] === 'connect')
       )
       const connectHandler = connectCall[1]
       connectHandler()
@@ -67,7 +67,9 @@ describe('#buildRedisClient', () => {
     })
 
     test('Should log error message when error event fires', () => {
-      const errorCall = mockOn.mock.calls.find((call) => call[0] === 'error')
+      const errorCall = /** @type {[string, (error: Error) => void]} */ (
+        mockOn.mock.calls.find((call) => call[0] === 'error')
+      )
       const errorHandler = errorCall[1]
       const mockError = new Error('Connection failed')
       errorHandler(mockError)
@@ -103,7 +105,10 @@ describe('#buildRedisClient', () => {
     })
 
     test('Should configure dnsLookup to pass through address', () => {
-      const clusterCall = Cluster.mock.calls[0]
+      const clusterCall =
+        /** @type {[unknown, { dnsLookup: (address: string, callback: (error: null, address: string) => void) => void }]} */ (
+          vi.mocked(Cluster).mock.calls[0]
+        )
       const config = clusterCall[1]
       const dnsLookup = config.dnsLookup
       const mockCallback = vi.fn()
@@ -114,8 +119,8 @@ describe('#buildRedisClient', () => {
     })
 
     test('Should log info message when connect event fires', () => {
-      const connectCall = mockOn.mock.calls.find(
-        (call) => call[0] === 'connect'
+      const connectCall = /** @type {[string, () => void]} */ (
+        mockOn.mock.calls.find((call) => call[0] === 'connect')
       )
       const connectHandler = connectCall[1]
       connectHandler()
@@ -126,7 +131,9 @@ describe('#buildRedisClient', () => {
     })
 
     test('Should log error message when error event fires', () => {
-      const errorCall = mockOn.mock.calls.find((call) => call[0] === 'error')
+      const errorCall = /** @type {[string, (error: Error) => void]} */ (
+        mockOn.mock.calls.find((call) => call[0] === 'error')
+      )
       const errorHandler = errorCall[1]
       const mockError = new Error('Cluster connection failed')
       errorHandler(mockError)

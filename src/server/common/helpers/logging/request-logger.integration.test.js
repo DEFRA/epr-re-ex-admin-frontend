@@ -55,7 +55,7 @@ describe('request-logger integration (hapi-pino + pino + ecs format)', () => {
       http: { request: { method: 'GET' } },
       url: { path: '/test' }
     })
-    expect(out.http.request.id).toStrictEqual(expect.any(String))
+    expect(out?.http?.request?.id).toStrictEqual(expect.any(String))
     expect(out).not.toHaveProperty('req')
   })
 
@@ -69,7 +69,9 @@ describe('request-logger integration (hapi-pino + pino + ecs format)', () => {
     })
 
     await server.inject('/test')
-    const out = findLine((l) => l.url?.path === '/test' && l.http?.response)
+    const out = findLine(
+      (l) => l.url?.path === '/test' && Boolean(l.http?.response)
+    )
 
     expect(out).toMatchObject({
       http: { response: { status_code: 200 } },
@@ -162,7 +164,7 @@ describe('request-logger integration (hapi-pino + pino + ecs format)', () => {
     const out = findLine(
       (l) =>
         l.url?.path === '/public/stylesheets/application.css' &&
-        l.http?.response
+        Boolean(l.http?.response)
     )
 
     expect(out).toBeUndefined()
@@ -208,7 +210,9 @@ describe('request-logger integration (hapi-pino + pino + ecs format)', () => {
     })
 
     await server.inject('/visible')
-    const out = findLine((l) => l.url?.path === '/visible' && l.http?.response)
+    const out = findLine(
+      (l) => l.url?.path === '/visible' && Boolean(l.http?.response)
+    )
 
     expect(out?.http?.response?.status_code).toBe(200)
   })

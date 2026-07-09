@@ -43,7 +43,7 @@ describe('orsUploadStatusGetController', () => {
   })
 
   test('renders processing state with polling', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
       status: 'processing',
       files: []
     })
@@ -85,7 +85,7 @@ describe('orsUploadStatusGetController', () => {
   })
 
   test('renders completed state with file summary', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
       status: 'completed',
       files: [
         {
@@ -141,7 +141,7 @@ describe('orsUploadStatusGetController', () => {
   })
 
   test('renders status with empty files when backend response has no files array', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
       status: 'completed'
     })
 
@@ -162,11 +162,13 @@ describe('orsUploadStatusGetController', () => {
   })
 
   test('handles status fetch failure and renders failed view model', async () => {
-    const error = new Error('Request failed')
+    const error = /** @type {Error & { output: { statusCode: number } }} */ (
+      new Error('Request failed')
+    )
     error.output = {
       statusCode: 500
     }
-    fetchJsonFromBackend.mockRejectedValue(error)
+    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
 
     await orsUploadStatusGetController.handler(mockRequest, mockH)
 
@@ -203,7 +205,7 @@ describe('orsUploadStatusGetController', () => {
 
   test('handles status fetch failure with missing message and status code', async () => {
     const error = {}
-    fetchJsonFromBackend.mockRejectedValue(error)
+    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
 
     await orsUploadStatusGetController.handler(mockRequest, mockH)
 
