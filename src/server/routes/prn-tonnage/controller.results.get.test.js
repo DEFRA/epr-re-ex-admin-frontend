@@ -31,7 +31,7 @@ describe('prn-tonnage results GET controller', () => {
   })
 
   test('Should fetch PRN tonnage data from backend and render results page', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
       generatedAt: '2026-02-20T12:00:00.000Z',
       rows: [
         {
@@ -79,7 +79,7 @@ describe('prn-tonnage results GET controller', () => {
 
   test('Should display error message from session and clear it', async () => {
     mockRequest.yar.get.mockReturnValue('Download failed')
-    fetchJsonFromBackend.mockResolvedValue({
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
       generatedAt: '2026-02-20T12:00:00.000Z',
       rows: []
     })
@@ -98,7 +98,7 @@ describe('prn-tonnage results GET controller', () => {
   })
 
   test('Should keep unknown values and blank tonnage band for missing band', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
       generatedAt: '2026-02-20T12:00:00.000Z',
       rows: [
         {
