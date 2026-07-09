@@ -17,7 +17,7 @@ describe('#authPlugin', () => {
     end_session_endpoint: 'https://example-auth.test/oauth/logout'
   }
 
-  const mockBellOptions = {
+  const mockBellOptions = /** @type {ReturnType<typeof getBellOptions>} */ ({
     provider: {
       name: 'entra-id',
       protocol: 'oauth2',
@@ -26,17 +26,18 @@ describe('#authPlugin', () => {
     },
     clientId: 'test-client-id',
     clientSecret: 'test-client-secret'
-  }
+  })
 
-  const mockCookieOptions = {
-    cookie: {
-      password: TEST_COOKIE_PASSWORD,
-      path: '/',
-      isSecure: false,
-      isSameSite: 'Lax'
-    },
-    redirectTo: false
-  }
+  const mockCookieOptions =
+    /** @type {ReturnType<typeof getCookieOptions>} */ ({
+      cookie: {
+        password: TEST_COOKIE_PASSWORD,
+        path: '/',
+        isSecure: false,
+        isSameSite: 'Lax'
+      },
+      redirectTo: false
+    })
 
   const mockServer = {
     auth: {
@@ -48,9 +49,9 @@ describe('#authPlugin', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
-    getOidcConfig.mockResolvedValue(mockOidcConfig)
-    getBellOptions.mockReturnValue(mockBellOptions)
-    getCookieOptions.mockReturnValue(mockCookieOptions)
+    vi.mocked(getOidcConfig).mockResolvedValue(mockOidcConfig)
+    vi.mocked(getBellOptions).mockReturnValue(mockBellOptions)
+    vi.mocked(getCookieOptions).mockReturnValue(mockCookieOptions)
   })
 
   afterEach(() => {
@@ -84,17 +85,17 @@ describe('#authPlugin', () => {
   test('Should call functions in correct order', async () => {
     const callOrder = []
 
-    getOidcConfig.mockImplementation(async () => {
+    vi.mocked(getOidcConfig).mockImplementation(async () => {
       callOrder.push('getOidcConfig')
       return mockOidcConfig
     })
 
-    getBellOptions.mockImplementation(() => {
+    vi.mocked(getBellOptions).mockImplementation(() => {
       callOrder.push('getBellOptions')
       return mockBellOptions
     })
 
-    getCookieOptions.mockImplementation(() => {
+    vi.mocked(getCookieOptions).mockImplementation(() => {
       callOrder.push('getCookieOptions')
       return mockCookieOptions
     })
@@ -153,7 +154,7 @@ describe('#authPlugin', () => {
 
   test('Should handle getOidcConfig errors', async () => {
     const error = new Error('Failed to fetch OIDC config')
-    getOidcConfig.mockRejectedValue(error)
+    vi.mocked(getOidcConfig).mockRejectedValue(error)
 
     await expect(authPlugin.plugin.register(mockServer)).rejects.toThrow(
       'Failed to fetch OIDC config'
@@ -167,7 +168,7 @@ describe('#authPlugin', () => {
 
   test('Should handle getBellOptions errors', async () => {
     const error = new Error('Failed to get Bell options')
-    getBellOptions.mockImplementation(() => {
+    vi.mocked(getBellOptions).mockImplementation(() => {
       throw error
     })
 
@@ -182,7 +183,7 @@ describe('#authPlugin', () => {
 
   test('Should handle getCookieOptions errors', async () => {
     const error = new Error('Failed to get Cookie options')
-    getCookieOptions.mockImplementation(() => {
+    vi.mocked(getCookieOptions).mockImplementation(() => {
       throw error
     })
 
@@ -234,7 +235,7 @@ describe('#authPlugin', () => {
       end_session_endpoint: 'https://example-provider-2.test/logout'
     }
 
-    getOidcConfig.mockResolvedValue(differentOidcConfig)
+    vi.mocked(getOidcConfig).mockResolvedValue(differentOidcConfig)
 
     await authPlugin.plugin.register(mockServer)
 
