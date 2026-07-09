@@ -16,6 +16,9 @@
              <strong>Period:</strong> {{ formattedPeriod }}, {{ year }}
            </p>
            <p class="govuk-body">
+             <strong>Submission:</strong> {{ submissionNumber }}
+           </p>
+           <p class="govuk-body">
              The report is now in 'ready to submit' state. The operator can delete and recreate it to pick up corrected figures.
            </p>
          {% else %}
@@ -27,6 +30,9 @@
            </p>
            <p class="govuk-body">
              <strong>Period:</strong> {{ formattedPeriod }}, {{ year }}
+           </p>
+           <p class="govuk-body">
+             <strong>Submission:</strong> {{ submissionNumber }}
            </p>
            <p class="govuk-body">The report could not be unsubmitted.</p>
          {% endif %}

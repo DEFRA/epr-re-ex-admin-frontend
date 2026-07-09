@@ -51,7 +51,8 @@ export const reportUnsubmitPostController = {
       overviewUrl,
       registrationNumber: registration.registrationNumber,
       formattedPeriod: formatPeriod(period, cadence),
-      year
+      year,
+      submissionNumber
     })
   }
 }
