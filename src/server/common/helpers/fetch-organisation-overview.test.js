@@ -5,11 +5,14 @@ import {
 } from './fetch-organisation-overview.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
+/** @import { Request } from '@hapi/hapi' */
+/** @import { OrganisationOverview, Registration } from './fetch-organisation-overview.js' */
+
 vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
 }))
 
-const mockRequest = {}
+const mockRequest = /** @type {Request} */ ({})
 
 const mockOverview = {
   id: '69c3b4f0abda9efa68dd6697',
@@ -23,7 +26,7 @@ describe('fetchOrganisationOverview', () => {
   })
 
   test('calls fetchJsonFromBackend with the correct overview URL', async () => {
-    fetchJsonFromBackend.mockResolvedValue(mockOverview)
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockOverview)
 
     await fetchOrganisationOverview(mockRequest, '69c3b4f0abda9efa68dd6697')
 
@@ -35,7 +38,7 @@ describe('fetchOrganisationOverview', () => {
   })
 
   test('returns the overview response from the backend', async () => {
-    fetchJsonFromBackend.mockResolvedValue(mockOverview)
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockOverview)
 
     const result = await fetchOrganisationOverview(
       mockRequest,
@@ -47,7 +50,7 @@ describe('fetchOrganisationOverview', () => {
 
   test('propagates errors thrown by fetchJsonFromBackend', async () => {
     const error = new Error('backend unavailable')
-    fetchJsonFromBackend.mockRejectedValue(error)
+    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
 
     await expect(
       fetchOrganisationOverview(mockRequest, '69c3b4f0abda9efa68dd6697')
@@ -61,7 +64,9 @@ describe(findRegistration, () => {
 
   test('returns the matching registration when present', () => {
     const registration = { id: registrationId, registrationNumber: 'REG-001' }
-    const overview = { registrations: [registration] }
+    const overview = /** @type {OrganisationOverview} */ ({
+      registrations: [registration]
+    })
 
     expect(findRegistration(overview, organisationId, registrationId)).toBe(
       registration
@@ -69,7 +74,9 @@ describe(findRegistration, () => {
   })
 
   test('throws notFound enriched with code and event when missing', () => {
-    const overview = { registrations: [] }
+    const overview = /** @type {OrganisationOverview} */ ({
+      registrations: /** @type {Registration[]} */ ([])
+    })
 
     expect(() =>
       findRegistration(overview, organisationId, registrationId)
