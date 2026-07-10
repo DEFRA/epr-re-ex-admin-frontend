@@ -20,13 +20,15 @@ const mockOverview = {
   registrations: []
 }
 
+const mockFetchJsonFromBackend = vi.mocked(fetchJsonFromBackend)
+
 describe('fetchOrganisationOverview', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
   test('calls fetchJsonFromBackend with the correct overview URL', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockOverview)
+    mockFetchJsonFromBackend.mockResolvedValue(mockOverview)
 
     await fetchOrganisationOverview(mockRequest, '69c3b4f0abda9efa68dd6697')
 
@@ -38,7 +40,7 @@ describe('fetchOrganisationOverview', () => {
   })
 
   test('returns the overview response from the backend', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockOverview)
+    mockFetchJsonFromBackend.mockResolvedValue(mockOverview)
 
     const result = await fetchOrganisationOverview(
       mockRequest,
@@ -50,7 +52,7 @@ describe('fetchOrganisationOverview', () => {
 
   test('propagates errors thrown by fetchJsonFromBackend', async () => {
     const error = new Error('backend unavailable')
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
+    mockFetchJsonFromBackend.mockRejectedValue(error)
 
     await expect(
       fetchOrganisationOverview(mockRequest, '69c3b4f0abda9efa68dd6697')

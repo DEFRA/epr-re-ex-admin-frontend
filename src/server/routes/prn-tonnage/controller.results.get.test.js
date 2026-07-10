@@ -6,6 +6,8 @@ vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
 }))
 
+const mockFetchJsonFromBackend = vi.mocked(fetchJsonFromBackend)
+
 describe('prn-tonnage results GET controller', () => {
   let mockRequest
   let mockH
@@ -31,7 +33,7 @@ describe('prn-tonnage results GET controller', () => {
   })
 
   test('Should fetch PRN tonnage data from backend and render results page', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-02-20T12:00:00.000Z',
       rows: [
         {
@@ -79,7 +81,7 @@ describe('prn-tonnage results GET controller', () => {
 
   test('Should display error message from session and clear it', async () => {
     mockRequest.yar.get.mockReturnValue('Download failed')
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-02-20T12:00:00.000Z',
       rows: []
     })
@@ -98,7 +100,7 @@ describe('prn-tonnage results GET controller', () => {
   })
 
   test('Should keep unknown values and blank tonnage band for missing band', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-02-20T12:00:00.000Z',
       rows: [
         {

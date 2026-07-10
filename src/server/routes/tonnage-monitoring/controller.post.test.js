@@ -7,6 +7,8 @@ vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
 }))
 
+const mockFetchJsonFromBackend = vi.mocked(fetchJsonFromBackend)
+
 describe('tonnage-monitoring POST controller', () => {
   let mockRequest
   let mockH
@@ -32,7 +34,7 @@ describe('tonnage-monitoring POST controller', () => {
   })
 
   test('Should generate CSV with correct headers and formatting', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-01-29T14:30:00.000Z',
       materials: [
         {
@@ -90,7 +92,7 @@ describe('tonnage-monitoring POST controller', () => {
   })
 
   test('Should format material names to display names', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-01-29T09:00:00.000Z',
       materials: [
         {
@@ -123,7 +125,7 @@ describe('tonnage-monitoring POST controller', () => {
   })
 
   test('Should emit tonnage values as unquoted numbers', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-01-29T12:00:00.000Z',
       materials: [
         {
@@ -157,7 +159,7 @@ describe('tonnage-monitoring POST controller', () => {
   })
 
   test('Should format morning times correctly', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-06-15T09:05:00.000Z',
       materials: [],
       total: 0
@@ -170,7 +172,7 @@ describe('tonnage-monitoring POST controller', () => {
   })
 
   test('Should handle empty materials array', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-01-29T12:00:00.000Z',
       materials: [],
       total: 0
@@ -194,7 +196,7 @@ describe('tonnage-monitoring POST controller', () => {
   })
 
   test('Should include year column when multiple years present', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-01-29T12:00:00.000Z',
       materials: [
         {
@@ -222,7 +224,7 @@ describe('tonnage-monitoring POST controller', () => {
   })
 
   test('Should handle materials with different month counts', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-01-29T12:00:00.000Z',
       materials: [
         {
@@ -256,9 +258,7 @@ describe('tonnage-monitoring POST controller', () => {
   })
 
   test('Should redirect with error message on fetch failure', async () => {
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(
-      new Error('Network error')
-    )
+    mockFetchJsonFromBackend.mockRejectedValue(new Error('Network error'))
 
     const result = await tonnageMonitoringPostController.handler(
       mockRequest,
@@ -275,7 +275,7 @@ describe('tonnage-monitoring POST controller', () => {
 
   test('Should use error message from backend when available', async () => {
     const error = Boom.badRequest('Custom backend error message')
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
+    mockFetchJsonFromBackend.mockRejectedValue(error)
 
     await tonnageMonitoringPostController.handler(mockRequest, mockH)
 

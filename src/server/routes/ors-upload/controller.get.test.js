@@ -15,6 +15,8 @@ vi.mock('#server/common/helpers/logging/logger.js', () => ({
   }))
 }))
 
+const mockFetchJsonFromBackend = vi.mocked(fetchJsonFromBackend)
+
 describe('orsUploadGetController', () => {
   let mockRequest
   let mockH
@@ -38,7 +40,7 @@ describe('orsUploadGetController', () => {
   })
 
   test('initiates ORS upload and renders upload page', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       uploadUrl: 'http://cdp-uploader/upload-123'
     })
 
@@ -64,7 +66,7 @@ describe('orsUploadGetController', () => {
 
   test('handles upload initiation failure and renders error message', async () => {
     const error = new Error('Backend unavailable')
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
+    mockFetchJsonFromBackend.mockRejectedValue(error)
 
     await orsUploadGetController.handler(mockRequest, mockH)
 
@@ -110,7 +112,7 @@ describe('orsUploadGetController', () => {
       }
     }
 
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
+    mockFetchJsonFromBackend.mockRejectedValue(error)
 
     await orsUploadGetController.handler(mockRequest, mockH)
 
