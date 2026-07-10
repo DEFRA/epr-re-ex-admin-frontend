@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { orsUploadStatusGetController } from './controller.status.get.js'
+import { boomError } from '#server/common/test-helpers/fixtures.js'
 
 vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
@@ -162,12 +163,7 @@ describe('orsUploadStatusGetController', () => {
   })
 
   test('handles status fetch failure and renders failed view model', async () => {
-    const error = /** @type {Error & { output: { statusCode: number } }} */ (
-      new Error('Request failed')
-    )
-    error.output = {
-      statusCode: 500
-    }
+    const error = boomError({ message: 'Request failed', statusCode: 500 })
     vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
 
     await orsUploadStatusGetController.handler(mockRequest, mockH)

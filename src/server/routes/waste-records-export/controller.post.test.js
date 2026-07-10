@@ -4,6 +4,7 @@ import { vi, describe, it, expect, beforeEach } from 'vitest'
 
 import { wasteRecordsExportPostController } from './controller.post.js'
 import { streamFromBackend } from '#server/common/helpers/stream-from-backend.js'
+import { boomError } from '#server/common/test-helpers/fixtures.js'
 
 vi.mock('#server/common/helpers/stream-from-backend.js', () => ({
   streamFromBackend: vi.fn()
@@ -133,11 +134,10 @@ describe('wasteRecordsExportPostController', () => {
   })
 
   it('uses the Boom payload message when available', async () => {
-    const error =
-      /** @type {Error & { output: { payload: { message: string } } }} */ (
-        new Error('upstream')
-      )
-    error.output = { payload: { message: 'Backend exploded' } }
+    const error = boomError({
+      message: 'upstream',
+      payloadMessage: 'Backend exploded'
+    })
     vi.mocked(streamFromBackend).mockRejectedValue(error)
 
     const { h } = buildHapiH()

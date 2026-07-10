@@ -4,16 +4,9 @@ import { catchAll } from './errors.js'
 import { createServer } from '#server/server.js'
 import { statusCodes } from '../constants/status-codes.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
+import { asRequest } from '#server/common/test-helpers/fixtures.js'
 
-/** @import { HapiRequest } from '#server/common/hapi-types.js' */
 /** @import { Mock } from 'vitest' */
-
-/**
- * Cast a partial mock request to the full `HapiRequest` shape `catchAll` reads.
- * @param {unknown} req
- * @returns {HapiRequest}
- */
-const asRequest = (req) => /** @type {HapiRequest} */ (req)
 
 describe('#errors integration', () => {
   let server

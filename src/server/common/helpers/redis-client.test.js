@@ -9,6 +9,17 @@ const mockLoggerInfo = vi.fn()
 const mockLoggerError = vi.fn()
 const mockOn = vi.fn()
 
+/**
+ * @param {string} event
+ * @returns {(arg?: unknown) => void}
+ */
+const findHandler = (event) => {
+  const call = /** @type {[string, (arg?: unknown) => void]} */ (
+    mockOn.mock.calls.find((c) => c[0] === event)
+  )
+  return call[1]
+}
+
 vi.mock('./logging/logger.js', () => ({
   createLogger: () => ({
     info: (...args) => mockLoggerInfo(...args),
@@ -55,10 +66,7 @@ describe('#buildRedisClient', () => {
     })
 
     test('Should log info message when connect event fires', () => {
-      const connectCall = /** @type {[string, () => void]} */ (
-        mockOn.mock.calls.find((call) => call[0] === 'connect')
-      )
-      const connectHandler = connectCall[1]
+      const connectHandler = findHandler('connect')
       connectHandler()
 
       expect(mockLoggerInfo).toHaveBeenCalledWith({
@@ -67,10 +75,7 @@ describe('#buildRedisClient', () => {
     })
 
     test('Should log error message when error event fires', () => {
-      const errorCall = /** @type {[string, (error: Error) => void]} */ (
-        mockOn.mock.calls.find((call) => call[0] === 'error')
-      )
-      const errorHandler = errorCall[1]
+      const errorHandler = findHandler('error')
       const mockError = new Error('Connection failed')
       errorHandler(mockError)
 
@@ -119,10 +124,7 @@ describe('#buildRedisClient', () => {
     })
 
     test('Should log info message when connect event fires', () => {
-      const connectCall = /** @type {[string, () => void]} */ (
-        mockOn.mock.calls.find((call) => call[0] === 'connect')
-      )
-      const connectHandler = connectCall[1]
+      const connectHandler = findHandler('connect')
       connectHandler()
 
       expect(mockLoggerInfo).toHaveBeenCalledWith({
@@ -131,10 +133,7 @@ describe('#buildRedisClient', () => {
     })
 
     test('Should log error message when error event fires', () => {
-      const errorCall = /** @type {[string, (error: Error) => void]} */ (
-        mockOn.mock.calls.find((call) => call[0] === 'error')
-      )
-      const errorHandler = errorCall[1]
+      const errorHandler = findHandler('error')
       const mockError = new Error('Cluster connection failed')
       errorHandler(mockError)
 

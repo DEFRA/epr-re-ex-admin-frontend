@@ -6,16 +6,10 @@ import { clearUserSession } from '#server/common/helpers/auth/clear-user-session
 import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
 import { getOidcConfig } from '#server/common/helpers/auth/get-oidc-config.js'
 import { auditSignOut } from '#server/common/helpers/auditing/index.js'
-import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
-
-/** @import { HapiRequest } from '#server/common/hapi-types.js' */
-
-/**
- * Cast a partial mock request to the `HapiRequest` shape the handler reads.
- * @param {unknown} req
- * @returns {HapiRequest}
- */
-const asRequest = (req) => /** @type {HapiRequest} */ (req)
+import {
+  mockUserSession,
+  asRequest
+} from '#server/common/test-helpers/fixtures.js'
 
 vi.mock('#server/common/helpers/auth/clear-user-session.js')
 vi.mock('#server/common/helpers/auth/get-user-session.js')

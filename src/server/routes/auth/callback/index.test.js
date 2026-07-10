@@ -5,22 +5,12 @@ import { createUserSession } from '#server/common/helpers/auth/create-user-sessi
 import { fetchAdminMe } from '#server/common/helpers/auth/fetch-admin-me.js'
 import { randomUUID } from 'node:crypto'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
+import { asRequest } from '#server/common/test-helpers/fixtures.js'
 
 vi.mock('#server/common/helpers/auth/create-user-session.js')
 vi.mock('#server/common/helpers/auth/fetch-admin-me.js')
 vi.mock('#server/common/helpers/auditing/index.js')
 vi.mock('node:crypto')
-
-/** @typedef {import('#server/common/hapi-types.js').HapiRequest} HapiRequest */
-
-/**
- * Cast a partial mock request to the full `HapiRequest` shape the handler
- * signature requires. The handler only reads a narrow slice (auth.credentials,
- * logger, yar) so the runtime mock is sufficient — the cast satisfies tsc.
- * @param {unknown} obj
- * @returns {HapiRequest}
- */
-const asRequest = (obj) => /** @type {HapiRequest} */ (obj)
 
 /**
  * Cast a partial mock toolkit to the full `ResponseToolkit` shape.
