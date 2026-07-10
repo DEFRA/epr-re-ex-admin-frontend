@@ -30,7 +30,7 @@ export const wasteBalanceEventsGETController = {
 
     const events = await fetchJsonFromBackend(
       request,
-      `/v1/admin/registrations/${registrationId}/accreditations/${accreditationId}/waste-balance-events`,
+      `/v1/admin/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/waste-balance-events`,
       {}
     )
 
