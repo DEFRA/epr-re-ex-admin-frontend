@@ -6,10 +6,7 @@ vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
 }))
 
-const mockFetchJsonFromBackend =
-  /** @type {import('vitest').MockedFunction<typeof fetchJsonFromBackend>} */ (
-    fetchJsonFromBackend
-  )
+const mockFetchJsonFromBackend = vi.mocked(fetchJsonFromBackend)
 
 const { mockLoggerError } = vi.hoisted(() => ({ mockLoggerError: vi.fn() }))
 vi.mock('#server/common/helpers/logging/logger.js', () => ({

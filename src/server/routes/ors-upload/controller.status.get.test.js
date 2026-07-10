@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { orsUploadStatusGetController } from './controller.status.get.js'
+import { boomError } from '#server/common/test-helpers/fixtures.js'
 
 vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
@@ -16,6 +17,8 @@ vi.mock('#server/common/helpers/logging/logger.js', () => ({
     info: mockLoggerInfo
   }))
 }))
+
+const mockFetchJsonFromBackend = vi.mocked(fetchJsonFromBackend)
 
 describe('orsUploadStatusGetController', () => {
   let mockRequest
@@ -43,7 +46,7 @@ describe('orsUploadStatusGetController', () => {
   })
 
   test('renders processing state with polling', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       status: 'processing',
       files: []
     })
@@ -85,7 +88,7 @@ describe('orsUploadStatusGetController', () => {
   })
 
   test('renders completed state with file summary', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       status: 'completed',
       files: [
         {
@@ -141,7 +144,7 @@ describe('orsUploadStatusGetController', () => {
   })
 
   test('renders status with empty files when backend response has no files array', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       status: 'completed'
     })
 
@@ -162,11 +165,8 @@ describe('orsUploadStatusGetController', () => {
   })
 
   test('handles status fetch failure and renders failed view model', async () => {
-    const error = new Error('Request failed')
-    error.output = {
-      statusCode: 500
-    }
-    fetchJsonFromBackend.mockRejectedValue(error)
+    const error = boomError({ message: 'Request failed', statusCode: 500 })
+    mockFetchJsonFromBackend.mockRejectedValue(error)
 
     await orsUploadStatusGetController.handler(mockRequest, mockH)
 
@@ -203,7 +203,7 @@ describe('orsUploadStatusGetController', () => {
 
   test('handles status fetch failure with missing message and status code', async () => {
     const error = {}
-    fetchJsonFromBackend.mockRejectedValue(error)
+    mockFetchJsonFromBackend.mockRejectedValue(error)
 
     await orsUploadStatusGetController.handler(mockRequest, mockH)
 

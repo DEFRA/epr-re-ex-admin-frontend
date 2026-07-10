@@ -21,7 +21,7 @@ describe('#getCookieOptions', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     config.get = vi.fn().mockImplementation((key) => mockConfig[key])
-    validateAndRefreshSession.mockImplementation((userSession) =>
+    vi.mocked(validateAndRefreshSession).mockImplementation((userSession) =>
       Promise.resolve(userSession)
     )
   })
@@ -71,7 +71,7 @@ describe('#getCookieOptions', () => {
 
   describe('validate function', () => {
     test('Should return isValid false when userSession is null', async () => {
-      getUserSession.mockResolvedValue(null)
+      vi.mocked(getUserSession).mockResolvedValue(null)
 
       const result = getCookieOptions()
       const mockRequest = {}
@@ -83,7 +83,7 @@ describe('#getCookieOptions', () => {
     })
 
     test('Should return isValid false when userSession is undefined', async () => {
-      getUserSession.mockResolvedValue(undefined)
+      vi.mocked(getUserSession).mockResolvedValue(undefined)
 
       const result = getCookieOptions()
       const mockRequest = {}
@@ -101,8 +101,8 @@ describe('#getCookieOptions', () => {
         email: 'test@example-user.test'
       }
 
-      getUserSession.mockResolvedValue(mockUserSession)
-      validateAndRefreshSession.mockResolvedValue(mockUserSession)
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+      vi.mocked(validateAndRefreshSession).mockResolvedValue(mockUserSession)
 
       const result = getCookieOptions()
       const mockRequest = {}
@@ -121,7 +121,7 @@ describe('#getCookieOptions', () => {
     })
 
     test('Should call getUserSession with request', async () => {
-      getUserSession.mockResolvedValue(mockUserSession)
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
 
       const result = getCookieOptions()
       const mockRequest = { id: 'request-123' }
@@ -133,7 +133,9 @@ describe('#getCookieOptions', () => {
     })
 
     test('Should handle getUserSession errors gracefully', async () => {
-      getUserSession.mockRejectedValue(new Error('Session retrieval failed'))
+      vi.mocked(getUserSession).mockRejectedValue(
+        new Error('Session retrieval failed')
+      )
 
       const result = getCookieOptions()
       const mockRequest = {}
@@ -144,8 +146,8 @@ describe('#getCookieOptions', () => {
     })
 
     test('Should return isValid false when validateAndRefreshSession throws error', async () => {
-      getUserSession.mockResolvedValue({ sessionId: 'test' })
-      validateAndRefreshSession.mockRejectedValue(
+      vi.mocked(getUserSession).mockResolvedValue({ sessionId: 'test' })
+      vi.mocked(validateAndRefreshSession).mockRejectedValue(
         new Error('Session expired and no refresh token available')
       )
 
@@ -169,8 +171,8 @@ describe('#getCookieOptions', () => {
         }
       }
 
-      getUserSession.mockResolvedValue(complexUserSession)
-      validateAndRefreshSession.mockResolvedValue(complexUserSession)
+      vi.mocked(getUserSession).mockResolvedValue(complexUserSession)
+      vi.mocked(validateAndRefreshSession).mockResolvedValue(complexUserSession)
 
       const result = getCookieOptions()
       const mockRequest = {}
@@ -191,7 +193,7 @@ describe('#getCookieOptions', () => {
       const falsyValues = [null, undefined, false, 0, '', NaN]
 
       for (const value of falsyValues) {
-        getUserSession.mockResolvedValue(value)
+        vi.mocked(getUserSession).mockResolvedValue(value)
 
         const result = getCookieOptions()
         const validation = await result.validate({})
@@ -212,8 +214,8 @@ describe('#getCookieOptions', () => {
       ]
 
       for (const value of truthyValues) {
-        getUserSession.mockResolvedValue(value)
-        validateAndRefreshSession.mockResolvedValue(value)
+        vi.mocked(getUserSession).mockResolvedValue(value)
+        vi.mocked(validateAndRefreshSession).mockResolvedValue(value)
 
         const result = getCookieOptions()
         const validation = await result.validate({})

@@ -7,6 +7,8 @@ vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
 }))
 
+const mockFetchJsonFromBackend = vi.mocked(fetchJsonFromBackend)
+
 describe('prn-tonnage POST controller', () => {
   let mockRequest
   let mockH
@@ -32,7 +34,7 @@ describe('prn-tonnage POST controller', () => {
   })
 
   test('Should generate CSV with correct headers and formatting', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-02-20T14:30:00.000Z',
       rows: [
         {
@@ -77,7 +79,7 @@ describe('prn-tonnage POST controller', () => {
   })
 
   test('Should handle empty data rows', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-02-20T12:00:00.000Z',
       rows: []
     })
@@ -93,9 +95,7 @@ describe('prn-tonnage POST controller', () => {
   })
 
   test('Should redirect with default error message on failure', async () => {
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(
-      new Error('Network error')
-    )
+    mockFetchJsonFromBackend.mockRejectedValue(new Error('Network error'))
 
     const result = await prnTonnagePostController.handler(mockRequest, mockH)
 
@@ -109,7 +109,7 @@ describe('prn-tonnage POST controller', () => {
 
   test('Should use error message from backend when available', async () => {
     const error = Boom.badRequest('Custom backend error message')
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
+    mockFetchJsonFromBackend.mockRejectedValue(error)
 
     await prnTonnagePostController.handler(mockRequest, mockH)
 

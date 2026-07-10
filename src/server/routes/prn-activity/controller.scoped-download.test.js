@@ -24,6 +24,8 @@ const mockPrn = {
   wasteProcessingType: 'reprocessor'
 }
 
+const mockFetchJsonFromBackend = vi.mocked(fetchJsonFromBackend)
+
 describe('prn-activity scoped download controller', () => {
   let request
   let h
@@ -49,7 +51,7 @@ describe('prn-activity scoped download controller', () => {
   })
 
   test('Should fetch PRNs filtered by the accreditation id', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [],
       hasMore: false
     })
@@ -63,7 +65,7 @@ describe('prn-activity scoped download controller', () => {
   })
 
   test('Should generate CSV and set an accreditation-scoped filename', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [mockPrn],
       hasMore: false
     })
@@ -83,9 +85,7 @@ describe('prn-activity scoped download controller', () => {
   })
 
   test('Should redirect to the registration overview with a flash error on failure', async () => {
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(
-      new Error('Network error')
-    )
+    mockFetchJsonFromBackend.mockRejectedValue(new Error('Network error'))
 
     const result = await prnActivityScopedDownloadController.handler(request, h)
 
@@ -100,7 +100,7 @@ describe('prn-activity scoped download controller', () => {
   })
 
   test('Should use the backend error message when available', async () => {
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(
+    mockFetchJsonFromBackend.mockRejectedValue(
       Boom.badRequest('Custom backend error message')
     )
 

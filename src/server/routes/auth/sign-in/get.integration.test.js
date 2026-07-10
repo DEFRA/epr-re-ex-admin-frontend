@@ -10,7 +10,9 @@ const mockSignInAttemptedMetric = vi.fn()
 
 vi.mock('#server/common/helpers/metrics/index.js', async (importOriginal) => ({
   metrics: {
-    ...(await importOriginal()).metrics,
+    .../** @type {{ metrics: Record<string, unknown> }} */ (
+      await importOriginal()
+    ).metrics,
     signInAttempted: () => mockSignInAttemptedMetric()
   }
 }))

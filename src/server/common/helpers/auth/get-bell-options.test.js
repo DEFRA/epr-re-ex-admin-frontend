@@ -4,6 +4,8 @@ import { getBellOptions } from './get-bell-options.js'
 import { config } from '#config/config.js'
 import { verifyToken } from '#server/common/helpers/auth/verify-token.js'
 
+/** @import { EntraIdTokenPayload } from '#server/common/helpers/auth/types.js' */
+
 vi.mock(import('#config/config.js'))
 vi.mock(import('#server/common/helpers/auth/verify-token.js'))
 
@@ -32,7 +34,9 @@ describe('#getBellOptions', () => {
 
     config.get = vi.fn().mockImplementation((key) => mockConfig[key])
 
-    verifyToken.mockReturnValue(mockJwtPayload)
+    vi.mocked(verifyToken).mockResolvedValue(
+      /** @type {EntraIdTokenPayload} */ (mockJwtPayload)
+    )
   })
 
   afterEach(() => {
@@ -128,7 +132,9 @@ describe('#getBellOptions', () => {
       oid: 'user-id'
     }
 
-    verifyToken.mockReturnValue(noNamePayload)
+    vi.mocked(verifyToken).mockResolvedValue(
+      /** @type {EntraIdTokenPayload} */ (noNamePayload)
+    )
 
     const result = getBellOptions(mockOidcConfig)
     const mockCredentials = {
@@ -151,7 +157,9 @@ describe('#getBellOptions', () => {
       login_hint: 'john.doe@example-user.test'
     }
 
-    verifyToken.mockReturnValue(payloadWithLoginHint)
+    vi.mocked(verifyToken).mockResolvedValue(
+      /** @type {EntraIdTokenPayload} */ (payloadWithLoginHint)
+    )
 
     const result = getBellOptions(mockOidcConfig)
     const mockCredentials = { token: 'mock-jwt-token' }

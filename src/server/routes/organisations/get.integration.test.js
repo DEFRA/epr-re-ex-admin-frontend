@@ -80,7 +80,7 @@ describe('GET /organisations', () => {
 
   describe('When user is authenticated', () => {
     beforeEach(() => {
-      getUserSession.mockReturnValue(mockUserSession)
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
     })
 
     const loadPage = async (queryParams = new URLSearchParams()) => {

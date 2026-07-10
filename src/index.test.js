@@ -21,7 +21,7 @@ describe('#index', () => {
       info: mockLoggerInfo,
       error: mockLoggerError
     })
-    mockStartServer.mockResolvedValue()
+    mockStartServer.mockResolvedValue(undefined)
   })
 
   beforeEach(() => {

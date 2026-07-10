@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 import { streamFromBackend } from './stream-from-backend.js'
+import { asRequest } from '#server/common/test-helpers/fixtures.js'
+
+const mockRequest = asRequest({ yar: {} })
 
 const { mockUserSession, mockConfigGet } = vi.hoisted(() => ({
   mockUserSession: vi.fn(),
@@ -45,7 +48,7 @@ describe('streamFromBackend', () => {
       body
     })
 
-    const result = await streamFromBackend({ yar: {} }, '/x')
+    const result = await streamFromBackend(mockRequest, '/x')
     expect(result.status).toBe(200)
     expect(result.headers.get('content-type')).toBe('text/csv')
     expect(result.body).toBe(body)
@@ -66,7 +69,7 @@ describe('streamFromBackend', () => {
       body: null
     })
 
-    await expect(streamFromBackend({ yar: {} }, '/x')).rejects.toMatchObject({
+    await expect(streamFromBackend(mockRequest, '/x')).rejects.toMatchObject({
       isBoom: true,
       output: { statusCode: 503 }
     })
@@ -74,7 +77,7 @@ describe('streamFromBackend', () => {
 
   it('throws an internal error if fetch itself rejects', async () => {
     fetchSpy.mockRejectedValue(new Error('network down'))
-    await expect(streamFromBackend({ yar: {} }, '/x')).rejects.toMatchObject({
+    await expect(streamFromBackend(mockRequest, '/x')).rejects.toMatchObject({
       isBoom: true
     })
   })

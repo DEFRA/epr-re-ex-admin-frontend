@@ -12,7 +12,11 @@ export async function getCsrfToken(server, getUrl, auth) {
   }
   const response = await server.inject(requestOptions)
   const setCookie = response.headers['set-cookie']
-  const cookies = Array.isArray(setCookie) ? setCookie : [setCookie]
+  const cookies = Array.isArray(setCookie)
+    ? setCookie
+    : setCookie
+      ? [setCookie]
+      : []
   const crumbCookie = cookies.find(
     (cookie) => cookie && cookie.startsWith('crumb=')
   )

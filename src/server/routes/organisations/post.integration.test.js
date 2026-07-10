@@ -67,7 +67,7 @@ describe('POST /organisations', () => {
   }
 
   const getCrumb = async () => {
-    getUserSession.mockReturnValue(mockUserSession)
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
     mswServer.use(
       http.get(`${config.get('eprBackendUrl')}/v1/organisations`, () =>
         HttpResponse.json(envelope([]))
@@ -101,7 +101,7 @@ describe('POST /organisations', () => {
     let crumb
 
     beforeEach(async () => {
-      getUserSession.mockReturnValue(mockUserSession)
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
       crumb = await getCrumb()
     })
 
