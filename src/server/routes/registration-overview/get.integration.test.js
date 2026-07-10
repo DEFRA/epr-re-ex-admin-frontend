@@ -1,8 +1,10 @@
+import * as cheerio from 'cheerio'
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
+import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { createServer } from '#server/server.js'
 import { http, HttpResponse, server as mswServer } from '#vite/setup-msw.js'
 import {
@@ -391,6 +393,47 @@ describe('#registrationOverviewController', () => {
       )
       expect(getSummaryRowValue(body, 'Material')).toHaveTextContent('glass')
       expect(getSummaryRowValue(body, 'Site')).toHaveTextContent('Site A')
+    })
+
+    test('Should render the registration number in the summary list when present', async () => {
+      useMockBackend()
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+
+      expect(getSummaryRowValue(body, 'Registration number')).toHaveTextContent(
+        'REG-50030-001'
+      )
+    })
+
+    test('Should not render the registration number row when the registration has no number', async () => {
+      useMockBackend({
+        ...mockOverview,
+        registrations: [
+          {
+            ...mockRegistration,
+            registrationNumber: undefined,
+            status: 'created'
+          }
+        ]
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+
+      expect(
+        queryByText(body, 'Registration number', { selector: 'dt' })
+      ).toBeNull()
     })
 
     test('Should render accreditation rows in summary list when accreditation exists', async () => {
@@ -990,6 +1033,170 @@ describe('#registrationOverviewController', () => {
         expect(
           getSummaryRowValue(body, 'Waste balance available (tonnes)')
         ).toHaveTextContent('No data')
+      })
+    })
+
+    describe('Approve action visibility', () => {
+      const approveHref = `/organisations/${organisationId}/registrations/${registrationId}/approve/confirm`
+
+      /**
+       * Stub the overview endpoint so the registration has the given status.
+       * @param {string} status
+       */
+      const stubOverviewWithRegistrationStatus = (status) =>
+        useMockBackend({
+          ...mockOverview,
+          registrations: [{ ...mockRegistration, status }]
+        })
+
+      test('shows the Approve action when the registration is created and the user can write', async () => {
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+        stubOverviewWithRegistrationStatus('created')
+
+        const { statusCode, result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        const $ = cheerio.load(result)
+        expect($(`a[href="${approveHref}"]`).length).toBe(1)
+      })
+
+      test('hides the Approve action when the registration is not created', async () => {
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+        stubOverviewWithRegistrationStatus('approved')
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const $ = cheerio.load(result)
+        expect($(`a[href="${approveHref}"]`).length).toBe(0)
+      })
+
+      test('hides the Approve action for read-only users', async () => {
+        const readOnlySession = { ...mockUserSession, scopes: ['admin.read'] }
+        vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
+        stubOverviewWithRegistrationStatus('created')
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: readOnlySession }
+        })
+
+        const $ = cheerio.load(result)
+        expect($(`a[href="${approveHref}"]`).length).toBe(0)
+      })
+    })
+
+    describe('Grant success banner', () => {
+      const confirmUrl = `/organisations/${organisationId}/registrations/${registrationId}/approve/confirm`
+      const postUrl = `/organisations/${organisationId}/registrations/${registrationId}/approve`
+      const statusHistoryPath = `/v1/organisations/${organisationId}/registrations/${registrationId}/status-history`
+
+      /**
+       * Stub the single-organisation endpoint used by the confirm-page GET
+       * handler, which calls `/v1/organisations/{id}` (not the overview path).
+       * @param {string} status
+       */
+      const stubOrgForConfirm = (status) =>
+        mswServer.use(
+          http.get(`${backendUrl}/v1/organisations/${organisationId}`, () =>
+            HttpResponse.json({
+              id: organisationId,
+              companyName: 'ACME ltd',
+              version: 1,
+              registrations: [{ ...mockRegistration, status }]
+            })
+          )
+        )
+
+      const stubGrantSuccess = () =>
+        mswServer.use(
+          http.post(`${backendUrl}${statusHistoryPath}`, () =>
+            HttpResponse.json({ id: registrationId, version: 2 })
+          )
+        )
+
+      /**
+       * POST to the grant registration endpoint, capturing the session cookie
+       * that contains the yar flash. Returns the redirect cookie for use in the
+       * follow-up GET.
+       * @returns {Promise<{ postResponse: import('@hapi/shot').ResponseObject, redirectCookie: string }>}
+       */
+      const postApprove = async () => {
+        const authOptions = {
+          strategy: 'session',
+          credentials: mockUserSession
+        }
+        const { cookie, crumb } = await getCsrfToken(
+          server,
+          confirmUrl,
+          authOptions
+        )
+        const postResponse = await server.inject({
+          method: 'POST',
+          url: postUrl,
+          auth: authOptions,
+          headers: { cookie },
+          payload: { crumb, version: '1', reason: 'Docs verified' }
+        })
+        const postCookies = [postResponse.headers['set-cookie']]
+          .flat()
+          .filter(Boolean)
+        const redirectCookie = postCookies.length
+          ? postCookies.map((c) => c.split(';')[0]).join('; ')
+          : cookie
+        return { postResponse, redirectCookie }
+      }
+
+      test('shows a success banner after a grant', async () => {
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+        stubOrgForConfirm('created')
+        useMockBackend({
+          ...mockOverview,
+          registrations: [{ ...mockRegistration, status: 'created' }]
+        })
+        stubGrantSuccess()
+
+        const { postResponse, redirectCookie } = await postApprove()
+        expect(postResponse.statusCode).toBe(statusCodes.found)
+
+        useMockBackend({
+          ...mockOverview,
+          registrations: [{ ...mockRegistration, status: 'approved' }]
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          headers: { cookie: redirectCookie },
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const $ = cheerio.load(result)
+        expect($('[data-module="govuk-notification-banner"]').text()).toContain(
+          'Registration approved'
+        )
+      })
+
+      test('does not show a success banner without the grant flash', async () => {
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+        useMockBackend()
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const $ = cheerio.load(result)
+        expect($('[data-module="govuk-notification-banner"]').length).toBe(0)
       })
     })
 
