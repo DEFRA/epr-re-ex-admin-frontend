@@ -50,7 +50,7 @@ describe('prn-activity scoped download controller', () => {
     }
   })
 
-  test('Should fetch PRNs filtered by the accreditation id', async () => {
+  test('Should fetch the PRNs of the accreditation by its full path', async () => {
     mockFetchJsonFromBackend.mockResolvedValue({
       items: [],
       hasMore: false
@@ -60,8 +60,20 @@ describe('prn-activity scoped download controller', () => {
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
       request,
-      expect.stringContaining('accreditationId=acc-9')
+      expect.stringContaining(
+        '/v1/admin/organisations/org-1/registrations/reg-1/accreditations/acc-9/packaging-recycling-notes'
+      )
     )
+  })
+
+  test('Should generate a headers-only CSV when the backend returns no payload', async () => {
+    mockFetchJsonFromBackend.mockResolvedValue(null)
+
+    await prnActivityScopedDownloadController.handler(request, h)
+
+    const csvContent = h.response.mock.calls[0][0]
+    expect(csvContent).toContain('PRN Number')
+    expect(csvContent).not.toContain('PRN-001')
   })
 
   test('Should generate CSV and set an accreditation-scoped filename', async () => {

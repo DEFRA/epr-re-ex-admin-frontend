@@ -31,15 +31,30 @@ function mapPrns(data) {
   }))
 }
 
-export function buildPrnApiUrl(cursor, accreditationId) {
+export function buildPrnApiUrl(cursor) {
   let url = `/v1/admin/packaging-recycling-notes?statuses=${statuses}`
   if (cursor) {
     url += `&cursor=${encodeURIComponent(cursor)}`
   }
-  if (accreditationId) {
-    url += `&accreditationId=${encodeURIComponent(accreditationId)}`
-  }
   return url
+}
+
+export function buildAccreditationPrnApiUrl({
+  organisationId,
+  registrationId,
+  accreditationId
+}) {
+  const path = [
+    '/v1/admin/organisations',
+    encodeURIComponent(organisationId),
+    'registrations',
+    encodeURIComponent(registrationId),
+    'accreditations',
+    encodeURIComponent(accreditationId),
+    'packaging-recycling-notes'
+  ].join('/')
+
+  return `${path}?statuses=${statuses}`
 }
 
 export const prnActivityController = {
