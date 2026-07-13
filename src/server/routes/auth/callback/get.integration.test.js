@@ -59,7 +59,7 @@ describe('GET /auth/callback', () => {
       .split(';')[0]
 
     mswServer.use(
-      http.post(mockOidcResponse.token_endpoint, ({ request }) => {
+      http.post(mockOidcResponse.token_endpoint, () => {
         return HttpResponse.json({
           access_token: Jwt.token.generate(
             accessToken,
