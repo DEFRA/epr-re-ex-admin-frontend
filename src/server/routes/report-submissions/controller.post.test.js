@@ -298,7 +298,14 @@ describe('reportSubmissionsPostController', () => {
     expect(dataLine).toContain('2026-04-20,Jane Doe,2,')
   })
 
-  test('emits one data row per submission for a resubmitted period', async () => {
+  // Column indices in the flat CSV data row (0-based), covering the boundary
+  // the submission-number column was inserted at.
+  const SUBMITTED_BY_COL = 13
+  const SUBMISSION_NUMBER_COL = 14
+  const FIRST_TONNAGE_COL = 15
+  const TOTAL_COLUMNS = 32
+
+  test('emits one CSV line per backend row, submission number in its own column', async () => {
     mockFetchJsonFromBackend.mockResolvedValue({
       reportSubmissions: [
         buildRow({ submittedBy: 'First Submitter', submissionNumber: 1 }),
@@ -310,10 +317,37 @@ describe('reportSubmissionsPostController', () => {
     await reportSubmissionsPostController.handler(mockRequest, mockH)
 
     const csv = mockH.response.mock.calls[0][0]
-    const dataLines = csv.split(/\r?\n/).filter((line) => line.startsWith('EA'))
-    expect(dataLines).toHaveLength(2)
-    expect(dataLines[0]).toContain(',First Submitter,1,')
-    expect(dataLines[1]).toContain(',Second Submitter,2,')
+    const cells = csv
+      .split(/\r?\n/)
+      .filter((line) => line.startsWith('EA'))
+      .map((line) => line.split(','))
+    expect(cells).toHaveLength(2)
+    for (const row of cells) {
+      expect(row).toHaveLength(TOTAL_COLUMNS)
+    }
+    expect(cells[0][SUBMITTED_BY_COL]).toBe('First Submitter')
+    expect(cells[0][SUBMISSION_NUMBER_COL]).toBe('1')
+    expect(cells[1][SUBMITTED_BY_COL]).toBe('Second Submitter')
+    expect(cells[1][SUBMISSION_NUMBER_COL]).toBe('2')
+  })
+
+  test('renders a blank submission-number cell for an outstanding period', async () => {
+    mockFetchJsonFromBackend.mockResolvedValue({
+      reportSubmissions: [buildRow()],
+      generatedAt: '2026-04-17T10:00:00.000Z'
+    })
+
+    await reportSubmissionsPostController.handler(mockRequest, mockH)
+
+    const csv = mockH.response.mock.calls[0][0]
+    const cells = csv
+      .split(/\r?\n/)
+      .find((line) => line.startsWith('EA'))
+      .split(',')
+    expect(cells).toHaveLength(TOTAL_COLUMNS)
+    expect(cells[SUBMITTED_BY_COL]).toBe('')
+    expect(cells[SUBMISSION_NUMBER_COL]).toBe('')
+    expect(cells[FIRST_TONNAGE_COL]).toBe('')
   })
 
   test('coerces numeric columns whether the backend sends numbers or strings', async () => {
