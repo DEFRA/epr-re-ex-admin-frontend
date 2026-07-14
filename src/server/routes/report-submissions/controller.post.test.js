@@ -115,35 +115,7 @@ describe('reportSubmissionsPostController', () => {
     expect(firstLine).toContain('Report submissions')
   })
 
-  test('CSV includes the non-tonnage column headers', async () => {
-    mockFetchJsonFromBackend.mockResolvedValue({
-      reportSubmissions: [],
-      generatedAt: '2026-04-17T10:00:00.000Z'
-    })
-
-    await reportSubmissionsPostController.handler(mockRequest, mockH)
-
-    const csv = mockH.response.mock.calls[0][0]
-    expect(csv).toContain('Regulator')
-    expect(csv).toContain('Organisation name')
-    expect(csv).toContain('Organisation registered approver contact number')
-    expect(csv).toContain(
-      'Organisation registered approver person email address'
-    )
-    expect(csv).toContain('Organisation registered submitter contact number')
-    expect(csv).toContain('Organisation registered submitter email address')
-    expect(csv).toContain('Material')
-    expect(csv).toContain('Accreditation No')
-    expect(csv).toContain('Registered No')
-    expect(csv).toContain('Report Type')
-    expect(csv).toContain('Report Period')
-    expect(csv).toContain('Due Date')
-    expect(csv).toContain('Submitted Date')
-    expect(csv).toContain('Submitted By')
-    expect(csv).toContain('Submission Number')
-  })
-
-  test('Submission Number header sits directly after Submitted By', async () => {
+  test('emits the full header row with columns in the expected order', async () => {
     mockFetchJsonFromBackend.mockResolvedValue({
       reportSubmissions: [],
       generatedAt: '2026-04-17T10:00:00.000Z'
@@ -155,24 +127,9 @@ describe('reportSubmissionsPostController', () => {
     const headerLine = csv
       .split(/\r?\n/)
       .find((line) => line.startsWith('Regulator'))
-    expect(headerLine).toContain(
-      'Submitted By,Submission Number,Tonnage received for recycling'
+    expect(headerLine).toBe(
+      'Regulator,Organisation name,Organisation registered approver contact number,Organisation registered approver person email address,Organisation registered submitter contact number,Organisation registered submitter email address,Material,Accreditation No,Registered No,Report Type,Report Period,Due Date,Submitted Date,Submitted By,Submission Number,Tonnage received for recycling,Tonnage recycled,Tonnage exported for recycling,"Tonnage sent on, total",Tonnage sent on to a reprocessor,Tonnage sent on to an exporter,Tonnage sent on to other facilities,Tonnage of PRNs/PERNs issued,Self-issued (free) tonnage,Total revenue from PRNs/PERNs,Average PRN/PERN price per tonne,Tonnage received but not recycled,Tonnage received but not exported,Tonnage exported that was stopped,Tonnage exported that was refused,Tonnage repatriated,Note to regulator'
     )
-  })
-
-  test('Regulator is the first column header', async () => {
-    mockFetchJsonFromBackend.mockResolvedValue({
-      reportSubmissions: [],
-      generatedAt: '2026-04-17T10:00:00.000Z'
-    })
-
-    await reportSubmissionsPostController.handler(mockRequest, mockH)
-
-    const csv = mockH.response.mock.calls[0][0]
-    const headerLine = csv
-      .split(/\r?\n/)
-      .find((line) => line.startsWith('Regulator'))
-    expect(headerLine).toMatch(/^Regulator,Organisation name/)
   })
 
   test('regulator value appears as the first cell of a data row', async () => {
@@ -214,34 +171,6 @@ describe('reportSubmissionsPostController', () => {
 
     const csv = mockH.response.mock.calls[0][0]
     expect(csv).toContain("'=SUM(A1)")
-  })
-
-  test('CSV includes the 17 tonnage column headers', async () => {
-    mockFetchJsonFromBackend.mockResolvedValue({
-      reportSubmissions: [],
-      generatedAt: '2026-04-17T10:00:00.000Z'
-    })
-
-    await reportSubmissionsPostController.handler(mockRequest, mockH)
-
-    const csv = mockH.response.mock.calls[0][0]
-    expect(csv).toContain('Tonnage received for recycling')
-    expect(csv).toContain('Tonnage recycled')
-    expect(csv).toContain('Tonnage exported for recycling')
-    expect(csv).toContain('Tonnage sent on, total')
-    expect(csv).toContain('Tonnage sent on to a reprocessor')
-    expect(csv).toContain('Tonnage sent on to an exporter')
-    expect(csv).toContain('Tonnage sent on to other facilities')
-    expect(csv).toContain('Tonnage of PRNs/PERNs issued')
-    expect(csv).toContain('Self-issued (free) tonnage')
-    expect(csv).toContain('Total revenue from PRNs/PERNs')
-    expect(csv).toContain('Average PRN/PERN price per tonne')
-    expect(csv).toContain('Tonnage received but not recycled')
-    expect(csv).toContain('Tonnage received but not exported')
-    expect(csv).toContain('Tonnage exported that was stopped')
-    expect(csv).toContain('Tonnage exported that was refused')
-    expect(csv).toContain('Tonnage repatriated')
-    expect(csv).toContain('Note to regulator')
   })
 
   test('CSV maps tonnage field values into data row', async () => {
