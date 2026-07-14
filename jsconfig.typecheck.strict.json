@@ -2,7 +2,6 @@
   "extends": "./jsconfig.typecheck.base.json",
   "compilerOptions": {
     "noImplicitAny": true,
-    "noImplicitThis": true,
     "noUncheckedIndexedAccess": true,
     "types": ["vitest/globals", "@testing-library/jest-dom/vitest"],
     "useUnknownInCatchVariables": true

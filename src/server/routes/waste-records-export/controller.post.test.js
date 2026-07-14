@@ -44,11 +44,11 @@ describe('wasteRecordsExportPostController', () => {
     const responseBuilder = {
       type: vi.fn(function (...args) {
         calls.type.push(args)
-        return this
+        return responseBuilder
       }),
       header: vi.fn(function (...args) {
         calls.header.push(args)
-        return this
+        return responseBuilder
       })
     }
     const h = {

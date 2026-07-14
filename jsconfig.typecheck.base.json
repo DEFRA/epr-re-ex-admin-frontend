@@ -13,6 +13,7 @@
     "noImplicitAny": false,
     "noImplicitOverride": true,
     "noImplicitReturns": true,
+    "noImplicitThis": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "paths": {
