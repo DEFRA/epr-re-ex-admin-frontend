@@ -10,6 +10,41 @@ const RED_TAG = 'govuk-tag--red'
 
 const EXPORTER_PROCESSING_TYPE = 'exporter'
 
+const SUBMITTED_STATUS = 'submitted'
+
+const periodKey = (period) => `${period.year}-${period.period}`
+
+/**
+ * Builds the view model for each calendar reporting period, flagging a
+ * submission as superseded when a later submitted submission exists for the same
+ * period. A superseded submission must not offer the Unsubmit action:
+ * unsubmitting it would silently drop it from the submission history (PAE-1657).
+ * The backend enforces the same rule; ADR-0038 keeps the calendar payload free
+ * of superseded fields, so the flag is derived here.
+ * @param {Array<Record<string, any>>} reportingPeriods
+ * @param {string} cadence
+ */
+const toReportingPeriods = (reportingPeriods, cadence) => {
+  const latestSubmittedSubmission = new Map()
+  for (const period of reportingPeriods) {
+    if (period.report?.status !== SUBMITTED_STATUS) {
+      continue
+    }
+    const key = periodKey(period)
+    latestSubmittedSubmission.set(
+      key,
+      Math.max(latestSubmittedSubmission.get(key) ?? 0, period.submissionNumber)
+    )
+  }
+  return reportingPeriods.map((period) => ({
+    ...period,
+    formattedPeriod: formatPeriod(period.period, cadence),
+    isSuperseded:
+      period.report?.status === SUBMITTED_STATUS &&
+      period.submissionNumber < latestSubmittedSubmission.get(periodKey(period))
+  }))
+}
+
 const STATUS_DISPLAY = {
   submitted: { label: 'Success', className: GREEN_TAG },
   rejected: { label: 'Failed (Rejected)', className: RED_TAG },
@@ -106,10 +141,10 @@ export const registrationOverviewGETController = {
       registrationId,
       registration,
       cadence: calendar.cadence,
-      reportingPeriods: calendar.reportingPeriods.map((rp) => ({
-        ...rp,
-        formattedPeriod: formatPeriod(rp.period, calendar.cadence)
-      })),
+      reportingPeriods: toReportingPeriods(
+        calendar.reportingPeriods,
+        calendar.cadence
+      ),
       summaryLogRows,
       wasteBalance,
       error: errorMessage,

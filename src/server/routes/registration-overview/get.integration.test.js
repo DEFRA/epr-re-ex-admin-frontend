@@ -1040,6 +1040,49 @@ describe('#registrationOverviewController', () => {
           })
         ).toBeNull()
       })
+
+      test('Should render the Unsubmit link only on the current submission, not a superseded one', async () => {
+        useMockBackend(mockOverview, mockCalendarWithHistory)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const [supersededRow, currentRow] = getDataRows(getReportsTable(body))
+
+        expect(
+          within(supersededRow).queryByRole('link', { name: 'Unsubmit' })
+        ).toBeNull()
+        expect(
+          within(currentRow).getByRole('link', { name: 'Unsubmit' })
+        ).toHaveAttribute(
+          'href',
+          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/2/unsubmit/confirm`
+        )
+      })
+
+      test('Should render the Unsubmit link on the submitted submission while a resubmission is required', async () => {
+        useMockBackend(mockOverview, mockCalendarWithSkeleton)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const [submittedRow] = getDataRows(getReportsTable(body))
+
+        expect(
+          within(submittedRow).getByRole('link', { name: 'Unsubmit' })
+        ).toHaveAttribute(
+          'href',
+          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/unsubmit/confirm`
+        )
+      })
     })
   })
 })
