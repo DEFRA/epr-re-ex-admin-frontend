@@ -1,0 +1,23 @@
+{
+  "extends": "./jsconfig.typecheck.base.json",
+  "compilerOptions": {
+    "types": ["vitest/globals", "@testing-library/jest-dom/vitest"],
+    "noUnusedLocals": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "useUnknownInCatchVariables": true,
+    "noImplicitAny": true,
+    "noUncheckedIndexedAccess": true
+  },
+  "include": [
+    "src/**/*.js",
+    "src/**/*.d.ts",
+    "**/*.test.js",
+    "**/test-helpers/**/*.js",
+    "**/test-fixtures.js"
+  ],
+  "exclude": ["node_modules", ".vite"]
+}

@@ -30,6 +30,7 @@
     "lint:scss": "stylelint \"src/**/*.scss\" --cache --cache-location .cache/stylelint --cache-strategy content --color --ignore-path .gitignore",
     "lint:types": "tsc -p jsconfig.typecheck.json",
     "lint:types:tests": "tsc -p jsconfig.typecheck.tests.json",
+    "lint:types:strict": "tsc -p jsconfig.typecheck.strict.json",
     "pretest": "npm run build:frontend",
     "test": "TZ=UTC vitest run --coverage",
     "test:watch": "TZ=UTC vitest",
