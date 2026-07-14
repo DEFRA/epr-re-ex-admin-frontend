@@ -28,6 +28,7 @@ const buildRow = (overrides = {}) => ({
   dueDate: '2026-04-20',
   submittedDate: '',
   submittedBy: '',
+  submissionNumber: '',
   tonnageReceivedForRecycling: '',
   tonnageRecycled: '',
   tonnageExportedForRecycling: '',
@@ -139,6 +140,24 @@ describe('reportSubmissionsPostController', () => {
     expect(csv).toContain('Due Date')
     expect(csv).toContain('Submitted Date')
     expect(csv).toContain('Submitted By')
+    expect(csv).toContain('Submission Number')
+  })
+
+  test('Submission Number header sits directly after Submitted By', async () => {
+    mockFetchJsonFromBackend.mockResolvedValue({
+      reportSubmissions: [],
+      generatedAt: '2026-04-17T10:00:00.000Z'
+    })
+
+    await reportSubmissionsPostController.handler(mockRequest, mockH)
+
+    const csv = mockH.response.mock.calls[0][0]
+    const headerLine = csv
+      .split(/\r?\n/)
+      .find((line) => line.startsWith('Regulator'))
+    expect(headerLine).toContain(
+      'Submitted By,Submission Number,Tonnage received for recycling'
+    )
   })
 
   test('Regulator is the first column header', async () => {
@@ -256,8 +275,45 @@ describe('reportSubmissionsPostController', () => {
     const csv = mockH.response.mock.calls[0][0]
     const dataLine = csv.split(/\r?\n/).find((line) => line.startsWith('EA'))
     expect(dataLine).toBe(
-      'EA,Acme Ltd,09876543210,ap@example.com,01234567890,submitter@example.com,Plastic,,REG-001,Quarterly,Q1 2026,2026-04-20,,,100.5,80,20.25,15,5,7,3,90,10,4500,50,19.5,0,1,2,0.5,All good'
+      'EA,Acme Ltd,09876543210,ap@example.com,01234567890,submitter@example.com,Plastic,,REG-001,Quarterly,Q1 2026,2026-04-20,,,,100.5,80,20.25,15,5,7,3,90,10,4500,50,19.5,0,1,2,0.5,All good'
     )
+  })
+
+  test('maps the submission number into the data row after submitted by', async () => {
+    mockFetchJsonFromBackend.mockResolvedValue({
+      reportSubmissions: [
+        buildRow({
+          submittedDate: '2026-04-20',
+          submittedBy: 'Jane Doe',
+          submissionNumber: 2
+        })
+      ],
+      generatedAt: '2026-04-17T10:00:00.000Z'
+    })
+
+    await reportSubmissionsPostController.handler(mockRequest, mockH)
+
+    const csv = mockH.response.mock.calls[0][0]
+    const dataLine = csv.split(/\r?\n/).find((line) => line.startsWith('EA'))
+    expect(dataLine).toContain('2026-04-20,Jane Doe,2,')
+  })
+
+  test('emits one data row per submission for a resubmitted period', async () => {
+    mockFetchJsonFromBackend.mockResolvedValue({
+      reportSubmissions: [
+        buildRow({ submittedBy: 'First Submitter', submissionNumber: 1 }),
+        buildRow({ submittedBy: 'Second Submitter', submissionNumber: 2 })
+      ],
+      generatedAt: '2026-04-17T10:00:00.000Z'
+    })
+
+    await reportSubmissionsPostController.handler(mockRequest, mockH)
+
+    const csv = mockH.response.mock.calls[0][0]
+    const dataLines = csv.split(/\r?\n/).filter((line) => line.startsWith('EA'))
+    expect(dataLines).toHaveLength(2)
+    expect(dataLines[0]).toContain(',First Submitter,1,')
+    expect(dataLines[1]).toContain(',Second Submitter,2,')
   })
 
   test('coerces numeric columns whether the backend sends numbers or strings', async () => {
