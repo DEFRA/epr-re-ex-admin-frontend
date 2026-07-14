@@ -28,7 +28,55 @@ describe('fetchWasteBalanceReport', () => {
       request,
       '/v1/admin/waste-balances/report?cutoff=2026-06-30T23%3A00%3A00.000Z'
     )
-    expect(result).toBe(report)
+    expect(result).toEqual(report)
+  })
+
+  it('returns the report in canonical order: totals by material then type, accreditations by material, type, then accreditation number', async () => {
+    const total = (material, wasteProcessingType) => ({
+      material,
+      wasteProcessingType,
+      amount: 1,
+      availableAmount: 1
+    })
+    const accreditation = (
+      material,
+      wasteProcessingType,
+      accreditationNumber
+    ) => ({
+      orgId: '500001',
+      registrationNumber: 'REG-1',
+      accreditationNumber,
+      material,
+      wasteProcessingType,
+      amount: 1,
+      availableAmount: 1
+    })
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+      cutoff: '2026-06-30T23:00:00Z',
+      totals: [
+        total('plastic', 'reprocessor'),
+        total('glass', 'reprocessor'),
+        total('plastic', 'exporter')
+      ],
+      accreditations: [
+        accreditation('plastic', 'reprocessor', 'ACC-9'),
+        accreditation('glass', 'reprocessor', 'ACC-5'),
+        accreditation('plastic', 'reprocessor', 'ACC-1'),
+        accreditation('plastic', 'exporter', 'ACC-7')
+      ]
+    })
+
+    const result = await fetchWasteBalanceReport(request, '2026-06')
+
+    expect(
+      result.totals.map((t) => `${t.material}|${t.wasteProcessingType}`)
+    ).toEqual(['glass|reprocessor', 'plastic|exporter', 'plastic|reprocessor'])
+    expect(result.accreditations.map((a) => a.accreditationNumber)).toEqual([
+      'ACC-5',
+      'ACC-7',
+      'ACC-1',
+      'ACC-9'
+    ])
   })
 
   it('maps a GMT month to a midnight UTC cutoff', async () => {

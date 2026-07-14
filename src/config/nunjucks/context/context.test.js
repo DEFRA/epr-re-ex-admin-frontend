@@ -115,6 +115,11 @@ describe('context and cache', () => {
             },
             {
               current: false,
+              text: 'Waste balance report',
+              href: '/waste-balance-report'
+            },
+            {
+              current: false,
               text: 'Waste records export',
               href: '/waste-records-export'
             },
@@ -309,6 +314,11 @@ describe('context and cache', () => {
               current: false,
               text: 'Report submissions',
               href: '/report-submissions'
+            },
+            {
+              current: false,
+              text: 'Waste balance report',
+              href: '/waste-balance-report'
             },
             {
               current: false,

@@ -66,6 +66,11 @@ describe('#buildNavigation', () => {
       },
       {
         current: false,
+        text: 'Waste balance report',
+        href: '/waste-balance-report'
+      },
+      {
+        current: false,
         text: 'Waste records export',
         href: '/waste-records-export'
       },
@@ -141,6 +146,11 @@ describe('#buildNavigation', () => {
       },
       {
         current: false,
+        text: 'Waste balance report',
+        href: '/waste-balance-report'
+      },
+      {
+        current: false,
         text: 'Waste records export',
         href: '/waste-records-export'
       },
@@ -173,12 +183,15 @@ describe('#buildNavigation', () => {
     )
   })
 
-  test('Should place report submissions before waste records export before system logs', () => {
+  test('Should place report submissions before waste balance report before waste records export before system logs', () => {
     const navigation = buildNavigation(
       mockRequest({ path: '/non-existent-path' })
     )
     const reportSubmissionsIndex = navigation.findIndex(
       (item) => item.text === 'Report submissions'
+    )
+    const wasteBalanceReportIndex = navigation.findIndex(
+      (item) => item.text === 'Waste balance report'
     )
     const wasteRecordsExportIndex = navigation.findIndex(
       (item) => item.text === 'Waste records export'
@@ -187,7 +200,8 @@ describe('#buildNavigation', () => {
       (item) => item.text === 'System logs'
     )
 
-    expect(wasteRecordsExportIndex).toBe(reportSubmissionsIndex + 1)
+    expect(wasteBalanceReportIndex).toBe(reportSubmissionsIndex + 1)
+    expect(wasteRecordsExportIndex).toBe(wasteBalanceReportIndex + 1)
     expect(systemLogsIndex).toBe(wasteRecordsExportIndex + 1)
   })
 
