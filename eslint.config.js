@@ -12,7 +12,17 @@ export default [
   }),
   {
     rules: {
-      eqeqeq: ['error', 'always']
+      eqeqeq: ['error', 'always'],
+      'no-unused-vars': [
+        'error',
+        {
+          args: 'all',
+          argsIgnorePattern: '^_',
+          caughtErrors: 'none',
+          ignoreRestSiblings: true,
+          varsIgnorePattern: '^_'
+        }
+      ]
     }
   }
 ]
