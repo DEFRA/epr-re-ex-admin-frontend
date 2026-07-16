@@ -4,6 +4,7 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
+import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { http, server as mswServer, HttpResponse } from '#vite/setup-msw.js'
 import * as cheerio from 'cheerio'
 
@@ -199,6 +200,159 @@ describe('credited-tonnage', () => {
 
         expect(statusCode).toBe(statusCodes.internalServerError)
         expect(result).toContain('Sorry, there is a problem with the service')
+      })
+    })
+  })
+
+  describe('POST /credited-tonnage', () => {
+    describe('When user is unauthenticated', () => {
+      beforeEach(() => {
+        vi.mocked(getUserSession).mockResolvedValue(null)
+      })
+
+      test('Should return unauthorised status code', async () => {
+        const { result, statusCode } = await server.inject({
+          method: 'POST',
+          url: '/credited-tonnage',
+          payload: {}
+        })
+
+        expect(statusCode).toBe(statusCodes.unauthorised)
+        expect(result).toEqual(expect.stringContaining('Unauthorised'))
+      })
+    })
+
+    describe('When user is authenticated', () => {
+      beforeEach(() => {
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+      })
+
+      test('Should return the CSV with a timestamped filename', async () => {
+        stubBackendResponse(mockCreditedTonnage)
+
+        const { cookie, crumb } = await getCsrfToken(
+          server,
+          '/credited-tonnage',
+          { strategy: 'session', credentials: mockUserSession }
+        )
+
+        const { statusCode, headers, payload } = await server.inject({
+          method: 'POST',
+          url: '/credited-tonnage',
+          headers: { cookie },
+          payload: { crumb },
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(headers['content-type']).toContain('text/csv')
+        expect(headers['content-disposition']).toBe(
+          'attachment; filename="credited-tonnage-2026-07-16T14-30-00Z.csv"'
+        )
+        expect(payload).toContain(
+          'month,organisation_id,accreditation_number,material,processing_type,total_credited,eligible_for_waste_balance,deductible_from_credited'
+        )
+        expect(payload).toContain(
+          '2026-01,500001,ACC-456,plastic,reprocessor,1000.00,900.00,50.00'
+        )
+      })
+
+      test('Should download a header-only CSV for an empty dataset', async () => {
+        stubBackendResponse({
+          meta: { generatedAt: '2026-07-16T12:00:00.000Z' },
+          data: []
+        })
+
+        const { cookie, crumb } = await getCsrfToken(
+          server,
+          '/credited-tonnage',
+          { strategy: 'session', credentials: mockUserSession }
+        )
+
+        const { statusCode, payload } = await server.inject({
+          method: 'POST',
+          url: '/credited-tonnage',
+          headers: { cookie },
+          payload: { crumb },
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        const lines = payload.split(/\r?\n/).filter((line) => line.length > 0)
+        expect(lines).toHaveLength(1)
+        expect(lines[0]).toBe(
+          'month,organisation_id,accreditation_number,material,processing_type,total_credited,eligible_for_waste_balance,deductible_from_credited'
+        )
+      })
+
+      test('Should redirect back and surface the flashed error on the page', async () => {
+        // The POST is the second backend call: the getCsrfToken GET succeeds,
+        // the POST fails (flashing the error), and the follow-up GET succeeds
+        // so the page can render the flash.
+        let backendCall = 0
+        mswServer.use(
+          http.get(
+            `${backendUrl}/v1/admin/waste-balances/credited-tonnage`,
+            () => {
+              backendCall += 1
+              if (backendCall === 2) {
+                return HttpResponse.json(
+                  { message: 'Server error' },
+                  { status: statusCodes.internalServerError }
+                )
+              }
+              return HttpResponse.json(mockCreditedTonnage)
+            }
+          )
+        )
+
+        const { cookie, crumb } = await getCsrfToken(
+          server,
+          '/credited-tonnage',
+          { strategy: 'session', credentials: mockUserSession }
+        )
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: '/credited-tonnage',
+          headers: { cookie },
+          payload: { crumb },
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe('/credited-tonnage')
+
+        const setCookie = headers['set-cookie']
+        const flashedCookie = (
+          Array.isArray(setCookie) ? setCookie : [setCookie]
+        )
+          .map((c) => c.split(';')[0])
+          .join('; ')
+
+        const followUp = await server.inject({
+          method: 'GET',
+          url: '/credited-tonnage',
+          headers: { cookie: flashedCookie },
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        expect(followUp.statusCode).toBe(statusCodes.ok)
+        const $ = cheerio.load(followUp.result)
+        expect($('.govuk-error-summary').text()).toContain('Server error')
+      })
+
+      test('Should reject a request without a CSRF token', async () => {
+        stubBackendResponse(mockCreditedTonnage)
+
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url: '/credited-tonnage',
+          payload: {},
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        expect(statusCode).toBe(statusCodes.forbidden)
       })
     })
   })

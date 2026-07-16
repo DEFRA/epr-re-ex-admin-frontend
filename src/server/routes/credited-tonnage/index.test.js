@@ -17,11 +17,11 @@ describe('#credited-tonnage routes plugin', () => {
     expect(typeof creditedTonnage.plugin.register).toBe('function')
   })
 
-  test('registers one route', () => {
+  test('registers two routes', () => {
     creditedTonnage.plugin.register(mockServer)
 
     const routes = mockServer.route.mock.calls[0][0]
-    expect(routes).toHaveLength(1)
+    expect(routes).toHaveLength(2)
   })
 
   test('registers GET /credited-tonnage with a handler', () => {
@@ -33,5 +33,16 @@ describe('#credited-tonnage routes plugin', () => {
       path: '/credited-tonnage'
     })
     expect(routes[0]).toHaveProperty('handler')
+  })
+
+  test('registers POST /credited-tonnage with a handler', () => {
+    creditedTonnage.plugin.register(mockServer)
+
+    const routes = mockServer.route.mock.calls[0][0]
+    expect(routes[1]).toMatchObject({
+      method: 'POST',
+      path: '/credited-tonnage'
+    })
+    expect(routes[1]).toHaveProperty('handler')
   })
 })

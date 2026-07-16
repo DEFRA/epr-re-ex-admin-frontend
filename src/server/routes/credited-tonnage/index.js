@@ -1,4 +1,5 @@
 import { creditedTonnageGetController } from './controller.get.js'
+import { creditedTonnagePostController } from './controller.post.js'
 
 export const creditedTonnage = {
   plugin: {
@@ -9,6 +10,11 @@ export const creditedTonnage = {
           method: 'GET',
           path: '/credited-tonnage',
           ...creditedTonnageGetController
+        },
+        {
+          method: 'POST',
+          path: '/credited-tonnage',
+          ...creditedTonnagePostController
         }
       ])
     }
