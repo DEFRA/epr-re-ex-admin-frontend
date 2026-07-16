@@ -42,7 +42,7 @@ describe('credited-tonnage formatters', () => {
         tonnage: {
           totalCredited: 1000,
           eligibleForWasteBalance: 900,
-          deductibleFromCredited: 50
+          sentOnDeductions: 50
         }
       }
 
@@ -54,7 +54,7 @@ describe('credited-tonnage formatters', () => {
         type: 'Reprocessor',
         totalCredited: '1,000.00',
         eligibleForWasteBalance: '900.00',
-        deductibleFromCredited: '50.00'
+        sentOnDeductions: '50.00'
       })
     })
 
@@ -71,7 +71,7 @@ describe('credited-tonnage formatters', () => {
         tonnage: {
           totalCredited: 12.5,
           eligibleForWasteBalance: 12.5,
-          deductibleFromCredited: 0
+          sentOnDeductions: 0
         }
       }
 
@@ -80,7 +80,7 @@ describe('credited-tonnage formatters', () => {
       expect(row.organisationId).toBe('500042')
       expect(row.material).toBe('Glass re-melt')
       expect(row.type).toBe('Exporter')
-      expect(row.deductibleFromCredited).toBe('0.00')
+      expect(row.sentOnDeductions).toBe('0.00')
     })
   })
 })

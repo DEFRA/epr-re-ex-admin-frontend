@@ -42,7 +42,7 @@
             { text: row.type },
             { text: row.totalCredited, format: "numeric" },
             { text: row.eligibleForWasteBalance, format: "numeric" },
-            { text: row.deductibleFromCredited, format: "numeric" }
+            { text: row.sentOnDeductions, format: "numeric" }
           ]]) %}
         {% endfor %}
 
@@ -57,7 +57,7 @@
             { text: "Type" },
             { text: "Total credited", format: "numeric" },
             { text: "Eligible for waste balance", format: "numeric" },
-            { text: "Deductible from credited", format: "numeric" }
+            { text: "Sent-on deductions", format: "numeric" }
           ],
           rows: tableRows
         }) }}

@@ -24,7 +24,7 @@ const buildRow = (overrides = {}) => ({
   tonnage: {
     totalCredited: 1000,
     eligibleForWasteBalance: 900,
-    deductibleFromCredited: 50
+    sentOnDeductions: 50
   },
   ...overrides
 })
@@ -94,7 +94,7 @@ describe('creditedTonnagePostController', () => {
 
     const csv = mockH.response.mock.calls[0][0]
     expect(dataLines(csv)[0]).toBe(
-      'month,organisation_id,accreditation_number,material,processing_type,total_credited,eligible_for_waste_balance,deductible_from_credited'
+      'month,organisation_id,accreditation_number,material,processing_type,total_credited,eligible_for_waste_balance,sent_on_deductions'
     )
   })
 
@@ -170,7 +170,7 @@ describe('creditedTonnagePostController', () => {
           tonnage: {
             totalCredited: 12.5,
             eligibleForWasteBalance: 0,
-            deductibleFromCredited: 3.456
+            sentOnDeductions: 3.456
           }
         })
       ]
@@ -190,7 +190,7 @@ describe('creditedTonnagePostController', () => {
           tonnage: {
             totalCredited: 1234567,
             eligibleForWasteBalance: 1000,
-            deductibleFromCredited: 0
+            sentOnDeductions: 0
           }
         })
       ]

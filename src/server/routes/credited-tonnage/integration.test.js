@@ -53,7 +53,7 @@ describe('credited-tonnage', () => {
         tonnage: {
           totalCredited: 1000,
           eligibleForWasteBalance: 900,
-          deductibleFromCredited: 50
+          sentOnDeductions: 50
         }
       }
     ]
@@ -250,7 +250,7 @@ describe('credited-tonnage', () => {
           'attachment; filename="credited-tonnage-2026-07-16T14-30-00Z.csv"'
         )
         expect(payload).toContain(
-          'month,organisation_id,accreditation_number,material,processing_type,total_credited,eligible_for_waste_balance,deductible_from_credited'
+          'month,organisation_id,accreditation_number,material,processing_type,total_credited,eligible_for_waste_balance,sent_on_deductions'
         )
         expect(payload).toContain(
           '2026-01,500001,ACC-456,plastic,reprocessor,1000.00,900.00,50.00'
@@ -281,7 +281,7 @@ describe('credited-tonnage', () => {
         const lines = payload.split(/\r?\n/).filter((line) => line.length > 0)
         expect(lines).toHaveLength(1)
         expect(lines[0]).toBe(
-          'month,organisation_id,accreditation_number,material,processing_type,total_credited,eligible_for_waste_balance,deductible_from_credited'
+          'month,organisation_id,accreditation_number,material,processing_type,total_credited,eligible_for_waste_balance,sent_on_deductions'
         )
       })
 

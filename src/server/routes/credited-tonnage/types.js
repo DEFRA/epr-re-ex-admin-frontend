@@ -13,7 +13,7 @@
  *   tonnage: {
  *     totalCredited: number
  *     eligibleForWasteBalance: number
- *     deductibleFromCredited: number
+ *     sentOnDeductions: number
  *   }
  * }} CreditedTonnageApiRow
  */
@@ -29,7 +29,7 @@
  *   type: string
  *   totalCredited: string
  *   eligibleForWasteBalance: string
- *   deductibleFromCredited: string
+ *   sentOnDeductions: string
  * }} CreditedTonnageRow
  */
 

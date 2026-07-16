@@ -30,7 +30,7 @@ function buildDataRow(row) {
     sanitizeFormulaInjection(row.accreditation.processingType),
     row.tonnage.totalCredited.toFixed(tonnageDecimals),
     row.tonnage.eligibleForWasteBalance.toFixed(tonnageDecimals),
-    row.tonnage.deductibleFromCredited.toFixed(tonnageDecimals)
+    row.tonnage.sentOnDeductions.toFixed(tonnageDecimals)
   ]
 }
 
@@ -49,7 +49,7 @@ function generateCsv(data) {
       'processing_type',
       'total_credited',
       'eligible_for_waste_balance',
-      'deductible_from_credited'
+      'sent_on_deductions'
     ]
   ]
 

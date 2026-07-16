@@ -44,6 +44,6 @@ export function mapCreditedTonnageRow(row) {
     type: formatProcessingType(row.accreditation.processingType),
     totalCredited: formatNumber(row.tonnage.totalCredited),
     eligibleForWasteBalance: formatNumber(row.tonnage.eligibleForWasteBalance),
-    deductibleFromCredited: formatNumber(row.tonnage.deductibleFromCredited)
+    sentOnDeductions: formatNumber(row.tonnage.sentOnDeductions)
   }
 }

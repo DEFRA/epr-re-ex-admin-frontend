@@ -42,7 +42,7 @@ describe('credited-tonnage GET controller', () => {
           tonnage: {
             totalCredited: 1000,
             eligibleForWasteBalance: 900,
-            deductibleFromCredited: 50
+            sentOnDeductions: 50
           }
         }
       ]
@@ -69,7 +69,7 @@ describe('credited-tonnage GET controller', () => {
         type: 'Reprocessor',
         totalCredited: '1,000.00',
         eligibleForWasteBalance: '900.00',
-        deductibleFromCredited: '50.00'
+        sentOnDeductions: '50.00'
       }
     ])
   })
