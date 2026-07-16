@@ -79,7 +79,7 @@ describe('GET /auth/sign-out', () => {
         `<div data-logout-url="${expectedSignOutUrl}" id="sign-out-data"></div>`
       )
       expect(response.result).toContain(
-        '<script type="text/javascript" src="/public/javascripts/sign-out'
+        '<script type="module" src="/public/javascripts/sign-out'
       )
     })
 
