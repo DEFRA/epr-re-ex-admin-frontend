@@ -6,7 +6,9 @@ const statuses =
   'awaiting_authorisation,awaiting_acceptance,accepted,awaiting_cancellation,cancelled,deleted'
 
 function getDisplayName(org) {
-  if (!org) return ''
+  if (!org) {
+    return ''
+  }
   return org.tradingName || org.name || ''
 }
 
