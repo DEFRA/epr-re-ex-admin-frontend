@@ -4,6 +4,7 @@ import { badGateway, classifierTail, internal } from './logging/cdp-boom.js'
 import { getUserSession } from './auth/get-user-session.js'
 import { withTraceId } from '@defra/hapi-tracing'
 import { getTracingHeaderName } from './request-tracing.js'
+
 /** @import { Request } from '@hapi/hapi' */
 
 /**

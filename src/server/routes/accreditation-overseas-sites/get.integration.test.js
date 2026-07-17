@@ -13,6 +13,7 @@ import {
 } from '@testing-library/dom'
 import { Window } from 'happy-dom'
 import { vi } from 'vitest'
+
 /** @import { OverseasSites } from './controller.get.js' */
 
 vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({

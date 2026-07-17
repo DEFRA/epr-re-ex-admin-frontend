@@ -1,5 +1,6 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getUserSession } from './get-user-session.js'
+
 /** @import { Lifecycle } from '@hapi/hapi' */
 
 /**

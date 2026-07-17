@@ -2,6 +2,7 @@ import { vi, describe, test, beforeEach, expect } from 'vitest'
 
 import { requireScope } from './require-scope.js'
 import { getUserSession } from './get-user-session.js'
+
 /** @import { Request, ResponseToolkit } from '@hapi/hapi' */
 /** @import { Mock } from 'vitest' */
 

@@ -6,6 +6,7 @@ import { fetchAdminMe } from '#server/common/helpers/auth/fetch-admin-me.js'
 import { randomUUID } from 'node:crypto'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
 import { asRequest } from '#server/common/test-helpers/fixtures.js'
+
 /** @import { ResponseToolkit } from '@hapi/hapi' */
 
 vi.mock('#server/common/helpers/auth/create-user-session.js')

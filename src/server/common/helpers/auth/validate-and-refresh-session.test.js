@@ -3,6 +3,7 @@ import Jwt from '@hapi/jwt'
 
 import { validateAndRefreshSession } from './validate-and-refresh-session.js'
 import { makeToken } from '#server/common/test-helpers/test-constants.js'
+
 /** @import { HapiJwt } from '@hapi/jwt' */
 
 /** @typedef {HapiJwt.Artifacts} JwtArtifacts */
