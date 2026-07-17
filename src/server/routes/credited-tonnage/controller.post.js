@@ -2,6 +2,7 @@ import { writeToString } from '@fast-csv/format'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { sanitizeFormulaInjection } from '#server/common/helpers/sanitize-formula-injection.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
+/** @import { CreditedTonnageApiRow } from './types.js' */
 
 const logger = createLogger()
 
@@ -18,7 +19,7 @@ function toFilenameTimestamp(isoTimestamp) {
 }
 
 /**
- * @param {import('./types.js').CreditedTonnageApiRow} row
+ * @param {CreditedTonnageApiRow} row
  * @returns {string[]}
  */
 function buildDataRow(row) {
@@ -35,7 +36,7 @@ function buildDataRow(row) {
 }
 
 /**
- * @param {import('./types.js').CreditedTonnageApiRow[]} data
+ * @param {CreditedTonnageApiRow[]} data
  * @returns {Promise<string>}
  */
 function generateCsv(data) {

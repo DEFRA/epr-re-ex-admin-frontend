@@ -11,6 +11,8 @@ import {
 import { http, server as mswServer, HttpResponse } from '#vite/setup-msw.js'
 import Jwt from '@hapi/jwt'
 
+/** @import * as MetricsModule from '#server/common/helpers/metrics/index.js' */
+
 const mock = {
   cdpAuditing: vi.fn(),
   signInSuccessMetric: vi.fn(),
@@ -19,9 +21,7 @@ const mock = {
 
 vi.mock('#server/common/helpers/metrics/index.js', async (importOriginal) => ({
   metrics: {
-    .../** @type {typeof import('#server/common/helpers/metrics/index.js')} */ (
-      await importOriginal()
-    ).metrics,
+    .../** @type {typeof MetricsModule} */ (await importOriginal()).metrics,
     signInFailure: () => mock.signInFailureMetric(),
     signInSuccess: () => mock.signInSuccessMetric()
   }

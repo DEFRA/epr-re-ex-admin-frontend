@@ -13,8 +13,7 @@ import { config } from '#config/config.js'
 import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 import { http, HttpResponse, server as mswServer } from '#vite/setup-msw.js'
-
-/** @typedef {import('#server/common/hapi-types.js').HapiRequest} HapiRequest */
+/** @import { HapiRequest } from '#server/common/hapi-types.js' */
 
 /**
  * The helper reads the request only via the mocked `getUserSession`, so an

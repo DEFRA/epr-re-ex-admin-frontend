@@ -3,8 +3,9 @@ import { initJSONEditor } from './jsoneditor.helpers.js'
 import rawValidate from '#server/common/schemas/organisation.ajv.js'
 // @ts-expect-error -- JSON import; eslint parser doesn't support import attributes yet
 import schema from '#server/common/schemas/organisation.json'
+/** @import { ValidateFunction } from 'ajv' */
 
-/** @type {import('ajv').ValidateFunction} */
+/** @type {ValidateFunction} */
 const validate = rawValidate
 
 initJSONEditor({

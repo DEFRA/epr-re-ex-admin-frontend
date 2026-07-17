@@ -1,5 +1,6 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getUserSession } from './get-user-session.js'
+/** @import { Lifecycle } from '@hapi/hapi' */
 
 /**
  * Hapi pre-handler that gates a route on the presence of an `admin.*` scope
@@ -12,7 +13,7 @@ import { getUserSession } from './get-user-session.js'
  * than letting the backend 403 surface as a generic error after a render.
  *
  * @param {string} scope - Required scope, e.g. 'admin.write' or 'admin.dlq.purge'.
- * @returns {{ method: import('@hapi/hapi').Lifecycle.Method }}
+ * @returns {{ method: Lifecycle.Method }}
  */
 export function requireScope(scope) {
   return {

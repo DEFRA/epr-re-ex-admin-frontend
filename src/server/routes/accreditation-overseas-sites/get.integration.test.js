@@ -13,6 +13,7 @@ import {
 } from '@testing-library/dom'
 import { Window } from 'happy-dom'
 import { vi } from 'vitest'
+/** @import { OverseasSites } from './controller.get.js' */
 
 vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
   getUserSession: vi.fn().mockReturnValue(null)
@@ -68,10 +69,6 @@ describe('#accreditationOverseasSitesController', () => {
     companyName: 'ACME ltd',
     registrations: []
   }
-
-  /**
-   * @typedef {import('./controller.get.js').OverseasSites} OverseasSites
-   */
 
   /** @type {OverseasSites} */
   const mockSites = {

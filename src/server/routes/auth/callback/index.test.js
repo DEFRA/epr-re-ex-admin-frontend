@@ -6,6 +6,7 @@ import { fetchAdminMe } from '#server/common/helpers/auth/fetch-admin-me.js'
 import { randomUUID } from 'node:crypto'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
 import { asRequest } from '#server/common/test-helpers/fixtures.js'
+/** @import { ResponseToolkit } from '@hapi/hapi' */
 
 vi.mock('#server/common/helpers/auth/create-user-session.js')
 vi.mock('#server/common/helpers/auth/fetch-admin-me.js')
@@ -15,10 +16,9 @@ vi.mock('node:crypto')
 /**
  * Cast a partial mock toolkit to the full `ResponseToolkit` shape.
  * @param {unknown} obj
- * @returns {import('@hapi/hapi').ResponseToolkit}
+ * @returns {ResponseToolkit}
  */
-const asToolkit = (obj) =>
-  /** @type {import('@hapi/hapi').ResponseToolkit} */ (obj)
+const asToolkit = (obj) => /** @type {ResponseToolkit} */ (obj)
 
 const ADMIN_ME_DEFAULT = {
   scopes: ['admin.read', 'admin.write', 'admin.dlq.purge']
