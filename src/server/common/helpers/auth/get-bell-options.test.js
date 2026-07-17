@@ -81,7 +81,9 @@ describe('#getBellOptions', () => {
 
   test('Should set isSecure and forceHttps to true in production', () => {
     config.get = vi.fn().mockImplementation((key) => {
-      if (key === 'isProduction') return true
+      if (key === 'isProduction') {
+        return true
+      }
       return mockConfig[key]
     })
 
@@ -187,7 +189,9 @@ describe('#getBellOptions', () => {
 
     testUrls.forEach((url) => {
       config.get = vi.fn().mockImplementation((key) => {
-        if (key === 'appBaseUrl') return url
+        if (key === 'appBaseUrl') {
+          return url
+        }
         return mockConfig[key]
       })
 
