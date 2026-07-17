@@ -48,7 +48,9 @@ describe('#getCookieOptions', () => {
 
   test('Should set isSecure to true in production', () => {
     config.get = vi.fn().mockImplementation((key) => {
-      if (key === 'isProduction') return true
+      if (key === 'isProduction') {
+        return true
+      }
       return mockConfig[key]
     })
 
@@ -233,7 +235,9 @@ describe('#getCookieOptions', () => {
 
     passwords.forEach((password) => {
       config.get = vi.fn().mockImplementation((key) => {
-        if (key === 'session.cookie.password') return password
+        if (key === 'session.cookie.password') {
+          return password
+        }
         return mockConfig[key]
       })
 

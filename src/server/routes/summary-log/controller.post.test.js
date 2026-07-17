@@ -8,7 +8,9 @@ vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
 
 vi.mock('#server/common/helpers/formatters.js', () => ({
   formatDateTime: vi.fn((isoString) => {
-    if (!isoString) return ''
+    if (!isoString) {
+      return ''
+    }
     if (isoString.includes('2026-02-06T14:30')) {
       return '6 February 2026 at 2:30pm'
     }

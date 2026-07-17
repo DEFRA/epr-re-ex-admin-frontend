@@ -7,7 +7,9 @@ import { buildPrnApiUrl } from './controller.js'
 const dateFormat = 'dd/MM/yyyy'
 
 function getDisplayName(org) {
-  if (!org) return ''
+  if (!org) {
+    return ''
+  }
   return org.tradingName || org.name || ''
 }
 

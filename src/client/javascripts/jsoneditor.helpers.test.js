@@ -1099,12 +1099,24 @@ describe('JSONEditor Helpers', () => {
       // Mock document.getElementById
       originalGetElementById = document.getElementById
       document.getElementById = vi.fn((id) => {
-        if (id === 'jsoneditor') return container
-        if (id === 'organisation-json') return payloadEl
-        if (id === 'jsoneditor-organisation-object') return hiddenInput
-        if (id === 'jsoneditor-reset-button') return resetButton
-        if (id === 'jsoneditor-save-button') return saveButton
-        if (id === 'organisation-success-message') return messageEl
+        if (id === 'jsoneditor') {
+          return container
+        }
+        if (id === 'organisation-json') {
+          return payloadEl
+        }
+        if (id === 'jsoneditor-organisation-object') {
+          return hiddenInput
+        }
+        if (id === 'jsoneditor-reset-button') {
+          return resetButton
+        }
+        if (id === 'jsoneditor-save-button') {
+          return saveButton
+        }
+        if (id === 'organisation-success-message') {
+          return messageEl
+        }
         return null
       })
 
@@ -1208,10 +1220,18 @@ describe('JSONEditor Helpers', () => {
       document.getElementById = /** @type {typeof document.getElementById} */ (
         /** @type {unknown} */ (
           vi.fn((id) => {
-            if (id === 'custom-container') return customContainer
-            if (id === 'custom-payload') return customPayload
-            if (id === 'custom-input') return customInput
-            if (id === 'custom-button') return customButton
+            if (id === 'custom-container') {
+              return customContainer
+            }
+            if (id === 'custom-payload') {
+              return customPayload
+            }
+            if (id === 'custom-input') {
+              return customInput
+            }
+            if (id === 'custom-button') {
+              return customButton
+            }
             return null
           })
         )
@@ -1251,8 +1271,12 @@ describe('JSONEditor Helpers', () => {
 
     it('should not initialise when payload element does not exist', () => {
       document.getElementById = vi.fn((id) => {
-        if (id === 'jsoneditor') return container
-        if (id === 'organisation-json') return null
+        if (id === 'jsoneditor') {
+          return container
+        }
+        if (id === 'organisation-json') {
+          return null
+        }
         return null
       })
 
@@ -1283,10 +1307,18 @@ describe('JSONEditor Helpers', () => {
 
     it('should handle missing hidden input', () => {
       document.getElementById = vi.fn((id) => {
-        if (id === 'jsoneditor') return container
-        if (id === 'organisation-json') return payloadEl
-        if (id === 'jsoneditor-organisation-object') return null
-        if (id === 'jsoneditor-reset-button') return resetButton
+        if (id === 'jsoneditor') {
+          return container
+        }
+        if (id === 'organisation-json') {
+          return payloadEl
+        }
+        if (id === 'jsoneditor-organisation-object') {
+          return null
+        }
+        if (id === 'jsoneditor-reset-button') {
+          return resetButton
+        }
         return null
       })
 
@@ -1336,13 +1368,27 @@ describe('JSONEditor Helpers', () => {
       const warningPlaceholder = { innerHTML: '' }
       const originalGetById = document.getElementById
       document.getElementById = vi.fn((id) => {
-        if (id === 'jsoneditor') return container
-        if (id === 'organisation-json') return payloadEl
-        if (id === 'jsoneditor-organisation-object') return hiddenInput
-        if (id === 'jsoneditor-reset-button') return resetButton
-        if (id === 'jsoneditor-save-button') return saveButton
-        if (id === 'organisation-success-message') return messageEl
-        if (id === 'stale-draft-warning-placeholder') return warningPlaceholder
+        if (id === 'jsoneditor') {
+          return container
+        }
+        if (id === 'organisation-json') {
+          return payloadEl
+        }
+        if (id === 'jsoneditor-organisation-object') {
+          return hiddenInput
+        }
+        if (id === 'jsoneditor-reset-button') {
+          return resetButton
+        }
+        if (id === 'jsoneditor-save-button') {
+          return saveButton
+        }
+        if (id === 'organisation-success-message') {
+          return messageEl
+        }
+        if (id === 'stale-draft-warning-placeholder') {
+          return warningPlaceholder
+        }
         return null
       })
 
@@ -1389,12 +1435,24 @@ describe('JSONEditor Helpers', () => {
 
       const originalGetById = document.getElementById
       document.getElementById = vi.fn((id) => {
-        if (id === 'jsoneditor') return container
-        if (id === 'organisation-json') return payloadEl
-        if (id === 'jsoneditor-organisation-object') return hiddenInput
-        if (id === 'jsoneditor-reset-button') return resetButton
-        if (id === 'jsoneditor-save-button') return saveButton
-        if (id === 'organisation-success-message') return messageEl
+        if (id === 'jsoneditor') {
+          return container
+        }
+        if (id === 'organisation-json') {
+          return payloadEl
+        }
+        if (id === 'jsoneditor-organisation-object') {
+          return hiddenInput
+        }
+        if (id === 'jsoneditor-reset-button') {
+          return resetButton
+        }
+        if (id === 'jsoneditor-save-button') {
+          return saveButton
+        }
+        if (id === 'organisation-success-message') {
+          return messageEl
+        }
         return null
       })
 
@@ -1416,11 +1474,21 @@ describe('JSONEditor Helpers', () => {
     it('should not throw when the reset button is missing', () => {
       const originalGetById = document.getElementById
       document.getElementById = vi.fn((id) => {
-        if (id === 'jsoneditor') return container
-        if (id === 'organisation-json') return payloadEl
-        if (id === 'jsoneditor-organisation-object') return hiddenInput
-        if (id === 'jsoneditor-save-button') return saveButton
-        if (id === 'organisation-success-message') return messageEl
+        if (id === 'jsoneditor') {
+          return container
+        }
+        if (id === 'organisation-json') {
+          return payloadEl
+        }
+        if (id === 'jsoneditor-organisation-object') {
+          return hiddenInput
+        }
+        if (id === 'jsoneditor-save-button') {
+          return saveButton
+        }
+        if (id === 'organisation-success-message') {
+          return messageEl
+        }
         return null
       })
 
@@ -1663,11 +1731,21 @@ describe('JSONEditor Helpers', () => {
 
     it('should handle missing save button gracefully', () => {
       document.getElementById = vi.fn((id) => {
-        if (id === 'jsoneditor') return container
-        if (id === 'organisation-json') return payloadEl
-        if (id === 'jsoneditor-organisation-object') return hiddenInput
-        if (id === 'jsoneditor-reset-button') return resetButton
-        if (id === 'jsoneditor-save-button') return null
+        if (id === 'jsoneditor') {
+          return container
+        }
+        if (id === 'organisation-json') {
+          return payloadEl
+        }
+        if (id === 'jsoneditor-organisation-object') {
+          return hiddenInput
+        }
+        if (id === 'jsoneditor-reset-button') {
+          return resetButton
+        }
+        if (id === 'jsoneditor-save-button') {
+          return null
+        }
         return null
       })
 
@@ -1733,8 +1811,12 @@ describe('JSONEditor Helpers', () => {
 
         const originalGetById = document.getElementById
         document.getElementById = vi.fn((id) => {
-          if (id === 'add-registration-button') return addRegistrationButton
-          if (id === 'add-accreditation-button') return addAccreditationButton
+          if (id === 'add-registration-button') {
+            return addRegistrationButton
+          }
+          if (id === 'add-accreditation-button') {
+            return addAccreditationButton
+          }
           return originalGetById(id)
         })
       })
@@ -1875,13 +1957,27 @@ describe('JSONEditor Helpers', () => {
 
       it('should not throw when append button does not exist in DOM', () => {
         document.getElementById = vi.fn((id) => {
-          if (id === 'jsoneditor') return container
-          if (id === 'organisation-json') return payloadEl
-          if (id === 'jsoneditor-organisation-object') return hiddenInput
-          if (id === 'jsoneditor-reset-button') return resetButton
-          if (id === 'jsoneditor-save-button') return saveButton
-          if (id === 'add-registration-button') return null
-          if (id === 'add-accreditation-button') return null
+          if (id === 'jsoneditor') {
+            return container
+          }
+          if (id === 'organisation-json') {
+            return payloadEl
+          }
+          if (id === 'jsoneditor-organisation-object') {
+            return hiddenInput
+          }
+          if (id === 'jsoneditor-reset-button') {
+            return resetButton
+          }
+          if (id === 'jsoneditor-save-button') {
+            return saveButton
+          }
+          if (id === 'add-registration-button') {
+            return null
+          }
+          if (id === 'add-accreditation-button') {
+            return null
+          }
           return null
         })
 
