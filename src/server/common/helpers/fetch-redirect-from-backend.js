@@ -5,10 +5,12 @@ import { getUserSession } from './auth/get-user-session.js'
 import { withTraceId } from '@defra/hapi-tracing'
 import { getTracingHeaderName } from './request-tracing.js'
 
+/** @import { Request } from '@hapi/hapi' */
+
 /**
  * Fetch a redirect response from the backend without following it.
  * Returns the Location header URL from the redirect response.
- * @param {import('@hapi/hapi').Request} request - The Hapi request object
+ * @param {Request} request - The Hapi request object
  * @param {string} path - The API path to append to the backend URL
  * @returns {Promise<string>} The redirect Location URL
  */

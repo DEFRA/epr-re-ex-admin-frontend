@@ -4,10 +4,12 @@ import { sanitizeFormulaInjection } from '#server/common/helpers/sanitize-formul
 import { formatDateTime } from '#server/common/helpers/formatters.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
 
+/** @import { ReportSubmissionsRow } from './types.js' */
+
 const logger = createLogger()
 
 /**
- * @param {import('./types.js').ReportSubmissionsRow} row
+ * @param {ReportSubmissionsRow} row
  * @returns {(string | number)[]}
  */
 function buildDataRow(row) {
@@ -48,7 +50,7 @@ function buildDataRow(row) {
 }
 
 /**
- * @param {import('./types.js').ReportSubmissionsRow[]} reportSubmissions
+ * @param {ReportSubmissionsRow[]} reportSubmissions
  * @param {string} generatedAt
  * @returns {Promise<string>}
  */

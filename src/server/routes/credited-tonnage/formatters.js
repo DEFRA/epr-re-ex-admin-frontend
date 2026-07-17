@@ -1,6 +1,8 @@
 import { format, parseISO } from 'date-fns'
 import { formatMaterialName } from '#server/common/helpers/format-material-name.js'
 
+/** @import { CreditedTonnageApiRow, CreditedTonnageRow } from './types.js' */
+
 const numberFormatter = new Intl.NumberFormat('en-GB', {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2
@@ -32,8 +34,8 @@ export function formatProcessingType(processingType) {
 }
 
 /**
- * @param {import('./types.js').CreditedTonnageApiRow} row
- * @returns {import('./types.js').CreditedTonnageRow}
+ * @param {CreditedTonnageApiRow} row
+ * @returns {CreditedTonnageRow}
  */
 export function mapCreditedTonnageRow(row) {
   return {

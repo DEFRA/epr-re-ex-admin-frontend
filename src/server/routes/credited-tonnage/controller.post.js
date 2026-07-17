@@ -3,6 +3,8 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
 import { sanitizeFormulaInjection } from '#server/common/helpers/sanitize-formula-injection.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
 
+/** @import { CreditedTonnageApiRow } from './types.js' */
+
 const logger = createLogger()
 
 const tonnageDecimals = 2
@@ -18,7 +20,7 @@ function toFilenameTimestamp(isoTimestamp) {
 }
 
 /**
- * @param {import('./types.js').CreditedTonnageApiRow} row
+ * @param {CreditedTonnageApiRow} row
  * @returns {string[]}
  */
 function buildDataRow(row) {
@@ -35,7 +37,7 @@ function buildDataRow(row) {
 }
 
 /**
- * @param {import('./types.js').CreditedTonnageApiRow[]} data
+ * @param {CreditedTonnageApiRow[]} data
  * @returns {Promise<string>}
  */
 function generateCsv(data) {

@@ -3,6 +3,9 @@ import { vi, describe, test, beforeEach, expect } from 'vitest'
 import { requireScope } from './require-scope.js'
 import { getUserSession } from './get-user-session.js'
 
+/** @import { Request, ResponseToolkit } from '@hapi/hapi' */
+/** @import { Mock } from 'vitest' */
+
 vi.mock('./get-user-session.js')
 
 /**
@@ -11,10 +14,10 @@ vi.mock('./get-user-session.js')
  * methods Hapi normally returns from `h.view(...)` can be asserted directly
  * on `h` (the test fixture wires them with `mockReturnThis` to flatten the
  * chain).
- * @typedef {import('@hapi/hapi').ResponseToolkit & {
- *   view: import('vitest').Mock,
- *   code: import('vitest').Mock,
- *   takeover: import('vitest').Mock
+ * @typedef {ResponseToolkit & {
+ *   view: Mock,
+ *   code: Mock,
+ *   takeover: Mock
  * }} MockToolkit
  */
 
@@ -29,9 +32,9 @@ describe('#requireScope', () => {
       })
     )
 
-  /** @returns {import('@hapi/hapi').Request} */
+  /** @returns {Request} */
   const mockRequest = () =>
-    /** @type {import('@hapi/hapi').Request} */ (
+    /** @type {Request} */ (
       /** @type {unknown} */ ({ logger: { info: vi.fn() } })
     )
 

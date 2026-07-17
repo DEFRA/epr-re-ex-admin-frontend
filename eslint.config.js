@@ -1,4 +1,5 @@
 import neostandard from 'neostandard'
+import jsdoc from 'eslint-plugin-jsdoc'
 
 export default [
   ...neostandard({
@@ -10,6 +11,18 @@ export default [
     noJsx: true,
     noStyle: true
   }),
+  {
+    plugins: { jsdoc },
+    rules: {
+      // Prefer `@import { X } from '...'` over inline `import('...').X` in types.
+      // named-import avoids the fixer's mangled namespace output; do not rely on
+      // --fix (wrong placement, no block merge) - hoist by hand when flagged.
+      'jsdoc/prefer-import-tag': [
+        'error',
+        { outputType: 'named-import', exemptTypedefs: false }
+      ]
+    }
+  },
   {
     rules: {
       curly: ['error', 'all'],
