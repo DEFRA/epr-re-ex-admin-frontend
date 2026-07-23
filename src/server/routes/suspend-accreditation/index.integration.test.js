@@ -86,14 +86,14 @@ describe('suspend-accreditation', () => {
 
   const stubSuspendSuccess = () =>
     mswServer.use(
-      http.post(backendSuspendUrl, () =>
+      http.patch(backendSuspendUrl, () =>
         HttpResponse.json({ status: 'suspended' })
       )
     )
 
   const stubSuspendFailure = (status = 422) =>
     mswServer.use(
-      http.post(backendSuspendUrl, () =>
+      http.patch(backendSuspendUrl, () =>
         HttpResponse.json(
           { message: 'Cannot transition from suspended to suspended' },
           { status }
@@ -103,7 +103,7 @@ describe('suspend-accreditation', () => {
 
   const stubSuspendFailureWithoutMessage = (status = 400) =>
     mswServer.use(
-      http.post(backendSuspendUrl, () =>
+      http.patch(backendSuspendUrl, () =>
         HttpResponse.json({ error: 'Bad request' }, { status })
       )
     )

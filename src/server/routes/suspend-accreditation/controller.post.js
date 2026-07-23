@@ -9,7 +9,7 @@ export const suspendAccreditationPostController = {
       await fetchJsonFromBackend(
         request,
         `/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/suspend`,
-        { method: 'POST' }
+        { method: 'PATCH' }
       )
     } catch (error) {
       request.logger.error({
