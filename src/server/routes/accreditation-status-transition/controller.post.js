@@ -1,4 +1,5 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
 
 /** @import {AccreditationStatusTransition} from './transitions.js' */
 
@@ -28,8 +29,13 @@ export const createTransitionPostController = (transition) => ({
         message: transition.logMessage
       })
 
+      // Only surface backend messages for client errors: 5xx and network
+      // failures carry Boom's generic message (or the raw fetch error, which
+      // leaks the backend URL), so those get the friendly fallback instead.
+      const { statusCode, payload } = error.output
       const errorMessage =
-        error.output?.payload?.message || transition.errorMessage
+        (statusCode < statusCodes.internalServerError && payload?.message) ||
+        transition.errorMessage
 
       request.yar.set('error', errorMessage)
     }

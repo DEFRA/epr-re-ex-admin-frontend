@@ -283,6 +283,54 @@ describe('accreditation-status-transition', () => {
         const $ = cheerio.load(result)
         expect($('.govuk-error-summary').text()).toContain(fallbackError)
       })
+
+      test(`failed ${action} with a non-object error body falls back to the generic flash error`, async () => {
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+        mswServer.use(
+          http.post(backendStatusHistoryUrl, () =>
+            HttpResponse.json(null, { status: 422 })
+          )
+        )
+
+        const { postResponse, redirectCookie } = await postTransition()
+        expect(postResponse.statusCode).toBe(statusCodes.found)
+        expect(postResponse.headers.location).toBe(overviewUrl)
+
+        stubOverview()
+        stubCalendarAndSummaryLogs()
+        const { result } = await server.inject({
+          method: 'GET',
+          url: overviewUrl,
+          headers: { cookie: redirectCookie },
+          auth: writeAuth
+        })
+
+        const $ = cheerio.load(result)
+        expect($('.govuk-error-summary').text()).toContain(fallbackError)
+      })
+
+      test(`failed ${action} when the backend is unreachable falls back to the generic flash error`, async () => {
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+        mswServer.use(
+          http.post(backendStatusHistoryUrl, () => HttpResponse.error())
+        )
+
+        const { postResponse, redirectCookie } = await postTransition()
+        expect(postResponse.statusCode).toBe(statusCodes.found)
+        expect(postResponse.headers.location).toBe(overviewUrl)
+
+        stubOverview()
+        stubCalendarAndSummaryLogs()
+        const { result } = await server.inject({
+          method: 'GET',
+          url: overviewUrl,
+          headers: { cookie: redirectCookie },
+          auth: writeAuth
+        })
+
+        const $ = cheerio.load(result)
+        expect($('.govuk-error-summary').text()).toContain(fallbackError)
+      })
     }
   )
 })
