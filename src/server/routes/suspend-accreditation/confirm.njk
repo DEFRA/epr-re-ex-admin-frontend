@@ -1,0 +1,27 @@
+{% extends 'layout.njk' %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/warning-text/macro.njk" import govukWarningText %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-xl">{{ heading }}</h1>
+
+      {{ govukWarningText({
+        text: "This action must only be taken following the required legal process for suspension and following instruction from an industry regulator. Suspending an operator will remove their ability to issue PRNs and all declared tonnages submitted during the suspended period will not count towards their waste balance",
+        iconFallbackText: "Warning"
+      }) }}
+
+      <form method="POST" action="{{ postUrl }}">
+        <input type="hidden" name="crumb" value="{{ crumb }}" />
+        {{ govukButton({
+          text: "Suspend now",
+          classes: "govuk-button--warning"
+        }) }}
+        <p class="govuk-body">
+          <a class="govuk-link" href="{{ overviewUrl }}">Cancel</a>
+        </p>
+      </form>
+    </div>
+  </div>
+{% endblock %}

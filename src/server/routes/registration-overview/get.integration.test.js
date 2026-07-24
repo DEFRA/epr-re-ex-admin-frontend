@@ -248,12 +248,19 @@ describe('#registrationOverviewController', () => {
 
   const getDataRows = (table) => getAllByRole(table, 'row').slice(1)
 
-  const getSummaryRowValue = (container, label) => {
+  const getSummaryRow = (container, label) => {
     const term = getByText(container, label, { selector: 'dt' })
-    const row = /** @type {HTMLElement} */ (
-      term.closest('.govuk-summary-list__row')
+    return /** @type {HTMLElement} */ (term.closest('.govuk-summary-list__row'))
+  }
+
+  const getSummaryRowValue = (container, label) => {
+    const row = getSummaryRow(container, label)
+    // A row with actions renders a second `<dd>` (the actions cell), which
+    // also has the implicit ARIA role "definition" — so `getByRole` alone is
+    // ambiguous. Scope to the value cell specifically.
+    return /** @type {HTMLElement} */ (
+      row.querySelector('.govuk-summary-list__value')
     )
-    return within(row).getByRole('definition')
   }
 
   const useMockBackend = (
@@ -1082,6 +1089,101 @@ describe('#registrationOverviewController', () => {
           'href',
           `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/unsubmit/confirm`
         )
+      })
+    })
+
+    describe('Suspend link visibility', () => {
+      afterEach(() => {
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+      })
+
+      test('Should render the Suspend action on the Accreditation status row for an approved accreditation when the user has admin.write scope', async () => {
+        useMockBackend()
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+        const suspendLink = within(statusRow).getByRole('link', {
+          name: /suspend accreditation/i
+        })
+
+        expect(suspendLink).toHaveAttribute(
+          'href',
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/suspend/confirm`
+        )
+      })
+
+      test('Should not render the Suspend action when the accreditation status is not approved', async () => {
+        useMockBackend({
+          ...mockOverview,
+          registrations: [
+            {
+              ...mockRegistration,
+              accreditation:
+                /** @type {{ id: string, accreditationNumber: string, status: string }} */ ({
+                  ...mockRegistration.accreditation,
+                  status: 'suspended'
+                })
+            }
+          ]
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+
+        expect(
+          within(statusRow).queryByRole('link', { name: /suspend/i })
+        ).toBeNull()
+      })
+
+      test('Should not render the Suspend action when the registration has no accreditation', async () => {
+        useMockBackend({
+          ...mockOverview,
+          registrations: [{ ...mockRegistration, accreditation: null }]
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+
+        expect(queryByText(body, 'Suspend')).toBeNull()
+      })
+
+      test('Should not render the Suspend action when the user lacks admin.write scope', async () => {
+        const readOnlySession = {
+          ...mockUserSession,
+          scopes: ['admin.read']
+        }
+        vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
+        useMockBackend()
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: readOnlySession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+
+        expect(
+          within(statusRow).queryByRole('link', { name: /suspend/i })
+        ).toBeNull()
       })
     })
   })
