@@ -1186,5 +1186,85 @@ describe('#registrationOverviewController', () => {
         ).toBeNull()
       })
     })
+
+    describe('Reinstate link visibility', () => {
+      const withSuspendedAccreditation = () => ({
+        ...mockOverview,
+        registrations: [
+          {
+            ...mockRegistration,
+            accreditation:
+              /** @type {{ id: string, accreditationNumber: string, status: string }} */ ({
+                ...mockRegistration.accreditation,
+                status: 'suspended'
+              })
+          }
+        ]
+      })
+
+      afterEach(() => {
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+      })
+
+      test('Should render the Reinstate action on the Accreditation status row for a suspended accreditation when the user has admin.write scope', async () => {
+        useMockBackend(withSuspendedAccreditation())
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+        const reinstateLink = within(statusRow).getByRole('link', {
+          name: /reinstate accreditation/i
+        })
+
+        expect(reinstateLink).toHaveAttribute(
+          'href',
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/reinstate/confirm`
+        )
+      })
+
+      test('Should not render the Reinstate action when the accreditation status is not suspended', async () => {
+        useMockBackend()
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+
+        expect(
+          within(statusRow).queryByRole('link', { name: /reinstate/i })
+        ).toBeNull()
+      })
+
+      test('Should not render the Reinstate action when the user lacks admin.write scope', async () => {
+        const readOnlySession = {
+          ...mockUserSession,
+          scopes: ['admin.read']
+        }
+        vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
+        useMockBackend(withSuspendedAccreditation())
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: readOnlySession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+
+        expect(
+          within(statusRow).queryByRole('link', { name: /reinstate/i })
+        ).toBeNull()
+      })
+    })
   })
 })

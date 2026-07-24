@@ -26,7 +26,7 @@ import { wasteBalanceEvents } from './routes/waste-balance-events/index.js'
 import { unlinkOrganisation } from './routes/unlink-organisation/index.js'
 import { accreditationOverseasSites } from './routes/accreditation-overseas-sites/index.js'
 import { creditedTonnage } from './routes/credited-tonnage/index.js'
-import { suspendAccreditation } from './routes/suspend-accreditation/index.js'
+import { accreditationStatusTransition } from './routes/accreditation-status-transition/index.js'
 
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
 
@@ -66,7 +66,7 @@ export const router = {
         unlinkOrganisation,
         accreditationOverseasSites,
         creditedTonnage,
-        suspendAccreditation
+        accreditationStatusTransition
       ])
 
       await server.register([serveStaticFiles])
