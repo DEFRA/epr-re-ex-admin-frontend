@@ -28,7 +28,7 @@ export const accreditationStatusTransition = {
           {
             method: 'POST',
             path: `${BASE}/${action}`,
-            ...createTransitionPostController(transition),
+            ...createTransitionPostController(action, transition),
             options: {
               pre: requireWrite
             }

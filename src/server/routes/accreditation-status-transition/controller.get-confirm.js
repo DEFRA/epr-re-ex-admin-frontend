@@ -1,3 +1,5 @@
+import { buildConfirmView } from './confirm-view.js'
+
 /** @import {AccreditationStatusTransition} from './transitions.js' */
 
 /**
@@ -7,17 +9,11 @@
  */
 export const createConfirmGetController = (action, transition) => ({
   handler(request, h) {
-    const { organisationId, registrationId, accreditationId } = request.params
-    const overviewUrl = `/organisations/${organisationId}/registrations/${registrationId}/overview`
-
-    return h.view('routes/accreditation-status-transition/confirm', {
-      pageTitle: request.route.settings.app.pageTitle,
-      heading: transition.heading,
-      warningText: transition.warningText,
-      buttonText: transition.buttonText,
-      buttonClasses: transition.buttonClasses,
-      overviewUrl,
-      postUrl: `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/${action}`
-    })
+    return h.view(
+      'routes/accreditation-status-transition/confirm',
+      buildConfirmView(action, transition, request.params, {
+        pageTitle: request.route.settings.app.pageTitle
+      })
+    )
   }
 })

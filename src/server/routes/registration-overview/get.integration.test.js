@@ -1266,5 +1266,89 @@ describe('#registrationOverviewController', () => {
         ).toBeNull()
       })
     })
+
+    describe('Approve link visibility', () => {
+      const withCreatedAccreditation = () => ({
+        ...mockOverview,
+        registrations: [
+          {
+            ...mockRegistration,
+            accreditation:
+              /** @type {{ id: string, accreditationNumber: string, status: string }} */ ({
+                ...mockRegistration.accreditation,
+                status: 'created'
+              })
+          }
+        ]
+      })
+
+      afterEach(() => {
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+      })
+
+      test('Should render the Approve action on the Accreditation status row for a created accreditation when the user has admin.write scope', async () => {
+        useMockBackend(withCreatedAccreditation())
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+        const approveLink = within(statusRow).getByRole('link', {
+          name: /^approve accreditation$/i
+        })
+
+        expect(approveLink).toHaveAttribute(
+          'href',
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/approve/confirm`
+        )
+      })
+
+      test('Should not render the Approve action when the accreditation status is not created', async () => {
+        useMockBackend()
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+
+        expect(
+          within(statusRow).queryByRole('link', {
+            name: /^approve accreditation$/i
+          })
+        ).toBeNull()
+      })
+
+      test('Should not render the Approve action when the user lacks admin.write scope', async () => {
+        const readOnlySession = {
+          ...mockUserSession,
+          scopes: ['admin.read']
+        }
+        vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
+        useMockBackend(withCreatedAccreditation())
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: readOnlySession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+
+        expect(
+          within(statusRow).queryByRole('link', {
+            name: /^approve accreditation$/i
+          })
+        ).toBeNull()
+      })
+    })
   })
 })
