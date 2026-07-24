@@ -1,4 +1,5 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
 
 export const suspendAccreditationPostController = {
   async handler(request, h) {
@@ -17,8 +18,12 @@ export const suspendAccreditationPostController = {
         message: 'Suspend accreditation failed'
       })
 
+      // Only surface backend messages for client errors: 5xx and network
+      // failures carry Boom's generic message (or the raw fetch error, which
+      // leaks the backend URL), so those get the friendly fallback instead.
+      const { statusCode, payload } = error.output
       const errorMessage =
-        error.output?.payload?.message ||
+        (statusCode < statusCodes.internalServerError && payload.message) ||
         'There was a problem suspending the accreditation. Please try again.'
 
       request.yar.set('error', errorMessage)

@@ -244,4 +244,29 @@ describe('suspend-accreditation', () => {
       'There was a problem suspending the accreditation. Please try again.'
     )
   })
+
+  test('failed suspend when the backend is unreachable falls back to the generic flash error', async () => {
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+    mswServer.use(
+      http.post(backendStatusHistoryUrl, () => HttpResponse.error())
+    )
+
+    const { postResponse, redirectCookie } = await postSuspend()
+    expect(postResponse.statusCode).toBe(statusCodes.found)
+    expect(postResponse.headers.location).toBe(overviewUrl)
+
+    stubOverview()
+    stubCalendarAndSummaryLogs()
+    const { result } = await server.inject({
+      method: 'GET',
+      url: overviewUrl,
+      headers: { cookie: redirectCookie },
+      auth: writeAuth
+    })
+
+    const $ = cheerio.load(result)
+    expect($('.govuk-error-summary').text()).toContain(
+      'There was a problem suspending the accreditation. Please try again.'
+    )
+  })
 })
