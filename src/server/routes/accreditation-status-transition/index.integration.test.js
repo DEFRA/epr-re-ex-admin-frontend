@@ -394,10 +394,10 @@ describe('accreditation-status-transition', () => {
       })
 
       const $ = cheerio.load(result)
-      expect($('input[name="appliesFrom-day"]').length).toBe(1)
-      expect($('input[name="appliesFrom-month"]').length).toBe(1)
-      expect($('input[name="appliesFrom-year"]').length).toBe(1)
-      expect($('input[name="accreditationNumber"]').length).toBe(1)
+      expect($('input[name="appliesFrom-day"]')).toHaveLength(1)
+      expect($('input[name="appliesFrom-month"]')).toHaveLength(1)
+      expect($('input[name="appliesFrom-year"]')).toHaveLength(1)
+      expect($('input[name="accreditationNumber"]')).toHaveLength(1)
     })
 
     test('suspend confirm page does not render the grant fields', async () => {
@@ -410,8 +410,8 @@ describe('accreditation-status-transition', () => {
       })
 
       const $ = cheerio.load(result)
-      expect($('input[name="appliesFrom-day"]').length).toBe(0)
-      expect($('input[name="accreditationNumber"]').length).toBe(0)
+      expect($('input[name="appliesFrom-day"]')).toHaveLength(0)
+      expect($('input[name="accreditationNumber"]')).toHaveLength(0)
     })
 
     test('missing accreditation number re-renders the page with an error, preserving the date', async () => {
