@@ -29,16 +29,16 @@ export const ACCREDITATION_STATUS_TRANSITIONS = {
       'There was a problem suspending the accreditation. Please try again.',
     logMessage: 'Suspend accreditation failed'
   },
-  reinstate: {
+  reapprove: {
     targetStatus: 'approved',
-    pageTitle: 'Reinstate accreditation',
-    heading: 'Reinstate accreditation',
+    pageTitle: 'Reapprove accreditation',
+    heading: 'Reapprove accreditation',
     warningText:
       'This action must only be taken following the required legal process for lifting a suspension and following instruction from an industry regulator. Lifting a suspension for an operator will reinstate their ability to issue PRNs and declared tonnages newly submitted will then count towards their waste balance. Tonnages during the suspended period will not count towards their waste balance',
     buttonText: 'Reapprove now',
     buttonClasses: '',
     errorMessage:
-      'There was a problem reinstating the accreditation. Please try again.',
-    logMessage: 'Reinstate accreditation failed'
+      'There was a problem reapproving the accreditation. Please try again.',
+    logMessage: 'Reapprove accreditation failed'
   }
 }

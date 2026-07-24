@@ -36,7 +36,7 @@
         {% endif %}
         {% if registration.accreditation.status === 'suspended' %}
           {% set accreditationStatusActions = accreditationStatusActions.concat([
-            { href: accreditationBaseUrl ~ '/reinstate/confirm', text: "Reinstate", visuallyHiddenText: "accreditation" }
+            { href: accreditationBaseUrl ~ '/reapprove/confirm', text: "Reapprove", visuallyHiddenText: "accreditation" }
           ]) %}
         {% endif %}
       {% endif %}

@@ -1187,7 +1187,7 @@ describe('#registrationOverviewController', () => {
       })
     })
 
-    describe('Reinstate link visibility', () => {
+    describe('Reapprove link visibility', () => {
       const withSuspendedAccreditation = () => ({
         ...mockOverview,
         registrations: [
@@ -1206,7 +1206,7 @@ describe('#registrationOverviewController', () => {
         vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
       })
 
-      test('Should render the Reinstate action on the Accreditation status row for a suspended accreditation when the user has admin.write scope', async () => {
+      test('Should render the Reapprove action on the Accreditation status row for a suspended accreditation when the user has admin.write scope', async () => {
         useMockBackend(withSuspendedAccreditation())
 
         const { result } = await server.inject({
@@ -1217,17 +1217,17 @@ describe('#registrationOverviewController', () => {
 
         const body = renderPage(result)
         const statusRow = getSummaryRow(body, 'Accreditation status')
-        const reinstateLink = within(statusRow).getByRole('link', {
-          name: /reinstate accreditation/i
+        const reapproveLink = within(statusRow).getByRole('link', {
+          name: /reapprove accreditation/i
         })
 
-        expect(reinstateLink).toHaveAttribute(
+        expect(reapproveLink).toHaveAttribute(
           'href',
-          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/reinstate/confirm`
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/reapprove/confirm`
         )
       })
 
-      test('Should not render the Reinstate action when the accreditation status is not suspended', async () => {
+      test('Should not render the Reapprove action when the accreditation status is not suspended', async () => {
         useMockBackend()
 
         const { result } = await server.inject({
@@ -1240,11 +1240,11 @@ describe('#registrationOverviewController', () => {
         const statusRow = getSummaryRow(body, 'Accreditation status')
 
         expect(
-          within(statusRow).queryByRole('link', { name: /reinstate/i })
+          within(statusRow).queryByRole('link', { name: /reapprove/i })
         ).toBeNull()
       })
 
-      test('Should not render the Reinstate action when the user lacks admin.write scope', async () => {
+      test('Should not render the Reapprove action when the user lacks admin.write scope', async () => {
         const readOnlySession = {
           ...mockUserSession,
           scopes: ['admin.read']
@@ -1262,7 +1262,7 @@ describe('#registrationOverviewController', () => {
         const statusRow = getSummaryRow(body, 'Accreditation status')
 
         expect(
-          within(statusRow).queryByRole('link', { name: /reinstate/i })
+          within(statusRow).queryByRole('link', { name: /reapprove/i })
         ).toBeNull()
       })
     })
