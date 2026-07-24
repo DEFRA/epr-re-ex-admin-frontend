@@ -8,8 +8,8 @@ export const suspendAccreditationPostController = {
     try {
       await fetchJsonFromBackend(
         request,
-        `/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/suspend`,
-        { method: 'PATCH' }
+        `/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/status-history`,
+        { method: 'POST', body: JSON.stringify({ status: 'suspended' }) }
       )
     } catch (error) {
       request.logger.error({

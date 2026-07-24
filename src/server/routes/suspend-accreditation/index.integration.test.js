@@ -21,7 +21,7 @@ describe('suspend-accreditation', () => {
   const overviewUrl = `/organisations/${organisationId}/registrations/${registrationId}/overview`
   const confirmUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/suspend/confirm`
   const postUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/suspend`
-  const backendSuspendUrl = `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/suspend`
+  const backendStatusHistoryUrl = `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/status-history`
 
   const readOnlySession = { ...mockUserSession, scopes: ['admin.read'] }
 
@@ -84,16 +84,17 @@ describe('suspend-accreditation', () => {
     )
   }
 
-  const stubSuspendSuccess = () =>
+  const stubSuspendSuccess = (receivedBodies = []) =>
     mswServer.use(
-      http.patch(backendSuspendUrl, () =>
-        HttpResponse.json({ status: 'suspended' })
-      )
+      http.post(backendStatusHistoryUrl, async ({ request }) => {
+        receivedBodies.push(await request.json())
+        return HttpResponse.json({ status: 'suspended' })
+      })
     )
 
   const stubSuspendFailure = (status = 422) =>
     mswServer.use(
-      http.patch(backendSuspendUrl, () =>
+      http.post(backendStatusHistoryUrl, () =>
         HttpResponse.json(
           { message: 'Cannot transition from suspended to suspended' },
           { status }
@@ -103,7 +104,7 @@ describe('suspend-accreditation', () => {
 
   const stubSuspendFailureWithoutMessage = (status = 400) =>
     mswServer.use(
-      http.patch(backendSuspendUrl, () =>
+      http.post(backendStatusHistoryUrl, () =>
         HttpResponse.json({ error: 'Bad request' }, { status })
       )
     )
@@ -187,13 +188,15 @@ describe('suspend-accreditation', () => {
     expect(statusCode).toBe(statusCodes.forbidden)
   })
 
-  test('successful suspend calls the backend suspend endpoint and redirects to the overview', async () => {
+  test('successful suspend posts { status: "suspended" } to the backend status-history endpoint and redirects to the overview', async () => {
     vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
-    stubSuspendSuccess()
+    const receivedBodies = []
+    stubSuspendSuccess(receivedBodies)
 
     const { postResponse } = await postSuspend()
     expect(postResponse.statusCode).toBe(statusCodes.found)
     expect(postResponse.headers.location).toBe(overviewUrl)
+    expect(receivedBodies).toEqual([{ status: 'suspended' }])
   })
 
   test('failed suspend redirects to the overview and shows a flash error', async () => {
