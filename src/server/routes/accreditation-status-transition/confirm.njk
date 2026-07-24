@@ -8,15 +8,15 @@
       <h1 class="govuk-heading-xl">{{ heading }}</h1>
 
       {{ govukWarningText({
-        text: "This action must only be taken following the required legal process for suspension and following instruction from an industry regulator. Suspending an operator will remove their ability to issue PRNs and all declared tonnages submitted during the suspended period will not count towards their waste balance",
+        text: warningText,
         iconFallbackText: "Warning"
       }) }}
 
       <form method="POST" action="{{ postUrl }}">
         <input type="hidden" name="crumb" value="{{ crumb }}" />
         {{ govukButton({
-          text: "Suspend now",
-          classes: "govuk-button--warning"
+          text: buttonText,
+          classes: buttonClasses
         }) }}
         <p class="govuk-body">
           <a class="govuk-link" href="{{ overviewUrl }}">Cancel</a>

@@ -27,11 +27,18 @@
     ] %}
     {% if registration.accreditation %}
       {% set accreditationStatusActions = [] %}
-      {% if registration.accreditation.status === 'approved' and SCOPES.adminWrite in scopes %}
-        {% set suspendUrl = '/organisations/' ~ organisationId ~ '/registrations/' ~ registrationId ~ '/accreditations/' ~ registration.accreditation.id ~ '/suspend/confirm' %}
-        {% set accreditationStatusActions = accreditationStatusActions.concat([
-          { href: suspendUrl, text: "Suspend", visuallyHiddenText: "accreditation" }
-        ]) %}
+      {% if SCOPES.adminWrite in scopes %}
+        {% set accreditationBaseUrl = '/organisations/' ~ organisationId ~ '/registrations/' ~ registrationId ~ '/accreditations/' ~ registration.accreditation.id %}
+        {% if registration.accreditation.status === 'approved' %}
+          {% set accreditationStatusActions = accreditationStatusActions.concat([
+            { href: accreditationBaseUrl ~ '/suspend/confirm', text: "Suspend", visuallyHiddenText: "accreditation" }
+          ]) %}
+        {% endif %}
+        {% if registration.accreditation.status === 'suspended' %}
+          {% set accreditationStatusActions = accreditationStatusActions.concat([
+            { href: accreditationBaseUrl ~ '/reapprove/confirm', text: "Reapprove", visuallyHiddenText: "accreditation" }
+          ]) %}
+        {% endif %}
       {% endif %}
       {% set summaryRows = summaryRows.concat([
         { key: { text: "Accreditation number" }, value: { text: registration.accreditation.accreditationNumber } },
