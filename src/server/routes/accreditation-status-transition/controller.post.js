@@ -1,18 +1,55 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { buildConfirmView } from './confirm-view.js'
+import { parseGrantForm } from './grant-form.js'
 
 /** @import {AccreditationStatusTransition} from './transitions.js' */
 
+const CONFIRM_VIEW = 'routes/accreditation-status-transition/confirm'
+
 /**
  * Builds the POST controller for a status transition action. Posts the
- * transition's target status to the backend status-history endpoint and
- * redirects to the registration overview, flashing any error.
+ * transition's from/to statuses (plus grant fields where the transition
+ * collects them) to the backend status-history endpoint and redirects to the
+ * registration overview, flashing any backend error. Invalid grant fields —
+ * and backend rejections of them — re-render the confirm page with an error
+ * summary instead.
+ * @param {string} action - URL action segment (e.g. 'suspend')
  * @param {AccreditationStatusTransition} transition
  */
-export const createTransitionPostController = (transition) => ({
+export const createTransitionPostController = (action, transition) => ({
   async handler(request, h) {
     const { organisationId, registrationId, accreditationId } = request.params
     const overviewUrl = `/organisations/${organisationId}/registrations/${registrationId}/overview`
+
+    /** @type {{ fromStatus: string, toStatus: string, appliesFrom?: string, accreditationNumber?: string }} */
+    const body = {
+      fromStatus: transition.fromStatus,
+      toStatus: transition.toStatus
+    }
+
+    /** @type {{ day: string, month: string, year: string, accreditationNumber: string } | undefined} */
+    let grantValues
+
+    if (transition.hasGrantFields) {
+      const { values, errors, appliesFrom } = parseGrantForm(request.payload)
+      grantValues = values
+
+      if (errors) {
+        return h
+          .view(
+            CONFIRM_VIEW,
+            buildConfirmView(action, transition, request.params, {
+              values,
+              errors
+            })
+          )
+          .code(statusCodes.badRequest)
+      }
+
+      body.appliesFrom = /** @type {string} */ (appliesFrom)
+      body.accreditationNumber = values.accreditationNumber
+    }
 
     try {
       await fetchJsonFromBackend(
@@ -20,7 +57,7 @@ export const createTransitionPostController = (transition) => ({
         `/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/status-history`,
         {
           method: 'POST',
-          body: JSON.stringify({ status: transition.targetStatus })
+          body: JSON.stringify(body)
         }
       )
     } catch (error) {
@@ -36,6 +73,21 @@ export const createTransitionPostController = (transition) => ({
       const errorMessage =
         (statusCode < statusCodes.internalServerError && payload?.message) ||
         transition.errorMessage
+
+      // A backend rejection of the grant fields re-renders the confirm page
+      // so the admin keeps what they typed; 5xx and network failures still
+      // flash on the overview, where retrying immediately won't help.
+      if (grantValues && statusCode < statusCodes.internalServerError) {
+        return h
+          .view(
+            CONFIRM_VIEW,
+            buildConfirmView(action, transition, request.params, {
+              values: grantValues,
+              backendError: errorMessage
+            })
+          )
+          .code(statusCodes.badRequest)
+      }
 
       request.yar.set('error', errorMessage)
     }

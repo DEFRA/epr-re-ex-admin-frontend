@@ -15,24 +15,48 @@ vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
 
 const TRANSITION_CASES = [
   {
+    action: 'approve',
+    heading: 'Approve accreditation',
+    warningText:
+      'This action must only be taken following the required legal process for approval and following instruction from an industry regulator. Approving an operator will grant them permission to issue PRNs and declared tonnages will count towards their waste balance',
+    buttonText: 'Approve now',
+    fallbackError:
+      'There was a problem approving the accreditation. Please try again.',
+    formPayload: {
+      'appliesFrom-day': '1',
+      'appliesFrom-month': '8',
+      'appliesFrom-year': '2026',
+      accreditationNumber: 'ACC999999'
+    },
+    expectedBody: {
+      fromStatus: 'created',
+      toStatus: 'approved',
+      appliesFrom: '2026-08-01',
+      accreditationNumber: 'ACC999999'
+    },
+    hasGrantFields: true
+  },
+  {
     action: 'suspend',
-    targetStatus: 'suspended',
     heading: 'Suspend accreditation',
     warningText:
       'This action must only be taken following the required legal process for suspension and following instruction from an industry regulator. Suspending an operator will remove their ability to issue PRNs and all declared tonnages submitted during the suspended period will not count towards their waste balance',
     buttonText: 'Suspend now',
     fallbackError:
-      'There was a problem suspending the accreditation. Please try again.'
+      'There was a problem suspending the accreditation. Please try again.',
+    formPayload: {},
+    expectedBody: { fromStatus: 'approved', toStatus: 'suspended' }
   },
   {
     action: 'reapprove',
-    targetStatus: 'approved',
     heading: 'Reapprove accreditation',
     warningText:
       'This action must only be taken following the required legal process for lifting a suspension and following instruction from an industry regulator. Lifting a suspension for an operator will reinstate their ability to issue PRNs and declared tonnages newly submitted will then count towards their waste balance. Tonnages during the suspended period will not count towards their waste balance',
     buttonText: 'Reapprove now',
     fallbackError:
-      'There was a problem reapproving the accreditation. Please try again.'
+      'There was a problem reapproving the accreditation. Please try again.',
+    formPayload: {},
+    expectedBody: { fromStatus: 'suspended', toStatus: 'approved' }
   }
 ]
 
@@ -133,40 +157,56 @@ describe('accreditation-status-transition', () => {
   const writeAuth = { strategy: 'session', credentials: mockUserSession }
   const readAuth = { strategy: 'session', credentials: readOnlySession }
 
+  const postTransition = async (
+    action,
+    formPayload = {},
+    payloadOverrides = {}
+  ) => {
+    const confirmUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/${action}/confirm`
+    const postUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/${action}`
+    const { cookie, crumb } = await getCsrfToken(server, confirmUrl, writeAuth)
+    const postResponse = await server.inject({
+      method: 'POST',
+      url: postUrl,
+      auth: writeAuth,
+      headers: { cookie },
+      payload: { crumb, ...formPayload, ...payloadOverrides }
+    })
+    const postCookies = [postResponse.headers['set-cookie']]
+      .flat()
+      .filter(Boolean)
+    const redirectCookie = postCookies.length
+      ? postCookies.map((c) => c.split(';')[0]).join('; ')
+      : cookie
+    return { postResponse, redirectCookie }
+  }
+
+  const expectOverviewFlash = async (redirectCookie, message) => {
+    stubOverview()
+    stubCalendarAndSummaryLogs()
+    const { result } = await server.inject({
+      method: 'GET',
+      url: overviewUrl,
+      headers: { cookie: redirectCookie },
+      auth: writeAuth
+    })
+    const $ = cheerio.load(result)
+    expect($('.govuk-error-summary').text()).toContain(message)
+  }
+
   describe.each(TRANSITION_CASES)(
     '$action',
     ({
       action,
-      targetStatus,
       heading,
       warningText,
       buttonText,
-      fallbackError
+      fallbackError,
+      formPayload,
+      expectedBody
     }) => {
       const confirmUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/${action}/confirm`
       const postUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/${action}`
-
-      const postTransition = async () => {
-        const { cookie, crumb } = await getCsrfToken(
-          server,
-          confirmUrl,
-          writeAuth
-        )
-        const postResponse = await server.inject({
-          method: 'POST',
-          url: postUrl,
-          auth: writeAuth,
-          headers: { cookie },
-          payload: { crumb }
-        })
-        const postCookies = [postResponse.headers['set-cookie']]
-          .flat()
-          .filter(Boolean)
-        const redirectCookie = postCookies.length
-          ? postCookies.map((c) => c.split(';')[0]).join('; ')
-          : cookie
-        return { postResponse, redirectCookie }
-      }
 
       test('confirm page is rejected with 401 when unauthenticated', async () => {
         const { statusCode } = await server.inject({
@@ -229,84 +269,15 @@ describe('accreditation-status-transition', () => {
         expect(statusCode).toBe(statusCodes.forbidden)
       })
 
-      test(`successful ${action} posts { status: "${targetStatus}" } to the backend status-history endpoint and redirects to the overview`, async () => {
+      test(`successful ${action} posts the from/to transition to the backend status-history endpoint and redirects to the overview`, async () => {
         vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
         const receivedBodies = []
-        stubTransitionSuccess(targetStatus, receivedBodies)
+        stubTransitionSuccess(expectedBody.toStatus, receivedBodies)
 
-        const { postResponse } = await postTransition()
+        const { postResponse } = await postTransition(action, formPayload)
         expect(postResponse.statusCode).toBe(statusCodes.found)
         expect(postResponse.headers.location).toBe(overviewUrl)
-        expect(receivedBodies).toEqual([{ status: targetStatus }])
-      })
-
-      test(`failed ${action} redirects to the overview and shows a flash error`, async () => {
-        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
-        stubTransitionFailure()
-
-        const { postResponse, redirectCookie } = await postTransition()
-        expect(postResponse.statusCode).toBe(statusCodes.found)
-        expect(postResponse.headers.location).toBe(overviewUrl)
-
-        stubOverview()
-        stubCalendarAndSummaryLogs()
-        const { result } = await server.inject({
-          method: 'GET',
-          url: overviewUrl,
-          headers: { cookie: redirectCookie },
-          auth: writeAuth
-        })
-
-        const $ = cheerio.load(result)
-        expect($('.govuk-error-summary').text()).toContain(
-          'Cannot transition from suspended to suspended'
-        )
-      })
-
-      test(`failed ${action} without a backend message falls back to a generic flash error`, async () => {
-        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
-        stubTransitionFailureWithoutMessage()
-
-        const { postResponse, redirectCookie } = await postTransition()
-        expect(postResponse.statusCode).toBe(statusCodes.found)
-        expect(postResponse.headers.location).toBe(overviewUrl)
-
-        stubOverview()
-        stubCalendarAndSummaryLogs()
-        const { result } = await server.inject({
-          method: 'GET',
-          url: overviewUrl,
-          headers: { cookie: redirectCookie },
-          auth: writeAuth
-        })
-
-        const $ = cheerio.load(result)
-        expect($('.govuk-error-summary').text()).toContain(fallbackError)
-      })
-
-      test(`failed ${action} with a non-object error body falls back to the generic flash error`, async () => {
-        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
-        mswServer.use(
-          http.post(backendStatusHistoryUrl, () =>
-            HttpResponse.json(null, { status: 422 })
-          )
-        )
-
-        const { postResponse, redirectCookie } = await postTransition()
-        expect(postResponse.statusCode).toBe(statusCodes.found)
-        expect(postResponse.headers.location).toBe(overviewUrl)
-
-        stubOverview()
-        stubCalendarAndSummaryLogs()
-        const { result } = await server.inject({
-          method: 'GET',
-          url: overviewUrl,
-          headers: { cookie: redirectCookie },
-          auth: writeAuth
-        })
-
-        const $ = cheerio.load(result)
-        expect($('.govuk-error-summary').text()).toContain(fallbackError)
+        expect(receivedBodies).toEqual([expectedBody])
       })
 
       test(`failed ${action} when the backend is unreachable falls back to the generic flash error`, async () => {
@@ -315,22 +286,260 @@ describe('accreditation-status-transition', () => {
           http.post(backendStatusHistoryUrl, () => HttpResponse.error())
         )
 
-        const { postResponse, redirectCookie } = await postTransition()
+        const { postResponse, redirectCookie } = await postTransition(
+          action,
+          formPayload
+        )
         expect(postResponse.statusCode).toBe(statusCodes.found)
         expect(postResponse.headers.location).toBe(overviewUrl)
 
-        stubOverview()
-        stubCalendarAndSummaryLogs()
-        const { result } = await server.inject({
-          method: 'GET',
-          url: overviewUrl,
-          headers: { cookie: redirectCookie },
-          auth: writeAuth
-        })
-
-        const $ = cheerio.load(result)
-        expect($('.govuk-error-summary').text()).toContain(fallbackError)
+        await expectOverviewFlash(redirectCookie, fallbackError)
       })
     }
   )
+
+  describe.each(TRANSITION_CASES.filter((c) => !c.hasGrantFields))(
+    '$action backend rejection',
+    ({ action, fallbackError }) => {
+      test('redirects to the overview and shows the backend message as a flash error', async () => {
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+        stubTransitionFailure()
+
+        const { postResponse, redirectCookie } = await postTransition(action)
+        expect(postResponse.statusCode).toBe(statusCodes.found)
+        expect(postResponse.headers.location).toBe(overviewUrl)
+
+        await expectOverviewFlash(
+          redirectCookie,
+          'Cannot transition from suspended to suspended'
+        )
+      })
+
+      test('without a backend message falls back to a generic flash error', async () => {
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+        stubTransitionFailureWithoutMessage()
+
+        const { postResponse, redirectCookie } = await postTransition(action)
+        expect(postResponse.statusCode).toBe(statusCodes.found)
+        expect(postResponse.headers.location).toBe(overviewUrl)
+
+        await expectOverviewFlash(redirectCookie, fallbackError)
+      })
+
+      test('with a non-object error body falls back to the generic flash error', async () => {
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+        mswServer.use(
+          http.post(backendStatusHistoryUrl, () =>
+            HttpResponse.json(null, { status: 422 })
+          )
+        )
+
+        const { postResponse, redirectCookie } = await postTransition(action)
+        expect(postResponse.statusCode).toBe(statusCodes.found)
+        expect(postResponse.headers.location).toBe(overviewUrl)
+
+        await expectOverviewFlash(redirectCookie, fallbackError)
+      })
+    }
+  )
+
+  describe('approve grant fields', () => {
+    const confirmUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/approve/confirm`
+    const postUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/approve`
+
+    const validFormPayload = {
+      'appliesFrom-day': '1',
+      'appliesFrom-month': '8',
+      'appliesFrom-year': '2026',
+      accreditationNumber: 'ACC999999'
+    }
+
+    const postApprove = async (payloadOverrides) => {
+      const { cookie, crumb } = await getCsrfToken(
+        server,
+        confirmUrl,
+        writeAuth
+      )
+      return server.inject({
+        method: 'POST',
+        url: postUrl,
+        auth: writeAuth,
+        headers: { cookie },
+        payload: { crumb, ...validFormPayload, ...payloadOverrides }
+      })
+    }
+
+    test('confirm page renders the applies from date input and accreditation number field', async () => {
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: confirmUrl,
+        auth: writeAuth
+      })
+
+      const $ = cheerio.load(result)
+      expect($('input[name="appliesFrom-day"]')).toHaveLength(1)
+      expect($('input[name="appliesFrom-month"]')).toHaveLength(1)
+      expect($('input[name="appliesFrom-year"]')).toHaveLength(1)
+      expect($('input[name="accreditationNumber"]')).toHaveLength(1)
+    })
+
+    test('suspend confirm page does not render the grant fields', async () => {
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/suspend/confirm`,
+        auth: writeAuth
+      })
+
+      const $ = cheerio.load(result)
+      expect($('input[name="appliesFrom-day"]')).toHaveLength(0)
+      expect($('input[name="accreditationNumber"]')).toHaveLength(0)
+    })
+
+    test('missing accreditation number re-renders the page with an error, preserving the date', async () => {
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+      const receivedBodies = []
+      stubTransitionSuccess('approved', receivedBodies)
+
+      const response = await postApprove({ accreditationNumber: '  ' })
+
+      expect(response.statusCode).toBe(statusCodes.badRequest)
+      const $ = cheerio.load(response.result)
+      expect($('.govuk-error-summary').text()).toContain(
+        'Enter an accreditation number'
+      )
+      expect($('input[name="appliesFrom-day"]').attr('value')).toBe('1')
+      expect($('input[name="appliesFrom-year"]').attr('value')).toBe('2026')
+      expect(receivedBodies).toEqual([])
+    })
+
+    test.each([
+      ['a missing day', { 'appliesFrom-day': '' }],
+      ['a non-numeric month', { 'appliesFrom-month': 'August' }],
+      ['a month past December', { 'appliesFrom-month': '13' }],
+      ['a two-digit year', { 'appliesFrom-year': '26' }],
+      [
+        'an impossible date',
+        { 'appliesFrom-month': '2', 'appliesFrom-day': '30' }
+      ]
+    ])(
+      'an invalid applies from date (%s) re-renders the page with an error, preserving the number',
+      async (_label, payloadOverrides) => {
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+        const receivedBodies = []
+        stubTransitionSuccess('approved', receivedBodies)
+
+        const response = await postApprove(payloadOverrides)
+
+        expect(response.statusCode).toBe(statusCodes.badRequest)
+        const $ = cheerio.load(response.result)
+        expect($('.govuk-error-summary').text()).toContain(
+          'Enter a valid applies from date'
+        )
+        expect($('input[name="accreditationNumber"]').attr('value')).toBe(
+          'ACC999999'
+        )
+        expect(receivedBodies).toEqual([])
+      }
+    )
+
+    test('missing both fields lists both errors in the summary', async () => {
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+
+      const response = await postApprove({
+        'appliesFrom-day': '',
+        'appliesFrom-month': '',
+        'appliesFrom-year': '',
+        accreditationNumber: ''
+      })
+
+      expect(response.statusCode).toBe(statusCodes.badRequest)
+      const $ = cheerio.load(response.result)
+      const summary = $('.govuk-error-summary').text()
+      expect(summary).toContain('Enter a valid applies from date')
+      expect(summary).toContain('Enter an accreditation number')
+    })
+
+    test('a submission without any grant fields lists both errors in the summary', async () => {
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+      const { cookie, crumb } = await getCsrfToken(
+        server,
+        confirmUrl,
+        writeAuth
+      )
+
+      const response = await server.inject({
+        method: 'POST',
+        url: postUrl,
+        auth: writeAuth,
+        headers: { cookie },
+        payload: { crumb }
+      })
+
+      expect(response.statusCode).toBe(statusCodes.badRequest)
+      const $ = cheerio.load(response.result)
+      const summary = $('.govuk-error-summary').text()
+      expect(summary).toContain('Enter a valid applies from date')
+      expect(summary).toContain('Enter an accreditation number')
+    })
+
+    test('a backend rejection re-renders the page with the backend message, preserving input', async () => {
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+      mswServer.use(
+        http.post(backendStatusHistoryUrl, () =>
+          HttpResponse.json(
+            { message: 'Accreditation number ACC999999 is already in use' },
+            { status: 422 }
+          )
+        )
+      )
+
+      const response = await postApprove()
+
+      expect(response.statusCode).toBe(statusCodes.badRequest)
+      const $ = cheerio.load(response.result)
+      expect($('.govuk-error-summary').text()).toContain(
+        'Accreditation number ACC999999 is already in use'
+      )
+      expect($('input[name="appliesFrom-day"]').attr('value')).toBe('1')
+      expect($('input[name="appliesFrom-month"]').attr('value')).toBe('8')
+      expect($('input[name="appliesFrom-year"]').attr('value')).toBe('2026')
+      expect($('input[name="accreditationNumber"]').attr('value')).toBe(
+        'ACC999999'
+      )
+    })
+
+    test('a backend rejection without a message re-renders the page with the generic error', async () => {
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+      stubTransitionFailureWithoutMessage()
+
+      const response = await postApprove()
+
+      expect(response.statusCode).toBe(statusCodes.badRequest)
+      const $ = cheerio.load(response.result)
+      expect($('.govuk-error-summary').text()).toContain(
+        'There was a problem approving the accreditation. Please try again.'
+      )
+    })
+
+    test('a backend 5xx failure redirects to the overview with the generic flash error', async () => {
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+      stubTransitionFailure(statusCodes.internalServerError)
+
+      const { postResponse, redirectCookie } = await postTransition(
+        'approve',
+        validFormPayload
+      )
+      expect(postResponse.statusCode).toBe(statusCodes.found)
+      expect(postResponse.headers.location).toBe(overviewUrl)
+
+      await expectOverviewFlash(
+        redirectCookie,
+        'There was a problem approving the accreditation. Please try again.'
+      )
+    })
+  })
 })

@@ -21,14 +21,13 @@ export const accreditationStatusTransition = {
             path: `${BASE}/${action}/confirm`,
             ...createConfirmGetController(action, transition),
             options: {
-              pre: requireWrite,
-              app: { pageTitle: transition.pageTitle }
+              pre: requireWrite
             }
           },
           {
             method: 'POST',
             path: `${BASE}/${action}`,
-            ...createTransitionPostController(transition),
+            ...createTransitionPostController(action, transition),
             options: {
               pre: requireWrite
             }

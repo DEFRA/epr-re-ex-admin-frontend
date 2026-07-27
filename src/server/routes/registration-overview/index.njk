@@ -29,6 +29,11 @@
       {% set accreditationStatusActions = [] %}
       {% if SCOPES.adminWrite in scopes %}
         {% set accreditationBaseUrl = '/organisations/' ~ organisationId ~ '/registrations/' ~ registrationId ~ '/accreditations/' ~ registration.accreditation.id %}
+        {% if registration.accreditation.status === 'created' %}
+          {% set accreditationStatusActions = accreditationStatusActions.concat([
+            { href: accreditationBaseUrl ~ '/approve/confirm', text: "Approve", visuallyHiddenText: "accreditation" }
+          ]) %}
+        {% endif %}
         {% if registration.accreditation.status === 'approved' %}
           {% set accreditationStatusActions = accreditationStatusActions.concat([
             { href: accreditationBaseUrl ~ '/suspend/confirm', text: "Suspend", visuallyHiddenText: "accreditation" }
