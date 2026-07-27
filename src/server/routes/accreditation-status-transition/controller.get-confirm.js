@@ -11,9 +11,7 @@ export const createConfirmGetController = (action, transition) => ({
   handler(request, h) {
     return h.view(
       'routes/accreditation-status-transition/confirm',
-      buildConfirmView(action, transition, request.params, {
-        pageTitle: request.route.settings.app.pageTitle
-      })
+      buildConfirmView(action, transition, request.params)
     )
   }
 })
