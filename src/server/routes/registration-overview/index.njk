@@ -41,7 +41,13 @@
         {% endif %}
         {% if registration.accreditation.status === 'suspended' %}
           {% set accreditationStatusActions = accreditationStatusActions.concat([
-            { href: accreditationBaseUrl ~ '/reapprove/confirm', text: "Reapprove", visuallyHiddenText: "accreditation" }
+            { href: accreditationBaseUrl ~ '/reapprove/confirm', text: "Reapprove", visuallyHiddenText: "accreditation" },
+            { href: accreditationBaseUrl ~ '/cancel/confirm', text: "Cancel", visuallyHiddenText: "accreditation" }
+          ]) %}
+        {% endif %}
+        {% if registration.accreditation.status === 'cancelled' %}
+          {% set accreditationStatusActions = accreditationStatusActions.concat([
+            { href: accreditationBaseUrl ~ '/reinstate/confirm', text: "Reinstate", visuallyHiddenText: "accreditation" }
           ]) %}
         {% endif %}
       {% endif %}
