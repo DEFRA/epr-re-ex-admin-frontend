@@ -352,7 +352,6 @@
               "approved",
               "cancelled",
               "rejected",
-              "suspended",
               null
             ]
           },
@@ -1191,8 +1190,7 @@
                     "approved",
                     "active",
                     "cancelled",
-                    "rejected",
-                    "suspended"
+                    "rejected"
                   ]
                 },
                 "updatedAt": {
