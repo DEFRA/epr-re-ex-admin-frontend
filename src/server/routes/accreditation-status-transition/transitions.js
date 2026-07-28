@@ -14,6 +14,8 @@
  * @property {boolean} [hasGrantFields] - Confirm page collects appliesFrom + accreditationNumber
  */
 
+const WARNING_BUTTON_CLASS = 'govuk-button--warning'
+
 /**
  * Accreditation status transitions the admin UI can action, keyed by the URL
  * action segment. Each entry drives a confirm page and a POST of
@@ -48,7 +50,7 @@ export const ACCREDITATION_STATUS_TRANSITIONS = {
     warningText:
       'This action must only be taken following the required legal process for suspension and following instruction from an industry regulator. Suspending an operator will remove their ability to issue PRNs and all declared tonnages submitted during the suspended period will not count towards their waste balance',
     buttonText: 'Suspend now',
-    buttonClasses: 'govuk-button--warning',
+    buttonClasses: WARNING_BUTTON_CLASS,
     errorMessage:
       'There was a problem suspending the accreditation. Please try again.',
     logMessage: 'Suspend accreditation failed'
@@ -80,7 +82,7 @@ export const ACCREDITATION_STATUS_TRANSITIONS = {
     warningText:
       'This action must only be taken following the required legal process for cancellation and following instruction from an industry regulator. Cancelling an accreditation is permanent: the operator will no longer be able to issue PRNs and tonnages declared after the cancellation will not count towards their waste balance',
     buttonText: 'Cancel accreditation now',
-    buttonClasses: 'govuk-button--warning',
+    buttonClasses: WARNING_BUTTON_CLASS,
     errorMessage:
       'There was a problem cancelling the accreditation. Please try again.',
     logMessage: 'Cancel accreditation failed'
@@ -114,7 +116,7 @@ export const ACCREDITATION_STATUS_TRANSITIONS = {
     warningText:
       'This action must only be taken following the required legal process for refusing an accreditation application and following instruction from an industry regulator. Rejecting an accreditation means the operator remains registered-only: they cannot issue PRNs and declared tonnages will not count towards a waste balance',
     buttonText: 'Reject now',
-    buttonClasses: 'govuk-button--warning',
+    buttonClasses: WARNING_BUTTON_CLASS,
     errorMessage:
       'There was a problem rejecting the accreditation. Please try again.',
     logMessage: 'Reject accreditation failed'
@@ -138,7 +140,7 @@ export const ACCREDITATION_STATUS_TRANSITIONS = {
 }
 
 const GREEN_BUTTON = 'govuk-button govuk-!-margin-bottom-0'
-const RED_BUTTON = 'govuk-button govuk-button--warning govuk-!-margin-bottom-0'
+const RED_BUTTON = `govuk-button ${WARNING_BUTTON_CLASS} govuk-!-margin-bottom-0`
 
 /**
  * Summary-list action items for every transition available from the given
