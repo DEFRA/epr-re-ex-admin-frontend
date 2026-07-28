@@ -1,6 +1,8 @@
 import { createTransitionPostController } from './controller.post.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
+/** @import {RegistrationStatusTransition} from './transitions.js' */
+
 vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
 }))
@@ -17,9 +19,15 @@ describe('createTransitionPostController without grant fields', () => {
   const registrationId = 'reg-1'
   const overviewUrl = `/organisations/${organisationId}/registrations/${registrationId}/overview`
 
+  /** @type {RegistrationStatusTransition} */
   const fakeTransition = {
     fromStatus: 'approved',
     toStatus: 'cancelled',
+    pageTitle: 'Cancel registration',
+    heading: 'Cancel registration',
+    warningText: 'This is a fake transition used only to test the factory.',
+    buttonText: 'Cancel registration now',
+    buttonClasses: 'govuk-button--warning',
     errorMessage:
       'There was a problem cancelling the registration. Please try again.',
     logMessage: 'Cancel registration failed'
