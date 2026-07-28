@@ -1,7 +1,8 @@
 import {
   formatMaterialName,
   formatTonnageBand,
-  formatTonnage
+  formatTonnage,
+  formatRegistrationType
 } from './formatters.js'
 
 describe('prn-tonnage formatters', () => {
@@ -28,5 +29,17 @@ describe('prn-tonnage formatters', () => {
     expect(formatTonnage(12.6)).toBe('13')
     expect(formatTonnage(-1.5)).toBe('-2')
     expect(formatTonnage(null)).toBe('0')
+  })
+
+  test('Should format known registration types and preserve unknowns', () => {
+    expect(formatRegistrationType('REPROCESSOR_INPUT')).toBe(
+      'Reprocessor input'
+    )
+    expect(formatRegistrationType('REPROCESSOR_OUTPUT')).toBe(
+      'Reprocessor output'
+    )
+    expect(formatRegistrationType('EXPORTER')).toBe('Exporter')
+    expect(formatRegistrationType('MYSTERY_TYPE')).toBe('MYSTERY_TYPE')
+    expect(formatRegistrationType(undefined)).toBeUndefined()
   })
 })

@@ -10,6 +10,12 @@ const materialDisplayNames = {
   wood: 'Wood'
 }
 
+const registrationTypeDisplayNames = {
+  REPROCESSOR_INPUT: 'Reprocessor input',
+  REPROCESSOR_OUTPUT: 'Reprocessor output',
+  EXPORTER: 'Exporter'
+}
+
 const tonnageBandDisplayNames = {
   up_to_500: 'Up to 500 tonnes',
   up_to_5000: 'Up to 5,000 tonnes',
@@ -20,6 +26,10 @@ const tonnageBandDisplayNames = {
 export function formatMaterialName(material) {
   const key = material?.toLowerCase()
   return materialDisplayNames[key] ?? material
+}
+
+export function formatRegistrationType(registrationType) {
+  return registrationTypeDisplayNames[registrationType] ?? registrationType
 }
 
 export function formatTonnageBand(tonnageBand) {
