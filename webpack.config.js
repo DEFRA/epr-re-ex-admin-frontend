@@ -98,6 +98,10 @@ export default {
           {
             loader: 'css-loader',
             options: {
+              // esModule output makes css url() assets `new URL()` refs, which
+              // webpack >= 5.109 emits as asset-url literals under outputModule;
+              // mini-css-extract-plugin then renders them as "[object Object]"
+              esModule: false,
               sourceMap: NODE_ENV !== 'production'
             }
           },
