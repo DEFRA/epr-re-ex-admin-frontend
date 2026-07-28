@@ -4,6 +4,7 @@ import {
   findRegistration
 } from '#server/common/helpers/fetch-organisation-overview.js'
 import { formatPeriod } from '#server/common/helpers/format-reporting-period.js'
+import { accreditationStatusActions } from '#server/routes/accreditation-status-transition/transitions.js'
 
 const GREEN_TAG = 'govuk-tag--green'
 const RED_TAG = 'govuk-tag--red'
@@ -140,6 +141,14 @@ export const registrationOverviewGETController = {
       organisationId,
       registrationId,
       registration,
+      // The template only attaches these to the Accreditation status row for
+      // users holding admin.write (hiding is UX — the backend enforces scope).
+      accreditationStatusActions: registration.accreditation
+        ? accreditationStatusActions(
+            registration.accreditation.status,
+            `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${registration.accreditation.id}`
+          )
+        : [],
       cadence: calendar.cadence,
       reportingPeriods: toReportingPeriods(
         calendar.reportingPeriods,

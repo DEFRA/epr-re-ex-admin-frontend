@@ -79,6 +79,28 @@ const TRANSITION_CASES = [
       'There was a problem reinstating the accreditation. Please try again.',
     formPayload: {},
     expectedBody: { fromStatus: 'cancelled', toStatus: 'approved' }
+  },
+  {
+    action: 'reject',
+    heading: 'Reject accreditation',
+    warningText:
+      'This action must only be taken following the required legal process for refusing an accreditation application and following instruction from an industry regulator. Rejecting an accreditation means the operator remains registered-only: they cannot issue PRNs and declared tonnages will not count towards a waste balance',
+    buttonText: 'Reject now',
+    fallbackError:
+      'There was a problem rejecting the accreditation. Please try again.',
+    formPayload: {},
+    expectedBody: { fromStatus: 'created', toStatus: 'rejected' }
+  },
+  {
+    action: 'reopen',
+    heading: 'Reopen accreditation',
+    warningText:
+      'This action must only be taken following instruction from an industry regulator. Reopening a rejected accreditation returns the application to created so it can be reworked and reconsidered. The operator remains registered-only and cannot issue PRNs unless the accreditation is subsequently approved',
+    buttonText: 'Reopen now',
+    fallbackError:
+      'There was a problem reopening the accreditation. Please try again.',
+    formPayload: {},
+    expectedBody: { fromStatus: 'rejected', toStatus: 'created' }
   }
 ]
 

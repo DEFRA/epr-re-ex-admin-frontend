@@ -2,6 +2,8 @@
  * @typedef {object} AccreditationStatusTransition
  * @property {string} fromStatus - Status the accreditation must currently hold
  * @property {string} toStatus - Status posted to the backend status-history endpoint
+ * @property {string} linkText - Overview action label, e.g. "Suspend"
+ * @property {'positive'|'negative'} polarity - Drives the green/red CTA styling of the overview action
  * @property {string} pageTitle
  * @property {string} heading
  * @property {string} warningText - Confirm-page warning copy
@@ -23,6 +25,8 @@ export const ACCREDITATION_STATUS_TRANSITIONS = {
   approve: {
     fromStatus: 'created',
     toStatus: 'approved',
+    linkText: 'Approve',
+    polarity: 'positive',
     pageTitle: 'Approve accreditation',
     heading: 'Approve accreditation',
     warningText:
@@ -37,6 +41,8 @@ export const ACCREDITATION_STATUS_TRANSITIONS = {
   suspend: {
     fromStatus: 'approved',
     toStatus: 'suspended',
+    linkText: 'Suspend',
+    polarity: 'negative',
     pageTitle: 'Suspend accreditation',
     heading: 'Suspend accreditation',
     warningText:
@@ -50,6 +56,8 @@ export const ACCREDITATION_STATUS_TRANSITIONS = {
   reapprove: {
     fromStatus: 'suspended',
     toStatus: 'approved',
+    linkText: 'Reapprove',
+    polarity: 'positive',
     pageTitle: 'Reapprove accreditation',
     heading: 'Reapprove accreditation',
     warningText:
@@ -65,6 +73,8 @@ export const ACCREDITATION_STATUS_TRANSITIONS = {
   cancel: {
     fromStatus: 'suspended',
     toStatus: 'cancelled',
+    linkText: 'Cancel',
+    polarity: 'negative',
     pageTitle: 'Cancel accreditation',
     heading: 'Cancel accreditation',
     warningText:
@@ -80,6 +90,8 @@ export const ACCREDITATION_STATUS_TRANSITIONS = {
   reinstate: {
     fromStatus: 'cancelled',
     toStatus: 'approved',
+    linkText: 'Reinstate',
+    polarity: 'positive',
     pageTitle: 'Reinstate accreditation',
     heading: 'Reinstate accreditation',
     warningText:
@@ -89,5 +101,60 @@ export const ACCREDITATION_STATUS_TRANSITIONS = {
     errorMessage:
       'There was a problem reinstating the accreditation. Please try again.',
     logMessage: 'Reinstate accreditation failed'
+  },
+  // Refusing a non-compliant application (PAE-1618): the operator stays
+  // registered-only — no number or validity dates are involved.
+  reject: {
+    fromStatus: 'created',
+    toStatus: 'rejected',
+    linkText: 'Reject',
+    polarity: 'negative',
+    pageTitle: 'Reject accreditation',
+    heading: 'Reject accreditation',
+    warningText:
+      'This action must only be taken following the required legal process for refusing an accreditation application and following instruction from an industry regulator. Rejecting an accreditation means the operator remains registered-only: they cannot issue PRNs and declared tonnages will not count towards a waste balance',
+    buttonText: 'Reject now',
+    buttonClasses: 'govuk-button--warning',
+    errorMessage:
+      'There was a problem rejecting the accreditation. Please try again.',
+    logMessage: 'Reject accreditation failed'
+  },
+  // Reopening a rejected application for rework (PAE-1623).
+  reopen: {
+    fromStatus: 'rejected',
+    toStatus: 'created',
+    linkText: 'Reopen',
+    polarity: 'positive',
+    pageTitle: 'Reopen accreditation',
+    heading: 'Reopen accreditation',
+    warningText:
+      'This action must only be taken following instruction from an industry regulator. Reopening a rejected accreditation returns the application to created so it can be reworked and reconsidered. The operator remains registered-only and cannot issue PRNs unless the accreditation is subsequently approved',
+    buttonText: 'Reopen now',
+    buttonClasses: '',
+    errorMessage:
+      'There was a problem reopening the accreditation. Please try again.',
+    logMessage: 'Reopen accreditation failed'
   }
 }
+
+const GREEN_BUTTON = 'govuk-button govuk-!-margin-bottom-0'
+const RED_BUTTON = 'govuk-button govuk-button--warning govuk-!-margin-bottom-0'
+
+/**
+ * Summary-list action items for every transition available from the given
+ * accreditation status, styled as green (positive) or red (negative) CTA
+ * buttons. Single source of truth for which actions the registration
+ * overview offers per status.
+ * @param {string} status - Current accreditation status
+ * @param {string} baseUrl - Accreditation URL prefix, `.../accreditations/{id}`
+ * @returns {Array<{href: string, text: string, visuallyHiddenText: string, classes: string}>}
+ */
+export const accreditationStatusActions = (status, baseUrl) =>
+  Object.entries(ACCREDITATION_STATUS_TRANSITIONS)
+    .filter(([, transition]) => transition.fromStatus === status)
+    .map(([action, transition]) => ({
+      href: `${baseUrl}/${action}/confirm`,
+      text: transition.linkText,
+      visuallyHiddenText: 'accreditation',
+      classes: transition.polarity === 'negative' ? RED_BUTTON : GREEN_BUTTON
+    }))

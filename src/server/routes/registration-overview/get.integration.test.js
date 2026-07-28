@@ -1510,5 +1510,218 @@ describe('#registrationOverviewController', () => {
         ).toBeNull()
       })
     })
+
+    describe('Reject accreditation link visibility', () => {
+      const withCreatedAccreditation = () => ({
+        ...mockOverview,
+        registrations: [
+          {
+            ...mockRegistration,
+            accreditation:
+              /** @type {{ id: string, accreditationNumber: string, status: string }} */ ({
+                ...mockRegistration.accreditation,
+                status: 'created'
+              })
+          }
+        ]
+      })
+
+      afterEach(() => {
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+      })
+
+      test('Should render the Reject action on the Accreditation status row for a created accreditation when the user has admin.write scope', async () => {
+        useMockBackend(withCreatedAccreditation())
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+        const rejectLink = within(statusRow).getByRole('link', {
+          name: /^reject accreditation$/i
+        })
+
+        expect(rejectLink).toHaveAttribute(
+          'href',
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/reject/confirm`
+        )
+      })
+
+      test('Should style Reject as a red CTA and Approve as a green CTA on a created accreditation', async () => {
+        useMockBackend(withCreatedAccreditation())
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+        const rejectLink = within(statusRow).getByRole('link', {
+          name: /^reject accreditation$/i
+        })
+        const approveLink = within(statusRow).getByRole('link', {
+          name: /^approve accreditation$/i
+        })
+
+        expect(rejectLink.className).toContain('govuk-button--warning')
+        expect(approveLink.className).toContain('govuk-button')
+        expect(approveLink.className).not.toContain('govuk-button--warning')
+      })
+
+      test('Should not render the Reject action when the accreditation status is not created', async () => {
+        useMockBackend()
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+
+        expect(
+          within(statusRow).queryByRole('link', {
+            name: /^reject accreditation$/i
+          })
+        ).toBeNull()
+      })
+
+      test('Should not render the Reject action when the user lacks admin.write scope', async () => {
+        const readOnlySession = {
+          ...mockUserSession,
+          scopes: ['admin.read']
+        }
+        vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
+        useMockBackend(withCreatedAccreditation())
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: readOnlySession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+
+        expect(
+          within(statusRow).queryByRole('link', {
+            name: /^reject accreditation$/i
+          })
+        ).toBeNull()
+      })
+    })
+
+    describe('Reopen accreditation link visibility', () => {
+      const withRejectedAccreditation = () => ({
+        ...mockOverview,
+        registrations: [
+          {
+            ...mockRegistration,
+            accreditation:
+              /** @type {{ id: string, accreditationNumber: string, status: string }} */ ({
+                ...mockRegistration.accreditation,
+                status: 'rejected'
+              })
+          }
+        ]
+      })
+
+      afterEach(() => {
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+      })
+
+      test('Should render the Reopen action as a green CTA on the Accreditation status row for a rejected accreditation when the user has admin.write scope', async () => {
+        useMockBackend(withRejectedAccreditation())
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+        const reopenLink = within(statusRow).getByRole('link', {
+          name: /^reopen accreditation$/i
+        })
+
+        expect(reopenLink).toHaveAttribute(
+          'href',
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/reopen/confirm`
+        )
+        expect(reopenLink.className).toContain('govuk-button')
+        expect(reopenLink.className).not.toContain('govuk-button--warning')
+      })
+
+      test('Should not render the Reopen action when the accreditation status is not rejected', async () => {
+        useMockBackend()
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+
+        expect(
+          within(statusRow).queryByRole('link', {
+            name: /^reopen accreditation$/i
+          })
+        ).toBeNull()
+      })
+
+      test('Should not render the Reopen action when the user lacks admin.write scope', async () => {
+        const readOnlySession = {
+          ...mockUserSession,
+          scopes: ['admin.read']
+        }
+        vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
+        useMockBackend(withRejectedAccreditation())
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: readOnlySession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+
+        expect(
+          within(statusRow).queryByRole('link', {
+            name: /^reopen accreditation$/i
+          })
+        ).toBeNull()
+      })
+    })
+
+    describe('Accreditation status action styling', () => {
+      test('Should style the Suspend action as a red CTA on an approved accreditation', async () => {
+        useMockBackend()
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+        const suspendLink = within(statusRow).getByRole('link', {
+          name: /^suspend accreditation$/i
+        })
+
+        expect(suspendLink.className).toContain('govuk-button--warning')
+      })
+    })
   })
 })

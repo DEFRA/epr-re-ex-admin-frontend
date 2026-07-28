@@ -26,34 +26,9 @@
       { key: { text: "Site" }, value: { text: registration.site } }
     ] %}
     {% if registration.accreditation %}
-      {% set accreditationStatusActions = [] %}
-      {% if SCOPES.adminWrite in scopes %}
-        {% set accreditationBaseUrl = '/organisations/' ~ organisationId ~ '/registrations/' ~ registrationId ~ '/accreditations/' ~ registration.accreditation.id %}
-        {% if registration.accreditation.status === 'created' %}
-          {% set accreditationStatusActions = accreditationStatusActions.concat([
-            { href: accreditationBaseUrl ~ '/approve/confirm', text: "Approve", visuallyHiddenText: "accreditation" }
-          ]) %}
-        {% endif %}
-        {% if registration.accreditation.status === 'approved' %}
-          {% set accreditationStatusActions = accreditationStatusActions.concat([
-            { href: accreditationBaseUrl ~ '/suspend/confirm', text: "Suspend", visuallyHiddenText: "accreditation" }
-          ]) %}
-        {% endif %}
-        {% if registration.accreditation.status === 'suspended' %}
-          {% set accreditationStatusActions = accreditationStatusActions.concat([
-            { href: accreditationBaseUrl ~ '/reapprove/confirm', text: "Reapprove", visuallyHiddenText: "accreditation" },
-            { href: accreditationBaseUrl ~ '/cancel/confirm', text: "Cancel", visuallyHiddenText: "accreditation" }
-          ]) %}
-        {% endif %}
-        {% if registration.accreditation.status === 'cancelled' %}
-          {% set accreditationStatusActions = accreditationStatusActions.concat([
-            { href: accreditationBaseUrl ~ '/reinstate/confirm', text: "Reinstate", visuallyHiddenText: "accreditation" }
-          ]) %}
-        {% endif %}
-      {% endif %}
       {% set summaryRows = summaryRows.concat([
         { key: { text: "Accreditation number" }, value: { text: registration.accreditation.accreditationNumber } },
-        { key: { text: "Accreditation status" }, value: { html: govukTag({ text: registration.accreditation.status }) }, actions: { items: accreditationStatusActions } },
+        { key: { text: "Accreditation status" }, value: { html: govukTag({ text: registration.accreditation.status }) }, actions: { items: accreditationStatusActions if SCOPES.adminWrite in scopes else [] } },
         { key: { text: "Waste balance (tonnes)" }, value: { text: wasteBalance.amount if wasteBalance else "No data" } },
         { key: { text: "Waste balance available (tonnes)" }, value: { text: wasteBalance.availableAmount if wasteBalance else "No data" } },
         { key: { text: "Waste balance events" }, value: { html: '<a class="govuk-link govuk-link--no-visited-state" href="' ~ wasteBalanceEventsUrl ~ '">View</a>' } }
@@ -77,7 +52,9 @@
     {% endif %}
 
     <div class="govuk-grid-row">
-      <div class="govuk-grid-column-one-third">
+      {# Two-thirds so multi-action rows (e.g. Approve | Reject) keep their
+         CTA buttons on one line instead of wrapping into a stack. #}
+      <div class="govuk-grid-column-two-thirds">
         {{ govukSummaryList({ rows: summaryRows }) }}
       </div>
     </div>
