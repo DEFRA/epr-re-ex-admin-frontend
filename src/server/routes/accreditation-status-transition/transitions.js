@@ -59,5 +59,35 @@ export const ACCREDITATION_STATUS_TRANSITIONS = {
     errorMessage:
       'There was a problem reapproving the accreditation. Please try again.',
     logMessage: 'Reapprove accreditation failed'
+  },
+  // Cancellation is only reachable from suspended — there is deliberately no
+  // approved -> cancelled action (suspend first, PAE-1624 / ADR 0042).
+  cancel: {
+    fromStatus: 'suspended',
+    toStatus: 'cancelled',
+    pageTitle: 'Cancel accreditation',
+    heading: 'Cancel accreditation',
+    warningText:
+      'This action must only be taken following the required legal process for cancellation and following instruction from an industry regulator. Cancelling an accreditation is permanent: the operator will no longer be able to issue PRNs and tonnages declared after the cancellation will not count towards their waste balance',
+    buttonText: 'Cancel accreditation now',
+    buttonClasses: 'govuk-button--warning',
+    errorMessage:
+      'There was a problem cancelling the accreditation. Please try again.',
+    logMessage: 'Cancel accreditation failed'
+  },
+  // Reinstatement after a cancellation is overturned on appeal (PAE-1785),
+  // effective on the day it is actioned — not retrospective.
+  reinstate: {
+    fromStatus: 'cancelled',
+    toStatus: 'approved',
+    pageTitle: 'Reinstate accreditation',
+    heading: 'Reinstate accreditation',
+    warningText:
+      'This action must only be taken where a cancellation has been overturned by the required legal process (for example a successful appeal through the courts) and following instruction from an industry regulator. Reinstating the operator will restore their ability to issue PRNs and newly declared tonnages will count towards their waste balance from the date of reinstatement. Tonnages dated during the cancelled period will not count towards their waste balance',
+    buttonText: 'Reinstate now',
+    buttonClasses: '',
+    errorMessage:
+      'There was a problem reinstating the accreditation. Please try again.',
+    logMessage: 'Reinstate accreditation failed'
   }
 }
