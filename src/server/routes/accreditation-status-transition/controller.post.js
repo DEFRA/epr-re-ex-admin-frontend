@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { postStatusTransition } from '#server/common/helpers/status-transition/post-status-transition.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildConfirmView } from './confirm-view.js'
 import { parseGrantForm } from './grant-form.js'
@@ -51,45 +51,24 @@ export const createTransitionPostController = (action, transition) => ({
       body.accreditationNumber = values.accreditationNumber
     }
 
-    try {
-      await fetchJsonFromBackend(
-        request,
-        `/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/status-history`,
-        {
-          method: 'POST',
-          body: JSON.stringify(body)
-        }
-      )
-    } catch (error) {
-      request.logger.error({
-        err: error,
-        message: transition.logMessage
-      })
+    const outcome = await postStatusTransition(
+      request,
+      `/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/status-history`,
+      body,
+      transition,
+      grantValues
+    )
 
-      // Only surface backend messages for client errors: 5xx and network
-      // failures carry Boom's generic message (or the raw fetch error, which
-      // leaks the backend URL), so those get the friendly fallback instead.
-      const { statusCode, payload } = error.output
-      const errorMessage =
-        (statusCode < statusCodes.internalServerError && payload?.message) ||
-        transition.errorMessage
-
-      // A backend rejection of the grant fields re-renders the confirm page
-      // so the admin keeps what they typed; 5xx and network failures still
-      // flash on the overview, where retrying immediately won't help.
-      if (grantValues && statusCode < statusCodes.internalServerError) {
-        return h
-          .view(
-            CONFIRM_VIEW,
-            buildConfirmView(action, transition, request.params, {
-              values: grantValues,
-              backendError: errorMessage
-            })
-          )
-          .code(statusCodes.badRequest)
-      }
-
-      request.yar.set('error', errorMessage)
+    if (outcome) {
+      return h
+        .view(
+          CONFIRM_VIEW,
+          buildConfirmView(action, transition, request.params, {
+            values: grantValues,
+            backendError: outcome.backendError
+          })
+        )
+        .code(statusCodes.badRequest)
     }
 
     return h.redirect(overviewUrl)
