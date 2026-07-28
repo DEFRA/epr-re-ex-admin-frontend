@@ -28,7 +28,14 @@ describe('prn-tonnage formatters', () => {
     expect(formatTonnage(12.5)).toBe('13')
     expect(formatTonnage(12.6)).toBe('13')
     expect(formatTonnage(-1.5)).toBe('-2')
-    expect(formatTonnage(null)).toBe('0')
+    expect(formatTonnage(0)).toBe('0')
+  })
+
+  test('Should render an empty cell when tonnage is missing or not a number', () => {
+    expect(formatTonnage(null)).toBe('')
+    expect(formatTonnage(undefined)).toBe('')
+    expect(formatTonnage('')).toBe('')
+    expect(formatTonnage('not a number')).toBe('')
   })
 
   test('Should format known registration types and preserve unknowns', () => {

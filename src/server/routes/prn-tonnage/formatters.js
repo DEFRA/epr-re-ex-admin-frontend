@@ -1,3 +1,5 @@
+import { isNil } from '#server/common/helpers/is-nil.js'
+
 const materialDisplayNames = {
   aluminium: 'Aluminium',
   fibre: 'Fibre based composite',
@@ -40,5 +42,15 @@ export function formatTonnageBand(tonnageBand) {
 }
 
 export function formatTonnage(tonnage) {
-  return Number(tonnage).toFixed(0)
+  if (isNil(tonnage) || tonnage === '') {
+    return ''
+  }
+
+  const number = Number(tonnage)
+
+  if (Number.isNaN(number)) {
+    return ''
+  }
+
+  return number.toFixed(0)
 }
