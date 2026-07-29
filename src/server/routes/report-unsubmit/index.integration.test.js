@@ -94,6 +94,36 @@ describe('report-unsubmit', () => {
       )
     )
 
+  const submittedSubmission = (n) => ({
+    year: Number(year),
+    period: Number(period),
+    submissionNumber: n,
+    startDate: '2026-01-01',
+    endDate: '2026-01-31',
+    dueDate: '2026-02-20',
+    periodStatus: 'submitted',
+    report: {
+      id: `report-${n}`,
+      status: 'submitted',
+      submissionNumber: n,
+      submittedAt: '2026-02-10T09:00:00.000Z',
+      submittedBy: 'Alice Regulator'
+    }
+  })
+
+  const stubCalendar = (reportingPeriods = [submittedSubmission(1)]) =>
+    mswServer.use(
+      http.get(
+        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
+        () => HttpResponse.json({ cadence, reportingPeriods })
+      )
+    )
+
+  // Every confirm-page request reads the calendar to spot a superseded
+  // submission. Default to the unsuperseded case; tests override by calling
+  // stubCalendar with their own periods.
+  beforeEach(() => stubCalendar())
+
   const stubUnsubmitSuccess = () =>
     mswServer.use(
       http.post(
@@ -262,6 +292,22 @@ describe('report-unsubmit', () => {
       )
     }
   )
+
+  it('should redirect to overview for a submission superseded by a later one', async () => {
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+    stubOverview()
+    stubReport({ currentStatus: 'submitted', unsubmittedAt: undefined })
+    stubCalendar([submittedSubmission(1), submittedSubmission(2)])
+
+    const { response, redirectCookie } = await getConfirm()
+
+    expect(response.statusCode).toBe(statusCodes.found)
+    expect(response.headers.location).toBe(overviewUrl)
+    await expectOverviewFlash(
+      redirectCookie,
+      'This report cannot be unsubmitted because a later submission has superseded it.'
+    )
+  })
 
   test('submitting the confirmation redirects to the success page', async () => {
     vi.mocked(getUserSession).mockResolvedValue(mockUserSession)

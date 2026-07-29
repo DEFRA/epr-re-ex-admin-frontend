@@ -5,6 +5,16 @@ import {
 } from '#server/common/helpers/fetch-organisation-overview.js'
 import { PAGE_TITLE } from './constants.js'
 import { formatPeriod } from '#server/common/helpers/format-reporting-period.js'
+import { toReportingPeriods } from '#server/common/helpers/reporting-periods.js'
+
+/**
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { ReportSubmissionParams } from './types.js'
+ */
+
+/**
+ * @typedef {HapiRequest & { params: ReportSubmissionParams }} SubmissionRequest
+ */
 
 /**
  * Mirrors the backend's has-any-key rule (reports/domain/resubmission.js): the
@@ -16,20 +26,71 @@ const isResubmissionRequired = (resubmissionRequired) =>
   Object.keys(resubmissionRequired ?? {}).length > 0
 
 /**
- * The reason the backend would refuse to unsubmit this report, or null when it
- * would accept it. Surfaced as a flash error on the overview rather than
+ * The reason the backend would refuse to unsubmit this submission, or null when
+ * it would accept it. Surfaced as a flash error on the overview rather than
  * letting the confirmation promise an outcome that cannot be delivered.
+ * Mirrors the three refusals in reports/routes/unsubmit.js.
  * @param {{ resubmissionRequired?: Record<string, unknown>, status: { currentStatus: string } }} report
+ * @param {{ isSuperseded?: boolean } | undefined} calendarPeriod
  * @returns {string | null}
  */
-const refusalReason = (report) => {
+const refusalReason = (report, calendarPeriod) => {
   if (report.status.currentStatus !== 'submitted') {
     return 'This report cannot be unsubmitted because it is no longer submitted.'
   }
   if (isResubmissionRequired(report.resubmissionRequired)) {
     return 'This report cannot be unsubmitted because a resubmission has been requested for this period.'
   }
+  if (calendarPeriod?.isSuperseded) {
+    return 'This report cannot be unsubmitted because a later submission has superseded it.'
+  }
   return null
+}
+
+/**
+ * The stored report for this submission, carrying its status and resubmission
+ * flag.
+ * @param {SubmissionRequest} request
+ */
+const fetchReportSubmission = (request) => {
+  const {
+    organisationId,
+    registrationId,
+    year,
+    cadence,
+    period,
+    submissionNumber
+  } = request.params
+
+  return fetchJsonFromBackend(
+    request,
+    `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`,
+    {}
+  )
+}
+
+/**
+ * The calendar item for this submission. Supersession is not carried on the
+ * report itself: it comes from the sibling submissions the calendar surfaces,
+ * via the same derivation the registration overview gates its Unsubmit link on.
+ * @param {SubmissionRequest} request
+ */
+const fetchCalendarPeriod = async (request) => {
+  const { organisationId, registrationId, year, period, submissionNumber } =
+    request.params
+
+  const calendar = await fetchJsonFromBackend(
+    request,
+    `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar?expand=submissions`,
+    {}
+  )
+
+  return toReportingPeriods(calendar.reportingPeriods, calendar.cadence).find(
+    (item) =>
+      item.year === Number(year) &&
+      item.period === Number(period) &&
+      item.submissionNumber === Number(submissionNumber)
+  )
 }
 
 export const reportUnsubmitConfirmGetController = {
@@ -45,13 +106,12 @@ export const reportUnsubmitConfirmGetController = {
 
     const overviewUrl = `/organisations/${organisationId}/registrations/${registrationId}/overview`
 
-    const report = await fetchJsonFromBackend(
-      request,
-      `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`,
-      {}
-    )
+    const [report, calendarPeriod] = await Promise.all([
+      fetchReportSubmission(request),
+      fetchCalendarPeriod(request)
+    ])
 
-    const refusal = refusalReason(report)
+    const refusal = refusalReason(report, calendarPeriod)
     if (refusal) {
       request.yar.set('error', refusal)
       return h.redirect(overviewUrl)
