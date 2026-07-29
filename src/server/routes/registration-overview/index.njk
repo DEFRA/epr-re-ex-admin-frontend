@@ -108,6 +108,18 @@
     <div class="govuk-grid-row">
       <div id="summary-logs" class="govuk-grid-column-two-thirds">
         {% if summaryLogRows and summaryLogRows.length %}
+          {% set summaryLogTableRows = [] %}
+          {% for row in summaryLogRows %}
+            {% set downloadHtml %}
+              <a class="govuk-link govuk-link--no-visited-state" href="{{ row.downloadUrl }}">Download</a>
+            {% endset %}
+            {% set summaryLogTableRows = summaryLogTableRows.concat([[
+              { text: row.uploadedAt },
+              { html: govukTag({ text: row.label, classes: row.className }) },
+              { html: downloadHtml }
+            ]]) %}
+          {% endfor %}
+
           {{ govukTable({
             caption: "Summary logs",
             captionClasses: "govuk-table__caption--m",
@@ -116,7 +128,7 @@
               { text: "Status" },
               { text: "Actions" }
             ],
-            rows: summaryLogRows
+            rows: summaryLogTableRows
           }) }}
         {% else %}
           <p class="govuk-body">No summary logs</p>

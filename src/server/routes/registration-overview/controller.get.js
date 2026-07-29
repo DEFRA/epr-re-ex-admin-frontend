@@ -84,22 +84,24 @@ const STATUS_DISPLAY = {
   submission_failed: { label: 'Failed (Submission)', className: RED_TAG }
 }
 
-const toSummaryLogTableRow =
-  (organisationId, registrationId) => (summaryLog) => {
-    const { summaryLogId, uploadedAt, status } = summaryLog
+/**
+ * Builds the view model for a summary log row. STATUS_DISPLAY keeps the
+ * status-to-label-and-colour decision; the template renders it through the
+ * govukTag macro so the tag markup has a single source.
+ * @param {string} organisationId
+ * @param {string} registrationId
+ */
+const toSummaryLogRow = (organisationId, registrationId) => (summaryLog) => {
+  const { summaryLogId, uploadedAt, status } = summaryLog
+  const { label, className } = STATUS_DISPLAY[status]
 
-    const { label, className } = STATUS_DISPLAY[status]
-
-    const downloadUrl = `/system-logs/download/${organisationId}/${registrationId}/${summaryLogId}`
-
-    return [
-      { text: uploadedAt },
-      { html: `<strong class="govuk-tag ${className}">${label}</strong>` },
-      {
-        html: `<a class="govuk-link govuk-link--no-visited-state" href="${downloadUrl}">Download</a>`
-      }
-    ]
+  return {
+    uploadedAt,
+    label,
+    className,
+    downloadUrl: `/system-logs/download/${organisationId}/${registrationId}/${summaryLogId}`
   }
+}
 
 const fetchWasteBalance = async (request, organisationId, accreditationId) => {
   try {
@@ -192,7 +194,7 @@ export const registrationOverviewGETController = {
     const heading = `${overview.companyName} - ${registration.registrationNumber ?? registration.id}`
 
     const summaryLogRows = summaryLogs.map(
-      toSummaryLogTableRow(organisationId, registrationId)
+      toSummaryLogRow(organisationId, registrationId)
     )
 
     return h.view('routes/registration-overview/index', {
