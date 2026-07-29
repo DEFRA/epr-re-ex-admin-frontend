@@ -16,10 +16,11 @@ export const prnTonnageResultsGetController = {
     const rows = data.rows.map((row) => ({
       organisationName: row.organisationName,
       organisationId: row.organisationId,
+      registrationNumber: row.registrationNumber,
+      registrationType: formatRegistrationType(row.registrationType),
       accreditationNumber: row.accreditationNumber,
       material: formatMaterialName(row.material),
       tonnageBand: formatTonnageBand(row.tonnageBand),
-      registrationType: formatRegistrationType(row.registrationType),
       wasteBalance: formatTonnage(row.wasteBalance),
       availableWasteBalance: formatTonnage(row.availableWasteBalance),
       awaitingAuthorisationTonnage: formatTonnage(
