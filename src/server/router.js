@@ -27,6 +27,7 @@ import { unlinkOrganisation } from './routes/unlink-organisation/index.js'
 import { accreditationOverseasSites } from './routes/accreditation-overseas-sites/index.js'
 import { creditedTonnage } from './routes/credited-tonnage/index.js'
 import { accreditationStatusTransition } from './routes/accreditation-status-transition/index.js'
+import { registrationStatusTransition } from './routes/registration-status-transition/index.js'
 
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
 
@@ -66,7 +67,8 @@ export const router = {
         unlinkOrganisation,
         accreditationOverseasSites,
         creditedTonnage,
-        accreditationStatusTransition
+        accreditationStatusTransition,
+        registrationStatusTransition
       ])
 
       await server.register([serveStaticFiles])
