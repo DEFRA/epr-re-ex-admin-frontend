@@ -145,6 +145,43 @@ const fetchWasteBalance = async (request, organisationId, accreditationId) => {
   }
 }
 
+/**
+ * The links the page derives from the registration, every one of which hinges
+ * on whether it carries an accreditation.
+ * @param {string} organisationId
+ * @param {string} registrationId
+ * @param {Record<string, any>} registration
+ */
+const toRegistrationLinks = (organisationId, registrationId, registration) => {
+  const registrationUrl = `/organisations/${organisationId}/registrations/${registrationId}`
+  const accreditationUrl = registration.accreditation
+    ? `${registrationUrl}/accreditations/${registration.accreditation.id}`
+    : null
+
+  return {
+    // The template only attaches these to the Accreditation status row for
+    // users holding admin.write (hiding is UX - the backend enforces scope).
+    accreditationStatusActions: accreditationUrl
+      ? accreditationStatusActions(
+          registration.accreditation.status,
+          accreditationUrl
+        )
+      : [],
+    wasteBalanceEventsUrl: accreditationUrl
+      ? `${accreditationUrl}/waste-balance-events`
+      : null,
+    overseasSitesUrl:
+      accreditationUrl &&
+      registration.processingType === EXPORTER_PROCESSING_TYPE
+        ? `${accreditationUrl}/overseas-sites`
+        : null,
+    wasteRecordsDownloadUrl: `${registrationUrl}/waste-records/download`,
+    prnActivityDownloadUrl: accreditationUrl
+      ? `${accreditationUrl}/prn-activity/download`
+      : null
+  }
+}
+
 export const registrationOverviewGETController = {
   async handler(request, h) {
     const { organisationId, registrationId } = request.params
@@ -201,14 +238,7 @@ export const registrationOverviewGETController = {
       organisationId,
       registrationId,
       registration,
-      // The template only attaches these to the Accreditation status row for
-      // users holding admin.write (hiding is UX — the backend enforces scope).
-      accreditationStatusActions: registration.accreditation
-        ? accreditationStatusActions(
-            registration.accreditation.status,
-            `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${registration.accreditation.id}`
-          )
-        : [],
+      ...toRegistrationLinks(organisationId, registrationId, registration),
       reportRows: toReportingPeriods(
         calendar.reportingPeriods,
         calendar.cadence
@@ -222,19 +252,7 @@ export const registrationOverviewGETController = {
       ),
       summaryLogRows,
       wasteBalance,
-      error: errorMessage,
-      wasteBalanceEventsUrl: registration.accreditation
-        ? `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${registration.accreditation.id}/waste-balance-events`
-        : null,
-      overseasSitesUrl:
-        registration.accreditation &&
-        registration.processingType === EXPORTER_PROCESSING_TYPE
-          ? `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${registration.accreditation.id}/overseas-sites`
-          : null,
-      wasteRecordsDownloadUrl: `/organisations/${organisationId}/registrations/${registrationId}/waste-records/download`,
-      prnActivityDownloadUrl: registration.accreditation
-        ? `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${registration.accreditation.id}/prn-activity/download`
-        : null
+      error: errorMessage
     })
   }
 }
