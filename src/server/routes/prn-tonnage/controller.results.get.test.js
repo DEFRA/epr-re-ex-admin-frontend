@@ -38,7 +38,7 @@ describe('prn-tonnage results GET controller', () => {
       rows: [
         {
           organisationName: 'Acme Recycling',
-          organisationId: 'ORG001',
+          orgId: 'ORG001',
           registrationNumber: 'REG-100',
           registrationType: 'REPROCESSOR_INPUT',
           accreditationNumber: 'ACC-100',
@@ -68,7 +68,7 @@ describe('prn-tonnage results GET controller', () => {
       rows: [
         {
           organisationName: 'Acme Recycling',
-          organisationId: 'ORG001',
+          orgId: 'ORG001',
           registrationNumber: 'REG-100',
           registrationType: 'Reprocessor input',
           accreditationNumber: 'ACC-100',
@@ -113,7 +113,7 @@ describe('prn-tonnage results GET controller', () => {
       rows: [
         {
           organisationName: 'Beta',
-          organisationId: 'ORG002',
+          orgId: 'ORG002',
           registrationNumber: 'REG-200',
           registrationType: 'MYSTERY_TYPE',
           accreditationNumber: 'ACC-200',

@@ -39,7 +39,7 @@ describe('prn-tonnage POST controller', () => {
       rows: [
         {
           organisationName: 'Acme Recycling',
-          organisationId: 'ORG001',
+          orgId: 'ORG001',
           registrationNumber: 'REG-100',
           registrationType: 'EXPORTER',
           accreditationNumber: 'ACC-100',

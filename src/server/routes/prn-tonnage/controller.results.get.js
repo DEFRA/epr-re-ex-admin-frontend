@@ -15,7 +15,7 @@ export const prnTonnageResultsGetController = {
 
     const rows = data.rows.map((row) => ({
       organisationName: row.organisationName,
-      organisationId: row.organisationId,
+      orgId: row.orgId,
       registrationNumber: row.registrationNumber,
       registrationType: formatRegistrationType(row.registrationType),
       accreditationNumber: row.accreditationNumber,

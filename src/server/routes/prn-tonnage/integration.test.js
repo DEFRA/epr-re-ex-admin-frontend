@@ -41,7 +41,7 @@ describe('prn-tonnage results table', () => {
     rows: [
       {
         organisationName: 'Acme Reprocessing',
-        organisationId: 'org-1',
+        orgId: 'org-1',
         registrationNumber: 'REG-100',
         registrationType: 'REPROCESSOR_OUTPUT',
         accreditationNumber: 'ACC-100',

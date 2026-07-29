@@ -47,7 +47,7 @@ async function generateCsv(data) {
   for (const row of data.rows) {
     rows.push([
       row.organisationName,
-      row.organisationId,
+      row.orgId,
       row.registrationNumber,
       formatRegistrationType(row.registrationType),
       row.accreditationNumber,
