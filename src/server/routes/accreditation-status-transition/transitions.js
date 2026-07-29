@@ -109,7 +109,7 @@ export const ACCREDITATION_STATUS_TRANSITIONS = {
     warningText:
       'This action must only be taken following the required legal process for refusing an accreditation application and following instruction from an industry regulator. Rejecting an accreditation means the operator remains registered-only: they cannot issue PRNs and declared tonnages will not count towards a waste balance',
     buttonText: 'Reject now',
-    buttonClasses: WARNING_BUTTON_CLASS,
+    buttonClasses: '',
     errorMessage:
       'There was a problem rejecting the accreditation. Please try again.',
     logMessage: 'Reject accreditation failed'
