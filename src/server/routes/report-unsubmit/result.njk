@@ -34,7 +34,7 @@
            <p class="govuk-body">
              <strong>Submission:</strong> {{ submissionNumber }}
            </p>
-           <p class="govuk-body">The report could not be unsubmitted.</p>
+           <p class="govuk-body">{{ reason if reason else "The report could not be unsubmitted." }}</p>
          {% endif %}
 
          <p class="govuk-body govuk-!-margin-top-6">

@@ -251,6 +251,33 @@ describe('report-unsubmit', () => {
     expect($('body').text()).toMatch(/Submission:\s*1/)
   })
 
+  it('should say why the unsubmit was refused when the backend rejects it', async () => {
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+    stubOverview()
+    stubReport({ currentStatus: 'submitted', unsubmittedAt: undefined })
+    stubUnsubmitFailure(statusCodes.conflict)
+
+    const { result } = await postUnsubmit()
+
+    expect(cheerio.load(result)('body').text()).toContain(
+      'The report could not be unsubmitted because its status has changed. It may have been superseded by a later submission, or flagged for resubmission.'
+    )
+  })
+
+  it('should not offer a reason when the backend fails for any other cause', async () => {
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+    stubOverview()
+    stubReport({ currentStatus: 'submitted', unsubmittedAt: undefined })
+    stubUnsubmitFailure(statusCodes.internalServerError)
+
+    const bodyText = cheerio
+      .load((await postUnsubmit()).result)('body')
+      .text()
+
+    expect(bodyText).toContain('The report could not be unsubmitted.')
+    expect(bodyText).not.toContain('its status has changed')
+  })
+
   test('success page confirms the report was unsubmitted', async () => {
     vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
     stubOverview()
