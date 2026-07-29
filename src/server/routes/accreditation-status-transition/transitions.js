@@ -3,7 +3,6 @@
  * @property {string} fromStatus - Status the accreditation must currently hold
  * @property {string} toStatus - Status posted to the backend status-history endpoint
  * @property {string} linkText - Overview action label, e.g. "Suspend"
- * @property {'positive'|'negative'} polarity - Drives the green/red CTA styling of the overview action
  * @property {string} pageTitle
  * @property {string} heading
  * @property {string} warningText - Confirm-page warning copy
@@ -28,7 +27,6 @@ export const ACCREDITATION_STATUS_TRANSITIONS = {
     fromStatus: 'created',
     toStatus: 'approved',
     linkText: 'Approve',
-    polarity: 'positive',
     pageTitle: 'Approve accreditation',
     heading: 'Approve accreditation',
     warningText:
@@ -44,7 +42,6 @@ export const ACCREDITATION_STATUS_TRANSITIONS = {
     fromStatus: 'approved',
     toStatus: 'suspended',
     linkText: 'Suspend',
-    polarity: 'negative',
     pageTitle: 'Suspend accreditation',
     heading: 'Suspend accreditation',
     warningText:
@@ -59,7 +56,6 @@ export const ACCREDITATION_STATUS_TRANSITIONS = {
     fromStatus: 'suspended',
     toStatus: 'approved',
     linkText: 'Reapprove',
-    polarity: 'positive',
     pageTitle: 'Reapprove accreditation',
     heading: 'Reapprove accreditation',
     warningText:
@@ -76,7 +72,6 @@ export const ACCREDITATION_STATUS_TRANSITIONS = {
     fromStatus: 'suspended',
     toStatus: 'cancelled',
     linkText: 'Cancel',
-    polarity: 'negative',
     pageTitle: 'Cancel accreditation',
     heading: 'Cancel accreditation',
     warningText:
@@ -93,7 +88,6 @@ export const ACCREDITATION_STATUS_TRANSITIONS = {
     fromStatus: 'cancelled',
     toStatus: 'approved',
     linkText: 'Reinstate',
-    polarity: 'positive',
     pageTitle: 'Reinstate accreditation',
     heading: 'Reinstate accreditation',
     warningText:
@@ -110,7 +104,6 @@ export const ACCREDITATION_STATUS_TRANSITIONS = {
     fromStatus: 'created',
     toStatus: 'rejected',
     linkText: 'Reject',
-    polarity: 'negative',
     pageTitle: 'Reject accreditation',
     heading: 'Reject accreditation',
     warningText:
@@ -126,7 +119,6 @@ export const ACCREDITATION_STATUS_TRANSITIONS = {
     fromStatus: 'rejected',
     toStatus: 'created',
     linkText: 'Reopen',
-    polarity: 'positive',
     pageTitle: 'Reopen accreditation',
     heading: 'Reopen accreditation',
     warningText:
@@ -139,17 +131,13 @@ export const ACCREDITATION_STATUS_TRANSITIONS = {
   }
 }
 
-const GREEN_BUTTON = 'govuk-button govuk-!-margin-bottom-0'
-const RED_BUTTON = `govuk-button ${WARNING_BUTTON_CLASS} govuk-!-margin-bottom-0`
-
 /**
  * Summary-list action items for every transition available from the given
- * accreditation status, styled as green (positive) or red (negative) CTA
- * buttons. Single source of truth for which actions the registration
- * overview offers per status.
+ * accreditation status. Single source of truth for which actions the
+ * registration overview offers per status.
  * @param {string} status - Current accreditation status
  * @param {string} baseUrl - Accreditation URL prefix, `.../accreditations/{id}`
- * @returns {Array<{href: string, text: string, visuallyHiddenText: string, classes: string}>}
+ * @returns {Array<{href: string, text: string, visuallyHiddenText: string}>}
  */
 export const accreditationStatusActions = (status, baseUrl) =>
   Object.entries(ACCREDITATION_STATUS_TRANSITIONS)
@@ -157,6 +145,5 @@ export const accreditationStatusActions = (status, baseUrl) =>
     .map(([action, transition]) => ({
       href: `${baseUrl}/${action}/confirm`,
       text: transition.linkText,
-      visuallyHiddenText: 'accreditation',
-      classes: transition.polarity === 'negative' ? RED_BUTTON : GREEN_BUTTON
+      visuallyHiddenText: 'accreditation'
     }))

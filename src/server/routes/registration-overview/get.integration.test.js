@@ -1551,29 +1551,6 @@ describe('#registrationOverviewController', () => {
         )
       })
 
-      test('Should style Reject as a red CTA and Approve as a green CTA on a created accreditation', async () => {
-        useMockBackend(withCreatedAccreditation())
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url,
-          auth: { strategy: 'session', credentials: mockUserSession }
-        })
-
-        const body = renderPage(result)
-        const statusRow = getSummaryRow(body, 'Accreditation status')
-        const rejectLink = within(statusRow).getByRole('link', {
-          name: /^reject accreditation$/i
-        })
-        const approveLink = within(statusRow).getByRole('link', {
-          name: /^approve accreditation$/i
-        })
-
-        expect(rejectLink.className).toContain('govuk-button--warning')
-        expect(approveLink.className).toContain('govuk-button')
-        expect(approveLink.className).not.toContain('govuk-button--warning')
-      })
-
       test('Should not render the Reject action when the accreditation status is not created', async () => {
         useMockBackend()
 
@@ -1637,7 +1614,7 @@ describe('#registrationOverviewController', () => {
         vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
       })
 
-      test('Should render the Reopen action as a green CTA on the Accreditation status row for a rejected accreditation when the user has admin.write scope', async () => {
+      test('Should render the Reopen action on the Accreditation status row for a rejected accreditation when the user has admin.write scope', async () => {
         useMockBackend(withRejectedAccreditation())
 
         const { result } = await server.inject({
@@ -1656,8 +1633,6 @@ describe('#registrationOverviewController', () => {
           'href',
           `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/reopen/confirm`
         )
-        expect(reopenLink.className).toContain('govuk-button')
-        expect(reopenLink.className).not.toContain('govuk-button--warning')
       })
 
       test('Should not render the Reopen action when the accreditation status is not rejected', async () => {
@@ -1701,26 +1676,6 @@ describe('#registrationOverviewController', () => {
             name: /^reopen accreditation$/i
           })
         ).toBeNull()
-      })
-    })
-
-    describe('Accreditation status action styling', () => {
-      test('Should style the Suspend action as a red CTA on an approved accreditation', async () => {
-        useMockBackend()
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url,
-          auth: { strategy: 'session', credentials: mockUserSession }
-        })
-
-        const body = renderPage(result)
-        const statusRow = getSummaryRow(body, 'Accreditation status')
-        const suspendLink = within(statusRow).getByRole('link', {
-          name: /^suspend accreditation$/i
-        })
-
-        expect(suspendLink.className).toContain('govuk-button--warning')
       })
     })
   })

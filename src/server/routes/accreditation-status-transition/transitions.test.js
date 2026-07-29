@@ -2,73 +2,63 @@ import { accreditationStatusActions } from './transitions.js'
 
 const baseUrl = '/organisations/org-1/registrations/reg-1/accreditations/acc-1'
 
-const GREEN_BUTTON = 'govuk-button govuk-!-margin-bottom-0'
-const RED_BUTTON = 'govuk-button govuk-button--warning govuk-!-margin-bottom-0'
-
 describe('accreditationStatusActions', () => {
-  it('offers Approve as a green CTA and Reject as a red CTA for a created accreditation', () => {
+  it('offers Approve and Reject links for a created accreditation', () => {
     expect(accreditationStatusActions('created', baseUrl)).toEqual([
       {
         href: `${baseUrl}/approve/confirm`,
         text: 'Approve',
-        visuallyHiddenText: 'accreditation',
-        classes: GREEN_BUTTON
+        visuallyHiddenText: 'accreditation'
       },
       {
         href: `${baseUrl}/reject/confirm`,
         text: 'Reject',
-        visuallyHiddenText: 'accreditation',
-        classes: RED_BUTTON
+        visuallyHiddenText: 'accreditation'
       }
     ])
   })
 
-  it('offers Suspend as a red CTA for an approved accreditation', () => {
+  it('offers a Suspend link for an approved accreditation', () => {
     expect(accreditationStatusActions('approved', baseUrl)).toEqual([
       {
         href: `${baseUrl}/suspend/confirm`,
         text: 'Suspend',
-        visuallyHiddenText: 'accreditation',
-        classes: RED_BUTTON
+        visuallyHiddenText: 'accreditation'
       }
     ])
   })
 
-  it('offers Reapprove as a green CTA and Cancel as a red CTA for a suspended accreditation', () => {
+  it('offers Reapprove and Cancel links for a suspended accreditation', () => {
     expect(accreditationStatusActions('suspended', baseUrl)).toEqual([
       {
         href: `${baseUrl}/reapprove/confirm`,
         text: 'Reapprove',
-        visuallyHiddenText: 'accreditation',
-        classes: GREEN_BUTTON
+        visuallyHiddenText: 'accreditation'
       },
       {
         href: `${baseUrl}/cancel/confirm`,
         text: 'Cancel',
-        visuallyHiddenText: 'accreditation',
-        classes: RED_BUTTON
+        visuallyHiddenText: 'accreditation'
       }
     ])
   })
 
-  it('offers Reinstate as a green CTA for a cancelled accreditation', () => {
+  it('offers a Reinstate link for a cancelled accreditation', () => {
     expect(accreditationStatusActions('cancelled', baseUrl)).toEqual([
       {
         href: `${baseUrl}/reinstate/confirm`,
         text: 'Reinstate',
-        visuallyHiddenText: 'accreditation',
-        classes: GREEN_BUTTON
+        visuallyHiddenText: 'accreditation'
       }
     ])
   })
 
-  it('offers Reopen as a green CTA for a rejected accreditation', () => {
+  it('offers a Reopen link for a rejected accreditation', () => {
     expect(accreditationStatusActions('rejected', baseUrl)).toEqual([
       {
         href: `${baseUrl}/reopen/confirm`,
         text: 'Reopen',
-        visuallyHiddenText: 'accreditation',
-        classes: GREEN_BUTTON
+        visuallyHiddenText: 'accreditation'
       }
     ])
   })
