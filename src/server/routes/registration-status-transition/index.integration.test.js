@@ -184,7 +184,7 @@ describe('registration-status-transition', () => {
     expect($('input[name="appliesFrom-year"]')).toHaveLength(1)
     expect($('input[name="registrationNumber"]')).toHaveLength(1)
     expect($('form').attr('action')).toBe(postUrl)
-    expect($(`button:contains("${buttonText}")`).length).toBe(1)
+    expect($(`button:contains("${buttonText}")`)).toHaveLength(1)
     expect($('a:contains("Cancel")').attr('href')).toBe(overviewUrl)
   })
 
