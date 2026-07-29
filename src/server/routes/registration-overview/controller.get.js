@@ -59,27 +59,18 @@ const toReportingPeriods = (reportingPeriods, cadence) => {
   }))
 }
 
-const escapeHtml = (value) =>
-  String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-
-const govukLink = (href, text) =>
-  `<a class="govuk-link govuk-link--no-visited-state" href="${href}">${text}</a>`
-
 /**
- * Builds a reports table row. The Unsubmit action is offered only where the
- * backend would accept it - a submitted report that is neither superseded nor
- * flagged for resubmission. Hiding it is UX; the backend enforces both rules
- * and the admin.write scope.
+ * Builds the view model for a reports table row, leaving the markup to the
+ * template. The Unsubmit action is offered only where the backend would accept
+ * it - a submitted report that is neither superseded nor flagged for
+ * resubmission. Hiding it is UX; the backend enforces both rules and the
+ * admin.write scope.
  * @param {string} organisationId
  * @param {string} registrationId
  * @param {string} cadence
  * @param {boolean} hasAdminWrite
  */
-const toReportsTableRow =
+const toReportRow =
   (organisationId, registrationId, cadence, hasAdminWrite) => (period) => {
     const submissionUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/${period.year}/${cadence}/${period.period}/submissions/${period.submissionNumber}`
 
@@ -89,26 +80,14 @@ const toReportsTableRow =
       !period.isSuperseded &&
       !period.isFlaggedForResubmission
 
-    const actions = [
-      ...(period.report ? [govukLink(submissionUrl, 'View')] : []),
-      ...(canUnsubmit
-        ? [govukLink(`${submissionUrl}/unsubmit/confirm`, 'Unsubmit')]
-        : [])
-    ]
-
-    const statusText = period.report?.status ?? period.periodStatus
-
-    return [
-      { text: period.formattedPeriod },
-      period.report ? { text: period.submissionNumber } : { text: '' },
-      { text: period.dueDate },
-      statusText
-        ? {
-            html: `<strong class="govuk-tag app-status-tag">${escapeHtml(statusText)}</strong>`
-          }
-        : { text: '' },
-      { html: actions.join('<br>') }
-    ]
+    return {
+      formattedPeriod: period.formattedPeriod,
+      submissionNumber: period.report ? period.submissionNumber : '',
+      dueDate: period.dueDate,
+      statusText: period.report?.status ?? period.periodStatus,
+      viewUrl: period.report ? submissionUrl : null,
+      unsubmitUrl: canUnsubmit ? `${submissionUrl}/unsubmit/confirm` : null
+    }
   }
 
 const STATUS_DISPLAY = {
@@ -218,7 +197,7 @@ export const registrationOverviewGETController = {
         calendar.reportingPeriods,
         calendar.cadence
       ).map(
-        toReportsTableRow(
+        toReportRow(
           organisationId,
           registrationId,
           calendar.cadence,

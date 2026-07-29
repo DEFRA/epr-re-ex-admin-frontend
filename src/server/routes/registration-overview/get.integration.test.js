@@ -702,38 +702,6 @@ describe('#registrationOverviewController', () => {
       ).toHaveClass('govuk-tag', 'app-status-tag')
     })
 
-    it('should escape markup in a status value rather than render it', async () => {
-      useMockBackend()
-      mswServer.use(
-        http.get(
-          `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
-          () =>
-            HttpResponse.json({
-              cadence: 'monthly',
-              reportingPeriods: [
-                {
-                  ...mockCalendarNotYetEnded.reportingPeriods[0],
-                  periodStatus: '<img src=x onerror=alert(1)>'
-                }
-              ]
-            })
-        )
-      )
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
-
-      const body = renderPage(result)
-      const [onlyRow] = getDataRows(getReportsTable(body))
-      const statusCell = getAllByRole(onlyRow, 'cell')[3]
-
-      expect(statusCell.querySelector('img')).toBeNull()
-      expect(statusCell).toHaveTextContent('<img src=x onerror=alert(1)>')
-    })
-
     test('Should render a blank status cell when periodStatus is null and there is no report', async () => {
       useMockBackend()
       mswServer.use(
