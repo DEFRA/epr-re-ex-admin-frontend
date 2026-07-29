@@ -6,6 +6,15 @@ import {
 import { PAGE_TITLE } from './constants.js'
 import { formatPeriod } from '#server/common/helpers/format-reporting-period.js'
 
+/**
+ * Mirrors the backend's has-any-key rule (reports/domain/resubmission.js): the
+ * flag is a container of the reasons a resubmission was asked for, so its
+ * presence alone says nothing.
+ * @param {Record<string, unknown> | null | undefined} resubmissionRequired
+ */
+const isResubmissionRequired = (resubmissionRequired) =>
+  Object.keys(resubmissionRequired ?? {}).length > 0
+
 export const reportUnsubmitConfirmGetController = {
   async handler(request, h) {
     const {
@@ -25,7 +34,12 @@ export const reportUnsubmitConfirmGetController = {
       {}
     )
 
-    if (report.status.currentStatus !== 'submitted') {
+    // The backend refuses to unsubmit a report requiring resubmission, so the
+    // confirmation must not promise an outcome it will not deliver (PAE-1775).
+    if (
+      report.status.currentStatus !== 'submitted' ||
+      isResubmissionRequired(report.resubmissionRequired)
+    ) {
       return h.redirect(overviewUrl)
     }
 

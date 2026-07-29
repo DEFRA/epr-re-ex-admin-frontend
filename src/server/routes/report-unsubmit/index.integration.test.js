@@ -68,9 +68,17 @@ describe('report-unsubmit', () => {
       )
     )
 
+  /**
+   * @param {{
+   *   currentStatus?: string,
+   *   resubmissionRequired?: Record<string, unknown>,
+   *   unsubmittedAt?: string
+   * }} [report]
+   */
   const stubReport = ({
     currentStatus = 'ready_to_submit',
-    unsubmittedAt = '2026-05-06T10:00:00.000Z'
+    unsubmittedAt = '2026-05-06T10:00:00.000Z',
+    resubmissionRequired = undefined
   } = {}) =>
     mswServer.use(
       http.get(
@@ -80,7 +88,8 @@ describe('report-unsubmit', () => {
             status: {
               currentStatus,
               ...(unsubmittedAt ? { unsubmitted: { at: unsubmittedAt } } : {})
-            }
+            },
+            ...(resubmissionRequired ? { resubmissionRequired } : {})
           })
       )
     )
@@ -180,6 +189,41 @@ describe('report-unsubmit', () => {
     expect(statusCode).toBe(statusCodes.found)
     expect(headers.location).toBe(overviewUrl)
   })
+
+  it.each([
+    {
+      flaggedBy: 'the operator',
+      resubmissionRequired: {
+        operatorRequested: { at: '2026-05-01T10:00:00.000Z' }
+      }
+    },
+    {
+      flaggedBy: 'a closed period restatement',
+      resubmissionRequired: {
+        closedPeriodRestated: { summaryLogId: 'sl-restated' }
+      }
+    }
+  ])(
+    'should redirect to overview for a report flagged for resubmission by $flaggedBy',
+    async ({ resubmissionRequired }) => {
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+      stubOverview()
+      stubReport({
+        currentStatus: 'submitted',
+        unsubmittedAt: undefined,
+        resubmissionRequired
+      })
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: confirmUrl,
+        auth: authOptions
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe(overviewUrl)
+    }
+  )
 
   test('submitting the confirmation redirects to the success page', async () => {
     vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
