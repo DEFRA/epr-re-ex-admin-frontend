@@ -5,6 +5,7 @@ import {
 } from '#server/common/helpers/fetch-organisation-overview.js'
 import { formatPeriod } from '#server/common/helpers/format-reporting-period.js'
 import { accreditationStatusActions } from '#server/routes/accreditation-status-transition/transitions.js'
+import { registrationStatusActions } from '#server/routes/registration-status-transition/transitions.js'
 
 const GREEN_TAG = 'govuk-tag--green'
 const RED_TAG = 'govuk-tag--red'
@@ -149,6 +150,10 @@ export const registrationOverviewGETController = {
             `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${registration.accreditation.id}`
           )
         : [],
+      registrationStatusActions: registrationStatusActions(
+        registration.status,
+        `/organisations/${organisationId}/registrations/${registrationId}`
+      ),
       cadence: calendar.cadence,
       reportingPeriods: toReportingPeriods(
         calendar.reportingPeriods,
