@@ -702,6 +702,28 @@ describe('#registrationOverviewController', () => {
       ).toHaveClass('govuk-tag', 'app-status-tag')
     })
 
+    it('should keep the requires-resubmission status once the draft is in flight', async () => {
+      useMockBackend(mockOverview, mockCalendarWithResubmissionDraft)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+      const [submittedRow, draftRow] = getDataRows(getReportsTable(body))
+
+      expect(within(submittedRow).getByText('Submitted')).toBeInTheDocument()
+      expect(within(draftRow).getByText('Requires resubmission')).toHaveClass(
+        'govuk-tag',
+        'app-status-tag'
+      )
+      expect(
+        within(draftRow).getByRole('link', { name: 'View' })
+      ).toBeInTheDocument()
+    })
+
     it('should fall back to the raw status when it has no label', async () => {
       useMockBackend()
       mswServer.use(

@@ -1,8 +1,8 @@
 import { formatPeriod } from '#server/common/helpers/format-reporting-period.js'
-
-const SUBMITTED_STATUS = 'submitted'
-
-const REQUIRES_RESUBMISSION_STATUS = 'requires_resubmission'
+import {
+  periodStatus,
+  reportStatus
+} from '#server/common/constants/report-status.js'
 
 const periodKey = (period) => `${period.year}-${period.period}`
 
@@ -32,12 +32,14 @@ const periodKey = (period) => `${period.year}-${period.period}`
 export const toReportingPeriods = (reportingPeriods, cadence) => {
   const periodsRequiringResubmission = new Set(
     reportingPeriods
-      .filter((period) => period.periodStatus === REQUIRES_RESUBMISSION_STATUS)
+      .filter(
+        (period) => period.periodStatus === periodStatus.requiresResubmission
+      )
       .map(periodKey)
   )
   const latestSubmittedSubmission = new Map()
   for (const period of reportingPeriods) {
-    if (period.report?.status !== SUBMITTED_STATUS) {
+    if (period.report?.status !== reportStatus.submitted) {
       continue
     }
     const key = periodKey(period)
@@ -50,7 +52,7 @@ export const toReportingPeriods = (reportingPeriods, cadence) => {
     ...period,
     formattedPeriod: formatPeriod(period.period, cadence),
     isSuperseded:
-      period.report?.status === SUBMITTED_STATUS &&
+      period.report?.status === reportStatus.submitted &&
       period.submissionNumber <
         latestSubmittedSubmission.get(periodKey(period)),
     isFlaggedForResubmission: periodsRequiringResubmission.has(

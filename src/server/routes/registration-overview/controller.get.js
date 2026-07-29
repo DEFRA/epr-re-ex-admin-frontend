@@ -4,28 +4,36 @@ import {
   findRegistration
 } from '#server/common/helpers/fetch-organisation-overview.js'
 import { toReportingPeriods } from '#server/common/helpers/reporting-periods.js'
+import {
+  periodStatus,
+  reportStatus
+} from '#server/common/constants/report-status.js'
 import { SCOPES } from '#server/common/helpers/auth/scopes.js'
 import { accreditationStatusActions } from '#server/routes/accreditation-status-transition/transitions.js'
+
+/**
+ * @import { PeriodStatus } from '#server/common/constants/report-status.js'
+ */
 
 const GREEN_TAG = 'govuk-tag--green'
 const RED_TAG = 'govuk-tag--red'
 
 const EXPORTER_PROCESSING_TYPE = 'exporter'
 
-const SUBMITTED_STATUS = 'submitted'
-
 /**
- * Labels for the backend's PERIOD_STATUS values, matching the wording the
- * operator sees in epr-frontend. An unmapped status renders as its raw token
- * rather than blank, so a value added backend-first stays legible.
+ * Labels for every periodStatus value, matching the wording the operator sees
+ * in epr-frontend. Typed exhaustively so a status added to the enum cannot ship
+ * without a label; a status the backend adds before this mirror knows about it
+ * still renders as its raw token rather than blank.
+ * @type {Record<PeriodStatus, string>}
  */
 const PERIOD_STATUS_LABELS = {
-  due: 'Due',
-  in_progress: 'In progress',
-  overdue: 'Overdue',
-  ready_to_submit: 'Ready to submit',
-  requires_resubmission: 'Requires resubmission',
-  submitted: 'Submitted'
+  [periodStatus.due]: 'Due',
+  [periodStatus.inProgress]: 'In progress',
+  [periodStatus.overdue]: 'Overdue',
+  [periodStatus.readyToSubmit]: 'Ready to submit',
+  [periodStatus.requiresResubmission]: 'Requires resubmission',
+  [periodStatus.submitted]: 'Submitted'
 }
 
 /**
@@ -45,11 +53,18 @@ const toReportRow =
 
     const canUnsubmit =
       hasAdminWrite &&
-      period.report?.status === SUBMITTED_STATUS &&
+      period.report?.status === reportStatus.submitted &&
       !period.isSuperseded &&
       !period.isFlaggedForResubmission
 
-    const status = period.report?.status ?? period.periodStatus
+    // A resubmission draft keeps the period in its requires-resubmission state
+    // rather than reporting the draft's own status, matching what the operator
+    // sees in epr-frontend. Otherwise the framing vanishes the moment the draft
+    // is started, leaving no sign why the submitted row lost its Unsubmit link.
+    const status =
+      period.periodStatus === periodStatus.requiresResubmission
+        ? period.periodStatus
+        : (period.report?.status ?? period.periodStatus)
 
     return {
       formattedPeriod: period.formattedPeriod,
