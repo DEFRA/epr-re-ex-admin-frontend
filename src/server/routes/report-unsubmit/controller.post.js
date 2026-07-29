@@ -5,6 +5,7 @@ import {
 } from '#server/common/helpers/fetch-organisation-overview.js'
 import { formatPeriod } from '#server/common/helpers/format-reporting-period.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { periodSubmissionUnsubmitPath } from '#server/common/helpers/backend-paths.js'
 
 const REFUSED_REASON =
   'The report could not be unsubmitted because its status has changed. It may have been superseded by a later submission, or flagged for resubmission.'
@@ -28,8 +29,10 @@ export const reportUnsubmitPostController = {
     try {
       await fetchJsonFromBackend(
         request,
-        `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/unsubmit`,
-        { method: 'POST' }
+        periodSubmissionUnsubmitPath(request.params),
+        {
+          method: 'POST'
+        }
       )
       return h.redirect(resultUrl)
     } catch (error) {

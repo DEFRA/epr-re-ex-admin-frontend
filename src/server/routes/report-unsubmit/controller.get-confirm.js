@@ -6,14 +6,18 @@ import {
 import { PAGE_TITLE } from './constants.js'
 import { formatPeriod } from '#server/common/helpers/format-reporting-period.js'
 import { toReportingPeriods } from '#server/common/helpers/reporting-periods.js'
+import {
+  periodSubmissionPath,
+  reportsCalendarPath
+} from '#server/common/helpers/backend-paths.js'
 
 /**
  * @import { HapiRequest } from '#server/common/hapi-types.js'
- * @import { ReportSubmissionParams } from './types.js'
+ * @import { PeriodSubmissionParams } from '#server/common/helpers/backend-paths.js'
  */
 
 /**
- * @typedef {HapiRequest & { params: ReportSubmissionParams }} SubmissionRequest
+ * @typedef {HapiRequest & { params: PeriodSubmissionParams }} SubmissionRequest
  */
 
 /**
@@ -52,22 +56,8 @@ const refusalReason = (report, calendarPeriod) => {
  * flag.
  * @param {SubmissionRequest} request
  */
-const fetchReportSubmission = (request) => {
-  const {
-    organisationId,
-    registrationId,
-    year,
-    cadence,
-    period,
-    submissionNumber
-  } = request.params
-
-  return fetchJsonFromBackend(
-    request,
-    `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`,
-    {}
-  )
-}
+const fetchPeriodSubmission = (request) =>
+  fetchJsonFromBackend(request, periodSubmissionPath(request.params), {})
 
 /**
  * The calendar item for this submission. Supersession is not carried on the
@@ -76,12 +66,11 @@ const fetchReportSubmission = (request) => {
  * @param {SubmissionRequest} request
  */
 const fetchCalendarPeriod = async (request) => {
-  const { organisationId, registrationId, year, period, submissionNumber } =
-    request.params
+  const { year, period, submissionNumber } = request.params
 
   const calendar = await fetchJsonFromBackend(
     request,
-    `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar?expand=submissions`,
+    reportsCalendarPath(request.params),
     {}
   )
 
@@ -107,7 +96,7 @@ export const reportUnsubmitConfirmGetController = {
     const overviewUrl = `/organisations/${organisationId}/registrations/${registrationId}/overview`
 
     const [report, calendarPeriod] = await Promise.all([
-      fetchReportSubmission(request),
+      fetchPeriodSubmission(request),
       fetchCalendarPeriod(request)
     ])
 

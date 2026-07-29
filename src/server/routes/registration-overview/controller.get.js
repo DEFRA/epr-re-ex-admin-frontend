@@ -4,6 +4,7 @@ import {
   findRegistration
 } from '#server/common/helpers/fetch-organisation-overview.js'
 import { toReportingPeriods } from '#server/common/helpers/reporting-periods.js'
+import { reportsCalendarPath } from '#server/common/helpers/backend-paths.js'
 import {
   periodStatus,
   reportStatus
@@ -163,11 +164,7 @@ export const registrationOverviewGETController = {
 
     const [overview, calendar, { summaryLogs }] = await Promise.all([
       fetchOrganisationOverview(request, organisationId),
-      fetchJsonFromBackend(
-        request,
-        `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar?expand=submissions`,
-        {}
-      ),
+      fetchJsonFromBackend(request, reportsCalendarPath(request.params), {}),
       fetchJsonFromBackend(
         request,
         `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs`,

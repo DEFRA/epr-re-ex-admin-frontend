@@ -4,6 +4,7 @@ import {
   findRegistration
 } from '#server/common/helpers/fetch-organisation-overview.js'
 import { formatPeriod } from '#server/common/helpers/format-reporting-period.js'
+import { periodSubmissionPath } from '#server/common/helpers/backend-paths.js'
 
 export const reportUnsubmitResultGetController = {
   async handler(request, h) {
@@ -20,7 +21,7 @@ export const reportUnsubmitResultGetController = {
 
     const report = await fetchJsonFromBackend(
       request,
-      `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`,
+      periodSubmissionPath(request.params),
       {}
     )
 
