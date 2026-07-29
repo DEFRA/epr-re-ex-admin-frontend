@@ -62,7 +62,7 @@ const TRANSITION_CASES = [
     action: 'cancel',
     heading: 'Cancel registration',
     warningText:
-      'This action must only be taken following the required legal process for cancellation and following instruction from an industry regulator. Cancelling a registration is permanent: the operator is no longer registered for this site and material and has no reporting obligation. Any linked accreditation is also cancelled, so the operator can no longer issue PRNs and tonnages declared after the cancellation will not count towards their waste balance',
+      'This action must only be taken following the required legal process for cancellation and following instruction from an industry regulator. Cancelling a registration is permanent: the operator is no longer registered for this site and material and has no reporting obligation. Any live accreditation linked to it is also cancelled, so the operator can no longer issue PRNs and tonnages declared after the cancellation will not count towards their waste balance',
     buttonText: 'Cancel registration now',
     fallbackError:
       'There was a problem cancelling the registration. Please try again.',
@@ -256,7 +256,7 @@ describe('registration-status-transition', () => {
         expect($('h1').text().trim()).toBe(heading)
         expect(result).toContain(warningText)
         expect($('form').attr('action')).toBe(postUrl)
-        expect($(`button:contains("${buttonText}")`).length).toBe(1)
+        expect($(`button:contains("${buttonText}")`)).toHaveLength(1)
         expect($('a:contains("Cancel")').attr('href')).toBe(overviewUrl)
       })
 
