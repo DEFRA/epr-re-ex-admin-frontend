@@ -1,4 +1,4 @@
-import { isNil } from '#server/common/helpers/is-nil.js'
+import { roundForCsv } from '#server/common/helpers/round-for-csv.js'
 
 const materialDisplayNames = {
   aluminium: 'Aluminium',
@@ -11,6 +11,8 @@ const materialDisplayNames = {
   steel: 'Steel',
   wood: 'Wood'
 }
+
+const tonnageDecimals = 0
 
 const registrationTypeDisplayNames = {
   REPROCESSOR_INPUT: 'Reprocessor input',
@@ -26,11 +28,17 @@ const tonnageBandDisplayNames = {
 }
 
 export function formatMaterialName(material) {
-  const key = material?.toLowerCase()
+  if (!material) {
+    return ''
+  }
+  const key = material.toLowerCase()
   return materialDisplayNames[key] ?? material
 }
 
 export function formatRegistrationType(registrationType) {
+  if (!registrationType) {
+    return ''
+  }
   return registrationTypeDisplayNames[registrationType] ?? registrationType
 }
 
@@ -42,15 +50,5 @@ export function formatTonnageBand(tonnageBand) {
 }
 
 export function formatTonnage(tonnage) {
-  if (isNil(tonnage) || tonnage === '') {
-    return ''
-  }
-
-  const number = Number(tonnage)
-
-  if (Number.isNaN(number)) {
-    return ''
-  }
-
-  return number.toFixed(0)
+  return String(roundForCsv(tonnage, tonnageDecimals))
 }

@@ -10,7 +10,7 @@ describe('prn-tonnage formatters', () => {
     expect(formatMaterialName('glass_re_melt')).toBe('Glass re-melt')
     expect(formatMaterialName('GLASS_RE_MELT')).toBe('Glass re-melt')
     expect(formatMaterialName('unknown_material')).toBe('unknown_material')
-    expect(formatMaterialName(undefined)).toBeUndefined()
+    expect(formatMaterialName(undefined)).toBe('')
   })
 
   test('Should format known tonnage bands and handle missing or unknown values', () => {
@@ -29,6 +29,7 @@ describe('prn-tonnage formatters', () => {
     expect(formatTonnage(12.6)).toBe('13')
     expect(formatTonnage(-1.5)).toBe('-2')
     expect(formatTonnage(0)).toBe('0')
+    expect(formatTonnage(-0.4)).toBe('0')
   })
 
   test('Should render an empty cell when tonnage is missing or not a number', () => {
@@ -47,6 +48,6 @@ describe('prn-tonnage formatters', () => {
     )
     expect(formatRegistrationType('EXPORTER')).toBe('Exporter')
     expect(formatRegistrationType('MYSTERY_TYPE')).toBe('MYSTERY_TYPE')
-    expect(formatRegistrationType(undefined)).toBeUndefined()
+    expect(formatRegistrationType(undefined)).toBe('')
   })
 })

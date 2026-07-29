@@ -125,4 +125,39 @@ describe('prn-tonnage results table', () => {
       '50'
     ])
   })
+
+  test('Should right-align the figures in both the heading and the cell', async () => {
+    const $ = await renderResults()
+    const numericFrom = (row) =>
+      $(row)
+        .children()
+        .map(
+          (_, cell) =>
+            $(cell).hasClass('govuk-table__header--numeric') ||
+            $(cell).hasClass('govuk-table__cell--numeric')
+        )
+        .get()
+
+    const alignedColumns = [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+
+    expect(numericFrom('.govuk-table thead tr')).toEqual(alignedColumns)
+    expect(numericFrom('.govuk-table tbody tr:first-child')).toEqual(
+      alignedColumns
+    )
+  })
 })

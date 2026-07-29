@@ -67,6 +67,7 @@ describe('prn-tonnage POST controller', () => {
       'PRN tonnage',
       '',
       '"Tonnage of PRNs per accreditation, broken down by current PRN status. Includes awaiting authorisation, awaiting acceptance, awaiting cancellation, accepted and cancelled."',
+      'Waste balance is the waste an accreditation holds after the PRNs it has issued. Available waste balance also deducts PRNs awaiting authorisation.',
       '',
       'Data generated at: 20 February 2026 at 2:30pm',
       '',
