@@ -13,19 +13,27 @@ const EXPORTER_PROCESSING_TYPE = 'exporter'
 
 const SUBMITTED_STATUS = 'submitted'
 
+const REQUIRES_RESUBMISSION_STATUS = 'requires_resubmission'
+
 const periodKey = (period) => `${period.year}-${period.period}`
 
 /**
- * Builds the view model for each calendar reporting period, flagging a
- * submission as superseded when a later submitted submission exists for the same
- * period. A superseded submission must not offer the Unsubmit action:
- * unsubmitting it would silently drop it from the submission history (PAE-1657).
- * The backend enforces the same rule; ADR-0038 keeps the calendar payload free
- * of superseded fields, so the flag is derived here.
+ * Builds the view model for each calendar reporting period, deriving the two
+ * conditions the backend refuses an unsubmit under so the action is not offered
+ * where it can only fail: the submission is superseded by a later submitted one
+ * (PAE-1657), or the period is flagged for resubmission (PAE-1775). ADR-0038
+ * keeps the calendar payload free of both, so they are derived here - the
+ * flagged report and its requires_resubmission item are separate calendar items,
+ * hence the per-period set.
  * @param {Array<Record<string, any>>} reportingPeriods
  * @param {string} cadence
  */
 const toReportingPeriods = (reportingPeriods, cadence) => {
+  const periodsRequiringResubmission = new Set(
+    reportingPeriods
+      .filter((period) => period.periodStatus === REQUIRES_RESUBMISSION_STATUS)
+      .map(periodKey)
+  )
   const latestSubmittedSubmission = new Map()
   for (const period of reportingPeriods) {
     if (period.report?.status !== SUBMITTED_STATUS) {
@@ -42,7 +50,11 @@ const toReportingPeriods = (reportingPeriods, cadence) => {
     formattedPeriod: formatPeriod(period.period, cadence),
     isSuperseded:
       period.report?.status === SUBMITTED_STATUS &&
-      period.submissionNumber < latestSubmittedSubmission.get(periodKey(period))
+      period.submissionNumber <
+        latestSubmittedSubmission.get(periodKey(period)),
+    isFlaggedForResubmission: periodsRequiringResubmission.has(
+      periodKey(period)
+    )
   }))
 }
 

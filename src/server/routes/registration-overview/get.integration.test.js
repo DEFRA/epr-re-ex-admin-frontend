@@ -202,6 +202,23 @@ describe('#registrationOverviewController', () => {
     ]
   }
 
+  const mockCalendarWithResubmissionDraft = {
+    cadence: 'monthly',
+    reportingPeriods: [
+      mockCalendarWithSkeleton.reportingPeriods[0],
+      {
+        ...mockCalendarWithSkeleton.reportingPeriods[1],
+        report: {
+          id: 'd63360fa-0c98-4436-d80f-6d908622hd12',
+          status: 'in_progress',
+          submissionNumber: 2,
+          submittedAt: null,
+          submittedBy: null
+        }
+      }
+    ]
+  }
+
   const mockCalendarNotYetEnded = {
     cadence: 'monthly',
     reportingPeriods: [
@@ -1071,25 +1088,35 @@ describe('#registrationOverviewController', () => {
         )
       })
 
-      test('Should render the Unsubmit link on the submitted submission while a resubmission is required', async () => {
-        useMockBackend(mockOverview, mockCalendarWithSkeleton)
+      it.each([
+        {
+          state: 'before the resubmission draft exists',
+          calendar: mockCalendarWithSkeleton
+        },
+        {
+          state: 'while the resubmission draft is in flight',
+          calendar: mockCalendarWithResubmissionDraft
+        }
+      ])(
+        'should not render the Unsubmit link on a report flagged for resubmission, $state',
+        async ({ calendar }) => {
+          useMockBackend(mockOverview, calendar)
 
-        const { result } = await server.inject({
-          method: 'GET',
-          url,
-          auth: { strategy: 'session', credentials: mockUserSession }
-        })
+          const { result } = await server.inject({
+            method: 'GET',
+            url,
+            auth: { strategy: 'session', credentials: mockUserSession }
+          })
 
-        const body = renderPage(result)
-        const [submittedRow] = getDataRows(getReportsTable(body))
+          const body = renderPage(result)
 
-        expect(
-          within(submittedRow).getByRole('link', { name: 'Unsubmit' })
-        ).toHaveAttribute(
-          'href',
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/unsubmit/confirm`
-        )
-      })
+          expect(
+            within(getReportsTable(body)).queryByRole('link', {
+              name: 'Unsubmit'
+            })
+          ).toBeNull()
+        }
+      )
     })
 
     describe('Suspend link visibility', () => {
