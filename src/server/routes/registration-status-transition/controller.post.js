@@ -3,9 +3,9 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildConfirmView } from './confirm-view.js'
 import { parseGrantForm } from './grant-form.js'
 
-/** @import {AccreditationStatusTransition} from './transitions.js' */
+/** @import {RegistrationStatusTransition} from './transitions.js' */
 
-const CONFIRM_VIEW = 'routes/accreditation-status-transition/confirm'
+const CONFIRM_VIEW = 'routes/registration-status-transition/confirm'
 
 /**
  * Builds the POST controller for a status transition action. Posts the
@@ -14,21 +14,21 @@ const CONFIRM_VIEW = 'routes/accreditation-status-transition/confirm'
  * registration overview, flashing any backend error. Invalid grant fields —
  * and backend rejections of them — re-render the confirm page with an error
  * summary instead.
- * @param {string} action - URL action segment (e.g. 'suspend')
- * @param {AccreditationStatusTransition} transition
+ * @param {string} action - URL action segment (e.g. 'approve')
+ * @param {RegistrationStatusTransition} transition
  */
 export const createTransitionPostController = (action, transition) => ({
   async handler(request, h) {
-    const { organisationId, registrationId, accreditationId } = request.params
+    const { organisationId, registrationId } = request.params
     const overviewUrl = `/organisations/${organisationId}/registrations/${registrationId}/overview`
 
-    /** @type {{ fromStatus: string, toStatus: string, appliesFrom?: string, accreditationNumber?: string }} */
+    /** @type {{ fromStatus: string, toStatus: string, appliesFrom?: string, registrationNumber?: string }} */
     const body = {
       fromStatus: transition.fromStatus,
       toStatus: transition.toStatus
     }
 
-    /** @type {{ day: string, month: string, year: string, accreditationNumber: string } | undefined} */
+    /** @type {{ day: string, month: string, year: string, registrationNumber: string } | undefined} */
     let grantValues
 
     if (transition.hasGrantFields) {
@@ -48,12 +48,12 @@ export const createTransitionPostController = (action, transition) => ({
       }
 
       body.appliesFrom = /** @type {string} */ (appliesFrom)
-      body.accreditationNumber = values.accreditationNumber
+      body.registrationNumber = values.registrationNumber
     }
 
     const outcome = await postStatusTransition(
       request,
-      `/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/status-history`,
+      `/v1/organisations/${organisationId}/registrations/${registrationId}/status-history`,
       body,
       transition,
       grantValues

@@ -1570,6 +1570,82 @@ describe('#registrationOverviewController', () => {
       })
     })
 
+    describe('Approve registration link visibility', () => {
+      afterEach(() => {
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+      })
+
+      test('Should render the Approve action on the Status row for a created registration when the user has admin.write scope', async () => {
+        useMockBackend({
+          ...mockOverview,
+          registrations: [{ ...mockRegistration, status: 'created' }]
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Status')
+        const approveLink = within(statusRow).getByRole('link', {
+          name: /^approve registration$/i
+        })
+
+        expect(approveLink).toHaveAttribute(
+          'href',
+          `/organisations/${organisationId}/registrations/${registrationId}/approve/confirm`
+        )
+      })
+
+      test('Should not render the Approve action when the registration status is not created', async () => {
+        useMockBackend()
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Status')
+
+        expect(
+          within(statusRow).queryByRole('link', {
+            name: /^approve registration$/i
+          })
+        ).toBeNull()
+      })
+
+      test('Should not render the Approve action when the user lacks admin.write scope', async () => {
+        const readOnlySession = {
+          ...mockUserSession,
+          scopes: ['admin.read']
+        }
+        vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
+        useMockBackend({
+          ...mockOverview,
+          registrations: [{ ...mockRegistration, status: 'created' }]
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: readOnlySession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Status')
+
+        expect(
+          within(statusRow).queryByRole('link', {
+            name: /^approve registration$/i
+          })
+        ).toBeNull()
+      })
+    })
+
     describe('Reject accreditation link visibility', () => {
       const withCreatedAccreditation = () => ({
         ...mockOverview,

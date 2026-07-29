@@ -2,11 +2,11 @@ import { parseAppliesFromDate } from '#server/common/helpers/status-transition/a
 
 /**
  * Parses and validates the grant fields (applies from date parts and
- * accreditation number) from a confirm-page POST.
+ * registration number) from a confirm-page POST.
  * @param {Record<string, string | undefined>} payload
  * @returns {{
- *   values: { day: string, month: string, year: string, accreditationNumber: string },
- *   errors: { appliesFrom?: string, accreditationNumber?: string } | null,
+ *   values: { day: string, month: string, year: string, registrationNumber: string },
+ *   errors: { appliesFrom?: string, registrationNumber?: string } | null,
  *   appliesFrom: string | null
  * }}
  */
@@ -18,19 +18,19 @@ export const parseGrantForm = (payload) => {
     appliesFrom,
     error: appliesFromError
   } = parseAppliesFromDate(payload)
-  const accreditationNumber = (payload.accreditationNumber ?? '').trim()
+  const registrationNumber = (payload.registrationNumber ?? '').trim()
 
-  /** @type {{ appliesFrom?: string, accreditationNumber?: string }} */
+  /** @type {{ appliesFrom?: string, registrationNumber?: string }} */
   const errors = {}
   if (appliesFromError) {
     errors.appliesFrom = appliesFromError
   }
-  if (!accreditationNumber) {
-    errors.accreditationNumber = 'Enter an accreditation number'
+  if (!registrationNumber) {
+    errors.registrationNumber = 'Enter a registration number'
   }
 
   return {
-    values: { day, month, year, accreditationNumber },
+    values: { day, month, year, registrationNumber },
     errors: Object.keys(errors).length > 0 ? errors : null,
     appliesFrom
   }
