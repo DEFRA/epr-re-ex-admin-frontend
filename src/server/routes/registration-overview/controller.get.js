@@ -4,6 +4,7 @@ import {
   findRegistration
 } from '#server/common/helpers/fetch-organisation-overview.js'
 import { formatPeriod } from '#server/common/helpers/format-reporting-period.js'
+import { SCOPES } from '#server/common/helpers/auth/scopes.js'
 import { accreditationStatusActions } from '#server/routes/accreditation-status-transition/transitions.js'
 
 const GREEN_TAG = 'govuk-tag--green'
@@ -57,6 +58,58 @@ const toReportingPeriods = (reportingPeriods, cadence) => {
     )
   }))
 }
+
+const escapeHtml = (value) =>
+  String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+
+const govukLink = (href, text) =>
+  `<a class="govuk-link govuk-link--no-visited-state" href="${href}">${text}</a>`
+
+/**
+ * Builds a reports table row. The Unsubmit action is offered only where the
+ * backend would accept it - a submitted report that is neither superseded nor
+ * flagged for resubmission. Hiding it is UX; the backend enforces both rules
+ * and the admin.write scope.
+ * @param {string} organisationId
+ * @param {string} registrationId
+ * @param {string} cadence
+ * @param {boolean} hasAdminWrite
+ */
+const toReportsTableRow =
+  (organisationId, registrationId, cadence, hasAdminWrite) => (period) => {
+    const submissionUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/${period.year}/${cadence}/${period.period}/submissions/${period.submissionNumber}`
+
+    const canUnsubmit =
+      hasAdminWrite &&
+      period.report?.status === SUBMITTED_STATUS &&
+      !period.isSuperseded &&
+      !period.isFlaggedForResubmission
+
+    const actions = [
+      ...(period.report ? [govukLink(submissionUrl, 'View')] : []),
+      ...(canUnsubmit
+        ? [govukLink(`${submissionUrl}/unsubmit/confirm`, 'Unsubmit')]
+        : [])
+    ]
+
+    const statusText = period.report?.status ?? period.periodStatus
+
+    return [
+      { text: period.formattedPeriod },
+      period.report ? { text: period.submissionNumber } : { text: '' },
+      { text: period.dueDate },
+      statusText
+        ? {
+            html: `<strong class="govuk-tag app-status-tag">${escapeHtml(statusText)}</strong>`
+          }
+        : { text: '' },
+      { html: actions.join('<br>') }
+    ]
+  }
 
 const STATUS_DISPLAY = {
   submitted: { label: 'Success', className: GREEN_TAG },
@@ -161,10 +214,16 @@ export const registrationOverviewGETController = {
             `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${registration.accreditation.id}`
           )
         : [],
-      cadence: calendar.cadence,
-      reportingPeriods: toReportingPeriods(
+      reportRows: toReportingPeriods(
         calendar.reportingPeriods,
         calendar.cadence
+      ).map(
+        toReportsTableRow(
+          organisationId,
+          registrationId,
+          calendar.cadence,
+          request.auth.credentials.scopes.includes(SCOPES.adminWrite)
+        )
       ),
       summaryLogRows,
       wasteBalance,
