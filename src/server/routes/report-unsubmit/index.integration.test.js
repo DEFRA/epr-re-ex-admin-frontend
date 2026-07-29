@@ -112,6 +112,44 @@ describe('report-unsubmit', () => {
 
   const authOptions = { strategy: 'session', credentials: mockUserSession }
 
+  const getConfirm = async () => {
+    const response = await server.inject({
+      method: 'GET',
+      url: confirmUrl,
+      auth: authOptions
+    })
+    const cookies = [response.headers['set-cookie']].flat().filter(Boolean)
+
+    return {
+      response,
+      redirectCookie: cookies.map((c) => c.split(';')[0]).join('; ')
+    }
+  }
+
+  const expectOverviewFlash = async (redirectCookie, message) => {
+    mswServer.use(
+      http.get(
+        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
+        () => HttpResponse.json({ cadence: 'monthly', reportingPeriods: [] })
+      ),
+      http.get(
+        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs`,
+        () => HttpResponse.json({ summaryLogs: [] })
+      )
+    )
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: overviewUrl,
+      headers: { cookie: redirectCookie },
+      auth: authOptions
+    })
+
+    expect(cheerio.load(result)('.govuk-error-summary').text()).toContain(
+      message
+    )
+  }
+
   const postUnsubmit = async () => {
     const { cookie, crumb } = await getCsrfToken(
       server,
@@ -180,14 +218,14 @@ describe('report-unsubmit', () => {
     stubOverview()
     stubReport({ currentStatus: 'ready_to_submit', unsubmittedAt: undefined })
 
-    const { statusCode, headers } = await server.inject({
-      method: 'GET',
-      url: confirmUrl,
-      auth: authOptions
-    })
+    const { response, redirectCookie } = await getConfirm()
 
-    expect(statusCode).toBe(statusCodes.found)
-    expect(headers.location).toBe(overviewUrl)
+    expect(response.statusCode).toBe(statusCodes.found)
+    expect(response.headers.location).toBe(overviewUrl)
+    await expectOverviewFlash(
+      redirectCookie,
+      'This report cannot be unsubmitted because it is no longer submitted.'
+    )
   })
 
   it.each([
@@ -214,14 +252,14 @@ describe('report-unsubmit', () => {
         resubmissionRequired
       })
 
-      const { statusCode, headers } = await server.inject({
-        method: 'GET',
-        url: confirmUrl,
-        auth: authOptions
-      })
+      const { response, redirectCookie } = await getConfirm()
 
-      expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe(overviewUrl)
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers.location).toBe(overviewUrl)
+      await expectOverviewFlash(
+        redirectCookie,
+        'This report cannot be unsubmitted because a resubmission has been requested for this period.'
+      )
     }
   )
 

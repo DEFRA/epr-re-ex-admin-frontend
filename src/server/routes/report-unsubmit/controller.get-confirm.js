@@ -15,6 +15,23 @@ import { formatPeriod } from '#server/common/helpers/format-reporting-period.js'
 const isResubmissionRequired = (resubmissionRequired) =>
   Object.keys(resubmissionRequired ?? {}).length > 0
 
+/**
+ * The reason the backend would refuse to unsubmit this report, or null when it
+ * would accept it. Surfaced as a flash error on the overview rather than
+ * letting the confirmation promise an outcome that cannot be delivered.
+ * @param {{ resubmissionRequired?: Record<string, unknown>, status: { currentStatus: string } }} report
+ * @returns {string | null}
+ */
+const refusalReason = (report) => {
+  if (report.status.currentStatus !== 'submitted') {
+    return 'This report cannot be unsubmitted because it is no longer submitted.'
+  }
+  if (isResubmissionRequired(report.resubmissionRequired)) {
+    return 'This report cannot be unsubmitted because a resubmission has been requested for this period.'
+  }
+  return null
+}
+
 export const reportUnsubmitConfirmGetController = {
   async handler(request, h) {
     const {
@@ -34,12 +51,9 @@ export const reportUnsubmitConfirmGetController = {
       {}
     )
 
-    // The backend refuses to unsubmit a report requiring resubmission, so the
-    // confirmation must not promise an outcome it will not deliver (PAE-1775).
-    if (
-      report.status.currentStatus !== 'submitted' ||
-      isResubmissionRequired(report.resubmissionRequired)
-    ) {
+    const refusal = refusalReason(report)
+    if (refusal) {
+      request.yar.set('error', refusal)
       return h.redirect(overviewUrl)
     }
 
