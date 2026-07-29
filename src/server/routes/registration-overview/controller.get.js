@@ -60,6 +60,20 @@ const toReportingPeriods = (reportingPeriods, cadence) => {
 }
 
 /**
+ * Labels for the backend's PERIOD_STATUS values, matching the wording the
+ * operator sees in epr-frontend. An unmapped status renders as its raw token
+ * rather than blank, so a value added backend-first stays legible.
+ */
+const PERIOD_STATUS_LABELS = {
+  due: 'Due',
+  in_progress: 'In progress',
+  overdue: 'Overdue',
+  ready_to_submit: 'Ready to submit',
+  requires_resubmission: 'Requires resubmission',
+  submitted: 'Submitted'
+}
+
+/**
  * Builds the view model for a reports table row, leaving the markup to the
  * template. The Unsubmit action is offered only where the backend would accept
  * it - a submitted report that is neither superseded nor flagged for
@@ -80,11 +94,13 @@ const toReportRow =
       !period.isSuperseded &&
       !period.isFlaggedForResubmission
 
+    const status = period.report?.status ?? period.periodStatus
+
     return {
       formattedPeriod: period.formattedPeriod,
       submissionNumber: period.report ? period.submissionNumber : '',
       dueDate: period.dueDate,
-      statusText: period.report?.status ?? period.periodStatus,
+      statusText: PERIOD_STATUS_LABELS[status] ?? status,
       viewUrl: period.report ? submissionUrl : null,
       unsubmitUrl: canUnsubmit ? `${submissionUrl}/unsubmit/confirm` : null
     }

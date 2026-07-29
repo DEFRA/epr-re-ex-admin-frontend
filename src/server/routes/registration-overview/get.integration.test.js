@@ -605,7 +605,7 @@ describe('#registrationOverviewController', () => {
 
       expect(within(firstRow).getByText('January')).toBeInTheDocument()
       expect(within(firstRow).getByText('2026-02-20')).toBeInTheDocument()
-      expect(within(firstRow).getByText('ready_to_submit')).toHaveClass(
+      expect(within(firstRow).getByText('Ready to submit')).toHaveClass(
         'govuk-tag'
       )
       expect(
@@ -615,7 +615,7 @@ describe('#registrationOverviewController', () => {
         `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1`
       )
 
-      expect(within(secondRow).getByText('due')).toHaveClass('govuk-tag')
+      expect(within(secondRow).getByText('Due')).toHaveClass('govuk-tag')
       expect(within(secondRow).queryByRole('link')).toBeNull()
     })
 
@@ -698,8 +698,40 @@ describe('#registrationOverviewController', () => {
       expect(getAllByRole(submittedRow, 'cell')[1]).toHaveTextContent('1')
       expect(getAllByRole(skeletonRow, 'cell')[1].textContent?.trim()).toBe('')
       expect(
-        within(skeletonRow).getByText('requires_resubmission')
+        within(skeletonRow).getByText('Requires resubmission')
       ).toHaveClass('govuk-tag', 'app-status-tag')
+    })
+
+    it('should fall back to the raw status when it has no label', async () => {
+      useMockBackend()
+      mswServer.use(
+        http.get(
+          `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
+          () =>
+            HttpResponse.json({
+              cadence: 'monthly',
+              reportingPeriods: [
+                {
+                  ...mockCalendarNotYetEnded.reportingPeriods[0],
+                  periodStatus: 'awaiting_the_unknown'
+                }
+              ]
+            })
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+      const [onlyRow] = getDataRows(getReportsTable(body))
+
+      expect(within(onlyRow).getByText('awaiting_the_unknown')).toHaveClass(
+        'govuk-tag'
+      )
     })
 
     test('Should render a blank status cell when periodStatus is null and there is no report', async () => {
