@@ -24,10 +24,13 @@ const { mockSet, mockGet, MockJSONEditorConstructor } = vi.hoisted(() => {
     findNodeByPath: vi.fn()
   }
 
-  const MockJSONEditorConstructor = vi.fn(function (_container, options) {
-    this.options = options
-    this.node = mockNode
-  })
+  const MockJSONEditorConstructor = vi.fn(
+    /** @this {{ options: unknown, node: typeof mockNode }} */
+    function (_container, options) {
+      this.options = options
+      this.node = mockNode
+    }
+  )
 
   MockJSONEditorConstructor.prototype.set = function (data) {
     mockSet(data)

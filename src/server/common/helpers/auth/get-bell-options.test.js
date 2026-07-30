@@ -3,6 +3,7 @@ import { vi, beforeEach, afterEach, describe, test, expect } from 'vitest'
 import { getBellOptions } from './get-bell-options.js'
 import { config } from '#config/config.js'
 import { verifyToken } from '#server/common/helpers/auth/verify-token.js'
+import { buildOidcConfig } from '#server/common/test-helpers/fixtures.js'
 
 /** @import { EntraIdTokenPayload } from '#server/common/helpers/auth/types.js' */
 
@@ -10,10 +11,10 @@ vi.mock(import('#config/config.js'))
 vi.mock(import('#server/common/helpers/auth/verify-token.js'))
 
 describe('#getBellOptions', () => {
-  const mockOidcConfig = {
+  const mockOidcConfig = buildOidcConfig({
     authorization_endpoint: 'https://example-oidc.test/auth',
     token_endpoint: 'https://example-oidc.test/token'
-  }
+  })
 
   const mockConfig = {
     'entraId.clientId': 'test-client-id',

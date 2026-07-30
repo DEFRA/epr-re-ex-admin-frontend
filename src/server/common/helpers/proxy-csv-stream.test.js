@@ -4,6 +4,7 @@ import { vi, describe, it, expect, beforeEach } from 'vitest'
 
 import { proxyCsvStream } from './proxy-csv-stream.js'
 import { streamFromBackend } from '#server/common/helpers/stream-from-backend.js'
+import { asToolkit } from '#server/common/test-helpers/fixtures.js'
 
 vi.mock('#server/common/helpers/stream-from-backend.js', () => ({
   streamFromBackend: vi.fn()
@@ -54,7 +55,12 @@ describe('proxyCsvStream', () => {
 
     const { h, responseBuilder } = buildHapiH()
 
-    await proxyCsvStream(request, h, '/some/path?x=1', 'fallback.csv')
+    await proxyCsvStream(
+      request,
+      asToolkit(h),
+      '/some/path?x=1',
+      'fallback.csv'
+    )
 
     expect(streamFromBackend).toHaveBeenCalledWith(request, '/some/path?x=1')
 
@@ -78,7 +84,7 @@ describe('proxyCsvStream', () => {
 
     const { h, responseBuilder } = buildHapiH()
 
-    await proxyCsvStream(request, h, '/some/path', 'fallback.csv')
+    await proxyCsvStream(request, asToolkit(h), '/some/path', 'fallback.csv')
 
     expect(responseBuilder.type).toHaveBeenCalledWith('text/csv; charset=utf-8')
     expect(responseBuilder.header).toHaveBeenCalledWith(
@@ -95,7 +101,7 @@ describe('proxyCsvStream', () => {
     const { h } = buildHapiH()
 
     await expect(
-      proxyCsvStream(request, h, '/some/path', 'fallback.csv')
+      proxyCsvStream(request, asToolkit(h), '/some/path', 'fallback.csv')
     ).rejects.toThrow(/no body/)
   })
 })
