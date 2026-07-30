@@ -11,6 +11,7 @@
  * @property {string} errorMessage - Flash fallback when the backend gives no message
  * @property {string} logMessage
  * @property {boolean} [hasGrantFields] - Confirm page collects appliesFrom + accreditationNumber
+ * @property {boolean} [requiresApprovedRegistration] - Action offered only when the linked registration is approved (PAE-1800)
  */
 
 const WARNING_BUTTON_CLASS = 'govuk-button--warning'
@@ -27,6 +28,7 @@ export const ACCREDITATION_STATUS_TRANSITIONS = {
     fromStatus: 'created',
     toStatus: 'approved',
     linkText: 'Approve',
+    requiresApprovedRegistration: true,
     pageTitle: 'Approve accreditation',
     heading: 'Approve accreditation',
     warningText:
@@ -88,6 +90,7 @@ export const ACCREDITATION_STATUS_TRANSITIONS = {
     fromStatus: 'cancelled',
     toStatus: 'approved',
     linkText: 'Reinstate',
+    requiresApprovedRegistration: true,
     pageTitle: 'Reinstate accreditation',
     heading: 'Reinstate accreditation',
     warningText:
@@ -134,14 +137,26 @@ export const ACCREDITATION_STATUS_TRANSITIONS = {
 /**
  * Summary-list action items for every transition available from the given
  * accreditation status. Single source of truth for which actions the
- * registration overview offers per status.
+ * registration overview offers per status. Actions that move the
+ * accreditation to approved are only offered when the linked registration is
+ * itself approved (PAE-1800).
  * @param {string} status - Current accreditation status
  * @param {string} baseUrl - Accreditation URL prefix, `.../accreditations/{id}`
+ * @param {string} registrationStatus - Current status of the linked registration
  * @returns {Array<{href: string, text: string, visuallyHiddenText: string}>}
  */
-export const accreditationStatusActions = (status, baseUrl) =>
+export const accreditationStatusActions = (
+  status,
+  baseUrl,
+  registrationStatus
+) =>
   Object.entries(ACCREDITATION_STATUS_TRANSITIONS)
-    .filter(([, transition]) => transition.fromStatus === status)
+    .filter(
+      ([, transition]) =>
+        transition.fromStatus === status &&
+        (!transition.requiresApprovedRegistration ||
+          registrationStatus === 'approved')
+    )
     .map(([action, transition]) => ({
       href: `${baseUrl}/${action}/confirm`,
       text: transition.linkText,
