@@ -105,6 +105,7 @@ describe('#fetchJsonFromBackend', () => {
     })
 
     test('adds the authorisation header with the user token', async () => {
+      /** @type {Record<string, string> | null} */
       let capturedHeaders = null
 
       const url = `${backendUrl}/v1/organisations`

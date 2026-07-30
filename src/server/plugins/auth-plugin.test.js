@@ -5,17 +5,18 @@ import { getOidcConfig } from '#server/common/helpers/auth/get-oidc-config.js'
 import { getBellOptions } from '#server/common/helpers/auth/get-bell-options.js'
 import { getCookieOptions } from '#server/common/helpers/auth/get-cookie-options.js'
 import { TEST_COOKIE_PASSWORD } from '#server/common/test-helpers/test-constants.js'
+import { buildOidcConfig } from '#server/common/test-helpers/fixtures.js'
 
 vi.mock('#server/common/helpers/auth/get-oidc-config.js')
 vi.mock('#server/common/helpers/auth/get-bell-options.js')
 vi.mock('#server/common/helpers/auth/get-cookie-options.js')
 
 describe('#authPlugin', () => {
-  const mockOidcConfig = {
+  const mockOidcConfig = buildOidcConfig({
     authorization_endpoint: 'https://example-auth.test/oauth/authorize',
     token_endpoint: 'https://example-auth.test/oauth/token',
     end_session_endpoint: 'https://example-auth.test/oauth/logout'
-  }
+  })
 
   const mockBellOptions = /** @type {ReturnType<typeof getBellOptions>} */ ({
     provider: {
@@ -229,11 +230,11 @@ describe('#authPlugin', () => {
   })
 
   test('Should work with different OIDC configurations', async () => {
-    const differentOidcConfig = {
+    const differentOidcConfig = buildOidcConfig({
       authorization_endpoint: 'https://example-provider-2.test/auth',
       token_endpoint: 'https://example-provider-2.test/token',
       end_session_endpoint: 'https://example-provider-2.test/logout'
-    }
+    })
 
     vi.mocked(getOidcConfig).mockResolvedValue(differentOidcConfig)
 

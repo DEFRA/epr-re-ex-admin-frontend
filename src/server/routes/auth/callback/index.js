@@ -7,7 +7,7 @@ import { loggingEventActions } from '#server/common/enums/event.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 
 /**
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { HapiRequest, UserSession } from '#server/common/hapi-types.js'
  *
  * @typedef {{
  *   profile: { id: string, email: string, displayName?: string, loginHint?: string },
@@ -64,6 +64,7 @@ export default {
 
     const sessionId = randomUUID()
 
+    /** @type {UserSession} */
     const userSession = {
       sessionId,
       userId,

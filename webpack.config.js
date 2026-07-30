@@ -25,7 +25,11 @@ export default {
       import: ['./javascripts/application.js', './stylesheets/application.scss']
     },
     jsoneditor: {
-      import: ['./javascripts/jsoneditor.js', './stylesheets/jsoneditor.scss']
+      import: [
+        'jsoneditor/dist/jsoneditor.css',
+        './javascripts/jsoneditor.js',
+        './stylesheets/jsoneditor.scss'
+      ]
     },
     'sign-out': {
       import: './javascripts/sign-out.js'

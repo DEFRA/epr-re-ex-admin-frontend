@@ -12,6 +12,7 @@
  *   email: string,
  *   loginHint?: string,
  *   isAuthenticated: true,
+ *   scopes: string[],
  *   token: string,
  *   refreshToken: string
  * }} UserSession

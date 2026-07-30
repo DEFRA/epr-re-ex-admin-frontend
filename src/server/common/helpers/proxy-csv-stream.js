@@ -2,6 +2,7 @@ import { Readable } from 'node:stream'
 
 import { streamFromBackend } from '#server/common/helpers/stream-from-backend.js'
 
+/** @import { ResponseObject, ResponseToolkit } from '@hapi/hapi' */
 /** @import { HapiRequest } from '#server/common/hapi-types.js' */
 /** @import { ReadableStream as WebReadableStream } from 'node:stream/web' */
 
@@ -13,10 +14,10 @@ const DEFAULT_CONTENT_TYPE = 'text/csv; charset=utf-8'
  * backend responds without a body so callers can surface a download error.
  *
  * @param {HapiRequest} request
- * @param {object} h - Hapi response toolkit
+ * @param {ResponseToolkit} h - Hapi response toolkit
  * @param {string} backendPath - Backend path (with any query string) to stream
  * @param {string} fallbackFilename - Filename used if the backend omits Content-Disposition
- * @returns {Promise<object>} the Hapi response
+ * @returns {Promise<ResponseObject>} the Hapi response
  */
 export const proxyCsvStream = async (
   request,
