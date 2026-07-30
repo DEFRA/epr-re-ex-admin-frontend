@@ -1511,6 +1511,114 @@ describe('#registrationOverviewController', () => {
       })
     })
 
+    describe.each([
+      {
+        action: 'Approve',
+        accreditationStatus: 'created',
+        href: 'approve/confirm'
+      },
+      {
+        action: 'Reinstate',
+        accreditationStatus: 'cancelled',
+        href: 'reinstate/confirm'
+      }
+    ])(
+      '$action accreditation gated on registration status (PAE-1800)',
+      ({ action, accreditationStatus, href }) => {
+        const linkName = new RegExp(`^${action} accreditation$`, 'i')
+        const withStatuses = (registrationStatus) => ({
+          ...mockOverview,
+          registrations: [
+            {
+              ...mockRegistration,
+              status: registrationStatus,
+              accreditation:
+                /** @type {{ id: string, accreditationNumber: string, status: string }} */ ({
+                  ...mockRegistration.accreditation,
+                  status: accreditationStatus
+                })
+            }
+          ]
+        })
+
+        afterEach(() => {
+          vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+        })
+
+        test(`Should render the ${action} action on the Accreditation status row when the registration is approved`, async () => {
+          useMockBackend(withStatuses('approved'))
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url,
+            auth: { strategy: 'session', credentials: mockUserSession }
+          })
+
+          const body = renderPage(result)
+          const statusRow = getSummaryRow(body, 'Accreditation status')
+          const link = within(statusRow).getByRole('link', { name: linkName })
+
+          expect(link).toHaveAttribute(
+            'href',
+            `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/${href}`
+          )
+        })
+
+        test(`Should not render the ${action} action when the registration is not approved`, async () => {
+          useMockBackend(withStatuses('cancelled'))
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url,
+            auth: { strategy: 'session', credentials: mockUserSession }
+          })
+
+          const body = renderPage(result)
+          const statusRow = getSummaryRow(body, 'Accreditation status')
+
+          expect(
+            within(statusRow).queryByRole('link', { name: linkName })
+          ).toBeNull()
+        })
+      }
+    )
+
+    describe('Reject accreditation link visibility when the registration is not approved (PAE-1800)', () => {
+      test('Should still render the Reject action on the Accreditation status row', async () => {
+        useMockBackend({
+          ...mockOverview,
+          registrations: [
+            {
+              ...mockRegistration,
+              status: 'created',
+              accreditation:
+                /** @type {{ id: string, accreditationNumber: string, status: string }} */ ({
+                  ...mockRegistration.accreditation,
+                  status: 'created'
+                })
+            }
+          ]
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+        const rejectLink = within(statusRow).getByRole('link', {
+          name: /^reject accreditation$/i
+        })
+
+        expect(rejectLink).toHaveAttribute(
+          'href',
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/reject/confirm`
+        )
+      })
+    })
+
     describe('Approve registration link visibility', () => {
       afterEach(() => {
         vi.mocked(getUserSession).mockResolvedValue(mockUserSession)

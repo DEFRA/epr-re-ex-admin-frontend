@@ -179,7 +179,8 @@ export const registrationOverviewGETController = {
       accreditationStatusActions: registration.accreditation
         ? accreditationStatusActions(
             registration.accreditation.status,
-            `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${registration.accreditation.id}`
+            `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${registration.accreditation.id}`,
+            registration.status
           )
         : [],
       registrationStatusActions: registrationStatusActions(
