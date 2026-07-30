@@ -5,6 +5,7 @@ import {
 } from '#server/common/helpers/fetch-organisation-overview.js'
 import { formatPeriod } from '#server/common/helpers/format-reporting-period.js'
 import { accreditationStatusActions } from '#server/routes/accreditation-status-transition/transitions.js'
+import { registrationStatusActions } from '#server/routes/registration-status-transition/transitions.js'
 
 const GREEN_TAG = 'govuk-tag--green'
 const RED_TAG = 'govuk-tag--red'
@@ -85,6 +86,38 @@ const fetchWasteBalance = async (request, organisationId, accreditationId) => {
   }
 }
 
+/**
+ * URLs for the accreditation-scoped overview links: null when the
+ * registration has no accreditation, and overseas sites additionally only
+ * apply to exporters.
+ * @param {{ accreditation?: { id: string }, processingType?: string }} registration
+ * @param {string} organisationId
+ * @param {string} registrationId
+ */
+const buildAccreditationUrls = (
+  registration,
+  organisationId,
+  registrationId
+) => {
+  const accreditationBaseUrl = registration.accreditation
+    ? `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${registration.accreditation.id}`
+    : null
+
+  return {
+    wasteBalanceEventsUrl: accreditationBaseUrl
+      ? `${accreditationBaseUrl}/waste-balance-events`
+      : null,
+    overseasSitesUrl:
+      accreditationBaseUrl &&
+      registration.processingType === EXPORTER_PROCESSING_TYPE
+        ? `${accreditationBaseUrl}/overseas-sites`
+        : null,
+    prnActivityDownloadUrl: accreditationBaseUrl
+      ? `${accreditationBaseUrl}/prn-activity/download`
+      : null
+  }
+}
+
 export const registrationOverviewGETController = {
   async handler(request, h) {
     const { organisationId, registrationId } = request.params
@@ -149,6 +182,10 @@ export const registrationOverviewGETController = {
             `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${registration.accreditation.id}`
           )
         : [],
+      registrationStatusActions: registrationStatusActions(
+        registration.status,
+        `/organisations/${organisationId}/registrations/${registrationId}`
+      ),
       cadence: calendar.cadence,
       reportingPeriods: toReportingPeriods(
         calendar.reportingPeriods,
@@ -157,18 +194,8 @@ export const registrationOverviewGETController = {
       summaryLogRows,
       wasteBalance,
       error: errorMessage,
-      wasteBalanceEventsUrl: registration.accreditation
-        ? `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${registration.accreditation.id}/waste-balance-events`
-        : null,
-      overseasSitesUrl:
-        registration.accreditation &&
-        registration.processingType === EXPORTER_PROCESSING_TYPE
-          ? `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${registration.accreditation.id}/overseas-sites`
-          : null,
       wasteRecordsDownloadUrl: `/organisations/${organisationId}/registrations/${registrationId}/waste-records/download`,
-      prnActivityDownloadUrl: registration.accreditation
-        ? `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${registration.accreditation.id}/prn-activity/download`
-        : null
+      ...buildAccreditationUrls(registration, organisationId, registrationId)
     })
   }
 }
