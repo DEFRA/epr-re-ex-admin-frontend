@@ -38,10 +38,14 @@ describe('prn-tonnage results GET controller', () => {
       rows: [
         {
           organisationName: 'Acme Recycling',
-          organisationId: 'ORG001',
+          orgId: 'ORG001',
+          registrationNumber: 'REG-100',
+          registrationType: 'REPROCESSOR_INPUT',
           accreditationNumber: 'ACC-100',
           material: 'glass_re_melt',
           tonnageBand: 'up_to_5000',
+          wasteBalance: 4321.4,
+          availableWasteBalance: 4221.6,
           awaitingAuthorisationTonnage: 100,
           awaitingAcceptanceTonnage: 20,
           awaitingCancellationTonnage: 2,
@@ -64,10 +68,14 @@ describe('prn-tonnage results GET controller', () => {
       rows: [
         {
           organisationName: 'Acme Recycling',
-          organisationId: 'ORG001',
+          orgId: 'ORG001',
+          registrationNumber: 'REG-100',
+          registrationType: 'Reprocessor input',
           accreditationNumber: 'ACC-100',
           material: 'Glass re-melt',
           tonnageBand: 'Up to 5,000 tonnes',
+          wasteBalance: '4321',
+          availableWasteBalance: '4222',
           awaitingAuthorisationTonnage: '100',
           awaitingAcceptanceTonnage: '20',
           awaitingCancellationTonnage: '2',
@@ -105,10 +113,14 @@ describe('prn-tonnage results GET controller', () => {
       rows: [
         {
           organisationName: 'Beta',
-          organisationId: 'ORG002',
+          orgId: 'ORG002',
+          registrationNumber: 'REG-200',
+          registrationType: 'MYSTERY_TYPE',
           accreditationNumber: 'ACC-200',
           material: 'mystery_material',
           tonnageBand: null,
+          wasteBalance: 0,
+          availableWasteBalance: 0,
           awaitingAuthorisationTonnage: 0,
           awaitingAcceptanceTonnage: 0,
           awaitingCancellationTonnage: 0,
@@ -125,8 +137,12 @@ describe('prn-tonnage results GET controller', () => {
       expect.objectContaining({
         rows: [
           expect.objectContaining({
+            registrationNumber: 'REG-200',
+            registrationType: 'MYSTERY_TYPE',
             material: 'mystery_material',
             tonnageBand: '',
+            wasteBalance: '0',
+            availableWasteBalance: '0',
             awaitingAuthorisationTonnage: '0',
             awaitingAcceptanceTonnage: '0',
             awaitingCancellationTonnage: '0',
