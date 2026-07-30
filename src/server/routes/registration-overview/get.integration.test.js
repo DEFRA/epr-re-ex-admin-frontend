@@ -1587,6 +1587,80 @@ describe('#registrationOverviewController', () => {
       })
     })
 
+    describe.each([
+      { action: 'Reject', status: 'created', href: 'reject/confirm' },
+      { action: 'Reopen', status: 'rejected', href: 'reopen/confirm' },
+      { action: 'Cancel', status: 'approved', href: 'cancel/confirm' },
+      { action: 'Reinstate', status: 'cancelled', href: 'reinstate/confirm' }
+    ])('$action registration link visibility', ({ action, status, href }) => {
+      const linkName = new RegExp(`^${action} registration$`, 'i')
+      const withRegistrationStatus = (regStatus) => ({
+        ...mockOverview,
+        registrations: [{ ...mockRegistration, status: regStatus }]
+      })
+
+      afterEach(() => {
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+      })
+
+      test(`Should render the ${action} action on the Status row for a ${status} registration when the user has admin.write scope`, async () => {
+        useMockBackend(withRegistrationStatus(status))
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Status')
+        const link = within(statusRow).getByRole('link', { name: linkName })
+
+        expect(link).toHaveAttribute(
+          'href',
+          `/organisations/${organisationId}/registrations/${registrationId}/${href}`
+        )
+      })
+
+      test(`Should not render the ${action} action when the registration status does not offer it`, async () => {
+        useMockBackend(
+          withRegistrationStatus(status === 'created' ? 'approved' : 'created')
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Status')
+
+        expect(
+          within(statusRow).queryByRole('link', { name: linkName })
+        ).toBeNull()
+      })
+
+      test(`Should not render the ${action} action when the user lacks admin.write scope`, async () => {
+        const readOnlySession = { ...mockUserSession, scopes: ['admin.read'] }
+        vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
+        useMockBackend(withRegistrationStatus(status))
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: readOnlySession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Status')
+
+        expect(
+          within(statusRow).queryByRole('link', { name: linkName })
+        ).toBeNull()
+      })
+    })
+
     describe('Reject accreditation link visibility', () => {
       const withCreatedAccreditation = () => ({
         ...mockOverview,
