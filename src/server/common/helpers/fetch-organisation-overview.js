@@ -2,7 +2,7 @@ import { errorCodes } from '#server/common/enums/error-codes.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 
-/** @import { Request } from '@hapi/hapi' */
+/** @import { HapiRequest } from '#server/common/hapi-types.js' */
 
 /**
  * @typedef {{
@@ -37,7 +37,7 @@ import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
  */
 
 /**
- * @param {Request} request
+ * @param {HapiRequest} request
  * @param {string} organisationId
  * @returns {Promise<OrganisationOverview>}
  */

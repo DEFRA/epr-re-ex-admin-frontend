@@ -7,10 +7,15 @@ import { formatPeriod } from '#server/common/helpers/format-reporting-period.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { periodSubmissionUnsubmitPath } from '#server/common/helpers/backend-paths.js'
 
+/**
+ * @import { PeriodSubmissionRequest } from '#server/common/hapi-types.js'
+ */
+
 const REFUSED_REASON =
   'The report could not be unsubmitted because its status has changed. It may have been superseded by a later submission, or flagged for resubmission.'
 
 export const reportUnsubmitPostController = {
+  /** @param {PeriodSubmissionRequest} request */
   async handler(request, h) {
     const {
       organisationId,

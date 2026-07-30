@@ -1,4 +1,5 @@
 /**
+ * @import { PeriodSubmissionParams } from './helpers/backend-paths.js'
  * @import { Request, Server } from '@hapi/hapi'
  * @import { Yar } from '@hapi/yar'
  * @import { TypedLogger } from './helpers/logging/logger.js'
@@ -38,6 +39,12 @@
  *   logger: TypedLogger,
  *   yar: HapiYar
  * }} HapiRequest
+ */
+
+/**
+ * A request on one of the report routes, whose path pins a single submission of
+ * a reporting period.
+ * @typedef {HapiRequest & { params: PeriodSubmissionParams }} PeriodSubmissionRequest
  */
 
 export {} // NOSONAR: javascript:S7787 - Required to make this file a module for JSDoc @import

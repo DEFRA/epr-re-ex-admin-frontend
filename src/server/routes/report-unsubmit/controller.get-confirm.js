@@ -12,12 +12,7 @@ import {
 } from '#server/common/helpers/backend-paths.js'
 
 /**
- * @import { HapiRequest } from '#server/common/hapi-types.js'
- * @import { PeriodSubmissionParams } from '#server/common/helpers/backend-paths.js'
- */
-
-/**
- * @typedef {HapiRequest & { params: PeriodSubmissionParams }} SubmissionRequest
+ * @import { PeriodSubmissionRequest } from '#server/common/hapi-types.js'
  */
 
 /**
@@ -54,7 +49,7 @@ const refusalReason = (report, calendarPeriod) => {
 /**
  * The stored report for this submission, carrying its status and resubmission
  * flag.
- * @param {SubmissionRequest} request
+ * @param {PeriodSubmissionRequest} request
  */
 const fetchPeriodSubmission = (request) =>
   fetchJsonFromBackend(request, periodSubmissionPath(request.params), {})
@@ -63,7 +58,7 @@ const fetchPeriodSubmission = (request) =>
  * The calendar item for this submission. Supersession is not carried on the
  * report itself: it comes from the sibling submissions the calendar surfaces,
  * via the same derivation the registration overview gates its Unsubmit link on.
- * @param {SubmissionRequest} request
+ * @param {PeriodSubmissionRequest} request
  */
 const fetchCalendarPeriod = async (request) => {
   const { year, period, submissionNumber } = request.params
@@ -83,6 +78,7 @@ const fetchCalendarPeriod = async (request) => {
 }
 
 export const reportUnsubmitConfirmGetController = {
+  /** @param {PeriodSubmissionRequest} request */
   async handler(request, h) {
     const {
       organisationId,
@@ -114,7 +110,7 @@ export const reportUnsubmitConfirmGetController = {
     )
 
     return h.view('routes/report-unsubmit/confirm', {
-      pageTitle: request.route.settings.app.pageTitle,
+      pageTitle: request.route.settings.app?.pageTitle,
       heading: PAGE_TITLE,
       breadcrumbs: [
         { text: 'Organisations', href: '/organisations' },

@@ -6,7 +6,12 @@ import {
 import { formatPeriod } from '#server/common/helpers/format-reporting-period.js'
 import { periodSubmissionPath } from '#server/common/helpers/backend-paths.js'
 
+/**
+ * @import { PeriodSubmissionRequest } from '#server/common/hapi-types.js'
+ */
+
 export const reportUnsubmitResultGetController = {
+  /** @param {PeriodSubmissionRequest} request */
   async handler(request, h) {
     const {
       organisationId,
@@ -41,7 +46,7 @@ export const reportUnsubmitResultGetController = {
     )
 
     return h.view('routes/report-unsubmit/result', {
-      pageTitle: request.route.settings.app.pageTitle,
+      pageTitle: request.route.settings.app?.pageTitle,
       success: true,
       breadcrumbs: [
         { text: 'Organisations', href: '/organisations' },

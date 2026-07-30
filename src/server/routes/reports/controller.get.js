@@ -1,7 +1,12 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { periodSubmissionPath } from '#server/common/helpers/backend-paths.js'
 
+/**
+ * @import { PeriodSubmissionRequest } from '#server/common/hapi-types.js'
+ */
+
 export const reportDetailGETController = {
+  /** @param {PeriodSubmissionRequest} request */
   async handler(request, h) {
     const {
       organisationId,
@@ -18,7 +23,7 @@ export const reportDetailGETController = {
       {}
     )
 
-    const pageTitle = request.route.settings.app.pageTitle
+    const pageTitle = request.route.settings.app?.pageTitle
     const heading = `Report – ${year} ${cadence} period ${period} submission ${submissionNumber}`
 
     return h.view('routes/reports/index', {
