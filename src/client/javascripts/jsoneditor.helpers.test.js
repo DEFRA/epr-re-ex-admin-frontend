@@ -49,8 +49,6 @@ vi.mock('jsoneditor', () => ({
   default: MockJSONEditorConstructor
 }))
 
-vi.mock('jsoneditor/dist/jsoneditor.css', () => ({}))
-
 // Mock localStorage for Node.js environment
 const localStorageMock = {
   getItem: vi.fn(),
