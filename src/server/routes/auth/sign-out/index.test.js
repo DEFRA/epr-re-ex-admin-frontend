@@ -7,6 +7,7 @@ import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
 import { getOidcConfig } from '#server/common/helpers/auth/get-oidc-config.js'
 import { auditSignOut } from '#server/common/helpers/auditing/index.js'
 import {
+  buildOidcConfig,
   mockUserSession,
   asRequest
 } from '#server/common/test-helpers/fixtures.js'
@@ -17,9 +18,9 @@ vi.mock('#server/common/helpers/auth/get-oidc-config.js')
 vi.mock('#server/common/helpers/auditing/index.js')
 
 describe('#signOut route', () => {
-  const mockOidcConfig = {
+  const mockOidcConfig = buildOidcConfig({
     end_session_endpoint: 'https://example-oidc.test/oauth/logout'
-  }
+  })
 
   const mockLogger = {
     info: vi.fn()
@@ -179,9 +180,9 @@ describe('#signOut route', () => {
 
     for (const endpoint of testEndpoints) {
       vi.clearAllMocks()
-      vi.mocked(getOidcConfig).mockResolvedValue({
-        end_session_endpoint: endpoint
-      })
+      vi.mocked(getOidcConfig).mockResolvedValue(
+        buildOidcConfig({ end_session_endpoint: endpoint })
+      )
       vi.mocked(clearUserSession).mockResolvedValue()
       mockToolkit.view.mockReturnValue('view-result')
 
@@ -273,7 +274,9 @@ describe('#signOut route', () => {
   })
 
   test('Should handle missing end_session_endpoint in OIDC config', async () => {
-    vi.mocked(getOidcConfig).mockResolvedValue({})
+    vi.mocked(getOidcConfig).mockResolvedValue(
+      buildOidcConfig({ end_session_endpoint: undefined })
+    )
 
     const mockRequest = {
       logger: mockLogger,

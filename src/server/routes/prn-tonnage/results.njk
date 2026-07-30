@@ -29,6 +29,12 @@
         </p>
 
         <p class="govuk-body">
+          Waste balance is the waste an accreditation holds after the PRNs it
+          has issued. Available waste balance also deducts PRNs awaiting
+          authorisation.
+        </p>
+
+        <p class="govuk-body">
           Data generated at: <strong>{{ generatedAt | formatDate("d MMMM yyyy 'at' h:mmaaa") }}</strong>
         </p>
 
@@ -44,10 +50,14 @@
           {% for row in rows %}
             {% set tableRow = [
               { text: row.organisationName },
-              { text: row.organisationId },
+              { text: row.orgId },
+              { text: row.registrationNumber },
+              { text: row.registrationType },
               { text: row.accreditationNumber },
               { text: row.material },
               { text: row.tonnageBand },
+              { text: row.wasteBalance, format: "numeric" },
+              { text: row.availableWasteBalance, format: "numeric" },
               { text: row.awaitingAuthorisationTonnage, format: "numeric" },
               { text: row.awaitingAcceptanceTonnage, format: "numeric" },
               { text: row.awaitingCancellationTonnage, format: "numeric" },
@@ -63,9 +73,13 @@
             head: [
               { text: "Organisation Name" },
               { text: "Organisation ID" },
+              { text: "Registration Number" },
+              { text: "Registration Type" },
               { text: "Accreditation Number" },
               { text: "Material" },
               { text: "Tonnage Band" },
+              { text: "Waste balance", format: "numeric" },
+              { text: "Available waste balance", format: "numeric" },
               { text: "Awaiting authorisation", format: "numeric" },
               { text: "Awaiting acceptance", format: "numeric" },
               { text: "Awaiting cancellation", format: "numeric" },

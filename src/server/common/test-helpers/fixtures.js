@@ -1,7 +1,22 @@
 import { makeToken } from './test-constants.js'
 
-/** @import { HapiRequest } from '#server/common/hapi-types.js' */
+/** @import { ResponseToolkit } from '@hapi/hapi' */
+/** @import { OidcConfig } from '#server/common/helpers/auth/types.js' */
+/** @import { HapiRequest, UserSession } from '#server/common/hapi-types.js' */
 
+/**
+ * @param {Partial<OidcConfig>} [overrides]
+ * @returns {OidcConfig}
+ */
+export const buildOidcConfig = (overrides = {}) => ({
+  authorization_endpoint: 'https://example-oidc.test/oauth/authorize',
+  end_session_endpoint: 'https://example-oidc.test/oauth/logout',
+  jwks_uri: 'https://example-oidc.test/discovery/keys',
+  token_endpoint: 'https://example-oidc.test/oauth/token',
+  ...overrides
+})
+
+/** @type {UserSession} */
 export const mockUserSession = {
   userId: 'user-id',
   email: 'user@email.com',
@@ -18,6 +33,12 @@ export const mockUserSession = {
  * @returns {HapiRequest}
  */
 export const asRequest = (req) => /** @type {HapiRequest} */ (req)
+
+/**
+ * @param {unknown} h
+ * @returns {ResponseToolkit}
+ */
+export const asToolkit = (h) => /** @type {ResponseToolkit} */ (h)
 
 /**
  * @param {{ message?: string, statusCode?: number, payloadMessage?: string }} [options]
