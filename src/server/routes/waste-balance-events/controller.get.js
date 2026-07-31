@@ -36,15 +36,15 @@ export const wasteBalanceEventsGETController = {
 
     const heading = `${overview.companyName} - ${registration.accreditation?.accreditationNumber}`
 
-    const eventRows = events.map((event) => [
-      { text: event.number },
-      { text: event.kind },
-      { text: event.createdAt },
-      { text: formatActor(event.createdBy) },
-      { html: `<code>${JSON.stringify(event.payload)}</code>` },
-      { text: event.closingBalance.amount },
-      { text: event.closingBalance.availableAmount }
-    ])
+    const eventRows = events.map((event) => ({
+      number: event.number,
+      kind: event.kind,
+      createdAt: event.createdAt,
+      createdBy: formatActor(event.createdBy),
+      payload: JSON.stringify(event.payload),
+      closingAmount: event.closingBalance.amount,
+      closingAvailableAmount: event.closingBalance.availableAmount
+    }))
 
     return h.view('routes/waste-balance-events/index', {
       breadcrumbs: [

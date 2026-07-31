@@ -274,6 +274,63 @@ describe('#wasteBalanceEventsController', () => {
       expect(secondCells[6]).toHaveTextContent('50')
     })
 
+    it('should render the payload as json inside a code element', async () => {
+      useMockBackend()
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+      const [firstRow] = getDataRows(getEventsTable(body))
+      const payloadCell = getAllByRole(firstRow, 'cell')[4]
+
+      expect(payloadCell.querySelector('code')?.textContent).toBe(
+        '{"summaryLogId":"sl-1","creditTotal":100}'
+      )
+    })
+
+    it('should render a payload carrying markup as text, not markup', async () => {
+      const payload = {
+        summaryLogId: '</code><img src="x" onerror="alert(1)">',
+        creditTotal: 100
+      }
+      useMockBackend(mockOverview, [
+        {
+          id: 'evt-5',
+          registrationId: 'reg-001',
+          accreditationId,
+          organisationId,
+          number: 5,
+          kind: 'SUMMARY_LOG_SUBMITTED',
+          payload,
+          openingBalance: { amount: 0, availableAmount: 0 },
+          closingBalance: { amount: 100, availableAmount: 100 },
+          createdAt: '2026-01-19T10:00:00.000Z',
+          createdBy: {
+            id: 'user-1',
+            name: 'Test User',
+            email: 'test.user@example.com'
+          }
+        }
+      ])
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+      const [firstRow] = getDataRows(getEventsTable(body))
+      const payloadCell = getAllByRole(firstRow, 'cell')[4]
+
+      expect(payloadCell.querySelector('img')).toBeNull()
+      expect(payloadCell.textContent).toBe(JSON.stringify(payload))
+    })
+
     test('Should render empty Created by when actor has only id', async () => {
       useMockBackend(mockOverview, [
         {
