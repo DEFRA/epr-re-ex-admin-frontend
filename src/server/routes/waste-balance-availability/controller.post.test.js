@@ -59,7 +59,7 @@ describe('waste-balance-availability POST controller', () => {
       '',
       'Material,Available amount',
       'Aluminium,1234.56',
-      'Glass re-melt,5678.9',
+      'Glass remelt,5678.9',
       'Total,6913.46'
     ].join('\n')
 
@@ -102,7 +102,7 @@ describe('waste-balance-availability POST controller', () => {
 
     const csvContent = mockH.response.mock.calls[0][0]
     expect(csvContent).toContain('Wood,1000')
-    expect(csvContent).toContain('Fibre based composite,99.1')
+    expect(csvContent).toContain('Fibre-based composite,99.1')
     expect(csvContent).toContain('Total,1099.1')
   })
 

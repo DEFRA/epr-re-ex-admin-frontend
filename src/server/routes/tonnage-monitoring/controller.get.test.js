@@ -109,7 +109,7 @@ describe('tonnage-monitoring GET controller', () => {
     expect(viewCall[1].materials).toEqual([
       {
         Jan: '100.00',
-        material: 'Glass re-melt',
+        material: 'Glass remelt',
         type: 'Exporter',
         total: '100.00'
       },

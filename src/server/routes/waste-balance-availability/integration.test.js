@@ -110,7 +110,7 @@ describe('waste-balance-availability', () => {
         const tableText = $('.govuk-table').text()
         expect(tableText).toContain('Aluminium')
         expect(tableText).toContain('1234.56')
-        expect(tableText).toContain('Glass re-melt')
+        expect(tableText).toContain('Glass remelt')
         expect(tableText).toContain('5678.90')
         expect(tableText).toContain('Total')
         expect(tableText).toContain('6913.46')
@@ -248,7 +248,7 @@ describe('waste-balance-availability', () => {
         )
         expect(payload).toContain('Waste balance availability by material')
         expect(payload).toContain('Aluminium,1234.56')
-        expect(payload).toContain('Glass re-melt,5678.9')
+        expect(payload).toContain('Glass remelt,5678.9')
         expect(payload).toContain('Total,6913.46')
       })
 

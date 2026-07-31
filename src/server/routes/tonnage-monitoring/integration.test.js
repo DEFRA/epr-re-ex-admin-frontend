@@ -126,7 +126,7 @@ describe('tonnage-monitoring', () => {
         const tableText = $('.govuk-table').text()
         expect(tableText).toContain('Aluminium')
         expect(tableText).toContain('1234.56')
-        expect(tableText).toContain('Glass re-melt')
+        expect(tableText).toContain('Glass remelt')
         expect(tableText).toContain('5678.90')
       })
 
@@ -263,7 +263,7 @@ describe('tonnage-monitoring', () => {
         expect(payload).toContain('Tonnage by material')
         expect(payload).toContain('Material,Type,Jan,Feb')
         expect(payload).toContain('Aluminium,Exporter,1234.56,0')
-        expect(payload).toContain('Glass re-melt,Reprocessor,0,5678.9')
+        expect(payload).toContain('Glass remelt,Reprocessor,0,5678.9')
         expect(payload).toContain('Total: 6913.46')
       })
 

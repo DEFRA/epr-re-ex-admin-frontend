@@ -1,5 +1,5 @@
 import { isNil } from '#server/common/helpers/is-nil.js'
-import { formatMaterialName } from '#server/common/helpers/format-material-name.js'
+import { formatMaterialName } from '#server/common/helpers/materials.js'
 
 export function formatTonnage(tonnage) {
   if (isNil(tonnage)) {

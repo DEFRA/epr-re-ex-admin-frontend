@@ -78,7 +78,7 @@ describe('tonnage-monitoring POST controller', () => {
       'Material,Type,Jan,Feb,Total',
       'Aluminium,Exporter,1234.56,0,1234.56',
       ',Exporter,1234.56,0,1234.56',
-      'Glass re-melt,Reprocessor,0,5678.9,5678.9',
+      'Glass remelt,Reprocessor,0,5678.9,5678.9',
       ',Reprocessor,0,5678.9,5678.9',
       'Total,,1234.56,5678.9,6913.46'
     ].join('\n')
@@ -154,7 +154,7 @@ describe('tonnage-monitoring POST controller', () => {
 
     const csvContent = mockH.response.mock.calls[0][0]
     expect(csvContent).toContain('Wood,Exporter,1000,0')
-    expect(csvContent).toContain('Fibre based composite,Reprocessor,0,99.1')
+    expect(csvContent).toContain('Fibre-based composite,Reprocessor,0,99.1')
     expect(csvContent).toContain('Total: 1099.10')
   })
 

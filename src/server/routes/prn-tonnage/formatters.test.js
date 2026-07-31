@@ -6,11 +6,16 @@ import {
 } from './formatters.js'
 
 describe('prn-tonnage formatters', () => {
-  test('Should format known material names and preserve unknowns', () => {
-    expect(formatMaterialName('glass_re_melt')).toBe('Glass re-melt')
-    expect(formatMaterialName('GLASS_RE_MELT')).toBe('Glass re-melt')
-    expect(formatMaterialName('unknown_material')).toBe('unknown_material')
-    expect(formatMaterialName(undefined)).toBe('')
+  test('Should format known material names', () => {
+    expect(formatMaterialName('glass_re_melt')).toBe('Glass remelt')
+    expect(formatMaterialName('GLASS_RE_MELT')).toBe('Glass remelt')
+    expect(formatMaterialName('glass')).toBe('Glass')
+  })
+
+  test('Should reject a material the backend cannot send', () => {
+    expect(() => formatMaterialName('unknown_material')).toThrow(
+      'Unknown material: unknown_material'
+    )
   })
 
   test('Should format known tonnage bands and handle missing or unknown values', () => {

@@ -56,7 +56,7 @@ describe('waste-balance-availability GET controller', () => {
         generatedAt: '2026-01-29T12:00:00.000Z',
         materials: [
           { material: 'Aluminium', availableAmount: '1234.56' },
-          { material: 'Glass re-melt', availableAmount: '5678.90' }
+          { material: 'Glass remelt', availableAmount: '5678.90' }
         ],
         total: '6913.46',
         error: null
@@ -106,7 +106,7 @@ describe('waste-balance-availability GET controller', () => {
       expect.objectContaining({
         materials: [
           { material: 'Wood', availableAmount: '1000.00' },
-          { material: 'Fibre based composite', availableAmount: '99.10' }
+          { material: 'Fibre-based composite', availableAmount: '99.10' }
         ],
         total: '1099.10'
       })
