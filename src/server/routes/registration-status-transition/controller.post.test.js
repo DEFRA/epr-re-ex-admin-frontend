@@ -9,11 +9,10 @@ vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
 
 const mockFetchJsonFromBackend = vi.mocked(fetchJsonFromBackend)
 
-// Registration transitions currently registered (transitions.js) all collect
-// grant fields, so the "no grant fields" branch of the shared post-controller
-// factory can't be reached through a real route yet. It's still a genuine,
-// designed-for case — the sibling accreditation module has transitions
-// without grant fields — so it's covered here directly against the factory.
+// The "no grant fields" branch of the shared post-controller factory is
+// exercised end-to-end by the reject/reopen/cancel/reinstate routes in
+// index.integration.test.js; this file keeps the factory's unit-level
+// contract (redirect target, flash handling) pinned directly.
 describe('createTransitionPostController without grant fields', () => {
   const organisationId = 'org-1'
   const registrationId = 'reg-1'
@@ -23,6 +22,7 @@ describe('createTransitionPostController without grant fields', () => {
   const fakeTransition = {
     fromStatus: 'approved',
     toStatus: 'cancelled',
+    linkText: 'Cancel',
     pageTitle: 'Cancel registration',
     heading: 'Cancel registration',
     warningText: 'This is a fake transition used only to test the factory.',

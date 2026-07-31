@@ -19,18 +19,8 @@
 
     <h1 class="govuk-heading-xl">{{ heading }}</h1>
 
-    {% set registrationStatusActions = [] %}
-    {% if SCOPES.adminWrite in scopes %}
-      {% set registrationBaseUrl = '/organisations/' ~ organisationId ~ '/registrations/' ~ registrationId %}
-      {% if registration.status === 'created' %}
-        {% set registrationStatusActions = registrationStatusActions.concat([
-          { href: registrationBaseUrl ~ '/approve/confirm', text: "Approve", visuallyHiddenText: "registration" }
-        ]) %}
-      {% endif %}
-    {% endif %}
-
     {% set summaryRows = [
-      { key: { text: "Status" }, value: { html: govukTag({ text: registration.status }) }, actions: { items: registrationStatusActions } },
+      { key: { text: "Status" }, value: { html: govukTag({ text: registration.status }) }, actions: { items: registrationStatusActions if SCOPES.adminWrite in scopes else [] } },
       { key: { text: "Processing type" }, value: { text: registration.processingType } },
       { key: { text: "Material" }, value: { text: registration.material } },
       { key: { text: "Site" }, value: { text: registration.site } }

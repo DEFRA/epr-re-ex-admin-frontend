@@ -29,6 +29,7 @@ export const reportUnsubmitPostController = {
     const overviewUrl = `/organisations/${organisationId}/registrations/${registrationId}/overview`
     const resultUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/unsubmit/result`
 
+    /** @type {string | null} */
     let reason = null
 
     try {

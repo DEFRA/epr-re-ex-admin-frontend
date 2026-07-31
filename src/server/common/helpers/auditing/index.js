@@ -1,13 +1,27 @@
 import { audit } from '@defra/cdp-auditing'
 
+/**
+ * @import { UserSession } from '#server/common/hapi-types.js'
+ */
+
+/**
+ * @param {UserSession} userSession
+ */
 function auditSignIn(userSession) {
   auditSSO('sign-in', userSession)
 }
 
+/**
+ * @param {UserSession} userSession
+ */
 function auditSignOut(userSession) {
   auditSSO('sign-out', userSession)
 }
 
+/**
+ * @param {string} action
+ * @param {UserSession} userSession
+ */
 function auditSSO(action, userSession) {
   const payload = {
     event: {
@@ -28,13 +42,13 @@ function auditSSO(action, userSession) {
  * - for endpoints protected by entra-id strategy user details are on auth.credentials.profile
  * - for endpoints protected by session strategy user details are on auth.credentials
  *
- * @param {object} userSession
+ * @param {UserSession} userSession
  * @returns {{ id: string, email: string }}
  */
 function extractUserDetails(userSession) {
   return {
-    id: userSession?.userId,
-    email: userSession?.email
+    id: userSession.userId,
+    email: userSession.email
   }
 }
 

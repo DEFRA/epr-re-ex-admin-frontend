@@ -24,10 +24,13 @@ const { mockSet, mockGet, MockJSONEditorConstructor } = vi.hoisted(() => {
     findNodeByPath: vi.fn()
   }
 
-  const MockJSONEditorConstructor = vi.fn(function (_container, options) {
-    this.options = options
-    this.node = mockNode
-  })
+  const MockJSONEditorConstructor = vi.fn(
+    /** @this {{ options: unknown, node: typeof mockNode }} */
+    function (_container, options) {
+      this.options = options
+      this.node = mockNode
+    }
+  )
 
   MockJSONEditorConstructor.prototype.set = function (data) {
     mockSet(data)
@@ -45,8 +48,6 @@ const { mockSet, mockGet, MockJSONEditorConstructor } = vi.hoisted(() => {
 vi.mock('jsoneditor', () => ({
   default: MockJSONEditorConstructor
 }))
-
-vi.mock('jsoneditor/dist/jsoneditor.css', () => ({}))
 
 // Mock localStorage for Node.js environment
 const localStorageMock = {

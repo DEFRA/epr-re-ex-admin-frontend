@@ -11,6 +11,7 @@ import {
 } from '#server/common/constants/report-status.js'
 import { SCOPES } from '#server/common/helpers/auth/scopes.js'
 import { accreditationStatusActions } from '#server/routes/accreditation-status-transition/transitions.js'
+import { registrationStatusActions } from '#server/routes/registration-status-transition/transitions.js'
 
 /**
  * @import { PeriodStatus } from '#server/common/constants/report-status.js'
@@ -119,8 +120,9 @@ const fetchWasteBalance = async (request, organisationId, accreditationId) => {
 }
 
 /**
- * The links the page derives from the registration, every one of which hinges
- * on whether it carries an accreditation.
+ * The links and status actions the page derives from the registration. The
+ * accreditation-scoped ones are null when there is no accreditation, and
+ * overseas sites additionally only apply to exporters.
  * @param {string} organisationId
  * @param {string} registrationId
  * @param {Record<string, any>} registration
@@ -132,14 +134,19 @@ const toRegistrationLinks = (organisationId, registrationId, registration) => {
     : null
 
   return {
-    // The template only attaches these to the Accreditation status row for
-    // users holding admin.write (hiding is UX - the backend enforces scope).
+    // The template only attaches these to their status rows for users holding
+    // admin.write (hiding is UX - the backend enforces scope).
     accreditationStatusActions: accreditationUrl
       ? accreditationStatusActions(
           registration.accreditation.status,
-          accreditationUrl
+          accreditationUrl,
+          registration.status
         )
       : [],
+    registrationStatusActions: registrationStatusActions(
+      registration.status,
+      registrationUrl
+    ),
     wasteBalanceEventsUrl: accreditationUrl
       ? `${accreditationUrl}/waste-balance-events`
       : null,
