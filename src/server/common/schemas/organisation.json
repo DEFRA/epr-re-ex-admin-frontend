@@ -1177,10 +1177,7 @@
             "additionalProperties": false
           },
           "statusHistory": {
-            "type": [
-              "array",
-              "null"
-            ],
+            "type": "array",
             "items": {
               "type": "object",
               "properties": {
@@ -1191,14 +1188,16 @@
                     "approved",
                     "cancelled",
                     "rejected"
-                  ]
+                  ],
+                  "readOnly": true
                 },
                 "updatedAt": {
                   "type": "string",
                   "format": "date-time"
                 },
                 "updatedBy": {
-                  "type": "string"
+                  "type": "string",
+                  "readOnly": true
                 }
               },
               "required": [
@@ -1206,8 +1205,7 @@
                 "updatedAt"
               ],
               "additionalProperties": false
-            },
-            "readOnly": true
+            }
           }
         },
         "additionalProperties": false
@@ -1594,10 +1592,7 @@
             }
           },
           "statusHistory": {
-            "type": [
-              "array",
-              "null"
-            ],
+            "type": "array",
             "items": {
               "type": "object",
               "properties": {
@@ -1609,14 +1604,16 @@
                     "cancelled",
                     "rejected",
                     "suspended"
-                  ]
+                  ],
+                  "readOnly": true
                 },
                 "updatedAt": {
                   "type": "string",
                   "format": "date-time"
                 },
                 "updatedBy": {
-                  "type": "string"
+                  "type": "string",
+                  "readOnly": true
                 }
               },
               "required": [
@@ -1624,8 +1621,7 @@
                 "updatedAt"
               ],
               "additionalProperties": false
-            },
-            "readOnly": true
+            }
           }
         },
         "additionalProperties": false
