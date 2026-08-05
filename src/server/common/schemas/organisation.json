@@ -1188,8 +1188,7 @@
                     "approved",
                     "cancelled",
                     "rejected"
-                  ],
-                  "readOnly": true
+                  ]
                 },
                 "updatedAt": {
                   "type": "string",
@@ -1604,8 +1603,7 @@
                     "cancelled",
                     "rejected",
                     "suspended"
-                  ],
-                  "readOnly": true
+                  ]
                 },
                 "updatedAt": {
                   "type": "string",
