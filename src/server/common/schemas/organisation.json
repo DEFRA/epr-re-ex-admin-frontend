@@ -1177,10 +1177,7 @@
             "additionalProperties": false
           },
           "statusHistory": {
-            "type": [
-              "array",
-              "null"
-            ],
+            "type": "array",
             "items": {
               "type": "object",
               "properties": {
@@ -1198,7 +1195,8 @@
                   "format": "date-time"
                 },
                 "updatedBy": {
-                  "type": "string"
+                  "type": "string",
+                  "readOnly": true
                 }
               },
               "required": [
@@ -1206,8 +1204,7 @@
                 "updatedAt"
               ],
               "additionalProperties": false
-            },
-            "readOnly": true
+            }
           }
         },
         "additionalProperties": false
@@ -1594,10 +1591,7 @@
             }
           },
           "statusHistory": {
-            "type": [
-              "array",
-              "null"
-            ],
+            "type": "array",
             "items": {
               "type": "object",
               "properties": {
@@ -1616,7 +1610,8 @@
                   "format": "date-time"
                 },
                 "updatedBy": {
-                  "type": "string"
+                  "type": "string",
+                  "readOnly": true
                 }
               },
               "required": [
@@ -1624,8 +1619,7 @@
                 "updatedAt"
               ],
               "additionalProperties": false
-            },
-            "readOnly": true
+            }
           }
         },
         "additionalProperties": false
