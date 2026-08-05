@@ -353,7 +353,8 @@
               "cancelled",
               "rejected",
               null
-            ]
+            ],
+            "readOnly": true
           },
           "registrationNumber": {
             "type": [
@@ -1188,7 +1189,6 @@
                   "enum": [
                     "created",
                     "approved",
-                    "active",
                     "cancelled",
                     "rejected"
                   ]
@@ -1241,7 +1241,8 @@
               "rejected",
               "suspended",
               null
-            ]
+            ],
+            "readOnly": true
           },
           "validFrom": {
             "type": [
@@ -1605,7 +1606,6 @@
                   "enum": [
                     "created",
                     "approved",
-                    "active",
                     "cancelled",
                     "rejected",
                     "suspended"
