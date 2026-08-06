@@ -202,6 +202,23 @@ describe('#registrationOverviewController', () => {
     ]
   }
 
+  const mockCalendarWithResubmissionDraft = {
+    cadence: 'monthly',
+    reportingPeriods: [
+      mockCalendarWithSkeleton.reportingPeriods[0],
+      {
+        ...mockCalendarWithSkeleton.reportingPeriods[1],
+        report: {
+          id: 'd63360fa-0c98-4436-d80f-6d908622hd12',
+          status: 'in_progress',
+          submissionNumber: 2,
+          submittedAt: null,
+          submittedBy: null
+        }
+      }
+    ]
+  }
+
   const mockCalendarNotYetEnded = {
     cadence: 'monthly',
     reportingPeriods: [
@@ -588,7 +605,7 @@ describe('#registrationOverviewController', () => {
 
       expect(within(firstRow).getByText('January')).toBeInTheDocument()
       expect(within(firstRow).getByText('2026-02-20')).toBeInTheDocument()
-      expect(within(firstRow).getByText('ready_to_submit')).toHaveClass(
+      expect(within(firstRow).getByText('Ready to submit')).toHaveClass(
         'govuk-tag'
       )
       expect(
@@ -598,7 +615,7 @@ describe('#registrationOverviewController', () => {
         `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1`
       )
 
-      expect(within(secondRow).getByText('due')).toHaveClass('govuk-tag')
+      expect(within(secondRow).getByText('Due')).toHaveClass('govuk-tag')
       expect(within(secondRow).queryByRole('link')).toBeNull()
     })
 
@@ -681,8 +698,64 @@ describe('#registrationOverviewController', () => {
       expect(getAllByRole(submittedRow, 'cell')[1]).toHaveTextContent('1')
       expect(getAllByRole(skeletonRow, 'cell')[1].textContent?.trim()).toBe('')
       expect(
-        within(skeletonRow).getByText('requires_resubmission')
+        within(skeletonRow).getByText('Requires resubmission')
       ).toHaveClass('govuk-tag', 'app-status-tag')
+    })
+
+    it('should keep the requires-resubmission status once the draft is in flight', async () => {
+      useMockBackend(mockOverview, mockCalendarWithResubmissionDraft)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+      const [submittedRow, draftRow] = getDataRows(getReportsTable(body))
+
+      expect(within(submittedRow).getByText('Submitted')).toBeInTheDocument()
+      expect(getAllByRole(submittedRow, 'cell')[1]).toHaveTextContent('1')
+      expect(within(draftRow).getByText('Requires resubmission')).toHaveClass(
+        'govuk-tag',
+        'app-status-tag'
+      )
+      expect(getAllByRole(draftRow, 'cell')[1]).toHaveTextContent('2')
+      expect(
+        within(draftRow).getByRole('link', { name: 'View' })
+      ).toBeInTheDocument()
+    })
+
+    it('should fall back to the raw status when it has no label', async () => {
+      useMockBackend()
+      mswServer.use(
+        http.get(
+          `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
+          () =>
+            HttpResponse.json({
+              cadence: 'monthly',
+              reportingPeriods: [
+                {
+                  ...mockCalendarNotYetEnded.reportingPeriods[0],
+                  periodStatus: 'awaiting_the_unknown'
+                }
+              ]
+            })
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+      const [onlyRow] = getDataRows(getReportsTable(body))
+
+      expect(within(onlyRow).getByText('awaiting_the_unknown')).toHaveClass(
+        'govuk-tag'
+      )
     })
 
     test('Should render a blank status cell when periodStatus is null and there is no report', async () => {
@@ -1071,25 +1144,35 @@ describe('#registrationOverviewController', () => {
         )
       })
 
-      test('Should render the Unsubmit link on the submitted submission while a resubmission is required', async () => {
-        useMockBackend(mockOverview, mockCalendarWithSkeleton)
+      it.each([
+        {
+          state: 'before the resubmission draft exists',
+          calendar: mockCalendarWithSkeleton
+        },
+        {
+          state: 'while the resubmission draft is in flight',
+          calendar: mockCalendarWithResubmissionDraft
+        }
+      ])(
+        'should not render the Unsubmit link on a report flagged for resubmission, $state',
+        async ({ calendar }) => {
+          useMockBackend(mockOverview, calendar)
 
-        const { result } = await server.inject({
-          method: 'GET',
-          url,
-          auth: { strategy: 'session', credentials: mockUserSession }
-        })
+          const { result } = await server.inject({
+            method: 'GET',
+            url,
+            auth: { strategy: 'session', credentials: mockUserSession }
+          })
 
-        const body = renderPage(result)
-        const [submittedRow] = getDataRows(getReportsTable(body))
+          const body = renderPage(result)
 
-        expect(
-          within(submittedRow).getByRole('link', { name: 'Unsubmit' })
-        ).toHaveAttribute(
-          'href',
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/unsubmit/confirm`
-        )
-      })
+          expect(
+            within(getReportsTable(body)).queryByRole('link', {
+              name: 'Unsubmit'
+            })
+          ).toBeNull()
+        }
+      )
     })
 
     describe('Suspend link visibility', () => {

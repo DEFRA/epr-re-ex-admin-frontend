@@ -4,8 +4,14 @@ import {
   findRegistration
 } from '#server/common/helpers/fetch-organisation-overview.js'
 import { formatPeriod } from '#server/common/helpers/format-reporting-period.js'
+import { periodSubmissionPath } from '#server/common/helpers/backend-paths.js'
+
+/**
+ * @import { PeriodSubmissionRequest } from '#server/common/hapi-types.js'
+ */
 
 export const reportUnsubmitResultGetController = {
+  /** @param {PeriodSubmissionRequest} request */
   async handler(request, h) {
     const {
       organisationId,
@@ -20,7 +26,7 @@ export const reportUnsubmitResultGetController = {
 
     const report = await fetchJsonFromBackend(
       request,
-      `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`,
+      periodSubmissionPath(request.params),
       {}
     )
 
@@ -40,7 +46,7 @@ export const reportUnsubmitResultGetController = {
     )
 
     return h.view('routes/report-unsubmit/result', {
-      pageTitle: request.route.settings.app.pageTitle,
+      pageTitle: request.route.settings.app?.pageTitle,
       success: true,
       breadcrumbs: [
         { text: 'Organisations', href: '/organisations' },
