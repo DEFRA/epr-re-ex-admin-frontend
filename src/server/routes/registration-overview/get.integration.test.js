@@ -715,10 +715,12 @@ describe('#registrationOverviewController', () => {
       const [submittedRow, draftRow] = getDataRows(getReportsTable(body))
 
       expect(within(submittedRow).getByText('Submitted')).toBeInTheDocument()
+      expect(getAllByRole(submittedRow, 'cell')[1]).toHaveTextContent('1')
       expect(within(draftRow).getByText('Requires resubmission')).toHaveClass(
         'govuk-tag',
         'app-status-tag'
       )
+      expect(getAllByRole(draftRow, 'cell')[1]).toHaveTextContent('2')
       expect(
         within(draftRow).getByRole('link', { name: 'View' })
       ).toBeInTheDocument()

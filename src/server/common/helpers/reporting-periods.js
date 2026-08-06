@@ -7,20 +7,14 @@ import {
 const periodKey = (period) => `${period.year}-${period.period}`
 
 /**
- * Decorates each calendar reporting period with the two conditions the backend
- * refuses an unsubmit under, so no page offers an action that can only fail:
- * the submission is superseded by a later submitted one (PAE-1657), or the
- * period is flagged for resubmission (PAE-1775).
+ * Flags the two conditions the backend refuses an unsubmit under. ADR-0038
+ * keeps both off the calendar payload, so they are derived here.
  *
- * Together these match the backend's absolute-latest rule
- * (isLatestSubmissionOf in reports/application/resubmission-service.js), which
- * counts submissions of any status: a draft above a submitted report can only
- * exist once that report was flagged for resubmission, so the flag covers the
- * case supersession alone would miss.
- *
- * ADR-0038 keeps the calendar payload free of both fields, so they are derived
- * here - the flagged report and its requires_resubmission item are separate
- * calendar items, hence the per-period set.
+ * The pair only equals the backend's absolute-latest rule
+ * (isLatestSubmissionOf) because a draft can sit above a submitted report only
+ * once that report was flagged - enforced by assertResubmissionAllowed and
+ * pinned by epr-backend reports/routes/post.test.js ("rejects submission 2 ...
+ * when submission 1 is submitted but not flagged").
  * @param {Array<Record<string, any>>} reportingPeriods
  * @param {string} cadence
  * @returns {Array<Record<string, any> & {
