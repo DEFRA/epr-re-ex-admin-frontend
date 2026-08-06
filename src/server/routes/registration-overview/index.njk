@@ -60,32 +60,24 @@
     </div>
     <div class="govuk-grid-row">
       <div id="reports" class="govuk-grid-column-two-thirds">
-        {% if reportingPeriods and reportingPeriods.length %}
+        {% if reportRows and reportRows.length %}
           {% set tableRows = [] %}
-          {% for period in reportingPeriods %}
-            {% set statusText = period.report.status if period.report else period.periodStatus %}
-            {% if period.report %}
-              {% set reportUrl = '/organisations/' ~ organisationId ~ '/registrations/' ~ registrationId ~ '/reports/' ~ period.year ~ '/' ~ cadence ~ '/' ~ period.period ~ '/submissions/' ~ period.submissionNumber %}
-            {% endif %}
+          {% for row in reportRows %}
             {% set actionsHtml %}
-              {% if period.report %}
-                <a class="govuk-link govuk-link--no-visited-state" href="{{ reportUrl }}">View</a>
+              {% if row.viewUrl %}
+                <a class="govuk-link govuk-link--no-visited-state" href="{{ row.viewUrl }}">View</a>
               {% endif %}
-              {% if period.report and period.report.status === 'submitted' and not period.isSuperseded and SCOPES.adminWrite in scopes %}
-                {% set unsubmitUrl = '/organisations/' ~ organisationId ~ '/registrations/' ~ registrationId ~ '/reports/' ~ period.year ~ '/' ~ cadence ~ '/' ~ period.period ~ '/submissions/' ~ period.submissionNumber ~ '/unsubmit/confirm' %}
-                <br><a class="govuk-link govuk-link--no-visited-state" href="{{ unsubmitUrl }}">Unsubmit</a>
+              {% if row.unsubmitUrl %}
+                <br><a class="govuk-link govuk-link--no-visited-state" href="{{ row.unsubmitUrl }}">Unsubmit</a>
               {% endif %}
             {% endset %}
-            {% set statusCell = { html: govukTag({ text: statusText, classes: "app-status-tag" }) } if statusText else { text: "" } %}
-            {% set submissionCell = { text: period.submissionNumber } if period.report else { text: "" } %}
-            {% set row = [
-              { text: period.formattedPeriod },
-              submissionCell,
-              { text: period.dueDate },
-              statusCell,
+            {% set tableRows = tableRows.concat([[
+              { text: row.formattedPeriod },
+              { text: row.submissionNumber },
+              { text: row.dueDate },
+              { html: govukTag({ text: row.statusText, classes: "app-status-tag" }) } if row.statusText else { text: "" },
               { html: actionsHtml }
-            ] %}
-            {% set tableRows = tableRows.concat([row]) %}
+            ]]) %}
           {% endfor %}
 
           {{ govukTable({
@@ -106,6 +98,18 @@
     <div class="govuk-grid-row">
       <div id="summary-logs" class="govuk-grid-column-two-thirds">
         {% if summaryLogRows and summaryLogRows.length %}
+          {% set summaryLogTableRows = [] %}
+          {% for row in summaryLogRows %}
+            {% set downloadHtml %}
+              <a class="govuk-link govuk-link--no-visited-state" href="{{ row.downloadUrl }}">Download</a>
+            {% endset %}
+            {% set summaryLogTableRows = summaryLogTableRows.concat([[
+              { text: row.uploadedAt },
+              { html: govukTag({ text: row.label, classes: row.className }) },
+              { html: downloadHtml }
+            ]]) %}
+          {% endfor %}
+
           {{ govukTable({
             caption: "Summary logs",
             captionClasses: "govuk-table__caption--m",
@@ -114,7 +118,7 @@
               { text: "Status" },
               { text: "Actions" }
             ],
-            rows: summaryLogRows
+            rows: summaryLogTableRows
           }) }}
         {% else %}
           <p class="govuk-body">No summary logs</p>
