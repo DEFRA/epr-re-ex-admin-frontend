@@ -34,7 +34,7 @@
     "pretest": "npm run build:frontend",
     "test": "TZ=UTC vitest run --coverage",
     "test:watch": "TZ=UTC vitest",
-    "server:watch": "nodemon --inspect=0.0.0.0 --ext js,json --legacy-watch ./src",
+    "server:watch": "nodemon --inspect=0.0.0.0 --ext js,json --legacy-watch --polling-interval 1000 ./src",
     "server:debug": "nodemon --inspect-brk=0.0.0.0 --ext js,json --legacy-watch ./src",
     "prestart": "npm run build:frontend",
     "start": "NODE_ENV=production node --use-strict .",
