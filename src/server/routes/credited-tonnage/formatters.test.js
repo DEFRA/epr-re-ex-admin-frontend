@@ -78,7 +78,7 @@ describe('credited-tonnage formatters', () => {
       const row = mapCreditedTonnageRow(apiRow)
 
       expect(row.organisationId).toBe('500042')
-      expect(row.material).toBe('Glass re-melt')
+      expect(row.material).toBe('Glass remelt')
       expect(row.type).toBe('Exporter')
       expect(row.sentOnDeductions).toBe('0.00')
     })

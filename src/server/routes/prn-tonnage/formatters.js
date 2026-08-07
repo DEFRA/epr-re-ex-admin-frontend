@@ -1,16 +1,6 @@
 import { roundForCsv } from '#server/common/helpers/round-for-csv.js'
 
-const materialDisplayNames = {
-  aluminium: 'Aluminium',
-  fibre: 'Fibre based composite',
-  glass: 'Glass',
-  glass_other: 'Glass other',
-  glass_re_melt: 'Glass re-melt',
-  paper: 'Paper and board',
-  plastic: 'Plastic',
-  steel: 'Steel',
-  wood: 'Wood'
-}
+export { formatMaterialName } from '#server/common/helpers/materials.js'
 
 const tonnageDecimals = 0
 
@@ -25,14 +15,6 @@ const tonnageBandDisplayNames = {
   up_to_5000: 'Up to 5,000 tonnes',
   up_to_10000: 'Up to 10,000 tonnes',
   over_10000: 'Over 10,000 tonnes'
-}
-
-export function formatMaterialName(material) {
-  if (!material) {
-    return ''
-  }
-  const key = material.toLowerCase()
-  return materialDisplayNames[key] ?? material
 }
 
 export function formatRegistrationType(registrationType) {

@@ -158,7 +158,7 @@ describe('creditedTonnagePostController', () => {
     const row = dataLines(csv)[1]
     expect(row).toContain('glass_re_melt')
     expect(row).toContain('exporter')
-    expect(csv).not.toContain('Glass re-melt')
+    expect(csv).not.toContain('Glass remelt')
     expect(csv).not.toContain('Exporter')
   })
 
