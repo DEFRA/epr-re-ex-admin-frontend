@@ -18,9 +18,15 @@ const buildOrg = (overrides = {}) => ({
   status: 'ACTIVE',
   statusHistory: [{ status: 'ACTIVE', updatedAt: '2025-10-01T00:00:00Z' }],
   companyDetails: {
-    name: 'Acme Ltd',
-    registrationNumber: '12345678'
+    name: 'Acme Ltd'
   },
+  registrations: [
+    { id: 'reg-1', registrationNumber: 'REG001', accreditationId: 'acc-1' }
+  ],
+  accreditations: [
+    { id: 'acc-1', accreditationNumber: 'ACC001' },
+    { id: 'acc-9', accreditationNumber: 'ACC444' }
+  ],
   submittedToRegulator: 'regulator-name',
   ...overrides
 })
@@ -112,13 +118,83 @@ describe('GET /organisations', () => {
         expect(calls[0].query.search).toBeUndefined()
       })
 
-      test('renders the search form with empty value', async () => {
+      test('renders all six search fields, empty, each with its label', async () => {
         stubBackendResponse(HttpResponse.json(envelope([])))
 
         const { $, statusCode } = await loadPage()
 
         expect(statusCode).toBe(statusCodes.ok)
-        expect($('input[name="search"]').val()).toBe('')
+        const fields = $('form.app-filters input[type="search"]')
+          .map((_, input) => ({
+            name: $(input).attr('name'),
+            value: $(input).val(),
+            label: $(`label[for="${$(input).attr('id')}"]`)
+              .text()
+              .trim(),
+            autocomplete: $(input).attr('autocomplete')
+          }))
+          .get()
+
+        expect(fields).toEqual([
+          {
+            name: 'search',
+            value: '',
+            label: 'Organisation name',
+            autocomplete: 'off'
+          },
+          {
+            name: 'orgId',
+            value: '',
+            label: 'Organisation Id',
+            autocomplete: 'off'
+          },
+          {
+            name: 'registrationNumber',
+            value: '',
+            label: 'Registration number',
+            autocomplete: 'off'
+          },
+          {
+            name: 'registrationId',
+            value: '',
+            label: 'Registration Id',
+            autocomplete: 'off'
+          },
+          {
+            name: 'accreditationNumber',
+            value: '',
+            label: 'Accreditation number',
+            autocomplete: 'off'
+          },
+          {
+            name: 'accreditationId',
+            value: '',
+            label: 'Accreditation Id',
+            autocomplete: 'off'
+          }
+        ])
+      })
+
+      test('lays the six fields out three rows of two', async () => {
+        stubBackendResponse(HttpResponse.json(envelope([])))
+
+        const { $ } = await loadPage()
+
+        const rows = $('form.app-filters .govuk-grid-row')
+        expect(rows).toHaveLength(3)
+        rows.each((_, row) => {
+          expect($(row).find('.govuk-grid-column-one-half')).toHaveLength(2)
+        })
+      })
+
+      test('does not offer the clear-search link when no criterion is set', async () => {
+        stubBackendResponse(HttpResponse.json(envelope([])))
+
+        const { $ } = await loadPage()
+
+        expect(
+          $('form.app-filters a.govuk-button[href="/organisations"]')
+        ).toHaveLength(0)
       })
 
       test('renders organisations from the envelope items', async () => {
@@ -172,8 +248,7 @@ describe('GET /organisations', () => {
         )
 
         expect(raw).toContain('0 results found')
-        expect(raw).toContain('No organisations found matching')
-        expect(raw).toContain('NoSuchOrg')
+        expect(raw).toContain('No organisations found matching your search')
       })
 
       test('renders the generic empty message when there is no search and no results', async () => {
@@ -182,6 +257,98 @@ describe('GET /organisations', () => {
         const { raw } = await loadPage()
 
         expect(raw).toContain('No organisations found.')
+      })
+
+      test('offers the clear-search link when a criterion is set', async () => {
+        stubBackendResponse(HttpResponse.json(envelope([])))
+
+        const { $ } = await loadPage(new URLSearchParams({ search: 'acme' }))
+
+        const clearLink = $(
+          'form.app-filters a.govuk-button[href="/organisations"]'
+        )
+        expect(clearLink).toHaveLength(1)
+        expect(clearLink.text()).toBe('Clear search and view all organisations')
+      })
+    })
+
+    describe('search by identifier', () => {
+      const criteriaFields = [
+        ['orgId', '100001'],
+        ['registrationNumber', 'REG001'],
+        ['registrationId', 'reg-1'],
+        ['accreditationNumber', 'ACC001'],
+        ['accreditationId', 'acc-1']
+      ]
+
+      test.each(criteriaFields)(
+        'forwards %s to the backend',
+        async (field, value) => {
+          const calls = stubBackendResponse(HttpResponse.json(envelope([])))
+
+          await loadPage(new URLSearchParams({ [field]: value }))
+
+          expect(calls[0].query).toMatchObject({
+            [field]: value,
+            page: '1',
+            pageSize: '50'
+          })
+        }
+      )
+
+      test.each(criteriaFields)(
+        'echoes the submitted %s back into the form',
+        async (field, value) => {
+          stubBackendResponse(HttpResponse.json(envelope([])))
+
+          const { $ } = await loadPage(new URLSearchParams({ [field]: value }))
+
+          expect($(`input[name="${field}"]`).val()).toBe(value)
+        }
+      )
+
+      test('forwards every filled criterion together, omitting the empty ones', async () => {
+        const calls = stubBackendResponse(HttpResponse.json(envelope([])))
+
+        const { statusCode } = await loadPage(
+          new URLSearchParams({
+            registrationNumber: 'REG001',
+            accreditationNumber: 'ACC444',
+            registrationId: '',
+            accreditationId: '   '
+          })
+        )
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(calls[0].query).toEqual({
+          registrationNumber: 'REG001',
+          accreditationNumber: 'ACC444',
+          page: '1',
+          pageSize: '50'
+        })
+      })
+
+      test('reports zero results for a criteria-only search that matches nothing', async () => {
+        stubBackendResponse(HttpResponse.json(envelope([])))
+
+        const { raw } = await loadPage(
+          new URLSearchParams({
+            registrationNumber: 'REG001',
+            accreditationNumber: 'ACC444'
+          })
+        )
+
+        expect(raw).toContain('0 results found')
+        expect(raw).toContain('No organisations found matching your search')
+        expect(raw).not.toContain('No organisations found.')
+      })
+
+      test('renders the results count for a criteria-only search', async () => {
+        stubBackendResponse(HttpResponse.json(envelope([buildOrg()])))
+
+        const { raw } = await loadPage(new URLSearchParams({ orgId: '100001' }))
+
+        expect(raw).toContain('1 result found')
       })
     })
 
@@ -290,6 +457,32 @@ describe('GET /organisations', () => {
         expect(nextHref).toContain('search=acme')
         expect(nextHref).toContain('page=2')
       })
+
+      test('preserves every non-empty criterion in pagination links', async () => {
+        stubBackendResponse(
+          HttpResponse.json(
+            envelope([buildOrg()], { page: 2, totalItems: 120, totalPages: 3 })
+          )
+        )
+
+        const { $ } = await loadPage(
+          new URLSearchParams({
+            search: 'acme',
+            orgId: '100001',
+            accreditationId: 'acc-1',
+            page: '2'
+          })
+        )
+
+        const expectedCriteria =
+          'search=acme&orgId=100001&accreditationId=acc-1'
+        expect($('.govuk-pagination__prev a').attr('href')).toBe(
+          `/organisations?${expectedCriteria}&page=1`
+        )
+        expect($('.govuk-pagination__next a').attr('href')).toBe(
+          `/organisations?${expectedCriteria}&page=3`
+        )
+      })
     })
 
     describe('table content', () => {
@@ -300,11 +493,71 @@ describe('GET /organisations', () => {
 
         const rowData = $('table tbody tr td')
         expect($(rowData[0]).text()).toEqual('org-1')
-        expect($(rowData[1]).text()).toEqual('12345678')
         expect($(rowData[2]).text()).toEqual('REGULATOR-NAME')
         expect($(rowData[3]).find('strong.govuk-tag').text().trim()).toEqual(
           'ACTIVE'
         )
+      })
+
+      test('heads the third column Reg/Acc Numbers', async () => {
+        stubBackendResponse(HttpResponse.json(envelope([buildOrg()])))
+
+        const { $ } = await loadPage()
+
+        const headings = $('table thead th')
+          .map((_, th) => $(th).text())
+          .get()
+        expect(headings).toEqual([
+          'Name',
+          'Organisation ID',
+          'Reg/Acc Numbers',
+          'Regulator',
+          'Status',
+          'Actions'
+        ])
+      })
+
+      test('lists each registration pair on its own line, orphan accreditations last', async () => {
+        stubBackendResponse(HttpResponse.json(envelope([buildOrg()])))
+
+        const { $ } = await loadPage()
+
+        // Rendered as <br>-separated lines so the cell reads one pair per line
+        const regAccCell = $('table tbody tr td').eq(1)
+        expect(regAccCell.html()).toEqual('REG001 - ACC001<br>None - ACC444')
+      })
+
+      test('renders None in place of a number that has not been issued yet', async () => {
+        stubBackendResponse(
+          HttpResponse.json(
+            envelope([
+              buildOrg({
+                registrations: [
+                  { id: 'reg-1', registrationNumber: null },
+                  { id: 'reg-2', registrationNumber: 'REG002' }
+                ],
+                accreditations: []
+              })
+            ])
+          )
+        )
+
+        const { $ } = await loadPage()
+
+        const regAccCell = $('table tbody tr td').eq(1)
+        expect(regAccCell.html()).toEqual('None - None<br>REG002 - None')
+      })
+
+      test('renders an empty cell when the organisation holds no registrations or accreditations', async () => {
+        stubBackendResponse(
+          HttpResponse.json(
+            envelope([buildOrg({ registrations: [], accreditations: [] })])
+          )
+        )
+
+        const { $ } = await loadPage()
+
+        expect($('table tbody tr td').eq(1).html()).toEqual('')
       })
 
       test('renders the action links unchanged', async () => {

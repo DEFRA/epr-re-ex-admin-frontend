@@ -1,6 +1,23 @@
+/** @import { SearchCriteria } from './criteria.js'; */import { CRITERIA_KEYS } from './criteria.js'
+
 export const PAGE_SIZE = 50
 
-export const buildPaginationLinks = ({ page, totalPages, searchTerm }) => {
+/**
+ * Builds the previous/next links for the organisations table, carrying every
+ * non-empty search criterion through so paging never widens the search.
+ *
+ * @param {{
+  page: number,
+  totalPages: number,
+  criteria: Partial<SearchCriteria>
+}}
+ *   page: number,
+ *   totalPages: number,
+ *   criteria: Partial<import('./criteria.js').SearchCriteria>
+ * }} params
+ * @returns {{ previous?: { href: string }, next?: { href: string } }}
+ */
+export const buildPaginationLinks = ({ page, totalPages, criteria }) => {
   if (totalPages <= 1) {
     return {}
   }
@@ -8,8 +25,10 @@ export const buildPaginationLinks = ({ page, totalPages, searchTerm }) => {
   const linkFor = (n) => {
     const params = new URLSearchParams()
 
-    if (searchTerm) {
-      params.set('search', searchTerm)
+    for (const key of CRITERIA_KEYS) {
+      if (criteria[key]) {
+        params.set(key, criteria[key])
+      }
     }
 
     params.set('page', String(n))
