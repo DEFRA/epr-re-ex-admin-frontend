@@ -1,4 +1,6 @@
-/** @import { SearchCriteria } from './criteria.js'; */import { CRITERIA_KEYS } from './criteria.js'
+/** @import { SearchCriteria } from './criteria.js' */
+
+import { CRITERIA_KEYS } from './criteria.js'
 
 export const PAGE_SIZE = 50
 
@@ -7,13 +9,9 @@ export const PAGE_SIZE = 50
  * non-empty search criterion through so paging never widens the search.
  *
  * @param {{
-  page: number,
-  totalPages: number,
-  criteria: Partial<SearchCriteria>
-}}
  *   page: number,
  *   totalPages: number,
- *   criteria: Partial<import('./criteria.js').SearchCriteria>
+ *   criteria: Partial<SearchCriteria>
  * }} params
  * @returns {{ previous?: { href: string }, next?: { href: string } }}
  */
