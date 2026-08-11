@@ -1,12 +1,13 @@
 import { vi } from 'vitest'
 import {
   fetchOrganisationOverview,
-  findRegistration
+  findRegistration,
+  findUnlinkedAccreditation
 } from './fetch-organisation-overview.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
 /** @import { Request } from '@hapi/hapi' */
-/** @import { OrganisationOverview, Registration } from './fetch-organisation-overview.js' */
+/** @import { Accreditation, OrganisationOverview, Registration } from './fetch-organisation-overview.js' */
 
 vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
@@ -93,5 +94,63 @@ describe(findRegistration, () => {
         }
       })
     )
+  })
+})
+
+describe(findUnlinkedAccreditation, () => {
+  const organisationId = 'aaa111bbb222ccc333ddd4444'
+  const accreditationId = 'ccc333ddd444eee555fff6666'
+
+  const expectedNotFound = expect.objectContaining({
+    isBoom: true,
+    message: 'Unlinked accreditation not found',
+    code: 'accreditation_not_found',
+    event: {
+      action: 'fetch_unlinked_accreditation',
+      reason: `organisationId=${organisationId} accreditationId=${accreditationId}`
+    }
+  })
+
+  /**
+   * @param {Accreditation[]} [unlinkedAccreditations]
+   * @returns {OrganisationOverview}
+   */
+  const overviewWith = (unlinkedAccreditations) => ({
+    id: organisationId,
+    companyName: 'ACME ltd',
+    registrations: [],
+    unlinkedAccreditations
+  })
+
+  test('returns the matching unlinked accreditation when present', () => {
+    const accreditation = /** @type {Accreditation} */ ({
+      id: accreditationId,
+      accreditationNumber: null,
+      status: 'created'
+    })
+
+    expect(
+      findUnlinkedAccreditation(
+        overviewWith([accreditation]),
+        organisationId,
+        accreditationId
+      )
+    ).toBe(accreditation)
+  })
+
+  test('throws notFound when the accreditation is not in the collection', () => {
+    expect(() =>
+      findUnlinkedAccreditation(
+        overviewWith([]),
+        organisationId,
+        accreditationId
+      )
+    ).toThrow(expectedNotFound)
+  })
+
+  test('throws notFound when the overview has no unlinked accreditations at all', () => {
+    expect(() =>
+      findUnlinkedAccreditation(overviewWith(), organisationId, accreditationId)
+    ).toThrow(expectedNotFound)
   })
 })

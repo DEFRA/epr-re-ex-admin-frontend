@@ -28,6 +28,7 @@ import { accreditationOverseasSites } from './routes/accreditation-overseas-site
 import { creditedTonnage } from './routes/credited-tonnage/index.js'
 import { accreditationStatusTransition } from './routes/accreditation-status-transition/index.js'
 import { registrationStatusTransition } from './routes/registration-status-transition/index.js'
+import { accreditationAssign } from './routes/accreditation-assign/index.js'
 
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
 
@@ -68,7 +69,8 @@ export const router = {
         accreditationOverseasSites,
         creditedTonnage,
         accreditationStatusTransition,
-        registrationStatusTransition
+        registrationStatusTransition,
+        accreditationAssign
       ])
 
       await server.register([serveStaticFiles])

@@ -224,6 +224,133 @@ describe('#organisationOverviewController', () => {
       expect($(cells[6]).text().trim()).toEqual('-')
     })
 
+    describe('Unlinked accreditations', () => {
+      const unapprovedOrphan = {
+        id: '69c3b4f0abda9efa68dd66a0',
+        accreditationNumber: null,
+        status: 'created',
+        processingType: 'reprocessor',
+        material: 'plastic',
+        site: 'Site C'
+      }
+
+      const approvedOrphan = {
+        id: '69c3b4f0abda9efa68dd66a1',
+        accreditationNumber: 'ACC-50030-009',
+        status: 'approved',
+        processingType: 'exporter',
+        material: 'glass'
+      }
+
+      const stubOverview = (overview) =>
+        mswServer.use(
+          http.get(
+            `${backendUrl}/v1/organisations/${organisationId}/overview`,
+            () => HttpResponse.json(overview)
+          )
+        )
+
+      const renderRows = async (overview, credentials = mockUserSession) => {
+        vi.mocked(getUserSession).mockResolvedValue(credentials)
+        stubOverview(overview)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: `/organisations/${organisationId}/overview`,
+          auth: { strategy: 'session', credentials }
+        })
+
+        return cheerio.load(result)('table tbody tr')
+      }
+
+      test('renders an unlinked accreditation after the registration rows, with dashes for the registration columns', async () => {
+        const $rows = await renderRows({
+          ...mockOverview,
+          unlinkedAccreditations: [unapprovedOrphan]
+        })
+
+        expect($rows).toHaveLength(2)
+        const cells = cheerio.load($rows[1])('td')
+        expect(cells.eq(0).text().trim()).toEqual('-')
+        expect(cells.eq(1).text().trim()).toEqual('-')
+        expect(cells.eq(2).text().trim()).toEqual('reprocessor')
+        expect(cells.eq(3).text().trim()).toEqual('plastic')
+        expect(cells.eq(4).text().trim()).toEqual('Site C')
+        expect(cells.eq(5).text().trim()).toEqual('-')
+        expect(cells.eq(6).find('strong.govuk-tag').text().trim()).toEqual(
+          'created'
+        )
+      })
+
+      test('renders the accreditation number once the orphan is approved, and leaves the site blank for an exporter', async () => {
+        const $rows = await renderRows({
+          ...mockOverview,
+          registrations: [],
+          unlinkedAccreditations: [approvedOrphan]
+        })
+
+        const cells = cheerio.load($rows[0])('td')
+        expect(cells.eq(4).text().trim()).toEqual('')
+        expect(cells.eq(5).text().trim()).toEqual('ACC-50030-009')
+        expect(cells.eq(6).find('strong.govuk-tag').text().trim()).toEqual(
+          'approved'
+        )
+      })
+
+      test('offers assigning to a registration as the only action for a write admin', async () => {
+        const $rows = await renderRows({
+          ...mockOverview,
+          registrations: [],
+          unlinkedAccreditations: [unapprovedOrphan]
+        })
+
+        const actions = cheerio.load($rows[0])('td').eq(7).find('a')
+        expect(actions).toHaveLength(1)
+        expect(actions.text()).toEqual('Assign to registration')
+        expect(actions.attr('href')).toEqual(
+          `/organisations/${organisationId}/accreditations/${unapprovedOrphan.id}/assign/confirm`
+        )
+      })
+
+      test('offers no action on an unlinked row for a read-only admin', async () => {
+        const $rows = await renderRows(
+          {
+            ...mockOverview,
+            registrations: [],
+            unlinkedAccreditations: [unapprovedOrphan]
+          },
+          { ...mockUserSession, scopes: ['admin.read'] }
+        )
+
+        expect(cheerio.load($rows[0])('td').eq(7).find('a')).toHaveLength(0)
+      })
+
+      test('renders the table unchanged when there are no unlinked accreditations', async () => {
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+        stubOverview(mockOverview)
+        const withoutKey = await server.inject({
+          method: 'GET',
+          url: `/organisations/${organisationId}/overview`,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        stubOverview({ ...mockOverview, unlinkedAccreditations: [] })
+        const withEmptyCollection = await server.inject({
+          method: 'GET',
+          url: `/organisations/${organisationId}/overview`,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const table = (response) =>
+          cheerio.load(response.result)('table').toString()
+
+        expect(table(withEmptyCollection)).toEqual(table(withoutKey))
+        expect(cheerio.load(withoutKey.result)('table tbody tr')).toHaveLength(
+          1
+        )
+      })
+    })
+
     describe('Defra ID link section', () => {
       const readOnlySession = { ...mockUserSession, scopes: ['admin.read'] }
       const linkedOverview = {
