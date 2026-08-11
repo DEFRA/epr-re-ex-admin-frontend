@@ -8,22 +8,23 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
  */
 
 /**
- * Posts a status-transition body to the backend status-history endpoint.
- * Shared between accreditation-status-transition and
- * registration-status-transition — only the backend URL and the transition's
- * own error copy differ; the request/response handling is identical.
+ * Posts a confirm-page body to the backend and reports how the failure should
+ * surface. Shared between accreditation-status-transition,
+ * registration-status-transition and accreditation-assign — only the backend
+ * URL and the caller's own error copy differ; the request/response handling is
+ * identical.
  *
  * Returns `null` on success, or when a 5xx/network failure has already been
  * flashed on the request's session (the caller redirects to the overview
  * either way). Returns `{ backendError }` when a client-side (4xx) rejection
- * of grant fields should instead re-render the confirm page, preserving what
- * the admin typed.
+ * of the submitted fields should instead re-render the confirm page,
+ * preserving what the admin entered.
  * @param {string} statusHistoryUrl
  * @param {Record<string, string | undefined>} body
  * @param {StatusTransitionErrorCopy} transition
- * @param {Record<string, string> | undefined} grantValues - Parsed grant
- *   field values, present only when the transition collects them; used to
- *   decide whether a 4xx rejection re-renders the confirm page
+ * @param {Record<string, string> | undefined} grantValues - Parsed form
+ *   values, present only when the confirm page collects them; used to decide
+ *   whether a 4xx rejection re-renders the confirm page
  * @returns {Promise<{ backendError: string } | null>}
  */
 export const postStatusTransition = async (

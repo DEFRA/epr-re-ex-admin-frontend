@@ -1,0 +1,46 @@
+{% extends 'layout.njk' %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/select/macro.njk" import govukSelect %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if errorList.length %}
+        {{ govukErrorSummary({
+          titleText: "There is a problem",
+          errorList: errorList
+        }) }}
+      {% endif %}
+
+      <h1 class="govuk-heading-xl">{{ heading }}</h1>
+
+      {% if hasCandidates %}
+        <form method="POST" action="{{ postUrl }}">
+          <input type="hidden" name="crumb" value="{{ crumb }}" />
+
+          {{ govukSelect({
+            id: "registrationId",
+            name: "registrationId",
+            label: { text: "Registration", classes: "govuk-label--s" },
+            hint: { text: hintText },
+            errorMessage: { text: error } if error,
+            items: items
+          }) }}
+
+          {{ govukButton({
+            text: "Assign to registration"
+          }) }}
+          <p class="govuk-body">
+            <a class="govuk-link" href="{{ overviewUrl }}">Cancel</a>
+          </p>
+        </form>
+      {% else %}
+        <p class="govuk-body">{{ noCandidatesText }}</p>
+        <p class="govuk-body">
+          <a class="govuk-link" href="{{ overviewUrl }}">Back to organisation overview</a>
+        </p>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

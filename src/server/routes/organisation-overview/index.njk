@@ -4,9 +4,21 @@
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 {% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 
 {% block content %}
   <div class="govuk-width-container">
+    {% if error %}
+      {{ govukErrorSummary({
+        titleText: "There is a problem",
+        errorList: [
+          {
+            text: error
+          }
+        ]
+      }) }}
+    {% endif %}
+
     <h1 class="govuk-heading-xl">{{ heading }}</h1>
 
     {% if unlinkResult === 'success' %}
@@ -57,6 +69,22 @@
         { html: actionsHtml }
       ] %}
       {% set tableRows = tableRows.concat([row]) %}
+    {% endfor %}
+
+    {% for accreditation in unlinkedAccreditations %}
+      {% set assignUrl = '/organisations/' ~ organisationId ~ '/accreditations/' ~ accreditation.id ~ '/assign/confirm' %}
+      {% set assignHtml = '<a class="govuk-link govuk-link--no-visited-state" href="' ~ assignUrl ~ '">Assign to registration</a>' if SCOPES.adminWrite in scopes else '' %}
+      {% set unlinkedRow = [
+        { text: '-' },
+        { text: '-' },
+        { text: accreditation.processingType },
+        { text: accreditation.material },
+        { text: accreditation.site },
+        { text: accreditation.accreditationNumber if accreditation.accreditationNumber else '-' },
+        { html: govukTag({ text: accreditation.status }) },
+        { html: assignHtml }
+      ] %}
+      {% set tableRows = tableRows.concat([unlinkedRow]) %}
     {% endfor %}
 
     {{ govukTable({

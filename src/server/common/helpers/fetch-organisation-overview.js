@@ -5,10 +5,16 @@ import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 /** @import { HapiRequest } from '#server/common/hapi-types.js' */
 
 /**
+ * An accreditation as the overview returns it, whether linked to a
+ * registration or standing on its own. `accreditationNumber` is null until the
+ * accreditation is approved, and `site` is absent for an exporter.
  * @typedef {{
  *   id: string,
- *   accreditationNumber: string,
- *   status: string
+ *   accreditationNumber: string | null,
+ *   status: string,
+ *   material?: string,
+ *   processingType?: string,
+ *   site?: string
  * }} Accreditation
  *
  * @typedef {{
@@ -18,6 +24,7 @@ import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
  *   material: string,
  *   site: string,
  *   processingType: string,
+ *   reprocessingType?: string | null,
  *   accreditation?: Accreditation
  * }} Registration
  *
@@ -32,6 +39,7 @@ import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
  *   id: string,
  *   companyName: string,
  *   registrations: Registration[],
+ *   unlinkedAccreditations?: Accreditation[],
  *   linkedDefraOrganisation?: LinkedDefraOrganisation
  * }} OrganisationOverview
  */
@@ -71,4 +79,39 @@ export const findRegistration = (overview, organisationId, registrationId) => {
   }
 
   return registration
+}
+
+/**
+ * Find an accreditation that is not linked to any registration, throwing an
+ * enriched 404 if it's missing. An accreditation that has since been assigned
+ * has left this collection, so the 404 also covers "someone else assigned it
+ * while this page was open".
+ * @param {OrganisationOverview} overview
+ * @param {string} organisationId
+ * @param {string} accreditationId
+ * @returns {Accreditation}
+ */
+export const findUnlinkedAccreditation = (
+  overview,
+  organisationId,
+  accreditationId
+) => {
+  const accreditation = overview.unlinkedAccreditations?.find(
+    (a) => a.id === accreditationId
+  )
+
+  if (!accreditation) {
+    throw notFound(
+      'Unlinked accreditation not found',
+      errorCodes.accreditationNotFound,
+      {
+        event: {
+          action: 'fetch_unlinked_accreditation',
+          reason: `organisationId=${organisationId} accreditationId=${accreditationId}`
+        }
+      }
+    )
+  }
+
+  return accreditation
 }

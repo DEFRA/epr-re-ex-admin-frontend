@@ -9,6 +9,9 @@ export const organisationOverviewGETController = {
     const unlinkResult = request.yar.get('unlinkResult')
     request.yar.clear('unlinkResult')
 
+    const errorMessage = request.yar.get('error')
+    request.yar.clear('error')
+
     const pageTitle = request.route.settings.app.pageTitle
 
     return h.view('routes/organisation-overview/index', {
@@ -17,8 +20,10 @@ export const organisationOverviewGETController = {
       heading: data.companyName,
       organisationId: id,
       registrations: data.registrations,
+      unlinkedAccreditations: data.unlinkedAccreditations,
       linkedDefraOrganisation: data.linkedDefraOrganisation,
-      unlinkResult
+      unlinkResult,
+      error: errorMessage
     })
   }
 }
