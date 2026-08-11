@@ -1,5 +1,17 @@
 const EMPTY_DATE = { day: '', month: '', year: '' }
 
+// Accreditations run to 31 December of the accreditation year (Reg 97(7)), so
+// the confirm page offers that as a starting point rather than an empty field.
+// It is only a default: the regulator can overwrite it, and once the form has
+// been submitted the POST controller passes the entered values back, so a
+// re-render never silently reinstates this. Computed per render so it stays
+// correct across a year boundary.
+const defaultValidTo = () => ({
+  day: '31',
+  month: '12',
+  year: String(new Date().getFullYear())
+})
+
 /** @import {AccreditationStatusTransition} from './transitions.js' */
 /** @import {GrantFormValues} from './grant-form.js' */
 
@@ -27,7 +39,7 @@ export const buildConfirmView = (
   {
     values = {
       validFrom: EMPTY_DATE,
-      validTo: EMPTY_DATE,
+      validTo: defaultValidTo(),
       accreditationNumber: ''
     },
     errors = null,

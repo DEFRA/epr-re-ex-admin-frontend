@@ -416,6 +416,42 @@ describe('registration-status-transition', () => {
       expect(legends).toContain('Valid to')
     })
 
+    test('confirm page pre-populates valid to with 31 December of the current year, leaving valid from empty', async () => {
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: confirmUrl,
+        auth: writeAuth
+      })
+
+      const $ = cheerio.load(result)
+      expect($('input[name="validTo-day"]').val()).toBe('31')
+      expect($('input[name="validTo-month"]').val()).toBe('12')
+      expect($('input[name="validTo-year"]').val()).toBe(
+        String(new Date().getFullYear())
+      )
+      expect($('input[name="validFrom-day"]').val()).toBe('')
+      expect($('input[name="validFrom-month"]').val()).toBe('')
+      expect($('input[name="validFrom-year"]').val()).toBe('')
+    })
+
+    test('a cleared valid to is not silently repopulated with the default on re-render', async () => {
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+
+      const { result } = await postApprove({
+        'validTo-day': '',
+        'validTo-month': '',
+        'validTo-year': ''
+      })
+
+      const $ = cheerio.load(result)
+      expect($('input[name="validTo-day"]').val()).toBe('')
+      expect($('input[name="validTo-month"]').val()).toBe('')
+      expect($('input[name="validTo-year"]').val()).toBe('')
+      expect($('.govuk-error-summary a').attr('href')).toBe('#valid-to-day')
+    })
+
     test('reject confirm page does not render the grant fields', async () => {
       vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
 
