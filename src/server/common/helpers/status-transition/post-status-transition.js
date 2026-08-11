@@ -21,7 +21,7 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
  * @param {string} statusHistoryUrl
  * @param {Record<string, string | undefined>} body
  * @param {StatusTransitionErrorCopy} transition
- * @param {Record<string, string> | undefined} grantValues - Parsed grant
+ * @param {Record<string, unknown> | undefined} grantValues - Parsed grant
  *   field values, present only when the transition collects them; used to
  *   decide whether a 4xx rejection re-renders the confirm page
  * @returns {Promise<{ backendError: string } | null>}

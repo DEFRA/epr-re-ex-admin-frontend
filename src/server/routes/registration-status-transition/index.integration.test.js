@@ -23,15 +23,19 @@ const TRANSITION_CASES = [
     fallbackError:
       'There was a problem approving the registration. Please try again.',
     formPayload: {
-      'appliesFrom-day': '1',
-      'appliesFrom-month': '8',
-      'appliesFrom-year': '2026',
+      'validFrom-day': '1',
+      'validFrom-month': '8',
+      'validFrom-year': '2026',
+      'validTo-day': '31',
+      'validTo-month': '12',
+      'validTo-year': '2027',
       registrationNumber: 'REG999999'
     },
     expectedBody: {
       fromStatus: 'created',
       toStatus: 'approved',
-      appliesFrom: '2026-08-01',
+      validFrom: '2026-08-01',
+      validTo: '2027-12-31',
       registrationNumber: 'REG999999'
     },
     hasGrantFields: true
@@ -366,9 +370,12 @@ describe('registration-status-transition', () => {
       'There was a problem approving the registration. Please try again.'
 
     const validFormPayload = {
-      'appliesFrom-day': '1',
-      'appliesFrom-month': '8',
-      'appliesFrom-year': '2026',
+      'validFrom-day': '1',
+      'validFrom-month': '8',
+      'validFrom-year': '2026',
+      'validTo-day': '31',
+      'validTo-month': '12',
+      'validTo-year': '2027',
       registrationNumber: 'REG999999'
     }
 
@@ -387,7 +394,7 @@ describe('registration-status-transition', () => {
       })
     }
 
-    test('confirm page renders the applies from date input and registration number field', async () => {
+    test('confirm page renders the valid from and valid to date inputs and the registration number field', async () => {
       vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
 
       const { result } = await server.inject({
@@ -397,10 +404,16 @@ describe('registration-status-transition', () => {
       })
 
       const $ = cheerio.load(result)
-      expect($('input[name="appliesFrom-day"]')).toHaveLength(1)
-      expect($('input[name="appliesFrom-month"]')).toHaveLength(1)
-      expect($('input[name="appliesFrom-year"]')).toHaveLength(1)
+      expect($('input[name="validFrom-day"]')).toHaveLength(1)
+      expect($('input[name="validFrom-month"]')).toHaveLength(1)
+      expect($('input[name="validFrom-year"]')).toHaveLength(1)
+      expect($('input[name="validTo-day"]')).toHaveLength(1)
+      expect($('input[name="validTo-month"]')).toHaveLength(1)
+      expect($('input[name="validTo-year"]')).toHaveLength(1)
       expect($('input[name="registrationNumber"]')).toHaveLength(1)
+      const legends = $('legend').text()
+      expect(legends).toContain('Valid from')
+      expect(legends).toContain('Valid to')
     })
 
     test('reject confirm page does not render the grant fields', async () => {
@@ -413,11 +426,12 @@ describe('registration-status-transition', () => {
       })
 
       const $ = cheerio.load(result)
-      expect($('input[name="appliesFrom-day"]')).toHaveLength(0)
+      expect($('input[name="validFrom-day"]')).toHaveLength(0)
+      expect($('input[name="validTo-day"]')).toHaveLength(0)
       expect($('input[name="registrationNumber"]')).toHaveLength(0)
     })
 
-    test('missing registration number re-renders the page with an error, preserving the date', async () => {
+    test('missing registration number re-renders the page with an error, preserving both dates', async () => {
       vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
       const receivedBodies = []
       stubTransitionSuccess('approved', receivedBodies)
@@ -429,22 +443,21 @@ describe('registration-status-transition', () => {
       expect($('.govuk-error-summary').text()).toContain(
         'Enter a registration number'
       )
-      expect($('input[name="appliesFrom-day"]').attr('value')).toBe('1')
-      expect($('input[name="appliesFrom-year"]').attr('value')).toBe('2026')
+      expect($('input[name="validFrom-day"]').attr('value')).toBe('1')
+      expect($('input[name="validFrom-year"]').attr('value')).toBe('2026')
+      expect($('input[name="validTo-day"]').attr('value')).toBe('31')
+      expect($('input[name="validTo-year"]').attr('value')).toBe('2027')
       expect(receivedBodies).toEqual([])
     })
 
     test.each([
-      ['a missing day', { 'appliesFrom-day': '' }],
-      ['a non-numeric month', { 'appliesFrom-month': 'August' }],
-      ['a month past December', { 'appliesFrom-month': '13' }],
-      ['a two-digit year', { 'appliesFrom-year': '26' }],
-      [
-        'an impossible date',
-        { 'appliesFrom-month': '2', 'appliesFrom-day': '30' }
-      ]
+      ['a missing day', { 'validFrom-day': '' }],
+      ['a non-numeric month', { 'validFrom-month': 'August' }],
+      ['a month past December', { 'validFrom-month': '13' }],
+      ['a two-digit year', { 'validFrom-year': '26' }],
+      ['an impossible date', { 'validFrom-month': '2', 'validFrom-day': '30' }]
     ])(
-      'an invalid applies from date (%s) re-renders the page with an error, preserving the number',
+      'an invalid valid from date (%s) re-renders the page with an error, preserving the number and the valid to date',
       async (_label, payloadOverrides) => {
         vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
         const receivedBodies = []
@@ -455,33 +468,77 @@ describe('registration-status-transition', () => {
         expect(response.statusCode).toBe(statusCodes.badRequest)
         const $ = cheerio.load(response.result)
         expect($('.govuk-error-summary').text()).toContain(
-          'Enter a valid applies from date'
+          'Enter the date the registration is valid from'
         )
+        expect($('.govuk-error-summary a').attr('href')).toBe('#valid-from-day')
         expect($('input[name="registrationNumber"]').attr('value')).toBe(
           'REG999999'
         )
+        expect($('input[name="validTo-day"]').attr('value')).toBe('31')
+        expect($('input[name="validTo-month"]').attr('value')).toBe('12')
+        expect($('input[name="validTo-year"]').attr('value')).toBe('2027')
         expect(receivedBodies).toEqual([])
       }
     )
 
-    test('missing both fields lists both errors in the summary', async () => {
+    test.each([
+      ['a missing day', { 'validTo-day': '' }],
+      ['a non-numeric month', { 'validTo-month': 'December' }],
+      ['a month past December', { 'validTo-month': '13' }],
+      ['a two-digit year', { 'validTo-year': '27' }],
+      ['an impossible date', { 'validTo-month': '2', 'validTo-day': '30' }]
+    ])(
+      'an invalid valid to date (%s) re-renders the page with an error, preserving the number and the valid from date',
+      async (_label, payloadOverrides) => {
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+        const receivedBodies = []
+        stubTransitionSuccess('approved', receivedBodies)
+
+        const response = await postApprove(payloadOverrides)
+
+        expect(response.statusCode).toBe(statusCodes.badRequest)
+        const $ = cheerio.load(response.result)
+        expect($('.govuk-error-summary').text()).toContain(
+          'Enter the date the registration is valid to'
+        )
+        expect($('.govuk-error-summary a').attr('href')).toBe('#valid-to-day')
+        expect($('input[name="registrationNumber"]').attr('value')).toBe(
+          'REG999999'
+        )
+        expect($('input[name="validFrom-day"]').attr('value')).toBe('1')
+        expect($('input[name="validFrom-month"]').attr('value')).toBe('8')
+        expect($('input[name="validFrom-year"]').attr('value')).toBe('2026')
+        expect(receivedBodies).toEqual([])
+      }
+    )
+
+    test('missing every field lists all three errors in field order', async () => {
       vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
 
       const response = await postApprove({
-        'appliesFrom-day': '',
-        'appliesFrom-month': '',
-        'appliesFrom-year': '',
+        'validFrom-day': '',
+        'validFrom-month': '',
+        'validFrom-year': '',
+        'validTo-day': '',
+        'validTo-month': '',
+        'validTo-year': '',
         registrationNumber: ''
       })
 
       expect(response.statusCode).toBe(statusCodes.badRequest)
       const $ = cheerio.load(response.result)
       const summary = $('.govuk-error-summary').text()
-      expect(summary).toContain('Enter a valid applies from date')
+      expect(summary).toContain('Enter the date the registration is valid from')
+      expect(summary).toContain('Enter the date the registration is valid to')
       expect(summary).toContain('Enter a registration number')
+      expect(
+        $('.govuk-error-summary a')
+          .toArray()
+          .map((a) => a.attribs.href)
+      ).toEqual(['#valid-from-day', '#valid-to-day', '#registration-number'])
     })
 
-    test('a submission without any grant fields lists both errors in the summary', async () => {
+    test('a submission without any grant fields lists all three errors in the summary', async () => {
       vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
       const { cookie, crumb } = await getCsrfToken(
         server,
@@ -500,7 +557,8 @@ describe('registration-status-transition', () => {
       expect(response.statusCode).toBe(statusCodes.badRequest)
       const $ = cheerio.load(response.result)
       const summary = $('.govuk-error-summary').text()
-      expect(summary).toContain('Enter a valid applies from date')
+      expect(summary).toContain('Enter the date the registration is valid from')
+      expect(summary).toContain('Enter the date the registration is valid to')
       expect(summary).toContain('Enter a registration number')
     })
 
@@ -522,9 +580,12 @@ describe('registration-status-transition', () => {
       expect($('.govuk-error-summary').text()).toContain(
         'Registration number REG999999 is already in use'
       )
-      expect($('input[name="appliesFrom-day"]').attr('value')).toBe('1')
-      expect($('input[name="appliesFrom-month"]').attr('value')).toBe('8')
-      expect($('input[name="appliesFrom-year"]').attr('value')).toBe('2026')
+      expect($('input[name="validFrom-day"]').attr('value')).toBe('1')
+      expect($('input[name="validFrom-month"]').attr('value')).toBe('8')
+      expect($('input[name="validFrom-year"]').attr('value')).toBe('2026')
+      expect($('input[name="validTo-day"]').attr('value')).toBe('31')
+      expect($('input[name="validTo-month"]').attr('value')).toBe('12')
+      expect($('input[name="validTo-year"]').attr('value')).toBe('2027')
       expect($('input[name="registrationNumber"]').attr('value')).toBe(
         'REG999999'
       )

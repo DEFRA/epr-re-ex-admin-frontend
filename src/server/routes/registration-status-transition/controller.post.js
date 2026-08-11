@@ -4,6 +4,7 @@ import { buildConfirmView } from './confirm-view.js'
 import { parseGrantForm } from './grant-form.js'
 
 /** @import {RegistrationStatusTransition} from './transitions.js' */
+/** @import {GrantFormValues} from './grant-form.js' */
 
 const CONFIRM_VIEW = 'routes/registration-status-transition/confirm'
 
@@ -22,17 +23,19 @@ export const createTransitionPostController = (action, transition) => ({
     const { organisationId, registrationId } = request.params
     const overviewUrl = `/organisations/${organisationId}/registrations/${registrationId}/overview`
 
-    /** @type {{ fromStatus: string, toStatus: string, appliesFrom?: string, registrationNumber?: string }} */
+    /** @type {{ fromStatus: string, toStatus: string, validFrom?: string, validTo?: string, registrationNumber?: string }} */
     const body = {
       fromStatus: transition.fromStatus,
       toStatus: transition.toStatus
     }
 
-    /** @type {{ day: string, month: string, year: string, registrationNumber: string } | undefined} */
+    /** @type {GrantFormValues | undefined} */
     let grantValues
 
     if (transition.hasGrantFields) {
-      const { values, errors, appliesFrom } = parseGrantForm(request.payload)
+      const { values, errors, validFrom, validTo } = parseGrantForm(
+        request.payload
+      )
       grantValues = values
 
       if (errors) {
@@ -47,7 +50,8 @@ export const createTransitionPostController = (action, transition) => ({
           .code(statusCodes.badRequest)
       }
 
-      body.appliesFrom = /** @type {string} */ (appliesFrom)
+      body.validFrom = /** @type {string} */ (validFrom)
+      body.validTo = /** @type {string} */ (validTo)
       body.registrationNumber = values.registrationNumber
     }
 

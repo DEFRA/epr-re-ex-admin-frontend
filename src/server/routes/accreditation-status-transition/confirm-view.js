@@ -1,4 +1,7 @@
+const EMPTY_DATE = { day: '', month: '', year: '' }
+
 /** @import {AccreditationStatusTransition} from './transitions.js' */
+/** @import {GrantFormValues} from './grant-form.js' */
 
 /**
  * Builds the view context for a transition's confirm page. Used by the GET
@@ -8,8 +11,12 @@
  * @param {AccreditationStatusTransition} transition
  * @param {{ organisationId: string, registrationId: string, accreditationId: string }} params
  * @param {{
- *   values?: { day: string, month: string, year: string, accreditationNumber: string },
- *   errors?: { appliesFrom?: string, accreditationNumber?: string } | null,
+ *   values?: GrantFormValues,
+ *   errors?: {
+ *     validFrom?: string,
+ *     validTo?: string,
+ *     accreditationNumber?: string
+ *   } | null,
  *   backendError?: string
  * }} [state]
  */
@@ -18,7 +25,11 @@ export const buildConfirmView = (
   transition,
   { organisationId, registrationId, accreditationId },
   {
-    values = { day: '', month: '', year: '', accreditationNumber: '' },
+    values = {
+      validFrom: EMPTY_DATE,
+      validTo: EMPTY_DATE,
+      accreditationNumber: ''
+    },
     errors = null,
     backendError
   } = {}
@@ -27,8 +38,11 @@ export const buildConfirmView = (
   if (backendError) {
     errorList.push({ text: backendError })
   }
-  if (errors?.appliesFrom) {
-    errorList.push({ text: errors.appliesFrom, href: '#applies-from-day' })
+  if (errors?.validFrom) {
+    errorList.push({ text: errors.validFrom, href: '#valid-from-day' })
+  }
+  if (errors?.validTo) {
+    errorList.push({ text: errors.validTo, href: '#valid-to-day' })
   }
   if (errors?.accreditationNumber) {
     errorList.push({
