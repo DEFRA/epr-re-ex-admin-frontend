@@ -10,7 +10,7 @@
  * @property {string} buttonClasses
  * @property {string} errorMessage - Flash fallback when the backend gives no message
  * @property {string} logMessage
- * @property {boolean} [hasGrantFields] - Confirm page collects appliesFrom + accreditationNumber
+ * @property {boolean} [hasGrantFields] - Confirm page collects validFrom + validTo + accreditationNumber
  * @property {boolean} [requiresApprovedRegistration] - Action offered only when the linked registration is approved (PAE-1800)
  */
 

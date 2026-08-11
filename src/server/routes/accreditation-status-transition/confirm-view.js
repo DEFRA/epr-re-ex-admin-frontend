@@ -1,4 +1,19 @@
+const EMPTY_DATE = { day: '', month: '', year: '' }
+
+// Accreditations run to 31 December of the accreditation year (Reg 97(7)), so
+// the confirm page offers that as a starting point rather than an empty field.
+// It is only a default: the regulator can overwrite it, and once the form has
+// been submitted the POST controller passes the entered values back, so a
+// re-render never silently reinstates this. Computed per render so it stays
+// correct across a year boundary.
+const defaultValidTo = () => ({
+  day: '31',
+  month: '12',
+  year: String(new Date().getFullYear())
+})
+
 /** @import {AccreditationStatusTransition} from './transitions.js' */
+/** @import {GrantFormValues} from './grant-form.js' */
 
 /**
  * Builds the view context for a transition's confirm page. Used by the GET
@@ -8,8 +23,12 @@
  * @param {AccreditationStatusTransition} transition
  * @param {{ organisationId: string, registrationId: string, accreditationId: string }} params
  * @param {{
- *   values?: { day: string, month: string, year: string, accreditationNumber: string },
- *   errors?: { appliesFrom?: string, accreditationNumber?: string } | null,
+ *   values?: GrantFormValues,
+ *   errors?: {
+ *     validFrom?: string,
+ *     validTo?: string,
+ *     accreditationNumber?: string
+ *   } | null,
  *   backendError?: string
  * }} [state]
  */
@@ -18,7 +37,11 @@ export const buildConfirmView = (
   transition,
   { organisationId, registrationId, accreditationId },
   {
-    values = { day: '', month: '', year: '', accreditationNumber: '' },
+    values = {
+      validFrom: EMPTY_DATE,
+      validTo: defaultValidTo(),
+      accreditationNumber: ''
+    },
     errors = null,
     backendError
   } = {}
@@ -27,8 +50,11 @@ export const buildConfirmView = (
   if (backendError) {
     errorList.push({ text: backendError })
   }
-  if (errors?.appliesFrom) {
-    errorList.push({ text: errors.appliesFrom, href: '#applies-from-day' })
+  if (errors?.validFrom) {
+    errorList.push({ text: errors.validFrom, href: '#valid-from-day' })
+  }
+  if (errors?.validTo) {
+    errorList.push({ text: errors.validTo, href: '#valid-to-day' })
   }
   if (errors?.accreditationNumber) {
     errorList.push({

@@ -27,17 +27,32 @@
 
         {% if hasGrantFields %}
           {{ govukDateInput({
-            id: "applies-from",
-            namePrefix: "appliesFrom",
+            id: "valid-from",
+            namePrefix: "validFrom",
             fieldset: {
-              legend: { text: "Applies from", classes: "govuk-fieldset__legend--s" }
+              legend: { text: "Valid from", classes: "govuk-fieldset__legend--s" }
             },
             hint: { text: "For example, 27 3 2026" },
-            errorMessage: { text: errors.appliesFrom } if errors and errors.appliesFrom,
+            errorMessage: { text: errors.validFrom } if errors and errors.validFrom,
             items: [
-              { name: "day", classes: "govuk-input--width-2", value: values.day },
-              { name: "month", classes: "govuk-input--width-2", value: values.month },
-              { name: "year", classes: "govuk-input--width-4", value: values.year }
+              { name: "day", classes: "govuk-input--width-2", value: values.validFrom.day },
+              { name: "month", classes: "govuk-input--width-2", value: values.validFrom.month },
+              { name: "year", classes: "govuk-input--width-4", value: values.validFrom.year }
+            ]
+          }) }}
+
+          {{ govukDateInput({
+            id: "valid-to",
+            namePrefix: "validTo",
+            fieldset: {
+              legend: { text: "Valid to", classes: "govuk-fieldset__legend--s" }
+            },
+            hint: { text: "For example, 27 3 2026" },
+            errorMessage: { text: errors.validTo } if errors and errors.validTo,
+            items: [
+              { name: "day", classes: "govuk-input--width-2", value: values.validTo.day },
+              { name: "month", classes: "govuk-input--width-2", value: values.validTo.month },
+              { name: "year", classes: "govuk-input--width-4", value: values.validTo.year }
             ]
           }) }}
 

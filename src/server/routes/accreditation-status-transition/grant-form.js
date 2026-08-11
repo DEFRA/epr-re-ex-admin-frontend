@@ -1,37 +1,68 @@
-import { parseAppliesFromDate } from '#server/common/helpers/status-transition/applies-from-date.js'
+import { parseTransitionDate } from '#server/common/helpers/status-transition/transition-date.js'
 
 /**
- * Parses and validates the grant fields (applies from date parts and
- * accreditation number) from a confirm-page POST.
+ * @typedef {object} DateInputValues
+ * @property {string} day
+ * @property {string} month
+ * @property {string} year
+ */
+
+/**
+ * @typedef {object} GrantFormValues
+ * @property {DateInputValues} validFrom
+ * @property {DateInputValues} validTo
+ * @property {string} accreditationNumber
+ */
+
+/**
+ * Parses and validates the grant fields (valid from and valid to date parts,
+ * and the accreditation number) from a confirm-page POST. Values are keyed per
+ * field so both dates survive a re-render.
  * @param {Record<string, string | undefined>} payload
  * @returns {{
- *   values: { day: string, month: string, year: string, accreditationNumber: string },
- *   errors: { appliesFrom?: string, accreditationNumber?: string } | null,
- *   appliesFrom: string | null
+ *   values: GrantFormValues,
+ *   errors: {
+ *     validFrom?: string,
+ *     validTo?: string,
+ *     accreditationNumber?: string
+ *   } | null,
+ *   validFrom: string | null,
+ *   validTo: string | null
  * }}
  */
 export const parseGrantForm = (payload) => {
-  const {
-    day,
-    month,
-    year,
-    appliesFrom,
-    error: appliesFromError
-  } = parseAppliesFromDate(payload)
+  const from = parseTransitionDate(
+    payload,
+    'validFrom',
+    'Enter the date the accreditation is valid from'
+  )
+  const to = parseTransitionDate(
+    payload,
+    'validTo',
+    'Enter the date the accreditation is valid to'
+  )
   const accreditationNumber = (payload.accreditationNumber ?? '').trim()
 
-  /** @type {{ appliesFrom?: string, accreditationNumber?: string }} */
+  /** @type {{ validFrom?: string, validTo?: string, accreditationNumber?: string }} */
   const errors = {}
-  if (appliesFromError) {
-    errors.appliesFrom = appliesFromError
+  if (from.error) {
+    errors.validFrom = from.error
+  }
+  if (to.error) {
+    errors.validTo = to.error
   }
   if (!accreditationNumber) {
     errors.accreditationNumber = 'Enter an accreditation number'
   }
 
   return {
-    values: { day, month, year, accreditationNumber },
+    values: {
+      validFrom: { day: from.day, month: from.month, year: from.year },
+      validTo: { day: to.day, month: to.month, year: to.year },
+      accreditationNumber
+    },
     errors: Object.keys(errors).length > 0 ? errors : null,
-    appliesFrom
+    validFrom: from.isoDate,
+    validTo: to.isoDate
   }
 }
