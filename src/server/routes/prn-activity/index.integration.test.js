@@ -17,6 +17,7 @@ vi.mock('#server/common/helpers/feature-flags.js', () => ({
 
 describe('prn-activity Cancel link visibility', () => {
   const backendUrl = config.get('eprBackendUrl')
+  const prnActivityUrl = '/prn-activity'
   const readOnlySession = { ...mockUserSession, scopes: ['admin.read'] }
 
   const buildPrn = (overrides = {}) => ({
@@ -61,7 +62,7 @@ describe('prn-activity Cancel link visibility', () => {
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/prn-activity',
+      url: prnActivityUrl,
       auth: { strategy: 'session', credentials: mockUserSession }
     })
 
@@ -78,7 +79,7 @@ describe('prn-activity Cancel link visibility', () => {
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/prn-activity',
+      url: prnActivityUrl,
       auth: { strategy: 'session', credentials: mockUserSession }
     })
 
@@ -93,7 +94,7 @@ describe('prn-activity Cancel link visibility', () => {
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/prn-activity',
+      url: prnActivityUrl,
       auth: { strategy: 'session', credentials: readOnlySession }
     })
 
