@@ -151,6 +151,49 @@ describe('prn-activity controller', () => {
     expect(viewArgs.prns[0].id).toBe('prn-id-1')
   })
 
+  test('Should build the cancel confirm URL from the PRN fields', async () => {
+    mockFetchJsonFromBackend.mockResolvedValue({
+      items: [
+        {
+          id: 'prn-id-1',
+          prnNumber: 'ER26000123',
+          status: 'accepted',
+          tonnage: 5,
+          material: 'plastic',
+          accreditationNumber: 'ACC-2026-001',
+          accreditationYear: 2026,
+          organisationName: 'ACME Ltd',
+          issuedToOrganisation: { name: 'Some Producer' }
+        }
+      ]
+    })
+
+    await prnActivityController.handler(mockRequest, mockH)
+
+    const viewArgs = mockH.view.mock.calls[0][1]
+    expect(viewArgs.prns[0].cancelConfirmUrl).toBe(
+      '/prn-activity/prn-id-1/cancel/confirm?prnNumber=ER26000123&organisationName=ACME+Ltd&issuedTo=Some+Producer&tonnage=5&material=plastic&accreditationNumber=ACC-2026-001&accreditationYear=2026'
+    )
+  })
+
+  test('Should build the cancel confirm URL with empty tonnage/year when they are missing', async () => {
+    mockFetchJsonFromBackend.mockResolvedValue({
+      items: [
+        {
+          id: 'prn-id-1',
+          status: 'accepted'
+        }
+      ]
+    })
+
+    await prnActivityController.handler(mockRequest, mockH)
+
+    const viewArgs = mockH.view.mock.calls[0][1]
+    expect(viewArgs.prns[0].cancelConfirmUrl).toBe(
+      '/prn-activity/prn-id-1/cancel/confirm?prnNumber=&organisationName=&issuedTo=&tonnage=&material=&accreditationNumber=&accreditationYear='
+    )
+  })
+
   test('Should handle empty items array', async () => {
     mockFetchJsonFromBackend.mockResolvedValue({ items: [] })
 

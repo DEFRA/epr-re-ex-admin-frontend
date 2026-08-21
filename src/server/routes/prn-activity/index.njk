@@ -35,15 +35,7 @@
 
           {% set actionCell = { html: '' } %}
           {% if FEATURE_FLAGS.prnAdminCancellation and prn.status == 'accepted' and SCOPES.adminWrite in scopes %}
-            {% set confirmUrl = "/prn-activity/" + prn.id + "/cancel/confirm"
-              + "?prnNumber=" + (prn.prnNumber | urlencode)
-              + "&organisationName=" + (prn.organisationName | urlencode)
-              + "&issuedTo=" + (prn.issuedTo | urlencode)
-              + "&tonnage=" + (prn.tonnage | string | urlencode)
-              + "&material=" + (prn.material | urlencode)
-              + "&accreditationNumber=" + (prn.accreditationNumber | urlencode)
-              + "&accreditationYear=" + (prn.accreditationYear | string | urlencode) %}
-            {% set actionCell = { html: '<a class="govuk-link" href="' + confirmUrl + '">Cancel<span class="govuk-visually-hidden"> PRN ' + prn.prnNumber + '</span></a>' } %}
+            {% set actionCell = { html: '<a class="govuk-link" href="' + prn.cancelConfirmUrl + '">Cancel<span class="govuk-visually-hidden"> PRN ' + prn.prnNumber + '</span></a>' } %}
           {% endif %}
 
           {% set row = [
