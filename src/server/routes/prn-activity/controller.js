@@ -15,6 +15,7 @@ function getDisplayName(org) {
 function mapPrns(data) {
   const items = data?.items || []
   return items.map((prn) => ({
+    id: prn.id || '',
     prnNumber: prn.prnNumber || '',
     status: prn.status,
     issuedTo: getDisplayName(prn.issuedToOrganisation),

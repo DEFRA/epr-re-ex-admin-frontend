@@ -121,6 +121,7 @@ describe('prn-activity controller', () => {
     await prnActivityController.handler(mockRequest, mockH)
 
     const viewArgs = mockH.view.mock.calls[0][1]
+    expect(viewArgs.prns[0].id).toBe('')
     expect(viewArgs.prns[0].prnNumber).toBe('')
     expect(viewArgs.prns[0].material).toBe('')
     expect(viewArgs.prns[0].issuedAt).toBe('')
@@ -131,6 +132,23 @@ describe('prn-activity controller', () => {
     expect(viewArgs.prns[0].organisationName).toBe('')
     expect(viewArgs.prns[0].wasteProcessingType).toBe('')
     expect(viewArgs.prns[0].processToBeUsed).toBe('')
+  })
+
+  test('Should map id through from the backend', async () => {
+    mockFetchJsonFromBackend.mockResolvedValue({
+      items: [
+        {
+          id: 'prn-id-1',
+          status: 'accepted',
+          tonnage: 10
+        }
+      ]
+    })
+
+    await prnActivityController.handler(mockRequest, mockH)
+
+    const viewArgs = mockH.view.mock.calls[0][1]
+    expect(viewArgs.prns[0].id).toBe('prn-id-1')
   })
 
   test('Should handle empty items array', async () => {

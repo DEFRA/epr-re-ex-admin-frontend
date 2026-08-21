@@ -33,6 +33,19 @@
         {% for prn in prns %}
           {% set statusCell = { html: govukTag({ text: prn.status | replace("_", " ") }) } %}
 
+          {% set actionCell = { html: '' } %}
+          {% if FEATURE_FLAGS.prnAdminCancellation and prn.status == 'accepted' and SCOPES.adminWrite in scopes %}
+            {% set confirmUrl = "/prn-activity/" + prn.id + "/cancel/confirm"
+              + "?prnNumber=" + (prn.prnNumber | urlencode)
+              + "&organisationName=" + (prn.organisationName | urlencode)
+              + "&issuedTo=" + (prn.issuedTo | urlencode)
+              + "&tonnage=" + (prn.tonnage | string | urlencode)
+              + "&material=" + (prn.material | urlencode)
+              + "&accreditationNumber=" + (prn.accreditationNumber | urlencode)
+              + "&accreditationYear=" + (prn.accreditationYear | string | urlencode) %}
+            {% set actionCell = { html: '<a class="govuk-link" href="' + confirmUrl + '">Cancel<span class="govuk-visually-hidden"> PRN ' + prn.prnNumber + '</span></a>' } %}
+          {% endif %}
+
           {% set row = [
             { text: prn.prnNumber },
             statusCell,
@@ -48,7 +61,8 @@
             { text: prn.accreditationYear },
             { text: prn.submittedToRegulator },
             { text: prn.organisationName },
-            { text: prn.wasteProcessingType }
+            { text: prn.wasteProcessingType },
+            actionCell
           ] %}
           {% set tableRows = tableRows.concat([row]) %}
         {% endfor %}
@@ -71,7 +85,8 @@
             { text: "Accreditation Year" },
             { text: "Submitted To Regulator" },
             { text: "Organisation" },
-            { text: "Waste Processing Type" }
+            { text: "Waste Processing Type" },
+            { text: "Action" }
           ],
           rows: tableRows
         }) }}
