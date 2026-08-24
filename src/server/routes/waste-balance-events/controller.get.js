@@ -7,7 +7,7 @@ import {
 /**
  * One entry of a waste balance ledger, as the backend answers it.
  *
- * An event concerns a waste report or a note, never both, and states that one
+ * An event concerns a summary log or a note, never both, and states that one
  * subject under a key that names it.
  * @typedef {{
  *   number: number,
