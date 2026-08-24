@@ -10,13 +10,13 @@
         {% if eventRows and eventRows.length %}
           {% set tableRows = [] %}
           {% for row in eventRows %}
-            {% set payloadHtml %}<code>{{ row.payload }}</code>{% endset %}
+            {% set subjectHtml %}<code>{{ row.subject }}</code>{% endset %}
             {% set tableRows = tableRows.concat([[
               { text: row.number },
               { text: row.kind },
               { text: row.createdAt },
               { text: row.createdBy },
-              { html: payloadHtml },
+              { html: subjectHtml },
               { text: row.closingAmount },
               { text: row.closingAvailableAmount }
             ]]) %}
@@ -30,7 +30,7 @@
               { text: "Kind" },
               { text: "Date" },
               { text: "Created by" },
-              { text: "Payload" },
+              { text: "Subject" },
               { text: "Closing balance" },
               { text: "Closing available" }
             ],
