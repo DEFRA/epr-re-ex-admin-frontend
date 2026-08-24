@@ -72,7 +72,6 @@ describe('#wasteBalanceEventsController', () => {
 
   const mockEvents = [
     {
-      id: 'evt-1',
       number: 1,
       kind: 'summary-log-submitted',
       summaryLog: { id: 'sl-1', creditTotal: 100 },
@@ -88,7 +87,6 @@ describe('#wasteBalanceEventsController', () => {
       }
     },
     {
-      id: 'evt-2',
       number: 2,
       kind: 'prn-created',
       prn: { id: 'prn-1', tonnage: 50 },
@@ -301,7 +299,6 @@ describe('#wasteBalanceEventsController', () => {
       }
       useMockBackend(mockOverview, [
         {
-          id: 'evt-5',
           number: 5,
           kind: 'summary-log-submitted',
           summaryLog,
@@ -335,7 +332,6 @@ describe('#wasteBalanceEventsController', () => {
     test('Should render empty Created by when actor has only id', async () => {
       useMockBackend(mockOverview, [
         {
-          id: 'evt-3',
           number: 3,
           kind: 'prn-created',
           prn: { id: 'prn-2', tonnage: 10 },
@@ -364,7 +360,6 @@ describe('#wasteBalanceEventsController', () => {
     test('Should render email as Created by when actor has no name', async () => {
       useMockBackend(mockOverview, [
         {
-          id: 'evt-4',
           number: 4,
           kind: 'prn-issued',
           prn: { id: 'prn-3', tonnage: 20 },

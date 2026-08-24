@@ -10,7 +10,6 @@ import {
  * An event concerns a waste report or a note, never both, and states that one
  * subject under a key that names it.
  * @typedef {{
- *   id: string,
  *   number: number,
  *   kind: string,
  *   createdAt: string,
