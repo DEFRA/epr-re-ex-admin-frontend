@@ -12,9 +12,23 @@ function getDisplayName(org) {
   return org.tradingName || org.name || ''
 }
 
+function buildCancelConfirmUrl(prn) {
+  const params = new URLSearchParams({
+    prnNumber: prn.prnNumber || '',
+    organisationName: prn.organisationName || '',
+    issuedTo: getDisplayName(prn.issuedToOrganisation),
+    tonnage: String(prn.tonnage ?? ''),
+    material: prn.material || '',
+    accreditationNumber: prn.accreditationNumber || '',
+    accreditationYear: String(prn.accreditationYear ?? '')
+  })
+  return `/prn-activity/${prn.id}/cancel/confirm?${params}`
+}
+
 function mapPrns(data) {
   const items = data?.items || []
   return items.map((prn) => ({
+    id: prn.id || '',
     prnNumber: prn.prnNumber || '',
     status: prn.status,
     issuedTo: getDisplayName(prn.issuedToOrganisation),
@@ -29,7 +43,8 @@ function mapPrns(data) {
     accreditationYear: prn.accreditationYear ?? '',
     submittedToRegulator: prn.submittedToRegulator || '',
     organisationName: prn.organisationName || '',
-    wasteProcessingType: prn.wasteProcessingType || ''
+    wasteProcessingType: prn.wasteProcessingType || '',
+    cancelConfirmUrl: buildCancelConfirmUrl(prn)
   }))
 }
 

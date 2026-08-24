@@ -16,6 +16,7 @@ import { prnTonnage } from './routes/prn-tonnage/index.js'
 import { wasteBalanceAvailability } from './routes/waste-balance-availability/index.js'
 import { linkedOrganisations } from './routes/linked-organisations/index.js'
 import { prnActivity } from './routes/prn-activity/index.js'
+import { prnCancel } from './routes/prn-cancel/index.js'
 import { summaryLogUploadsReport } from './routes/summary-log/index.js'
 import { orsUpload } from './routes/ors-upload/index.js'
 import { reportSubmissions } from './routes/report-submissions/index.js'
@@ -57,6 +58,7 @@ export const router = {
         wasteBalanceAvailability,
         linkedOrganisations,
         prnActivity,
+        prnCancel,
         summaryLogUploadsReport,
         orsUpload,
         reportSubmissions,
