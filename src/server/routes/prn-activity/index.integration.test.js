@@ -30,6 +30,7 @@ describe('prn-activity Cancel link visibility', () => {
     accreditationYear: 2026,
     organisationName: 'ACME Ltd',
     issuedToOrganisation: { name: 'Some Producer' },
+    regulatorCancellable: true,
     ...overrides
   })
 
@@ -95,9 +96,43 @@ describe('prn-activity Cancel link visibility', () => {
     'awaiting_cancellation',
     'cancelled',
     'deleted'
-  ])('hides the Cancel link when the PRN status is %s', async (status) => {
+  ])(
+    'hides the Cancel link when the PRN status is %s (backend reports it not regulator-cancellable)',
+    async (status) => {
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+      stubPrnList(buildPrn({ status, regulatorCancellable: false }))
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: prnActivityUrl,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      expect(statusCode).toBe(200)
+      const $ = cheerio.load(result)
+      expect($('a:contains("Cancel")')).toHaveLength(0)
+    }
+  )
+
+  test('hides the Cancel link for an accepted PRN past its cancellation window', async () => {
     vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
-    stubPrnList(buildPrn({ status }))
+    stubPrnList(buildPrn({ regulatorCancellable: false }))
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: prnActivityUrl,
+      auth: { strategy: 'session', credentials: mockUserSession }
+    })
+
+    expect(statusCode).toBe(200)
+    const $ = cheerio.load(result)
+    expect($('a:contains("Cancel")')).toHaveLength(0)
+  })
+
+  test('hides the Cancel link when regulatorCancellable is absent from the backend response (rollout window)', async () => {
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+    const { regulatorCancellable: _omit, ...prnWithoutFlag } = buildPrn()
+    stubPrnList(prnWithoutFlag)
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
@@ -123,5 +158,35 @@ describe('prn-activity Cancel link visibility', () => {
     expect(statusCode).toBe(200)
     const $ = cheerio.load(result)
     expect($('a:contains("Cancel")')).toHaveLength(0)
+  })
+
+  test('shows the Action column for an admin.write session', async () => {
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+    stubPrnList(buildPrn())
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: prnActivityUrl,
+      auth: { strategy: 'session', credentials: mockUserSession }
+    })
+
+    expect(statusCode).toBe(200)
+    const $ = cheerio.load(result)
+    expect($('th:contains("Action")')).toHaveLength(1)
+  })
+
+  test('hides the Action column entirely for a read-only (admin.read only) session', async () => {
+    vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
+    stubPrnList(buildPrn())
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: prnActivityUrl,
+      auth: { strategy: 'session', credentials: readOnlySession }
+    })
+
+    expect(statusCode).toBe(200)
+    const $ = cheerio.load(result)
+    expect($('th:contains("Action")')).toHaveLength(0)
   })
 })

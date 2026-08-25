@@ -13,6 +13,10 @@ vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
   getUserSession: vi.fn().mockReturnValue(null)
 }))
 
+vi.mock('#server/common/helpers/feature-flags.js', () => ({
+  FEATURE_FLAGS: { prnAdminCancellation: true }
+}))
+
 describe('prn-cancel', () => {
   const backendUrl = config.get('eprBackendUrl')
   const prnId = 'aaa111bbb222ccc333ddd4444'
@@ -176,6 +180,46 @@ describe('prn-cancel', () => {
     const $ = cheerio.load(response.result)
     expect($('.app-panel--error h1').text()).toBe('Cancellation failed')
     expect(response.result).toContain(deadlineMessage)
+  })
+
+  test('a 409 wrong-status refusal from the backend is shown verbatim', async () => {
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+    const statusMessage =
+      "Cannot cancel a PRN with status 'cancelled'; only an accepted or awaiting acceptance PRN can be cancelled"
+    stubCancelFailure(409, statusMessage)
+
+    const response = await postCancel()
+
+    expect(response.statusCode).toBe(statusCodes.ok)
+    // Nunjucks autoescapes the apostrophe in "status 'cancelled'", so assert
+    // on the parts either side of it rather than the raw message.
+    expect(response.result).toContain('Cannot cancel a PRN with status')
+    expect(response.result).toContain(
+      'only an accepted or awaiting acceptance PRN can be cancelled'
+    )
+  })
+
+  test('an unrecognised 409 (e.g. a version-conflict leak) falls back to a generic failure message', async () => {
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+    const versionConflictMessage =
+      'Version conflict: attempted to update PRN 6a8c18b7c7370da739958e13 with version 4 but current version is 5'
+    stubCancelFailure(409, versionConflictMessage)
+
+    const response = await postCancel()
+
+    expect(response.statusCode).toBe(statusCodes.ok)
+    expect(response.result).toContain('There was a problem cancelling the PRN')
+    expect(response.result).not.toContain(versionConflictMessage)
+  })
+
+  test('a bare 404 (e.g. the backend feature flag being off) falls back to a generic failure message', async () => {
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+    stubCancelFailure(404, 'Not Found')
+
+    const response = await postCancel()
+
+    expect(response.statusCode).toBe(statusCodes.ok)
+    expect(response.result).toContain('There was a problem cancelling the PRN')
   })
 
   test('a backend 500 falls back to a generic failure message', async () => {

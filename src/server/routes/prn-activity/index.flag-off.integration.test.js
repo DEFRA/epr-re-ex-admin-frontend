@@ -34,7 +34,7 @@ describe('prn-activity Cancel link, feature flag off', () => {
     vi.clearAllMocks()
   })
 
-  test('hides the Cancel link for an accepted PRN with admin.write when the flag is off', async () => {
+  test('hides the Cancel link and Action column for an accepted PRN with admin.write when the flag is off', async () => {
     vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
     mswServer.use(
       http.get(`${backendUrl}/v1/admin/packaging-recycling-notes`, () =>
@@ -44,7 +44,8 @@ describe('prn-activity Cancel link, feature flag off', () => {
               id: 'prn-id-1',
               prnNumber: 'ER26000123',
               status: 'accepted',
-              tonnage: 5
+              tonnage: 5,
+              regulatorCancellable: true
             }
           ],
           hasMore: false
@@ -61,5 +62,6 @@ describe('prn-activity Cancel link, feature flag off', () => {
     expect(statusCode).toBe(200)
     const $ = cheerio.load(result)
     expect($('a:contains("Cancel")')).toHaveLength(0)
+    expect($('th:contains("Action")')).toHaveLength(0)
   })
 })

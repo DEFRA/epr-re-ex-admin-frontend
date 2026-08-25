@@ -31,6 +31,7 @@ import { accreditationStatusTransition } from './routes/accreditation-status-tra
 import { registrationStatusTransition } from './routes/registration-status-transition/index.js'
 
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
+import { FEATURE_FLAGS } from './common/helpers/feature-flags.js'
 
 export const router = {
   plugin: {
@@ -58,7 +59,7 @@ export const router = {
         wasteBalanceAvailability,
         linkedOrganisations,
         prnActivity,
-        prnCancel,
+        ...(FEATURE_FLAGS.prnAdminCancellation ? [prnCancel] : []),
         summaryLogUploadsReport,
         orsUpload,
         reportSubmissions,
