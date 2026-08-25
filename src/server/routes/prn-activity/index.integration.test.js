@@ -85,7 +85,9 @@ describe('prn-activity Cancel link visibility', () => {
 
     expect(statusCode).toBe(200)
     const $ = cheerio.load(result)
-    expect($('a:contains("Cancel")')).toHaveLength(1)
+    expect($('a:contains("Cancel")').attr('href')).toBe(
+      '/prn-activity/prn-id-1/cancel/confirm?prnNumber=ER26000123&organisationName=ACME+Ltd&issuedTo=Some+Producer&tonnage=5&material=plastic&accreditationNumber=ACC-2026-001&accreditationYear=2026'
+    )
   })
 
   test.each([
