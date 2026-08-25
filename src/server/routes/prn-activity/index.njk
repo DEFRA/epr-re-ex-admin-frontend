@@ -34,7 +34,7 @@
           {% set statusCell = { html: govukTag({ text: prn.status | replace("_", " ") }) } %}
 
           {% set actionCell = { html: '' } %}
-          {% if FEATURE_FLAGS.prnAdminCancellation and prn.status == 'accepted' and SCOPES.adminWrite in scopes %}
+          {% if FEATURE_FLAGS.prnAdminCancellation and (prn.status == 'accepted' or prn.status == 'awaiting_acceptance') and SCOPES.adminWrite in scopes %}
             {% set actionCell = { html: '<a class="govuk-link" href="' + prn.cancelConfirmUrl + '">Cancel<span class="govuk-visually-hidden"> PRN ' + prn.prnNumber + '</span></a>' } %}
           {% endif %}
 

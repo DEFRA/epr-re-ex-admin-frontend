@@ -73,9 +73,29 @@ describe('prn-activity Cancel link visibility', () => {
     )
   })
 
-  test('hides the Cancel link when the PRN status is not accepted', async () => {
+  test('shows the Cancel link for an awaiting_acceptance PRN when the session has admin.write (PAE-1859)', async () => {
     vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
-    stubPrnList(buildPrn({ status: 'cancelled' }))
+    stubPrnList(buildPrn({ status: 'awaiting_acceptance' }))
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: prnActivityUrl,
+      auth: { strategy: 'session', credentials: mockUserSession }
+    })
+
+    expect(statusCode).toBe(200)
+    const $ = cheerio.load(result)
+    expect($('a:contains("Cancel")')).toHaveLength(1)
+  })
+
+  test.each([
+    'awaiting_authorisation',
+    'awaiting_cancellation',
+    'cancelled',
+    'deleted'
+  ])('hides the Cancel link when the PRN status is %s', async (status) => {
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+    stubPrnList(buildPrn({ status }))
 
     const { result, statusCode } = await server.inject({
       method: 'GET',

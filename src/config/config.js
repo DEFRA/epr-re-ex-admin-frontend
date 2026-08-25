@@ -90,7 +90,7 @@ export const config = convict({
   },
   featureFlags: {
     prnAdminCancellation: {
-      doc: 'Feature Flag: Show the Cancel action against an accepted PRN/PERN on the PRN activity page (PAE-1823)',
+      doc: 'Feature Flag: Show the Cancel action against an accepted or awaiting acceptance PRN/PERN on the PRN activity page (PAE-1823, PAE-1859)',
       format: Boolean,
       default: false,
       env: 'FEATURE_FLAG_PRN_ADMIN_CANCELLATION'
