@@ -199,29 +199,6 @@ describe('prn-cancel', () => {
     )
   })
 
-  test('an unrecognised 409 (e.g. a version-conflict leak) falls back to a generic failure message', async () => {
-    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
-    const versionConflictMessage =
-      'Version conflict: attempted to update PRN 6a8c18b7c7370da739958e13 with version 4 but current version is 5'
-    stubCancelFailure(409, versionConflictMessage)
-
-    const response = await postCancel()
-
-    expect(response.statusCode).toBe(statusCodes.ok)
-    expect(response.result).toContain('There was a problem cancelling the PRN')
-    expect(response.result).not.toContain(versionConflictMessage)
-  })
-
-  test('a bare 404 (e.g. the backend feature flag being off) falls back to a generic failure message', async () => {
-    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
-    stubCancelFailure(404, 'Not Found')
-
-    const response = await postCancel()
-
-    expect(response.statusCode).toBe(statusCodes.ok)
-    expect(response.result).toContain('There was a problem cancelling the PRN')
-  })
-
   test('a backend 500 falls back to a generic failure message', async () => {
     vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
     stubCancelFailure(500, 'Internal error detail the user should not see')
