@@ -44,7 +44,8 @@ function mapPrns(data) {
     submittedToRegulator: prn.submittedToRegulator || '',
     organisationName: prn.organisationName || '',
     wasteProcessingType: prn.wasteProcessingType || '',
-    cancelConfirmUrl: buildCancelConfirmUrl(prn)
+    cancelConfirmUrl: buildCancelConfirmUrl(prn),
+    regulatorCancellable: prn.regulatorCancellable ?? false
   }))
 }
 
