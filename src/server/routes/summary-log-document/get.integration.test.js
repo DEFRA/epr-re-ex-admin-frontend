@@ -95,25 +95,6 @@ describe('GET summary log document', () => {
       expect(parsed.loadsByReportingPeriod).toHaveLength(1)
     })
 
-    test('Should render an at-a-glance summary list of status, uploaded-at and processing type', async () => {
-      stubBackendDocument(HttpResponse.json(summaryLogDocument))
-
-      const { $, statusCode } = await loadPage()
-
-      expect(statusCode).toBe(statusCodes.ok)
-
-      const rowValue = (label) =>
-        $('.govuk-summary-list__row')
-          .filter((_, el) => $(el).find('dt').text().trim() === label)
-          .find('dd.govuk-summary-list__value')
-          .text()
-          .trim()
-
-      expect(rowValue('Status')).toBe('submitted')
-      expect(rowValue('Uploaded at')).toBe('2026-01-01T11:00:00.000Z')
-      expect(rowValue('Processing type')).toBe('reprocessor')
-    })
-
     test('Should render a breadcrumb back to the registration overview', async () => {
       stubBackendDocument(HttpResponse.json(summaryLogDocument))
 
@@ -127,7 +108,7 @@ describe('GET summary log document', () => {
       expect(overviewCrumb).toHaveLength(1)
     })
 
-    test('Should render a not-found message when the backend returns 404', async () => {
+    test('Should render the standard not-found page when the backend returns 404', async () => {
       stubBackendDocument(
         HttpResponse.json(
           { message: 'Not found' },
@@ -138,7 +119,7 @@ describe('GET summary log document', () => {
       const { $, statusCode } = await loadPage()
 
       expect(statusCode).toBe(statusCodes.notFound)
-      expect($.text()).toContain('Summary log not found')
+      expect($.text()).toContain('Page not found')
     })
 
     test('Should show the service error page when the backend errors', async () => {

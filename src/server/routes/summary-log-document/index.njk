@@ -1,25 +1,11 @@
 {% extends 'layout.njk' %}
-{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
-      {% if not summaryLog %}
-        <h1 class="govuk-heading-xl">Summary log not found</h1>
-        <p class="govuk-body">The summary log you requested could not be found.</p>
-      {% else %}
-        <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
+      <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
 
-        {{ govukSummaryList({
-          rows: [
-            { key: { text: "Status" }, value: { text: summaryLog.status } },
-            { key: { text: "Uploaded at" }, value: { text: summaryLog.uploadedAt } },
-            { key: { text: "Processing type" }, value: { text: summaryLog.processingType } }
-          ]
-        }) }}
-
-        <code class="app-json-display">{{ summaryLog | dump(2) }}</code>
-      {% endif %}
+      <code class="app-json-display">{{ summaryLog | dump(2) }}</code>
     </div>
   </div>
 {% endblock %}
