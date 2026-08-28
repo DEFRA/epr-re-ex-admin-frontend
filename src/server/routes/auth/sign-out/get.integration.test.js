@@ -14,7 +14,9 @@ const mockCdpAuditing = vi.fn()
 
 vi.mock('#server/common/helpers/metrics/index.js', async (importOriginal) => ({
   metrics: {
-    ...(await importOriginal()).metrics,
+    .../** @type {{ metrics: Record<string, unknown> }} */ (
+      await importOriginal()
+    ).metrics,
     signOutSuccess: () => mockSignOutSuccessMetric()
   }
 }))
@@ -45,7 +47,7 @@ describe('GET /auth/sign-out', () => {
     let response
 
     beforeEach(async () => {
-      getUserSession.mockReturnValue(mockUserSession)
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
 
       response = await server.inject({
         method: 'GET',
@@ -77,7 +79,7 @@ describe('GET /auth/sign-out', () => {
         `<div data-logout-url="${expectedSignOutUrl}" id="sign-out-data"></div>`
       )
       expect(response.result).toContain(
-        '<script type="text/javascript" src="/public/javascripts/sign-out'
+        '<script type="module" src="/public/javascripts/sign-out'
       )
     })
 

@@ -3,12 +3,80 @@ import {
   fetchOrganisationOverview,
   findRegistration
 } from '#server/common/helpers/fetch-organisation-overview.js'
-import { formatPeriod } from '#server/common/helpers/format-reporting-period.js'
+import { toReportingPeriods } from '#server/common/helpers/reporting-periods.js'
+import { reportsCalendarPath } from '#server/common/helpers/backend-paths.js'
+import {
+  periodStatus,
+  reportStatus
+} from '#server/common/constants/report-status.js'
+import { SCOPES } from '#server/common/helpers/auth/scopes.js'
+import { accreditationStatusActions } from '#server/routes/accreditation-status-transition/transitions.js'
+import { registrationStatusActions } from '#server/routes/registration-status-transition/transitions.js'
+
+/**
+ * @import { PeriodStatus } from '#server/common/constants/report-status.js'
+ */
 
 const GREEN_TAG = 'govuk-tag--green'
 const RED_TAG = 'govuk-tag--red'
 
 const EXPORTER_PROCESSING_TYPE = 'exporter'
+
+/**
+ * Labels for every periodStatus value, matching the wording the operator sees
+ * in epr-frontend. Typed exhaustively so a status added to the enum cannot ship
+ * without a label; a status the backend adds before this mirror knows about it
+ * still renders as its raw token rather than blank.
+ * @type {Record<PeriodStatus, string>}
+ */
+const PERIOD_STATUS_LABELS = {
+  [periodStatus.due]: 'Due',
+  [periodStatus.inProgress]: 'In progress',
+  [periodStatus.overdue]: 'Overdue',
+  [periodStatus.readyToSubmit]: 'Ready to submit',
+  [periodStatus.requiresResubmission]: 'Requires resubmission',
+  [periodStatus.submitted]: 'Submitted'
+}
+
+/**
+ * Builds the view model for a reports table row, leaving the markup to the
+ * template. The Unsubmit action is offered only where the backend would accept
+ * it - a submitted report that is neither superseded nor flagged for
+ * resubmission. Hiding it is UX; the backend enforces both rules and the
+ * admin.write scope.
+ * @param {string} organisationId
+ * @param {string} registrationId
+ * @param {string} cadence
+ * @param {boolean} hasAdminWrite
+ */
+const toReportRow =
+  (organisationId, registrationId, cadence, hasAdminWrite) => (period) => {
+    const submissionUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/${period.year}/${cadence}/${period.period}/submissions/${period.submissionNumber}`
+
+    const canUnsubmit =
+      hasAdminWrite &&
+      period.report?.status === reportStatus.submitted &&
+      !period.isSuperseded &&
+      !period.isFlaggedForResubmission
+
+    // A resubmission draft keeps the period in its requires-resubmission state
+    // rather than reporting the draft's own status, matching what the operator
+    // sees in epr-frontend. Otherwise the framing vanishes the moment the draft
+    // is started, leaving no sign why the submitted row lost its Unsubmit link.
+    const status =
+      period.periodStatus === periodStatus.requiresResubmission
+        ? period.periodStatus
+        : (period.report?.status ?? period.periodStatus)
+
+    return {
+      formattedPeriod: period.formattedPeriod,
+      submissionNumber: period.report ? period.submissionNumber : '',
+      dueDate: period.dueDate,
+      statusText: PERIOD_STATUS_LABELS[status] ?? status,
+      viewUrl: period.report ? submissionUrl : null,
+      unsubmitUrl: canUnsubmit ? `${submissionUrl}/unsubmit/confirm` : null
+    }
+  }
 
 const STATUS_DISPLAY = {
   submitted: { label: 'Success', className: GREEN_TAG },
@@ -18,22 +86,25 @@ const STATUS_DISPLAY = {
   submission_failed: { label: 'Failed (Submission)', className: RED_TAG }
 }
 
-const toSummaryLogTableRow =
-  (organisationId, registrationId) => (summaryLog) => {
-    const { summaryLogId, uploadedAt, status } = summaryLog
+/**
+ * Builds the view model for a summary log row. STATUS_DISPLAY keeps the
+ * status-to-label-and-colour decision; the template renders it through the
+ * govukTag macro so the tag markup has a single source.
+ * @param {string} organisationId
+ * @param {string} registrationId
+ */
+const toSummaryLogRow = (organisationId, registrationId) => (summaryLog) => {
+  const { summaryLogId, uploadedAt, status } = summaryLog
+  const { label, className } = STATUS_DISPLAY[status]
 
-    const { label, className } = STATUS_DISPLAY[status]
-
-    const downloadUrl = `/system-logs/download/${organisationId}/${registrationId}/${summaryLogId}`
-
-    return [
-      { text: uploadedAt },
-      { html: `<strong class="govuk-tag ${className}">${label}</strong>` },
-      {
-        html: `<a class="govuk-link govuk-link--no-visited-state" href="${downloadUrl}">Download</a>`
-      }
-    ]
+  return {
+    uploadedAt,
+    label,
+    className,
+    viewUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`,
+    downloadUrl: `/system-logs/download/${organisationId}/${registrationId}/${summaryLogId}`
   }
+}
 
 const fetchWasteBalance = async (request, organisationId, accreditationId) => {
   try {
@@ -49,6 +120,49 @@ const fetchWasteBalance = async (request, organisationId, accreditationId) => {
   }
 }
 
+/**
+ * The links and status actions the page derives from the registration. The
+ * accreditation-scoped ones are null when there is no accreditation, and
+ * overseas sites additionally only apply to exporters.
+ * @param {string} organisationId
+ * @param {string} registrationId
+ * @param {Record<string, any>} registration
+ */
+const toRegistrationLinks = (organisationId, registrationId, registration) => {
+  const registrationUrl = `/organisations/${organisationId}/registrations/${registrationId}`
+  const accreditationUrl = registration.accreditation
+    ? `${registrationUrl}/accreditations/${registration.accreditation.id}`
+    : null
+
+  return {
+    // The template only attaches these to their status rows for users holding
+    // admin.write (hiding is UX - the backend enforces scope).
+    accreditationStatusActions: accreditationUrl
+      ? accreditationStatusActions(
+          registration.accreditation.status,
+          accreditationUrl,
+          registration.status
+        )
+      : [],
+    registrationStatusActions: registrationStatusActions(
+      registration.status,
+      registrationUrl
+    ),
+    wasteBalanceEventsUrl: accreditationUrl
+      ? `${accreditationUrl}/waste-balance-events`
+      : null,
+    overseasSitesUrl:
+      accreditationUrl &&
+      registration.processingType === EXPORTER_PROCESSING_TYPE
+        ? `${accreditationUrl}/overseas-sites`
+        : null,
+    wasteRecordsDownloadUrl: `${registrationUrl}/waste-records/download`,
+    prnActivityDownloadUrl: accreditationUrl
+      ? `${accreditationUrl}/prn-activity/download`
+      : null
+  }
+}
+
 export const registrationOverviewGETController = {
   async handler(request, h) {
     const { organisationId, registrationId } = request.params
@@ -58,11 +172,7 @@ export const registrationOverviewGETController = {
 
     const [overview, calendar, { summaryLogs }] = await Promise.all([
       fetchOrganisationOverview(request, organisationId),
-      fetchJsonFromBackend(
-        request,
-        `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
-        {}
-      ),
+      fetchJsonFromBackend(request, reportsCalendarPath(request.params), {}),
       fetchJsonFromBackend(
         request,
         `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs`,
@@ -89,7 +199,7 @@ export const registrationOverviewGETController = {
     const heading = `${overview.companyName} - ${registration.registrationNumber ?? registration.id}`
 
     const summaryLogRows = summaryLogs.map(
-      toSummaryLogTableRow(organisationId, registrationId)
+      toSummaryLogRow(organisationId, registrationId)
     )
 
     return h.view('routes/registration-overview/index', {
@@ -105,26 +215,21 @@ export const registrationOverviewGETController = {
       organisationId,
       registrationId,
       registration,
-      cadence: calendar.cadence,
-      reportingPeriods: calendar.reportingPeriods.map((rp) => ({
-        ...rp,
-        formattedPeriod: formatPeriod(rp.period, calendar.cadence)
-      })),
+      ...toRegistrationLinks(organisationId, registrationId, registration),
+      reportRows: toReportingPeriods(
+        calendar.reportingPeriods,
+        calendar.cadence
+      ).map(
+        toReportRow(
+          organisationId,
+          registrationId,
+          calendar.cadence,
+          request.auth.credentials.scopes.includes(SCOPES.adminWrite)
+        )
+      ),
       summaryLogRows,
       wasteBalance,
-      error: errorMessage,
-      wasteBalanceEventsUrl: registration.accreditation
-        ? `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${registration.accreditation.id}/waste-balance-events`
-        : null,
-      overseasSitesUrl:
-        registration.accreditation &&
-        registration.processingType === EXPORTER_PROCESSING_TYPE
-          ? `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${registration.accreditation.id}/overseas-sites`
-          : null,
-      wasteRecordsDownloadUrl: `/organisations/${organisationId}/registrations/${registrationId}/waste-records/download`,
-      prnActivityDownloadUrl: registration.accreditation
-        ? `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${registration.accreditation.id}/prn-activity/download`
-        : null
+      error: errorMessage
     })
   }
 }

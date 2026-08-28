@@ -15,6 +15,7 @@
  *   regulator: string
  *   reportType: string
  *   reportingPeriod: string
+ *   submissionNumber: number | ''
  *   submittedBy: string
  *   submittedDate: string
  *   submitterEmail: string

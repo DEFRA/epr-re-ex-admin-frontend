@@ -9,6 +9,8 @@ vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
 const expectedStatuses =
   'awaiting_authorisation,awaiting_acceptance,accepted,awaiting_cancellation,cancelled,deleted'
 
+const mockFetchJsonFromBackend = vi.mocked(fetchJsonFromBackend)
+
 describe('prn-activity controller', () => {
   let mockRequest
   let mockH
@@ -35,7 +37,7 @@ describe('prn-activity controller', () => {
   })
 
   test('Should fetch PRNs with correct statuses', async () => {
-    fetchJsonFromBackend.mockResolvedValue({ items: [] })
+    mockFetchJsonFromBackend.mockResolvedValue({ items: [] })
 
     await prnActivityController.handler(mockRequest, mockH)
 
@@ -46,7 +48,7 @@ describe('prn-activity controller', () => {
   })
 
   test('Should render view with pageTitle and mapped PRNs', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [
         {
           prnNumber: 'PRN-001',
@@ -89,7 +91,7 @@ describe('prn-activity controller', () => {
   })
 
   test('Should map isDecemberWaste false to No', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [
         {
           prnNumber: 'PRN-001',
@@ -107,7 +109,7 @@ describe('prn-activity controller', () => {
   })
 
   test('Should handle null/undefined optional fields', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [
         {
           status: 'awaiting_authorisation',
@@ -119,6 +121,7 @@ describe('prn-activity controller', () => {
     await prnActivityController.handler(mockRequest, mockH)
 
     const viewArgs = mockH.view.mock.calls[0][1]
+    expect(viewArgs.prns[0].id).toBe('')
     expect(viewArgs.prns[0].prnNumber).toBe('')
     expect(viewArgs.prns[0].material).toBe('')
     expect(viewArgs.prns[0].issuedAt).toBe('')
@@ -131,8 +134,68 @@ describe('prn-activity controller', () => {
     expect(viewArgs.prns[0].processToBeUsed).toBe('')
   })
 
+  test('Should map id through from the backend', async () => {
+    mockFetchJsonFromBackend.mockResolvedValue({
+      items: [
+        {
+          id: 'prn-id-1',
+          status: 'accepted',
+          tonnage: 10
+        }
+      ]
+    })
+
+    await prnActivityController.handler(mockRequest, mockH)
+
+    const viewArgs = mockH.view.mock.calls[0][1]
+    expect(viewArgs.prns[0].id).toBe('prn-id-1')
+  })
+
+  test('Should build the cancel confirm URL from the PRN fields', async () => {
+    mockFetchJsonFromBackend.mockResolvedValue({
+      items: [
+        {
+          id: 'prn-id-1',
+          prnNumber: 'ER26000123',
+          status: 'accepted',
+          tonnage: 5,
+          material: 'plastic',
+          accreditationNumber: 'ACC-2026-001',
+          accreditationYear: 2026,
+          organisationName: 'ACME Ltd',
+          issuedToOrganisation: { name: 'Some Producer' }
+        }
+      ]
+    })
+
+    await prnActivityController.handler(mockRequest, mockH)
+
+    const viewArgs = mockH.view.mock.calls[0][1]
+    expect(viewArgs.prns[0].cancelConfirmUrl).toBe(
+      '/prn-activity/prn-id-1/cancel/confirm?prnNumber=ER26000123&organisationName=ACME+Ltd&issuedTo=Some+Producer&tonnage=5&material=plastic&accreditationNumber=ACC-2026-001&accreditationYear=2026'
+    )
+  })
+
+  test('Should build the cancel confirm URL with empty tonnage/year when they are missing', async () => {
+    mockFetchJsonFromBackend.mockResolvedValue({
+      items: [
+        {
+          id: 'prn-id-1',
+          status: 'accepted'
+        }
+      ]
+    })
+
+    await prnActivityController.handler(mockRequest, mockH)
+
+    const viewArgs = mockH.view.mock.calls[0][1]
+    expect(viewArgs.prns[0].cancelConfirmUrl).toBe(
+      '/prn-activity/prn-id-1/cancel/confirm?prnNumber=&organisationName=&issuedTo=&tonnage=&material=&accreditationNumber=&accreditationYear='
+    )
+  })
+
   test('Should handle empty items array', async () => {
-    fetchJsonFromBackend.mockResolvedValue({ items: [] })
+    mockFetchJsonFromBackend.mockResolvedValue({ items: [] })
 
     await prnActivityController.handler(mockRequest, mockH)
 
@@ -146,7 +209,7 @@ describe('prn-activity controller', () => {
   })
 
   test('Should handle null data from backend', async () => {
-    fetchJsonFromBackend.mockResolvedValue(null)
+    mockFetchJsonFromBackend.mockResolvedValue(null)
 
     await prnActivityController.handler(mockRequest, mockH)
 
@@ -155,7 +218,7 @@ describe('prn-activity controller', () => {
   })
 
   test('Should use tradingName over name for issuedToOrganisation', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [
         {
           status: 'accepted',
@@ -175,7 +238,7 @@ describe('prn-activity controller', () => {
   })
 
   test('Should use name when tradingName is empty string', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [
         {
           status: 'accepted',
@@ -192,7 +255,7 @@ describe('prn-activity controller', () => {
   })
 
   test('Should use name when tradingName is not present', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [
         {
           status: 'accepted',
@@ -209,7 +272,7 @@ describe('prn-activity controller', () => {
   })
 
   test('Should return empty string when org has no name or tradingName', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [
         {
           status: 'accepted',
@@ -227,7 +290,7 @@ describe('prn-activity controller', () => {
 
   test('Should display error message from session and clear it', async () => {
     mockRequest.yar.get.mockReturnValue('Download failed')
-    fetchJsonFromBackend.mockResolvedValue({ items: [] })
+    mockFetchJsonFromBackend.mockResolvedValue({ items: [] })
 
     await prnActivityController.handler(mockRequest, mockH)
 
@@ -243,7 +306,7 @@ describe('prn-activity controller', () => {
   })
 
   test('Should return empty string when issuedToOrganisation is null', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [
         {
           status: 'accepted',
@@ -261,7 +324,7 @@ describe('prn-activity controller', () => {
 
   test('Should pass cursor to backend when provided in query', async () => {
     mockRequest.query.cursor = 'abc123'
-    fetchJsonFromBackend.mockResolvedValue({ items: [] })
+    mockFetchJsonFromBackend.mockResolvedValue({ items: [] })
 
     await prnActivityController.handler(mockRequest, mockH)
 
@@ -272,7 +335,7 @@ describe('prn-activity controller', () => {
   })
 
   test('Should include next pagination link when hasMore is true', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [{ status: 'accepted', tonnage: 10 }],
       hasMore: true,
       nextCursor: 'cursor-xyz'
@@ -289,7 +352,7 @@ describe('prn-activity controller', () => {
   test('Should include previous pagination link when cursor is provided', async () => {
     mockRequest.query.cursor = 'abc123'
     mockRequest.query.page = '2'
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [{ status: 'accepted', tonnage: 10 }],
       hasMore: false
     })
@@ -304,7 +367,7 @@ describe('prn-activity controller', () => {
   })
 
   test('Should not include pagination links on first page with no more results', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [{ status: 'accepted', tonnage: 10 }],
       hasMore: false
     })

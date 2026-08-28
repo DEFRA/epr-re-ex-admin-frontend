@@ -110,6 +110,11 @@ describe('context and cache', () => {
             },
             {
               current: false,
+              text: 'Credited tonnage',
+              href: '/credited-tonnage'
+            },
+            {
+              current: false,
               text: 'Report submissions',
               href: '/report-submissions'
             },
@@ -304,6 +309,11 @@ describe('context and cache', () => {
               current: false,
               text: 'PRN tonnage',
               href: '/prn-tonnage'
+            },
+            {
+              current: false,
+              text: 'Credited tonnage',
+              href: '/credited-tonnage'
             },
             {
               current: false,

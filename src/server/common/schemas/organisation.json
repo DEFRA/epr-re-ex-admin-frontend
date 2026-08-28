@@ -352,9 +352,9 @@
               "approved",
               "cancelled",
               "rejected",
-              "suspended",
               null
-            ]
+            ],
+            "readOnly": true
           },
           "registrationNumber": {
             "type": [
@@ -1177,10 +1177,7 @@
             "additionalProperties": false
           },
           "statusHistory": {
-            "type": [
-              "array",
-              "null"
-            ],
+            "type": "array",
             "items": {
               "type": "object",
               "properties": {
@@ -1189,10 +1186,8 @@
                   "enum": [
                     "created",
                     "approved",
-                    "active",
                     "cancelled",
-                    "rejected",
-                    "suspended"
+                    "rejected"
                   ]
                 },
                 "updatedAt": {
@@ -1200,7 +1195,8 @@
                   "format": "date-time"
                 },
                 "updatedBy": {
-                  "type": "string"
+                  "type": "string",
+                  "readOnly": true
                 }
               },
               "required": [
@@ -1208,8 +1204,7 @@
                 "updatedAt"
               ],
               "additionalProperties": false
-            },
-            "readOnly": true
+            }
           }
         },
         "additionalProperties": false
@@ -1243,7 +1238,8 @@
               "rejected",
               "suspended",
               null
-            ]
+            ],
+            "readOnly": true
           },
           "validFrom": {
             "type": [
@@ -1595,10 +1591,7 @@
             }
           },
           "statusHistory": {
-            "type": [
-              "array",
-              "null"
-            ],
+            "type": "array",
             "items": {
               "type": "object",
               "properties": {
@@ -1607,7 +1600,6 @@
                   "enum": [
                     "created",
                     "approved",
-                    "active",
                     "cancelled",
                     "rejected",
                     "suspended"
@@ -1618,7 +1610,8 @@
                   "format": "date-time"
                 },
                 "updatedBy": {
-                  "type": "string"
+                  "type": "string",
+                  "readOnly": true
                 }
               },
               "required": [
@@ -1626,8 +1619,7 @@
                 "updatedAt"
               ],
               "additionalProperties": false
-            },
-            "readOnly": true
+            }
           }
         },
         "additionalProperties": false

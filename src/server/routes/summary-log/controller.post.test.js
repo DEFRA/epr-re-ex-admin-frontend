@@ -8,7 +8,9 @@ vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
 
 vi.mock('#server/common/helpers/formatters.js', () => ({
   formatDateTime: vi.fn((isoString) => {
-    if (!isoString) return ''
+    if (!isoString) {
+      return ''
+    }
     if (isoString.includes('2026-02-06T14:30')) {
       return '6 February 2026 at 2:30pm'
     }
@@ -26,6 +28,8 @@ vi.mock('#server/common/helpers/logging/logger.js', () => ({
     error: mockErrorFn
   }))
 }))
+
+const mockFetchJsonFromBackend = vi.mocked(fetchJsonFromBackend)
 
 describe('summaryLogUploadsReportPostController', () => {
   let mockRequest
@@ -96,7 +100,7 @@ describe('summaryLogUploadsReportPostController', () => {
       generatedAt: '2026-02-06T14:30:00.000Z'
     }
 
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockData)
+    mockFetchJsonFromBackend.mockResolvedValue(mockData)
 
     await summaryLogUploadsReportPostController.handler(mockRequest, mockH)
 
@@ -133,7 +137,7 @@ describe('summaryLogUploadsReportPostController', () => {
     const fetchError = new Error('Network error')
     fetchError.stack = 'Error stack trace...'
 
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(fetchError)
+    mockFetchJsonFromBackend.mockRejectedValue(fetchError)
 
     await summaryLogUploadsReportPostController.handler(mockRequest, mockH)
 

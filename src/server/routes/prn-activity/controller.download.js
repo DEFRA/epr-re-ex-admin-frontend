@@ -7,16 +7,18 @@ import { buildPrnApiUrl } from './controller.js'
 const dateFormat = 'dd/MM/yyyy'
 
 function getDisplayName(org) {
-  if (!org) return ''
+  if (!org) {
+    return ''
+  }
   return org.tradingName || org.name || ''
 }
 
-export async function fetchAllPrns(request, accreditationId) {
+export async function fetchAllPrns(request) {
   const allItems = []
   let cursor = null
 
   do {
-    const url = buildPrnApiUrl(cursor, accreditationId)
+    const url = buildPrnApiUrl(cursor)
     const data = await fetchJsonFromBackend(request, url)
     const items = data?.items || []
     allItems.push(...items)

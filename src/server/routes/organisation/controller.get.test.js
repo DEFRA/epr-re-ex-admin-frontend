@@ -81,7 +81,9 @@ describe('organisation GET controller - Unit Tests - Flash message handling', ()
 
     fetchJsonFromBackend.mockResolvedValue(mockOrgData)
     mockRequest.yar.get.mockImplementation((key) => {
-      if (key === 'errorList') return mockErrorList
+      if (key === 'errorList') {
+        return mockErrorList
+      }
       return null
     })
 
@@ -103,7 +105,9 @@ describe('organisation GET controller - Unit Tests - Flash message handling', ()
 
     fetchJsonFromBackend.mockResolvedValue(mockOrgData)
     mockRequest.yar.get.mockImplementation((key) => {
-      if (key === 'success') return true
+      if (key === 'success') {
+        return true
+      }
       return null
     })
 
@@ -127,8 +131,12 @@ describe('organisation GET controller - Unit Tests - Flash message handling', ()
 
     fetchJsonFromBackend.mockResolvedValue(mockOrgData)
     mockRequest.yar.get.mockImplementation((key) => {
-      if (key === 'errorList') return mockErrorList
-      if (key === 'success') return true
+      if (key === 'errorList') {
+        return mockErrorList
+      }
+      if (key === 'success') {
+        return true
+      }
       return null
     })
 

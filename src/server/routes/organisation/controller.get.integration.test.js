@@ -50,7 +50,7 @@ describe('organisation GET controller', () => {
 
   describe('When user is authenticated', () => {
     beforeEach(() => {
-      getUserSession.mockReturnValue(mockUserSession)
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
     })
 
     test('Should return OK and render organisation details', async () => {

@@ -24,6 +24,8 @@ const mockPrn = {
   wasteProcessingType: 'reprocessor'
 }
 
+const mockFetchJsonFromBackend = vi.mocked(fetchJsonFromBackend)
+
 describe('prn-activity scoped download controller', () => {
   let request
   let h
@@ -48,8 +50,8 @@ describe('prn-activity scoped download controller', () => {
     }
   })
 
-  test('Should fetch PRNs filtered by the accreditation id', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+  test('Should fetch the PRNs of the accreditation by its full path', async () => {
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [],
       hasMore: false
     })
@@ -58,12 +60,24 @@ describe('prn-activity scoped download controller', () => {
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
       request,
-      expect.stringContaining('accreditationId=acc-9')
+      expect.stringContaining(
+        '/v1/admin/organisations/org-1/registrations/reg-1/accreditations/acc-9/packaging-recycling-notes'
+      )
     )
   })
 
+  test('Should generate a headers-only CSV when the backend returns no payload', async () => {
+    mockFetchJsonFromBackend.mockResolvedValue(null)
+
+    await prnActivityScopedDownloadController.handler(request, h)
+
+    const csvContent = h.response.mock.calls[0][0]
+    expect(csvContent).toContain('PRN Number')
+    expect(csvContent).not.toContain('PRN-001')
+  })
+
   test('Should generate CSV and set an accreditation-scoped filename', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [mockPrn],
       hasMore: false
     })
@@ -83,9 +97,7 @@ describe('prn-activity scoped download controller', () => {
   })
 
   test('Should redirect to the registration overview with a flash error on failure', async () => {
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(
-      new Error('Network error')
-    )
+    mockFetchJsonFromBackend.mockRejectedValue(new Error('Network error'))
 
     const result = await prnActivityScopedDownloadController.handler(request, h)
 
@@ -100,7 +112,7 @@ describe('prn-activity scoped download controller', () => {
   })
 
   test('Should use the backend error message when available', async () => {
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(
+    mockFetchJsonFromBackend.mockRejectedValue(
       Boom.badRequest('Custom backend error message')
     )
 

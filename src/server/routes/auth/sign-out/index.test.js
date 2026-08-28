@@ -6,7 +6,11 @@ import { clearUserSession } from '#server/common/helpers/auth/clear-user-session
 import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
 import { getOidcConfig } from '#server/common/helpers/auth/get-oidc-config.js'
 import { auditSignOut } from '#server/common/helpers/auditing/index.js'
-import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
+import {
+  buildOidcConfig,
+  mockUserSession,
+  asRequest
+} from '#server/common/test-helpers/fixtures.js'
 
 vi.mock('#server/common/helpers/auth/clear-user-session.js')
 vi.mock('#server/common/helpers/auth/get-user-session.js')
@@ -14,9 +18,9 @@ vi.mock('#server/common/helpers/auth/get-oidc-config.js')
 vi.mock('#server/common/helpers/auditing/index.js')
 
 describe('#signOut route', () => {
-  const mockOidcConfig = {
+  const mockOidcConfig = buildOidcConfig({
     end_session_endpoint: 'https://example-oidc.test/oauth/logout'
-  }
+  })
 
   const mockLogger = {
     info: vi.fn()
@@ -32,9 +36,9 @@ describe('#signOut route', () => {
 
     mockToolkit.redirect.mockReturnValue('redirect-result')
     mockToolkit.view.mockReturnValue('view-result')
-    getOidcConfig.mockResolvedValue(mockOidcConfig)
-    clearUserSession.mockResolvedValue()
-    getUserSession.mockResolvedValue(mockUserSession)
+    vi.mocked(getOidcConfig).mockResolvedValue(mockOidcConfig)
+    vi.mocked(clearUserSession).mockResolvedValue()
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
   })
 
   afterEach(() => {
@@ -55,9 +59,9 @@ describe('#signOut route', () => {
   })
 
   test('Should redirect to home if there is no user session', async () => {
-    getUserSession.mockResolvedValue(null)
+    vi.mocked(getUserSession).mockResolvedValue(null)
 
-    const result = await signOutRoute.handler({}, mockToolkit)
+    const result = await signOutRoute.handler(asRequest({}), mockToolkit)
 
     expect(mockToolkit.redirect).toHaveBeenCalledWith('/')
     expect(result).toBe('redirect-result')
@@ -73,7 +77,10 @@ describe('#signOut route', () => {
       }
     }
 
-    const result = await signOutRoute.handler(mockRequest, mockToolkit)
+    const result = await signOutRoute.handler(
+      asRequest(mockRequest),
+      mockToolkit
+    )
 
     expect(clearUserSession).toHaveBeenCalledWith(mockRequest)
     expect(getOidcConfig).toHaveBeenCalledTimes(1)
@@ -103,7 +110,7 @@ describe('#signOut route', () => {
       }
     }
 
-    await signOutRoute.handler(mockRequest, mockToolkit)
+    await signOutRoute.handler(asRequest(mockRequest), mockToolkit)
 
     const expectedParams = new URLSearchParams()
     expectedParams.set('logout_hint', mockUserSession.email)
@@ -122,7 +129,7 @@ describe('#signOut route', () => {
   })
 
   test('Should prefer loginHint over email for logout_hint', async () => {
-    getUserSession.mockResolvedValue({
+    vi.mocked(getUserSession).mockResolvedValue({
       ...mockUserSession,
       loginHint: 'hint@example.test'
     })
@@ -132,7 +139,7 @@ describe('#signOut route', () => {
       auth: { isAuthenticated: true }
     }
 
-    await signOutRoute.handler(mockRequest, mockToolkit)
+    await signOutRoute.handler(asRequest(mockRequest), mockToolkit)
 
     expect(mockToolkit.view).toHaveBeenCalledWith(
       'routes/auth/sign-out/index',
@@ -143,7 +150,7 @@ describe('#signOut route', () => {
   })
 
   test('Should omit logout_hint when neither loginHint nor email available', async () => {
-    getUserSession.mockResolvedValue({
+    vi.mocked(getUserSession).mockResolvedValue({
       ...mockUserSession,
       loginHint: undefined,
       email: undefined
@@ -154,7 +161,7 @@ describe('#signOut route', () => {
       auth: { isAuthenticated: true }
     }
 
-    await signOutRoute.handler(mockRequest, mockToolkit)
+    await signOutRoute.handler(asRequest(mockRequest), mockToolkit)
 
     expect(mockToolkit.view).toHaveBeenCalledWith(
       'routes/auth/sign-out/index',
@@ -173,8 +180,10 @@ describe('#signOut route', () => {
 
     for (const endpoint of testEndpoints) {
       vi.clearAllMocks()
-      getOidcConfig.mockResolvedValue({ end_session_endpoint: endpoint })
-      clearUserSession.mockResolvedValue()
+      vi.mocked(getOidcConfig).mockResolvedValue(
+        buildOidcConfig({ end_session_endpoint: endpoint })
+      )
+      vi.mocked(clearUserSession).mockResolvedValue()
       mockToolkit.view.mockReturnValue('view-result')
 
       const mockRequest = {
@@ -184,7 +193,7 @@ describe('#signOut route', () => {
         }
       }
 
-      await signOutRoute.handler(mockRequest, mockToolkit)
+      await signOutRoute.handler(asRequest(mockRequest), mockToolkit)
 
       const expectedParams = new URLSearchParams()
       expectedParams.set('logout_hint', mockUserSession.email)
@@ -205,11 +214,11 @@ describe('#signOut route', () => {
 
   test('Should handle getOidcConfig errors', async () => {
     const error = new Error('Failed to get OIDC config')
-    getOidcConfig.mockRejectedValue(error)
+    vi.mocked(getOidcConfig).mockRejectedValue(error)
 
-    await expect(signOutRoute.handler({}, mockToolkit)).rejects.toThrow(
-      'Failed to get OIDC config'
-    )
+    await expect(
+      signOutRoute.handler(asRequest({}), mockToolkit)
+    ).rejects.toThrow('Failed to get OIDC config')
 
     expect(clearUserSession).not.toHaveBeenCalledWith()
     expect(mockToolkit.view).not.toHaveBeenCalled()
@@ -217,7 +226,7 @@ describe('#signOut route', () => {
 
   test('Should handle clearUserSession errors', async () => {
     const error = new Error('Failed to clear session')
-    clearUserSession.mockImplementation(() => {
+    vi.mocked(clearUserSession).mockImplementation(() => {
       throw error
     })
 
@@ -229,7 +238,7 @@ describe('#signOut route', () => {
     }
 
     await expect(
-      signOutRoute.handler(mockRequest, mockToolkit)
+      signOutRoute.handler(asRequest(mockRequest), mockToolkit)
     ).rejects.toThrow('Failed to clear session')
 
     expect(mockToolkit.view).not.toHaveBeenCalled()
@@ -238,11 +247,11 @@ describe('#signOut route', () => {
   test('Should call functions in correct order for authenticated user', async () => {
     const callOrder = []
 
-    clearUserSession.mockImplementation(async () => {
+    vi.mocked(clearUserSession).mockImplementation(async () => {
       callOrder.push('clearUserSession')
     })
 
-    getOidcConfig.mockImplementation(async () => {
+    vi.mocked(getOidcConfig).mockImplementation(async () => {
       callOrder.push('getOidcConfig')
       return mockOidcConfig
     })
@@ -259,13 +268,15 @@ describe('#signOut route', () => {
       }
     }
 
-    await signOutRoute.handler(mockRequest, mockToolkit)
+    await signOutRoute.handler(asRequest(mockRequest), mockToolkit)
 
     expect(callOrder).toEqual(['getOidcConfig', 'clearUserSession', 'view'])
   })
 
   test('Should handle missing end_session_endpoint in OIDC config', async () => {
-    getOidcConfig.mockResolvedValue({})
+    vi.mocked(getOidcConfig).mockResolvedValue(
+      buildOidcConfig({ end_session_endpoint: undefined })
+    )
 
     const mockRequest = {
       logger: mockLogger,
@@ -274,7 +285,7 @@ describe('#signOut route', () => {
       }
     }
 
-    await signOutRoute.handler(mockRequest, mockToolkit)
+    await signOutRoute.handler(asRequest(mockRequest), mockToolkit)
 
     const expectedParams = new URLSearchParams()
     expectedParams.set('logout_hint', mockUserSession.email)
@@ -300,15 +311,15 @@ describe('#signOut route', () => {
       }
     }
 
-    await signOutRoute.handler(mockRequest, mockToolkit)
+    await signOutRoute.handler(asRequest(mockRequest), mockToolkit)
 
     expect(auditSignOut).toHaveBeenCalledWith(mockUserSession)
   })
 
   test('Should not call auditSignOut when no user session', async () => {
-    getUserSession.mockResolvedValue(null)
+    vi.mocked(getUserSession).mockResolvedValue(null)
 
-    await signOutRoute.handler({}, mockToolkit)
+    await signOutRoute.handler(asRequest({}), mockToolkit)
 
     expect(auditSignOut).not.toHaveBeenCalled()
   })
@@ -321,7 +332,7 @@ describe('#signOut route', () => {
       }
     }
 
-    await signOutRoute.handler(mockRequest, mockToolkit)
+    await signOutRoute.handler(asRequest(mockRequest), mockToolkit)
 
     expect(mockLogger.info).toHaveBeenCalledWith({
       message: 'User signed out',

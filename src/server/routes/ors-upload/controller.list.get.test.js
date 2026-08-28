@@ -15,6 +15,8 @@ vi.mock('#server/common/helpers/logging/logger.js', () => ({
   }))
 }))
 
+const mockFetchJsonFromBackend = vi.mocked(fetchJsonFromBackend)
+
 describe('orsListGetController', () => {
   let mockRequest
   let mockH
@@ -39,7 +41,7 @@ describe('orsListGetController', () => {
   })
 
   test('loads ORS data and maps null values for display', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       rows: [
         {
           orsId: '001',
@@ -165,7 +167,7 @@ describe('orsListGetController', () => {
       registrationNumber: ' REG-123 '
     }
 
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       rows: [{ orsId: '003', registrationNumber: 'REG-123' }],
       pagination: {
         page: 2,
@@ -210,7 +212,7 @@ describe('orsListGetController', () => {
   })
 
   test('returns empty rows when backend returns no values', async () => {
-    fetchJsonFromBackend.mockResolvedValue(undefined)
+    mockFetchJsonFromBackend.mockResolvedValue(undefined)
 
     await orsListGetController.handler(mockRequest, mockH)
 
@@ -226,7 +228,7 @@ describe('orsListGetController', () => {
   })
 
   test('returns empty rows when backend returns non-array payload', async () => {
-    fetchJsonFromBackend.mockResolvedValue(null)
+    mockFetchJsonFromBackend.mockResolvedValue(null)
 
     await orsListGetController.handler(mockRequest, mockH)
 
@@ -247,7 +249,7 @@ describe('orsListGetController', () => {
       pageSize: 'invalid'
     }
 
-    fetchJsonFromBackend.mockResolvedValue([
+    mockFetchJsonFromBackend.mockResolvedValue([
       {
         orsId: '010'
       }
@@ -289,7 +291,7 @@ describe('orsListGetController', () => {
   })
 
   test('returns empty rows for non-array rows payload in object response', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       rows: {},
       pagination: {
         page: 1,
@@ -315,7 +317,7 @@ describe('orsListGetController', () => {
   })
 
   test('supports legacy empty array payloads with zero total pages', async () => {
-    fetchJsonFromBackend.mockResolvedValue([])
+    mockFetchJsonFromBackend.mockResolvedValue([])
 
     await orsListGetController.handler(mockRequest, mockH)
 
@@ -336,7 +338,7 @@ describe('orsListGetController', () => {
       pageSize: '2'
     }
 
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       rows: [{ orsId: '002' }],
       pagination: {
         page: 2,
@@ -408,7 +410,7 @@ describe('orsListGetController', () => {
   })
 
   test('builds numbered pagination items for each page', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       rows: [{ orsId: '001' }],
       pagination: {
         page: 1,
@@ -477,7 +479,7 @@ describe('orsListGetController', () => {
       pageSize: '10'
     }
 
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       rows: [{ orsId: '006' }],
       pagination: {
         page: 6,
@@ -565,7 +567,7 @@ describe('orsListGetController', () => {
       pageSize: '2'
     }
 
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       rows: [{ orsId: '003' }],
       pagination: {
         page: 3,
@@ -630,7 +632,7 @@ describe('orsListGetController', () => {
 
   test('handles backend failure and renders error message', async () => {
     const error = new Error('Backend unavailable')
-    fetchJsonFromBackend.mockRejectedValue(error)
+    mockFetchJsonFromBackend.mockRejectedValue(error)
 
     await orsListGetController.handler(mockRequest, mockH)
 

@@ -7,6 +7,8 @@ vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
 }))
 
+const mockFetchJsonFromBackend = vi.mocked(fetchJsonFromBackend)
+
 describe('prn-tonnage POST controller', () => {
   let mockRequest
   let mockH
@@ -32,15 +34,19 @@ describe('prn-tonnage POST controller', () => {
   })
 
   test('Should generate CSV with correct headers and formatting', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-02-20T14:30:00.000Z',
       rows: [
         {
           organisationName: 'Acme Recycling',
-          organisationId: 'ORG001',
+          orgId: 'ORG001',
+          registrationNumber: 'REG-100',
+          registrationType: 'EXPORTER',
           accreditationNumber: 'ACC-100',
           material: 'aluminium',
           tonnageBand: 'up_to_500',
+          wasteBalance: 4321.4,
+          availableWasteBalance: 4221.6,
           awaitingAuthorisationTonnage: 100,
           awaitingAcceptanceTonnage: 20,
           awaitingCancellationTonnage: 2,
@@ -61,11 +67,12 @@ describe('prn-tonnage POST controller', () => {
       'PRN tonnage',
       '',
       '"Tonnage of PRNs per accreditation, broken down by current PRN status. Includes awaiting authorisation, awaiting acceptance, awaiting cancellation, accepted and cancelled."',
+      'Waste balance is the waste an accreditation holds after the PRNs it has issued. Available waste balance also deducts PRNs awaiting authorisation.',
       '',
       'Data generated at: 20 February 2026 at 2:30pm',
       '',
-      'Organisation Name,Organisation ID,Accreditation Number,Material,Tonnage Band,Awaiting authorisation,Awaiting acceptance,Awaiting cancellation,Accepted,Cancelled',
-      'Acme Recycling,ORG001,ACC-100,Aluminium,Up to 500 tonnes,100,20,2,10,1'
+      'Organisation Name,Organisation ID,Registration Number,Registration Type,Accreditation Number,Material,Tonnage Band,Waste balance,Available waste balance,Awaiting authorisation,Awaiting acceptance,Awaiting cancellation,Accepted,Cancelled',
+      'Acme Recycling,ORG001,REG-100,Exporter,ACC-100,Aluminium,Up to 500 tonnes,4321,4222,100,20,2,10,1'
     ].join('\n')
 
     expect(mockH.response).toHaveBeenCalledWith(expectedCsv)
@@ -77,7 +84,7 @@ describe('prn-tonnage POST controller', () => {
   })
 
   test('Should handle empty data rows', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-02-20T12:00:00.000Z',
       rows: []
     })
@@ -87,15 +94,13 @@ describe('prn-tonnage POST controller', () => {
     const csvContent = mockH.response.mock.calls[0][0]
     expect(csvContent).toContain('PRN tonnage')
     expect(csvContent).toContain(
-      'Organisation Name,Organisation ID,Accreditation Number,Material,Tonnage Band,Awaiting authorisation,Awaiting acceptance,Awaiting cancellation,Accepted,Cancelled'
+      'Organisation Name,Organisation ID,Registration Number,Registration Type,Accreditation Number,Material,Tonnage Band,Waste balance,Available waste balance,Awaiting authorisation,Awaiting acceptance,Awaiting cancellation,Accepted,Cancelled'
     )
     expect(csvContent).not.toContain('"Acme Recycling"')
   })
 
   test('Should redirect with default error message on failure', async () => {
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(
-      new Error('Network error')
-    )
+    mockFetchJsonFromBackend.mockRejectedValue(new Error('Network error'))
 
     const result = await prnTonnagePostController.handler(mockRequest, mockH)
 
@@ -109,7 +114,7 @@ describe('prn-tonnage POST controller', () => {
 
   test('Should use error message from backend when available', async () => {
     const error = Boom.badRequest('Custom backend error message')
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
+    mockFetchJsonFromBackend.mockRejectedValue(error)
 
     await prnTonnagePostController.handler(mockRequest, mockH)
 

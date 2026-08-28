@@ -29,9 +29,16 @@
           Download all as CSV
         </a>
 
+        {% set showActionColumn = FEATURE_FLAGS.prnAdminCancellation and SCOPES.adminWrite in scopes %}
+
         {% set tableRows = [] %}
         {% for prn in prns %}
           {% set statusCell = { html: govukTag({ text: prn.status | replace("_", " ") }) } %}
+
+          {% set actionCell = { html: '' } %}
+          {% if showActionColumn and prn.regulatorCancellable %}
+            {% set actionCell = { html: '<a class="govuk-link" href="' + prn.cancelConfirmUrl + '">Cancel<span class="govuk-visually-hidden"> PRN ' + prn.prnNumber + '</span></a>' } %}
+          {% endif %}
 
           {% set row = [
             { text: prn.prnNumber },
@@ -50,29 +57,37 @@
             { text: prn.organisationName },
             { text: prn.wasteProcessingType }
           ] %}
+          {% if showActionColumn %}
+            {% set row = row.concat([actionCell]) %}
+          {% endif %}
           {% set tableRows = tableRows.concat([row]) %}
         {% endfor %}
+
+        {% set tableHead = [
+          { text: "PRN Number" },
+          { text: "Status" },
+          { text: "Issued To" },
+          { text: "Tonnage" },
+          { text: "Material" },
+          { text: "Process" },
+          { text: "December Waste" },
+          { text: "Issued Date" },
+          { text: "Issued By" },
+          { text: "Position" },
+          { text: "Accreditation Number" },
+          { text: "Accreditation Year" },
+          { text: "Submitted To Regulator" },
+          { text: "Organisation" },
+          { text: "Waste Processing Type" }
+        ] %}
+        {% if showActionColumn %}
+          {% set tableHead = tableHead.concat([{ text: "Action" }]) %}
+        {% endif %}
 
         {{ govukTable({
           captionClasses: "govuk-table__caption--m",
           firstCellIsHeader: true,
-          head: [
-            { text: "PRN Number" },
-            { text: "Status" },
-            { text: "Issued To" },
-            { text: "Tonnage" },
-            { text: "Material" },
-            { text: "Process" },
-            { text: "December Waste" },
-            { text: "Issued Date" },
-            { text: "Issued By" },
-            { text: "Position" },
-            { text: "Accreditation Number" },
-            { text: "Accreditation Year" },
-            { text: "Submitted To Regulator" },
-            { text: "Organisation" },
-            { text: "Waste Processing Type" }
-          ],
+          head: tableHead,
           rows: tableRows
         }) }}
 

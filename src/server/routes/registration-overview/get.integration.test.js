@@ -92,6 +92,7 @@ describe('#registrationOverviewController', () => {
         startDate: '2026-01-01',
         endDate: '2026-01-31',
         dueDate: '2026-02-20',
+        periodStatus: 'ready_to_submit',
         report: {
           id: 'b41148de-8a76-4214-b68d-4b786400fb90',
           status: 'ready_to_submit',
@@ -105,6 +106,7 @@ describe('#registrationOverviewController', () => {
         startDate: '2026-02-01',
         endDate: '2026-02-28',
         dueDate: '2026-03-20',
+        periodStatus: 'due',
         report: null
       }
     ]
@@ -120,11 +122,115 @@ describe('#registrationOverviewController', () => {
         startDate: '2026-01-01',
         endDate: '2026-01-31',
         dueDate: '2026-02-20',
+        periodStatus: 'submitted',
         report: {
           id: 'b41148de-8a76-4214-b68d-4b786400fb90',
           status: 'submitted',
           submissionNumber: 1
         }
+      }
+    ]
+  }
+
+  const mockCalendarWithHistory = {
+    cadence: 'monthly',
+    reportingPeriods: [
+      {
+        year: 2026,
+        period: 1,
+        submissionNumber: 1,
+        startDate: '2026-01-01',
+        endDate: '2026-01-31',
+        dueDate: '2026-02-20',
+        periodStatus: 'submitted',
+        report: {
+          id: 'b41148de-8a76-4214-b68d-4b786400fb90',
+          status: 'submitted',
+          submissionNumber: 1,
+          submittedAt: '2026-02-10T09:00:00.000Z',
+          submittedBy: 'Alice Regulator'
+        }
+      },
+      {
+        year: 2026,
+        period: 1,
+        submissionNumber: 2,
+        startDate: '2026-01-01',
+        endDate: '2026-01-31',
+        dueDate: '2026-02-20',
+        periodStatus: 'submitted',
+        report: {
+          id: 'c52259ef-9b87-4325-c79e-5c897511gc01',
+          status: 'submitted',
+          submissionNumber: 2,
+          submittedAt: '2026-03-05T09:00:00.000Z',
+          submittedBy: 'Bob Regulator'
+        }
+      }
+    ]
+  }
+
+  const mockCalendarWithSkeleton = {
+    cadence: 'monthly',
+    reportingPeriods: [
+      {
+        year: 2026,
+        period: 1,
+        submissionNumber: 1,
+        startDate: '2026-01-01',
+        endDate: '2026-01-31',
+        dueDate: '2026-02-20',
+        periodStatus: 'submitted',
+        report: {
+          id: 'b41148de-8a76-4214-b68d-4b786400fb90',
+          status: 'submitted',
+          submissionNumber: 1,
+          submittedAt: '2026-02-10T09:00:00.000Z',
+          submittedBy: 'Alice Regulator'
+        }
+      },
+      {
+        year: 2026,
+        period: 1,
+        submissionNumber: 2,
+        startDate: '2026-01-01',
+        endDate: '2026-01-31',
+        dueDate: '2026-02-20',
+        periodStatus: 'requires_resubmission',
+        report: null
+      }
+    ]
+  }
+
+  const mockCalendarWithResubmissionDraft = {
+    cadence: 'monthly',
+    reportingPeriods: [
+      mockCalendarWithSkeleton.reportingPeriods[0],
+      {
+        ...mockCalendarWithSkeleton.reportingPeriods[1],
+        report: {
+          id: 'd63360fa-0c98-4436-d80f-6d908622hd12',
+          status: 'in_progress',
+          submissionNumber: 2,
+          submittedAt: null,
+          submittedBy: null
+        }
+      }
+    ]
+  }
+
+  const mockCalendarNotYetEnded = {
+    cadence: 'monthly',
+    reportingPeriods: [
+      {
+        year: 2026,
+        period: 1,
+        submissionNumber: 1,
+        startDate: '2026-01-01',
+        endDate: '2026-01-31',
+        dueDate: '2026-02-20',
+        periodStatus: null,
+        report: null
       }
     ]
   }
@@ -159,12 +265,19 @@ describe('#registrationOverviewController', () => {
 
   const getDataRows = (table) => getAllByRole(table, 'row').slice(1)
 
-  const getSummaryRowValue = (container, label) => {
+  const getSummaryRow = (container, label) => {
     const term = getByText(container, label, { selector: 'dt' })
-    const row = /** @type {HTMLElement} */ (
-      term.closest('.govuk-summary-list__row')
+    return /** @type {HTMLElement} */ (term.closest('.govuk-summary-list__row'))
+  }
+
+  const getSummaryRowValue = (container, label) => {
+    const row = getSummaryRow(container, label)
+    // A row with actions renders a second `<dd>` (the actions cell), which
+    // also has the implicit ARIA role "definition" — so `getByRole` alone is
+    // ambiguous. Scope to the value cell specifically.
+    return /** @type {HTMLElement} */ (
+      row.querySelector('.govuk-summary-list__value')
     )
-    return within(row).getByRole('definition')
   }
 
   const useMockBackend = (
@@ -486,13 +599,13 @@ describe('#registrationOverviewController', () => {
         getAllByRole(reportsTable, 'columnheader').map((h) =>
           h.textContent?.trim()
         )
-      ).toEqual(['Period', 'Due', 'Status', 'Actions'])
+      ).toEqual(['Period', 'Submission', 'Due', 'Status', 'Actions'])
 
       const [firstRow, secondRow] = getDataRows(reportsTable)
 
       expect(within(firstRow).getByText('January')).toBeInTheDocument()
       expect(within(firstRow).getByText('2026-02-20')).toBeInTheDocument()
-      expect(within(firstRow).getByText('ready_to_submit')).toHaveClass(
+      expect(within(firstRow).getByText('Ready to submit')).toHaveClass(
         'govuk-tag'
       )
       expect(
@@ -504,6 +617,169 @@ describe('#registrationOverviewController', () => {
 
       expect(within(secondRow).getByText('Due')).toHaveClass('govuk-tag')
       expect(within(secondRow).queryByRole('link')).toBeNull()
+    })
+
+    test('Should request the reports calendar with the expand=submissions arg', async () => {
+      /** @type {URL | undefined} */
+      let calendarRequestUrl
+      useMockBackend()
+      mswServer.use(
+        http.get(
+          `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
+          ({ request }) => {
+            calendarRequestUrl = new URL(request.url)
+            return HttpResponse.json(mockCalendar)
+          }
+        )
+      )
+
+      await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      expect(calendarRequestUrl?.searchParams.get('expand')).toBe('submissions')
+    })
+
+    test('Should render every submission for a period as its own reachable row', async () => {
+      useMockBackend()
+      mswServer.use(
+        http.get(
+          `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
+          () => HttpResponse.json(mockCalendarWithHistory)
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+      const dataRows = getDataRows(getReportsTable(body))
+
+      expect(dataRows).toHaveLength(2)
+      expect(getAllByRole(dataRows[0], 'cell')[1]).toHaveTextContent('1')
+      expect(getAllByRole(dataRows[1], 'cell')[1]).toHaveTextContent('2')
+      expect(
+        within(dataRows[0]).getByRole('link', { name: 'View' })
+      ).toHaveAttribute(
+        'href',
+        `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1`
+      )
+      expect(
+        within(dataRows[1]).getByRole('link', { name: 'View' })
+      ).toHaveAttribute(
+        'href',
+        `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/2`
+      )
+    })
+
+    test('Should show requires_resubmission status for a skeleton resubmission row', async () => {
+      useMockBackend()
+      mswServer.use(
+        http.get(
+          `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
+          () => HttpResponse.json(mockCalendarWithSkeleton)
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+      const [submittedRow, skeletonRow] = getDataRows(getReportsTable(body))
+
+      expect(getAllByRole(submittedRow, 'cell')[1]).toHaveTextContent('1')
+      expect(getAllByRole(skeletonRow, 'cell')[1].textContent?.trim()).toBe('')
+      expect(
+        within(skeletonRow).getByText('Requires resubmission')
+      ).toHaveClass('govuk-tag', 'app-status-tag')
+    })
+
+    it('should keep the requires-resubmission status once the draft is in flight', async () => {
+      useMockBackend(mockOverview, mockCalendarWithResubmissionDraft)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+      const [submittedRow, draftRow] = getDataRows(getReportsTable(body))
+
+      expect(within(submittedRow).getByText('Submitted')).toBeInTheDocument()
+      expect(getAllByRole(submittedRow, 'cell')[1]).toHaveTextContent('1')
+      expect(within(draftRow).getByText('Requires resubmission')).toHaveClass(
+        'govuk-tag',
+        'app-status-tag'
+      )
+      expect(getAllByRole(draftRow, 'cell')[1]).toHaveTextContent('2')
+      expect(
+        within(draftRow).getByRole('link', { name: 'View' })
+      ).toBeInTheDocument()
+    })
+
+    it('should fall back to the raw status when it has no label', async () => {
+      useMockBackend()
+      mswServer.use(
+        http.get(
+          `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
+          () =>
+            HttpResponse.json({
+              cadence: 'monthly',
+              reportingPeriods: [
+                {
+                  ...mockCalendarNotYetEnded.reportingPeriods[0],
+                  periodStatus: 'awaiting_the_unknown'
+                }
+              ]
+            })
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+      const [onlyRow] = getDataRows(getReportsTable(body))
+
+      expect(within(onlyRow).getByText('awaiting_the_unknown')).toHaveClass(
+        'govuk-tag'
+      )
+    })
+
+    test('Should render a blank status cell when periodStatus is null and there is no report', async () => {
+      useMockBackend()
+      mswServer.use(
+        http.get(
+          `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
+          () => HttpResponse.json(mockCalendarNotYetEnded)
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+      const [onlyRow] = getDataRows(getReportsTable(body))
+      const statusCell = getAllByRole(onlyRow, 'cell')[3]
+
+      expect(getAllByRole(onlyRow, 'cell')[1].textContent?.trim()).toBe('')
+      expect(statusCell.querySelector('.govuk-tag')).toBeNull()
+      expect(statusCell.textContent?.trim()).toBe('')
     })
 
     test('Should render the Summary logs table with column headers when summary logs exist', async () => {
@@ -552,6 +828,28 @@ describe('#registrationOverviewController', () => {
       ).toHaveAttribute(
         'href',
         `/system-logs/download/${organisationId}/${registrationId}/${mockSubmittedSummaryLog.summaryLogId}`
+      )
+    })
+
+    test('Should render a View data link to the summary log document page', async () => {
+      useMockBackend(mockOverview, mockCalendar, {
+        summaryLogs: [mockSubmittedSummaryLog]
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+      const [firstRow] = getDataRows(getSummaryLogsTable(body))
+
+      expect(
+        within(firstRow).getByRole('link', { name: 'View data' })
+      ).toHaveAttribute(
+        'href',
+        `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${mockSubmittedSummaryLog.summaryLogId}`
       )
     })
 
@@ -669,6 +967,14 @@ describe('#registrationOverviewController', () => {
           () => {
             throw HttpResponse.text('', { status: 500 })
           }
+        ),
+        http.get(
+          `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
+          () => HttpResponse.json(mockCalendar)
+        ),
+        http.get(
+          `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs`,
+          () => HttpResponse.json({ summaryLogs: [] })
         )
       )
 
@@ -833,6 +1139,904 @@ describe('#registrationOverviewController', () => {
         expect(
           within(getReportsTable(body)).queryByRole('link', {
             name: 'Unsubmit'
+          })
+        ).toBeNull()
+      })
+
+      test('Should render the Unsubmit link only on the current submission, not a superseded one', async () => {
+        useMockBackend(mockOverview, mockCalendarWithHistory)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const [supersededRow, currentRow] = getDataRows(getReportsTable(body))
+
+        expect(
+          within(supersededRow).queryByRole('link', { name: 'Unsubmit' })
+        ).toBeNull()
+        expect(
+          within(currentRow).getByRole('link', { name: 'Unsubmit' })
+        ).toHaveAttribute(
+          'href',
+          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/2/unsubmit/confirm`
+        )
+      })
+
+      it.each([
+        {
+          state: 'before the resubmission draft exists',
+          calendar: mockCalendarWithSkeleton
+        },
+        {
+          state: 'while the resubmission draft is in flight',
+          calendar: mockCalendarWithResubmissionDraft
+        }
+      ])(
+        'should not render the Unsubmit link on a report flagged for resubmission, $state',
+        async ({ calendar }) => {
+          useMockBackend(mockOverview, calendar)
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url,
+            auth: { strategy: 'session', credentials: mockUserSession }
+          })
+
+          const body = renderPage(result)
+
+          expect(
+            within(getReportsTable(body)).queryByRole('link', {
+              name: 'Unsubmit'
+            })
+          ).toBeNull()
+        }
+      )
+    })
+
+    describe('Suspend link visibility', () => {
+      afterEach(() => {
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+      })
+
+      test('Should render the Suspend action on the Accreditation status row for an approved accreditation when the user has admin.write scope', async () => {
+        useMockBackend()
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+        const suspendLink = within(statusRow).getByRole('link', {
+          name: /suspend accreditation/i
+        })
+
+        expect(suspendLink).toHaveAttribute(
+          'href',
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/suspend/confirm`
+        )
+      })
+
+      test('Should not render the Suspend action when the accreditation status is not approved', async () => {
+        useMockBackend({
+          ...mockOverview,
+          registrations: [
+            {
+              ...mockRegistration,
+              accreditation:
+                /** @type {{ id: string, accreditationNumber: string, status: string }} */ ({
+                  ...mockRegistration.accreditation,
+                  status: 'suspended'
+                })
+            }
+          ]
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+
+        expect(
+          within(statusRow).queryByRole('link', { name: /suspend/i })
+        ).toBeNull()
+      })
+
+      test('Should not render the Suspend action when the registration has no accreditation', async () => {
+        useMockBackend({
+          ...mockOverview,
+          registrations: [{ ...mockRegistration, accreditation: null }]
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+
+        expect(queryByText(body, 'Suspend')).toBeNull()
+      })
+
+      test('Should not render the Suspend action when the user lacks admin.write scope', async () => {
+        const readOnlySession = {
+          ...mockUserSession,
+          scopes: ['admin.read']
+        }
+        vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
+        useMockBackend()
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: readOnlySession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+
+        expect(
+          within(statusRow).queryByRole('link', { name: /suspend/i })
+        ).toBeNull()
+      })
+    })
+
+    describe('Reapprove link visibility', () => {
+      const withSuspendedAccreditation = () => ({
+        ...mockOverview,
+        registrations: [
+          {
+            ...mockRegistration,
+            accreditation:
+              /** @type {{ id: string, accreditationNumber: string, status: string }} */ ({
+                ...mockRegistration.accreditation,
+                status: 'suspended'
+              })
+          }
+        ]
+      })
+
+      afterEach(() => {
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+      })
+
+      test('Should render the Reapprove action on the Accreditation status row for a suspended accreditation when the user has admin.write scope', async () => {
+        useMockBackend(withSuspendedAccreditation())
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+        const reapproveLink = within(statusRow).getByRole('link', {
+          name: /reapprove accreditation/i
+        })
+
+        expect(reapproveLink).toHaveAttribute(
+          'href',
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/reapprove/confirm`
+        )
+      })
+
+      test('Should not render the Reapprove action when the accreditation status is not suspended', async () => {
+        useMockBackend()
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+
+        expect(
+          within(statusRow).queryByRole('link', { name: /reapprove/i })
+        ).toBeNull()
+      })
+
+      test('Should not render the Reapprove action when the user lacks admin.write scope', async () => {
+        const readOnlySession = {
+          ...mockUserSession,
+          scopes: ['admin.read']
+        }
+        vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
+        useMockBackend(withSuspendedAccreditation())
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: readOnlySession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+
+        expect(
+          within(statusRow).queryByRole('link', { name: /reapprove/i })
+        ).toBeNull()
+      })
+    })
+
+    describe('Cancel accreditation link visibility', () => {
+      const withSuspendedAccreditation = () => ({
+        ...mockOverview,
+        registrations: [
+          {
+            ...mockRegistration,
+            accreditation:
+              /** @type {{ id: string, accreditationNumber: string, status: string }} */ ({
+                ...mockRegistration.accreditation,
+                status: 'suspended'
+              })
+          }
+        ]
+      })
+
+      afterEach(() => {
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+      })
+
+      test('Should render the Cancel action on the Accreditation status row for a suspended accreditation when the user has admin.write scope', async () => {
+        useMockBackend(withSuspendedAccreditation())
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+        const cancelLink = within(statusRow).getByRole('link', {
+          name: /cancel accreditation/i
+        })
+
+        expect(cancelLink).toHaveAttribute(
+          'href',
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/cancel/confirm`
+        )
+      })
+
+      test('Should not render the Cancel action when the accreditation status is not suspended', async () => {
+        useMockBackend()
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+
+        expect(
+          within(statusRow).queryByRole('link', { name: /cancel/i })
+        ).toBeNull()
+      })
+
+      test('Should not render the Cancel action when the user lacks admin.write scope', async () => {
+        const readOnlySession = {
+          ...mockUserSession,
+          scopes: ['admin.read']
+        }
+        vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
+        useMockBackend(withSuspendedAccreditation())
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: readOnlySession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+
+        expect(
+          within(statusRow).queryByRole('link', { name: /cancel/i })
+        ).toBeNull()
+      })
+    })
+
+    describe('Reinstate link visibility', () => {
+      const withCancelledAccreditation = () => ({
+        ...mockOverview,
+        registrations: [
+          {
+            ...mockRegistration,
+            accreditation:
+              /** @type {{ id: string, accreditationNumber: string, status: string }} */ ({
+                ...mockRegistration.accreditation,
+                status: 'cancelled'
+              })
+          }
+        ]
+      })
+
+      afterEach(() => {
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+      })
+
+      test('Should render the Reinstate action on the Accreditation status row for a cancelled accreditation when the user has admin.write scope', async () => {
+        useMockBackend(withCancelledAccreditation())
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+        const reinstateLink = within(statusRow).getByRole('link', {
+          name: /reinstate accreditation/i
+        })
+
+        expect(reinstateLink).toHaveAttribute(
+          'href',
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/reinstate/confirm`
+        )
+      })
+
+      test('Should not render the Reinstate action when the accreditation status is not cancelled', async () => {
+        useMockBackend()
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+
+        expect(
+          within(statusRow).queryByRole('link', { name: /reinstate/i })
+        ).toBeNull()
+      })
+
+      test('Should not render the Reinstate action when the user lacks admin.write scope', async () => {
+        const readOnlySession = {
+          ...mockUserSession,
+          scopes: ['admin.read']
+        }
+        vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
+        useMockBackend(withCancelledAccreditation())
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: readOnlySession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+
+        expect(
+          within(statusRow).queryByRole('link', { name: /reinstate/i })
+        ).toBeNull()
+      })
+    })
+
+    describe('Approve link visibility', () => {
+      const withCreatedAccreditation = () => ({
+        ...mockOverview,
+        registrations: [
+          {
+            ...mockRegistration,
+            accreditation:
+              /** @type {{ id: string, accreditationNumber: string, status: string }} */ ({
+                ...mockRegistration.accreditation,
+                status: 'created'
+              })
+          }
+        ]
+      })
+
+      afterEach(() => {
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+      })
+
+      test('Should render the Approve action on the Accreditation status row for a created accreditation when the user has admin.write scope', async () => {
+        useMockBackend(withCreatedAccreditation())
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+        const approveLink = within(statusRow).getByRole('link', {
+          name: /^approve accreditation$/i
+        })
+
+        expect(approveLink).toHaveAttribute(
+          'href',
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/approve/confirm`
+        )
+      })
+
+      test('Should not render the Approve action when the accreditation status is not created', async () => {
+        useMockBackend()
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+
+        expect(
+          within(statusRow).queryByRole('link', {
+            name: /^approve accreditation$/i
+          })
+        ).toBeNull()
+      })
+
+      test('Should not render the Approve action when the user lacks admin.write scope', async () => {
+        const readOnlySession = {
+          ...mockUserSession,
+          scopes: ['admin.read']
+        }
+        vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
+        useMockBackend(withCreatedAccreditation())
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: readOnlySession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+
+        expect(
+          within(statusRow).queryByRole('link', {
+            name: /^approve accreditation$/i
+          })
+        ).toBeNull()
+      })
+    })
+
+    describe.each([
+      {
+        action: 'Approve',
+        accreditationStatus: 'created',
+        href: 'approve/confirm'
+      },
+      {
+        action: 'Reinstate',
+        accreditationStatus: 'cancelled',
+        href: 'reinstate/confirm'
+      }
+    ])(
+      '$action accreditation gated on registration status (PAE-1800)',
+      ({ action, accreditationStatus, href }) => {
+        const linkName = new RegExp(`^${action} accreditation$`, 'i')
+        const withStatuses = (registrationStatus) => ({
+          ...mockOverview,
+          registrations: [
+            {
+              ...mockRegistration,
+              status: registrationStatus,
+              accreditation:
+                /** @type {{ id: string, accreditationNumber: string, status: string }} */ ({
+                  ...mockRegistration.accreditation,
+                  status: accreditationStatus
+                })
+            }
+          ]
+        })
+
+        afterEach(() => {
+          vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+        })
+
+        test(`Should render the ${action} action on the Accreditation status row when the registration is approved`, async () => {
+          useMockBackend(withStatuses('approved'))
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url,
+            auth: { strategy: 'session', credentials: mockUserSession }
+          })
+
+          const body = renderPage(result)
+          const statusRow = getSummaryRow(body, 'Accreditation status')
+          const link = within(statusRow).getByRole('link', { name: linkName })
+
+          expect(link).toHaveAttribute(
+            'href',
+            `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/${href}`
+          )
+        })
+
+        test(`Should not render the ${action} action when the registration is not approved`, async () => {
+          useMockBackend(withStatuses('cancelled'))
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url,
+            auth: { strategy: 'session', credentials: mockUserSession }
+          })
+
+          const body = renderPage(result)
+          const statusRow = getSummaryRow(body, 'Accreditation status')
+
+          expect(
+            within(statusRow).queryByRole('link', { name: linkName })
+          ).toBeNull()
+        })
+      }
+    )
+
+    describe('Reject accreditation link visibility when the registration is not approved (PAE-1800)', () => {
+      test('Should still render the Reject action on the Accreditation status row', async () => {
+        useMockBackend({
+          ...mockOverview,
+          registrations: [
+            {
+              ...mockRegistration,
+              status: 'created',
+              accreditation:
+                /** @type {{ id: string, accreditationNumber: string, status: string }} */ ({
+                  ...mockRegistration.accreditation,
+                  status: 'created'
+                })
+            }
+          ]
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+        const rejectLink = within(statusRow).getByRole('link', {
+          name: /^reject accreditation$/i
+        })
+
+        expect(rejectLink).toHaveAttribute(
+          'href',
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/reject/confirm`
+        )
+      })
+    })
+
+    describe('Approve registration link visibility', () => {
+      afterEach(() => {
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+      })
+
+      test('Should render the Approve action on the Status row for a created registration when the user has admin.write scope', async () => {
+        useMockBackend({
+          ...mockOverview,
+          registrations: [{ ...mockRegistration, status: 'created' }]
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Status')
+        const approveLink = within(statusRow).getByRole('link', {
+          name: /^approve registration$/i
+        })
+
+        expect(approveLink).toHaveAttribute(
+          'href',
+          `/organisations/${organisationId}/registrations/${registrationId}/approve/confirm`
+        )
+      })
+
+      test('Should not render the Approve action when the registration status is not created', async () => {
+        useMockBackend()
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Status')
+
+        expect(
+          within(statusRow).queryByRole('link', {
+            name: /^approve registration$/i
+          })
+        ).toBeNull()
+      })
+
+      test('Should not render the Approve action when the user lacks admin.write scope', async () => {
+        const readOnlySession = {
+          ...mockUserSession,
+          scopes: ['admin.read']
+        }
+        vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
+        useMockBackend({
+          ...mockOverview,
+          registrations: [{ ...mockRegistration, status: 'created' }]
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: readOnlySession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Status')
+
+        expect(
+          within(statusRow).queryByRole('link', {
+            name: /^approve registration$/i
+          })
+        ).toBeNull()
+      })
+    })
+
+    describe.each([
+      { action: 'Reject', status: 'created', href: 'reject/confirm' },
+      { action: 'Reopen', status: 'rejected', href: 'reopen/confirm' },
+      { action: 'Cancel', status: 'approved', href: 'cancel/confirm' },
+      { action: 'Reinstate', status: 'cancelled', href: 'reinstate/confirm' }
+    ])('$action registration link visibility', ({ action, status, href }) => {
+      const linkName = new RegExp(`^${action} registration$`, 'i')
+      const withRegistrationStatus = (regStatus) => ({
+        ...mockOverview,
+        registrations: [{ ...mockRegistration, status: regStatus }]
+      })
+
+      afterEach(() => {
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+      })
+
+      test(`Should render the ${action} action on the Status row for a ${status} registration when the user has admin.write scope`, async () => {
+        useMockBackend(withRegistrationStatus(status))
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Status')
+        const link = within(statusRow).getByRole('link', { name: linkName })
+
+        expect(link).toHaveAttribute(
+          'href',
+          `/organisations/${organisationId}/registrations/${registrationId}/${href}`
+        )
+      })
+
+      test(`Should not render the ${action} action when the registration status does not offer it`, async () => {
+        useMockBackend(
+          withRegistrationStatus(status === 'created' ? 'approved' : 'created')
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Status')
+
+        expect(
+          within(statusRow).queryByRole('link', { name: linkName })
+        ).toBeNull()
+      })
+
+      test(`Should not render the ${action} action when the user lacks admin.write scope`, async () => {
+        const readOnlySession = { ...mockUserSession, scopes: ['admin.read'] }
+        vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
+        useMockBackend(withRegistrationStatus(status))
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: readOnlySession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Status')
+
+        expect(
+          within(statusRow).queryByRole('link', { name: linkName })
+        ).toBeNull()
+      })
+    })
+
+    describe('Reject accreditation link visibility', () => {
+      const withCreatedAccreditation = () => ({
+        ...mockOverview,
+        registrations: [
+          {
+            ...mockRegistration,
+            accreditation:
+              /** @type {{ id: string, accreditationNumber: string, status: string }} */ ({
+                ...mockRegistration.accreditation,
+                status: 'created'
+              })
+          }
+        ]
+      })
+
+      afterEach(() => {
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+      })
+
+      test('Should render the Reject action on the Accreditation status row for a created accreditation when the user has admin.write scope', async () => {
+        useMockBackend(withCreatedAccreditation())
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+        const rejectLink = within(statusRow).getByRole('link', {
+          name: /^reject accreditation$/i
+        })
+
+        expect(rejectLink).toHaveAttribute(
+          'href',
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/reject/confirm`
+        )
+      })
+
+      test('Should not render the Reject action when the accreditation status is not created', async () => {
+        useMockBackend()
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+
+        expect(
+          within(statusRow).queryByRole('link', {
+            name: /^reject accreditation$/i
+          })
+        ).toBeNull()
+      })
+
+      test('Should not render the Reject action when the user lacks admin.write scope', async () => {
+        const readOnlySession = {
+          ...mockUserSession,
+          scopes: ['admin.read']
+        }
+        vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
+        useMockBackend(withCreatedAccreditation())
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: readOnlySession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+
+        expect(
+          within(statusRow).queryByRole('link', {
+            name: /^reject accreditation$/i
+          })
+        ).toBeNull()
+      })
+    })
+
+    describe('Reopen accreditation link visibility', () => {
+      const withRejectedAccreditation = () => ({
+        ...mockOverview,
+        registrations: [
+          {
+            ...mockRegistration,
+            accreditation:
+              /** @type {{ id: string, accreditationNumber: string, status: string }} */ ({
+                ...mockRegistration.accreditation,
+                status: 'rejected'
+              })
+          }
+        ]
+      })
+
+      afterEach(() => {
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+      })
+
+      test('Should render the Reopen action on the Accreditation status row for a rejected accreditation when the user has admin.write scope', async () => {
+        useMockBackend(withRejectedAccreditation())
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+        const reopenLink = within(statusRow).getByRole('link', {
+          name: /^reopen accreditation$/i
+        })
+
+        expect(reopenLink).toHaveAttribute(
+          'href',
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/reopen/confirm`
+        )
+      })
+
+      test('Should not render the Reopen action when the accreditation status is not rejected', async () => {
+        useMockBackend()
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+
+        expect(
+          within(statusRow).queryByRole('link', {
+            name: /^reopen accreditation$/i
+          })
+        ).toBeNull()
+      })
+
+      test('Should not render the Reopen action when the user lacks admin.write scope', async () => {
+        const readOnlySession = {
+          ...mockUserSession,
+          scopes: ['admin.read']
+        }
+        vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
+        useMockBackend(withRejectedAccreditation())
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: readOnlySession }
+        })
+
+        const body = renderPage(result)
+        const statusRow = getSummaryRow(body, 'Accreditation status')
+
+        expect(
+          within(statusRow).queryByRole('link', {
+            name: /^reopen accreditation$/i
           })
         ).toBeNull()
       })

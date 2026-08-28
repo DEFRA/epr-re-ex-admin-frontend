@@ -1,4 +1,6 @@
-import { fetchAllPrns, generateCsv } from './controller.download.js'
+import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { generateCsv } from './controller.download.js'
+import { buildAccreditationPrnApiUrl } from './controller.js'
 
 /**
  * Downloads PRN activity for a single accreditation as CSV. Triggered from the
@@ -9,8 +11,15 @@ export const prnActivityScopedDownloadController = {
     const { organisationId, registrationId, accreditationId } = request.params
 
     try {
-      const items = await fetchAllPrns(request, accreditationId)
-      const csv = await generateCsv(items)
+      const data = await fetchJsonFromBackend(
+        request,
+        buildAccreditationPrnApiUrl({
+          organisationId,
+          registrationId,
+          accreditationId
+        })
+      )
+      const csv = await generateCsv(data?.items || [])
 
       return h
         .response(csv)

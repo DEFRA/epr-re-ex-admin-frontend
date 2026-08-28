@@ -18,9 +18,15 @@ const buildOrg = (overrides = {}) => ({
   status: 'ACTIVE',
   statusHistory: [{ status: 'ACTIVE', updatedAt: '2025-10-01T00:00:00Z' }],
   companyDetails: {
-    name: 'Acme Ltd',
-    registrationNumber: '12345678'
+    name: 'Acme Ltd'
   },
+  registrations: [
+    { id: 'reg-1', registrationNumber: 'REG001', accreditationId: 'acc-1' }
+  ],
+  accreditations: [
+    { id: 'acc-1', accreditationNumber: 'ACC001' },
+    { id: 'acc-9', accreditationNumber: 'ACC444' }
+  ],
   submittedToRegulator: 'regulator-name',
   ...overrides
 })
@@ -67,7 +73,7 @@ describe('POST /organisations', () => {
   }
 
   const getCrumb = async () => {
-    getUserSession.mockReturnValue(mockUserSession)
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
     mswServer.use(
       http.get(`${config.get('eprBackendUrl')}/v1/organisations`, () =>
         HttpResponse.json(envelope([]))
@@ -101,7 +107,7 @@ describe('POST /organisations', () => {
     let crumb
 
     beforeEach(async () => {
-      getUserSession.mockReturnValue(mockUserSession)
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
       crumb = await getCrumb()
     })
 
@@ -225,8 +231,64 @@ describe('POST /organisations', () => {
         const { raw } = await submitSearch({ search: 'NoSuchOrg' })
 
         expect(raw).toContain('0 results found')
-        expect(raw).toContain('No organisations found matching')
-        expect(raw).toContain('NoSuchOrg')
+        expect(raw).toContain('No organisations found matching your search')
+      })
+    })
+
+    describe('searching by identifier', () => {
+      const allCriteria = {
+        search: 'Acme',
+        orgId: '100001',
+        registrationNumber: 'REG001',
+        registrationId: 'reg-1',
+        accreditationNumber: 'ACC001',
+        accreditationId: 'acc-1'
+      }
+
+      test('forwards every submitted criterion to the backend', async () => {
+        const calls = stubBackendResponse(
+          HttpResponse.json(envelope([buildOrg()]))
+        )
+
+        const { statusCode } = await submitSearch(allCriteria)
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(calls[0].query).toEqual({
+          ...allCriteria,
+          page: '1',
+          pageSize: '50'
+        })
+      })
+
+      test('echoes every submitted criterion back into the form', async () => {
+        stubBackendResponse(HttpResponse.json(envelope([buildOrg()])))
+
+        const { $ } = await submitSearch(allCriteria)
+
+        for (const [field, value] of Object.entries(allCriteria)) {
+          expect($(`input[name="${field}"]`).val()).toBe(value)
+        }
+      })
+
+      test('omits criteria left blank or whitespace-only', async () => {
+        const calls = stubBackendResponse(
+          HttpResponse.json(envelope([buildOrg()]))
+        )
+
+        await submitSearch({
+          search: '',
+          orgId: '  100001  ',
+          registrationNumber: '   ',
+          registrationId: '',
+          accreditationNumber: '',
+          accreditationId: ''
+        })
+
+        expect(calls[0].query).toEqual({
+          orgId: '100001',
+          page: '1',
+          pageSize: '50'
+        })
       })
     })
 

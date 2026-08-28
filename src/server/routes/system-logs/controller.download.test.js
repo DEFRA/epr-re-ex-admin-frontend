@@ -36,7 +36,7 @@ describe('system-log download controller', () => {
     const presignedUrl =
       'https://my-bucket.s3.eu-west-2.amazonaws.com/file.xlsx'
 
-    fetchRedirectFromBackend.mockResolvedValue(presignedUrl)
+    vi.mocked(fetchRedirectFromBackend).mockResolvedValue(presignedUrl)
     mswServer.use(
       http.get(
         presignedUrl,
@@ -59,7 +59,7 @@ describe('system-log download controller', () => {
       0x50, 0x4b, 0x03, 0x04, 0xff, 0xfe, 0x00, 0x80
     ])
 
-    fetchRedirectFromBackend.mockResolvedValue(presignedUrl)
+    vi.mocked(fetchRedirectFromBackend).mockResolvedValue(presignedUrl)
     mswServer.use(http.get(presignedUrl, () => new HttpResponse(binaryContent)))
 
     await systemLogDownloadController.handler(mockRequest, mockH)
@@ -81,7 +81,7 @@ describe('system-log download controller', () => {
     const presignedUrl = 'http://localhost:4566/bucket/file.xlsx'
     const binaryContent = new Uint8Array([0x50, 0x4b, 0x03, 0x04])
 
-    fetchRedirectFromBackend.mockResolvedValue(presignedUrl)
+    vi.mocked(fetchRedirectFromBackend).mockResolvedValue(presignedUrl)
     mswServer.use(http.get(presignedUrl, () => new HttpResponse(binaryContent)))
 
     await systemLogDownloadController.handler(mockRequest, mockH)
@@ -95,7 +95,7 @@ describe('system-log download controller', () => {
     const presignedUrl = 'http://floci:4566/bucket/file.xlsx'
     const binaryContent = new Uint8Array([0x50, 0x4b, 0x03, 0x04])
 
-    fetchRedirectFromBackend.mockResolvedValue(presignedUrl)
+    vi.mocked(fetchRedirectFromBackend).mockResolvedValue(presignedUrl)
     mswServer.use(http.get(presignedUrl, () => new HttpResponse(binaryContent)))
 
     await systemLogDownloadController.handler(mockRequest, mockH)
@@ -106,7 +106,7 @@ describe('system-log download controller', () => {
   })
 
   test('rejects invalid download URLs to prevent SSRF', async () => {
-    fetchRedirectFromBackend.mockResolvedValue(
+    vi.mocked(fetchRedirectFromBackend).mockResolvedValue(
       'https://evil-site.com/steal-data'
     )
 
@@ -119,7 +119,7 @@ describe('system-log download controller', () => {
     const presignedUrl =
       'https://my-bucket.s3.eu-west-2.amazonaws.com/file.xlsx'
 
-    fetchRedirectFromBackend.mockResolvedValue(presignedUrl)
+    vi.mocked(fetchRedirectFromBackend).mockResolvedValue(presignedUrl)
     mswServer.use(
       http.get(presignedUrl, () => new HttpResponse(null, { status: 500 }))
     )

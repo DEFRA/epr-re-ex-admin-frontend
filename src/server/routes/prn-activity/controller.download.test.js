@@ -26,6 +26,8 @@ const mockPrn = {
   wasteProcessingType: 'reprocessor'
 }
 
+const mockFetchJsonFromBackend = vi.mocked(fetchJsonFromBackend)
+
 describe('prn-activity download controller', () => {
   let mockRequest
   let mockH
@@ -51,7 +53,7 @@ describe('prn-activity download controller', () => {
   })
 
   test('Should fetch PRNs with correct statuses', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [],
       hasMore: false
     })
@@ -65,7 +67,7 @@ describe('prn-activity download controller', () => {
   })
 
   test('Should generate CSV with correct headers and data', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [mockPrn],
       hasMore: false
     })
@@ -86,7 +88,7 @@ describe('prn-activity download controller', () => {
   })
 
   test('Should set correct Content-Type and Content-Disposition headers', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [mockPrn],
       hasMore: false
     })
@@ -101,7 +103,7 @@ describe('prn-activity download controller', () => {
   })
 
   test('Should handle empty items', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [],
       hasMore: false
     })
@@ -115,7 +117,7 @@ describe('prn-activity download controller', () => {
   })
 
   test('Should handle null data from backend', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue(null)
+    mockFetchJsonFromBackend.mockResolvedValue(null)
 
     await prnActivityDownloadController.handler(mockRequest, mockH)
 
@@ -125,7 +127,7 @@ describe('prn-activity download controller', () => {
   })
 
   test('Should map isDecemberWaste to Yes/No', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [
         { ...mockPrn, isDecemberWaste: true },
         { ...mockPrn, prnNumber: 'PRN-002', isDecemberWaste: false }
@@ -142,7 +144,7 @@ describe('prn-activity download controller', () => {
   })
 
   test('Should use tradingName over name for issuedToOrganisation', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [
         {
           ...mockPrn,
@@ -163,7 +165,7 @@ describe('prn-activity download controller', () => {
   })
 
   test('Should handle null/undefined optional fields in CSV', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [
         {
           status: 'awaiting_authorisation',
@@ -194,7 +196,7 @@ describe('prn-activity download controller', () => {
   })
 
   test('Should return empty string when org has no name or tradingName', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [
         {
           ...mockPrn,
@@ -212,7 +214,7 @@ describe('prn-activity download controller', () => {
   })
 
   test('Should use name when tradingName is empty string', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [
         {
           ...mockPrn,
@@ -229,7 +231,7 @@ describe('prn-activity download controller', () => {
   })
 
   test('Should prefix fields starting with formula-injection characters', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [{ ...mockPrn, accreditationNumber: '=SUM(A1)' }],
       hasMore: false
     })
@@ -241,9 +243,7 @@ describe('prn-activity download controller', () => {
   })
 
   test('Should redirect with error message on fetch failure', async () => {
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(
-      new Error('Network error')
-    )
+    mockFetchJsonFromBackend.mockRejectedValue(new Error('Network error'))
 
     const result = await prnActivityDownloadController.handler(
       mockRequest,
@@ -260,7 +260,7 @@ describe('prn-activity download controller', () => {
 
   test('Should use error message from backend when available', async () => {
     const error = Boom.badRequest('Custom backend error message')
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
+    mockFetchJsonFromBackend.mockRejectedValue(error)
 
     await prnActivityDownloadController.handler(mockRequest, mockH)
 
@@ -271,7 +271,7 @@ describe('prn-activity download controller', () => {
   })
 
   test('Should fetch all pages when hasMore is true', async () => {
-    vi.mocked(fetchJsonFromBackend)
+    mockFetchJsonFromBackend
       .mockResolvedValueOnce({
         items: [{ ...mockPrn, prnNumber: 'PRN-001' }],
         hasMore: true,

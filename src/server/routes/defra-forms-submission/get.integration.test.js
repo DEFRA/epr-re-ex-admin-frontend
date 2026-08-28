@@ -45,7 +45,7 @@ describe('GET /defra-forms-submission/{documentId}', () => {
     const documentId = '000000-0000-1234'
 
     beforeEach(() => {
-      getUserSession.mockReturnValue(mockUserSession)
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
     })
 
     test('Should return OK and render defra forms submission details', async () => {
@@ -81,17 +81,26 @@ describe('GET /defra-forms-submission/{documentId}', () => {
       const quotesEscaped = (s) => s.replaceAll('"', '&quot;')
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result)
-        .toContain('<textarea class="govuk-textarea" id="organisation"')
-        .toContain(quotesEscaped('"id": "org-1"'))
-        .toContain('<textarea class="govuk-textarea" id="registration-1"')
-        .toContain(quotesEscaped('"id": "reg-1"'))
-        .toContain('<textarea class="govuk-textarea" id="registration-2"')
-        .toContain(quotesEscaped('"id": "reg-2"'))
-        .toContain('<textarea class="govuk-textarea" id="accreditation-1"')
-        .toContain(quotesEscaped('"id": "acc-1"'))
-        .toContain('<textarea class="govuk-textarea" id="accreditation-2"')
-        .toContain(quotesEscaped('"id": "acc-2"'))
+      expect(result).toContain(
+        '<textarea class="govuk-textarea" id="organisation"'
+      )
+      expect(result).toContain(quotesEscaped('"id": "org-1"'))
+      expect(result).toContain(
+        '<textarea class="govuk-textarea" id="registration-1"'
+      )
+      expect(result).toContain(quotesEscaped('"id": "reg-1"'))
+      expect(result).toContain(
+        '<textarea class="govuk-textarea" id="registration-2"'
+      )
+      expect(result).toContain(quotesEscaped('"id": "reg-2"'))
+      expect(result).toContain(
+        '<textarea class="govuk-textarea" id="accreditation-1"'
+      )
+      expect(result).toContain(quotesEscaped('"id": "acc-1"'))
+      expect(result).toContain(
+        '<textarea class="govuk-textarea" id="accreditation-2"'
+      )
+      expect(result).toContain(quotesEscaped('"id": "acc-2"'))
     })
 
     test('Should render page with no data when backend returns 404', async () => {
@@ -114,13 +123,14 @@ describe('GET /defra-forms-submission/{documentId}', () => {
       })
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result)
-        .toContain('<h3 class="govuk-heading-m">Organisation</h3>')
-        .toContain('No organisations submission data found.')
-        .toContain('<h3 class="govuk-heading-m">Registrations</h3>')
-        .toContain('No registrations submission data found.')
-        .toContain('<h3 class="govuk-heading-m">Accreditations</h3>')
-        .toContain('No accreditations submission data found.')
+      expect(result).toContain('<h3 class="govuk-heading-m">Organisation</h3>')
+      expect(result).toContain('No organisations submission data found.')
+      expect(result).toContain('<h3 class="govuk-heading-m">Registrations</h3>')
+      expect(result).toContain('No registrations submission data found.')
+      expect(result).toContain(
+        '<h3 class="govuk-heading-m">Accreditations</h3>'
+      )
+      expect(result).toContain('No accreditations submission data found.')
     })
 
     test('Should render not authorised page when backend request is not authorised', async () => {

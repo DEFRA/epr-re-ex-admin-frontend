@@ -2,6 +2,8 @@ import { errorCodes } from '#server/common/enums/error-codes.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 
+/** @import { HapiRequest } from '#server/common/hapi-types.js' */
+
 /**
  * @typedef {{
  *   id: string,
@@ -35,7 +37,7 @@ import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
  */
 
 /**
- * @param {import('@hapi/hapi').Request} request
+ * @param {HapiRequest} request
  * @param {string} organisationId
  * @returns {Promise<OrganisationOverview>}
  */

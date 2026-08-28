@@ -22,6 +22,7 @@ describe('#fetchAdminMe', () => {
       scopes: ['admin.read', 'admin.write', 'admin.dlq.purge']
     }
 
+    /** @type {string | null} */
     let capturedAuth = null
     mswServer.use(
       http.get(adminMeUrl, ({ request }) => {

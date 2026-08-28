@@ -45,7 +45,7 @@ describe('GET /system-logs/download/{organisationId}/{registrationId}/{summaryLo
 
   describe('when user is authenticated', () => {
     beforeEach(() => {
-      getUserSession.mockReturnValue(mockUserSession)
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
     })
 
     test('streams binary file content from S3 via the backend pre-signed URL', async () => {

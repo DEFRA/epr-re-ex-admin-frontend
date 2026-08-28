@@ -8,6 +8,8 @@ vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
 }))
 
+const mockFetchJsonFromBackend = vi.mocked(fetchJsonFromBackend)
+
 describe('orsDownloadController', () => {
   let mockRequest
   let mockH
@@ -33,7 +35,7 @@ describe('orsDownloadController', () => {
   })
 
   test('Should fetch all ORS rows from the backend', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({ rows: [] })
+    mockFetchJsonFromBackend.mockResolvedValue({ rows: [] })
 
     await orsDownloadController.handler(mockRequest, mockH)
 
@@ -44,7 +46,7 @@ describe('orsDownloadController', () => {
   })
 
   test('Should generate CSV with correct headers and row data', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       rows: [
         {
           orgId: 500001,
@@ -79,7 +81,7 @@ describe('orsDownloadController', () => {
   })
 
   test('Should preserve UTF-8 coordinate symbols in the CSV payload', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       rows: [
         {
           orgId: 500001,
@@ -99,7 +101,7 @@ describe('orsDownloadController', () => {
   })
 
   test('Should handle legacy array payloads', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue([
+    mockFetchJsonFromBackend.mockResolvedValue([
       {
         orgId: 500001,
         orsId: '001'
@@ -114,7 +116,7 @@ describe('orsDownloadController', () => {
   })
 
   test('Should handle empty backend rows', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({ rows: [] })
+    mockFetchJsonFromBackend.mockResolvedValue({ rows: [] })
 
     await orsDownloadController.handler(mockRequest, mockH)
 
@@ -125,7 +127,7 @@ describe('orsDownloadController', () => {
   })
 
   test('Should handle missing rows payload', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({})
+    mockFetchJsonFromBackend.mockResolvedValue({})
 
     await orsDownloadController.handler(mockRequest, mockH)
 
@@ -134,7 +136,7 @@ describe('orsDownloadController', () => {
   })
 
   test('Should return blank values for null and invalid dates', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       rows: [
         {
           orgId: null,
@@ -163,7 +165,7 @@ describe('orsDownloadController', () => {
   })
 
   test('Should prefix formula-like string values', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       rows: [
         {
           orgId: '=SUM(A1)',
@@ -185,7 +187,7 @@ describe('orsDownloadController', () => {
   })
 
   test('Should set correct Content-Type and Content-Disposition headers', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({ rows: [] })
+    mockFetchJsonFromBackend.mockResolvedValue({ rows: [] })
 
     await orsDownloadController.handler(mockRequest, mockH)
 
@@ -200,9 +202,7 @@ describe('orsDownloadController', () => {
   })
 
   test('Should redirect with default error message on fetch failure', async () => {
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(
-      new Error('Network error')
-    )
+    mockFetchJsonFromBackend.mockRejectedValue(new Error('Network error'))
 
     const result = await orsDownloadController.handler(mockRequest, mockH)
 
@@ -216,7 +216,7 @@ describe('orsDownloadController', () => {
 
   test('Should use backend error message when available', async () => {
     const error = Boom.badRequest('Custom backend error message')
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
+    mockFetchJsonFromBackend.mockRejectedValue(error)
 
     await orsDownloadController.handler(mockRequest, mockH)
 

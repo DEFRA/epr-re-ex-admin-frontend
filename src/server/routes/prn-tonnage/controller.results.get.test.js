@@ -6,6 +6,8 @@ vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
 }))
 
+const mockFetchJsonFromBackend = vi.mocked(fetchJsonFromBackend)
+
 describe('prn-tonnage results GET controller', () => {
   let mockRequest
   let mockH
@@ -31,15 +33,19 @@ describe('prn-tonnage results GET controller', () => {
   })
 
   test('Should fetch PRN tonnage data from backend and render results page', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-02-20T12:00:00.000Z',
       rows: [
         {
           organisationName: 'Acme Recycling',
-          organisationId: 'ORG001',
+          orgId: 'ORG001',
+          registrationNumber: 'REG-100',
+          registrationType: 'REPROCESSOR_INPUT',
           accreditationNumber: 'ACC-100',
           material: 'glass_re_melt',
           tonnageBand: 'up_to_5000',
+          wasteBalance: 4321.4,
+          availableWasteBalance: 4221.6,
           awaitingAuthorisationTonnage: 100,
           awaitingAcceptanceTonnage: 20,
           awaitingCancellationTonnage: 2,
@@ -62,10 +68,14 @@ describe('prn-tonnage results GET controller', () => {
       rows: [
         {
           organisationName: 'Acme Recycling',
-          organisationId: 'ORG001',
+          orgId: 'ORG001',
+          registrationNumber: 'REG-100',
+          registrationType: 'Reprocessor input',
           accreditationNumber: 'ACC-100',
           material: 'Glass re-melt',
           tonnageBand: 'Up to 5,000 tonnes',
+          wasteBalance: '4321',
+          availableWasteBalance: '4222',
           awaitingAuthorisationTonnage: '100',
           awaitingAcceptanceTonnage: '20',
           awaitingCancellationTonnage: '2',
@@ -79,7 +89,7 @@ describe('prn-tonnage results GET controller', () => {
 
   test('Should display error message from session and clear it', async () => {
     mockRequest.yar.get.mockReturnValue('Download failed')
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-02-20T12:00:00.000Z',
       rows: []
     })
@@ -98,15 +108,19 @@ describe('prn-tonnage results GET controller', () => {
   })
 
   test('Should keep unknown values and blank tonnage band for missing band', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-02-20T12:00:00.000Z',
       rows: [
         {
           organisationName: 'Beta',
-          organisationId: 'ORG002',
+          orgId: 'ORG002',
+          registrationNumber: 'REG-200',
+          registrationType: 'MYSTERY_TYPE',
           accreditationNumber: 'ACC-200',
           material: 'mystery_material',
           tonnageBand: null,
+          wasteBalance: 0,
+          availableWasteBalance: 0,
           awaitingAuthorisationTonnage: 0,
           awaitingAcceptanceTonnage: 0,
           awaitingCancellationTonnage: 0,
@@ -123,8 +137,12 @@ describe('prn-tonnage results GET controller', () => {
       expect.objectContaining({
         rows: [
           expect.objectContaining({
+            registrationNumber: 'REG-200',
+            registrationType: 'MYSTERY_TYPE',
             material: 'mystery_material',
             tonnageBand: '',
+            wasteBalance: '0',
+            availableWasteBalance: '0',
             awaitingAuthorisationTonnage: '0',
             awaitingAcceptanceTonnage: '0',
             awaitingCancellationTonnage: '0',

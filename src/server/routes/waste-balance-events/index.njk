@@ -8,6 +8,20 @@
     <div class="govuk-grid-row">
       <div class="govuk-grid-column-full">
         {% if eventRows and eventRows.length %}
+          {% set tableRows = [] %}
+          {% for row in eventRows %}
+            {% set subjectHtml %}<code>{{ row.subject }}</code>{% endset %}
+            {% set tableRows = tableRows.concat([[
+              { text: row.number },
+              { text: row.kind },
+              { text: row.createdAt },
+              { text: row.createdBy },
+              { html: subjectHtml },
+              { text: row.closingAmount },
+              { text: row.closingAvailableAmount }
+            ]]) %}
+          {% endfor %}
+
           {{ govukTable({
             caption: "Waste balance events",
             captionClasses: "govuk-table__caption--m",
@@ -16,11 +30,11 @@
               { text: "Kind" },
               { text: "Date" },
               { text: "Created by" },
-              { text: "Payload" },
+              { text: "Subject" },
               { text: "Closing balance" },
               { text: "Closing available" }
             ],
-            rows: eventRows
+            rows: tableRows
           }) }}
         {% else %}
           <p class="govuk-body">No waste balance events</p>

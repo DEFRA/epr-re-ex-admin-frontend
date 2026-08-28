@@ -1,0 +1,49 @@
+{% extends 'layout.njk' %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/warning-text/macro.njk" import govukWarningText %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-xl">{{ heading }} {{ prnNumber }}</h1>
+
+      {{ govukSummaryList({
+        rows: [
+          { key: { text: "PRN number" }, value: { text: prnNumber } },
+          { key: { text: "Organisation" }, value: { text: organisationName } },
+          { key: { text: "Issued to" }, value: { text: issuedTo } },
+          { key: { text: "Tonnage" }, value: { text: tonnage } },
+          { key: { text: "Material" }, value: { text: material } },
+          { key: { text: "Accreditation number" }, value: { text: accreditationNumber } },
+          { key: { text: "Accreditation year" }, value: { text: accreditationYear } }
+        ]
+      }) }}
+
+      {{ govukWarningText({
+        text: "Cancelling this PRN cannot be undone. " + tonnage + " tonnes will be credited back to the operator's waste balance immediately.",
+        iconFallbackText: "Warning"
+      }) }}
+
+      {% if SCOPES.adminWrite in scopes %}
+        <form method="POST" action="{{ postUrl }}">
+          <input type="hidden" name="crumb" value="{{ crumb }}" />
+          <input type="hidden" name="prnNumber" value="{{ prnNumber }}" />
+          <input type="hidden" name="organisationName" value="{{ organisationName }}" />
+          <input type="hidden" name="issuedTo" value="{{ issuedTo }}" />
+          <input type="hidden" name="tonnage" value="{{ tonnage }}" />
+          <input type="hidden" name="material" value="{{ material }}" />
+          <input type="hidden" name="accreditationNumber" value="{{ accreditationNumber }}" />
+          <input type="hidden" name="accreditationYear" value="{{ accreditationYear }}" />
+          {{ govukButton({
+            text: "Yes, cancel this PRN",
+            classes: "govuk-button--warning"
+          }) }}
+          <p class="govuk-body">
+            <a class="govuk-link" href="{{ overviewUrl }}">Return without cancelling</a>
+          </p>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

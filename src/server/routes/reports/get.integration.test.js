@@ -90,7 +90,9 @@ describe('#reportDetailController', () => {
       })
 
       const $ = cheerio.load(result)
-      expect($('h1').text().trim()).toEqual('Report – 2026 monthly period 1')
+      expect($('h1').text().trim()).toEqual(
+        'Report – 2026 monthly period 1 submission 1'
+      )
     })
 
     test('Should render breadcrumbs for Organisations, Organisation overview and Registration overview', async () => {

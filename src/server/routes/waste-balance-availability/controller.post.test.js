@@ -7,6 +7,8 @@ vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
 }))
 
+const mockFetchJsonFromBackend = vi.mocked(fetchJsonFromBackend)
+
 describe('waste-balance-availability POST controller', () => {
   let mockRequest
   let mockH
@@ -32,7 +34,7 @@ describe('waste-balance-availability POST controller', () => {
   })
 
   test('Should generate CSV with correct headers and formatting', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-01-29T14:30:00.000Z',
       materials: [
         { material: 'aluminium', availableAmount: 1234.56 },
@@ -70,7 +72,7 @@ describe('waste-balance-availability POST controller', () => {
   })
 
   test('Should format material names to display names', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-01-29T09:00:00.000Z',
       materials: [
         { material: 'plastic', availableAmount: 100 },
@@ -87,7 +89,7 @@ describe('waste-balance-availability POST controller', () => {
   })
 
   test('Should emit amount values as unquoted numbers', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-01-29T12:00:00.000Z',
       materials: [
         { material: 'wood', availableAmount: 1000 },
@@ -105,7 +107,7 @@ describe('waste-balance-availability POST controller', () => {
   })
 
   test('Should format morning times correctly', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-06-15T09:05:00.000Z',
       materials: [],
       total: 0
@@ -118,7 +120,7 @@ describe('waste-balance-availability POST controller', () => {
   })
 
   test('Should handle empty materials array', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-01-29T12:00:00.000Z',
       materials: [],
       total: 0
@@ -141,9 +143,7 @@ describe('waste-balance-availability POST controller', () => {
   })
 
   test('Should redirect with error message on fetch failure', async () => {
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(
-      new Error('Network error')
-    )
+    mockFetchJsonFromBackend.mockRejectedValue(new Error('Network error'))
 
     const result = await wasteBalanceAvailabilityPostController.handler(
       mockRequest,
@@ -160,7 +160,7 @@ describe('waste-balance-availability POST controller', () => {
 
   test('Should use error message from backend when available', async () => {
     const error = Boom.badRequest('Custom backend error message')
-    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
+    mockFetchJsonFromBackend.mockRejectedValue(error)
 
     await wasteBalanceAvailabilityPostController.handler(mockRequest, mockH)
 

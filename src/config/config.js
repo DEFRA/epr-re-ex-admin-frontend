@@ -88,6 +88,14 @@ export const config = convict({
       env: 'AUDIT_ENABLED'
     }
   },
+  featureFlags: {
+    prnAdminCancellation: {
+      doc: 'Feature Flag: Show the admin Cancel action on the PRN activity page',
+      format: Boolean,
+      default: false,
+      env: 'FEATURE_FLAG_PRN_ADMIN_CANCELLATION'
+    }
+  },
   log: {
     enabled: {
       doc: 'Is logging enabled',

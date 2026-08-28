@@ -3,17 +3,22 @@ import Boom from '@hapi/boom'
 import { fetchRedirectFromBackend } from './fetch-redirect-from-backend.js'
 import { getUserSession } from './auth/get-user-session.js'
 
+/** @import { Request } from '@hapi/hapi' */
+/** @import { UserSession } from '#server/common/hapi-types.js' */
+
 vi.mock('./auth/get-user-session.js', () => ({
   getUserSession: vi.fn()
 }))
 
 describe('fetchRedirectFromBackend', () => {
   const mockToken = 'test-token'
-  const mockRequest = {}
+  const mockRequest = /** @type {Request} */ ({})
 
   beforeEach(() => {
     vi.clearAllMocks()
-    getUserSession.mockResolvedValue({ token: mockToken })
+    vi.mocked(getUserSession).mockResolvedValue(
+      /** @type {UserSession} */ ({ token: mockToken })
+    )
   })
 
   test('returns the Location header from a redirect response', async () => {
@@ -45,7 +50,8 @@ describe('fetchRedirectFromBackend', () => {
     await fetchRedirectFromBackend(mockRequest, '/v1/test/download')
 
     const [, options] = fetchSpy.mock.calls[0]
-    expect(options.headers.Authorization).toBe(`Bearer ${mockToken}`)
+    const headers = /** @type {Record<string, string>} */ (options?.headers)
+    expect(headers.Authorization).toBe(`Bearer ${mockToken}`)
   })
 
   test('uses redirect manual to prevent following the redirect', async () => {
@@ -59,7 +65,7 @@ describe('fetchRedirectFromBackend', () => {
     await fetchRedirectFromBackend(mockRequest, '/v1/test/download')
 
     const [, options] = fetchSpy.mock.calls[0]
-    expect(options.redirect).toBe('manual')
+    expect(options?.redirect).toBe('manual')
   })
 
   test('throws a bad gateway error when no Location header is returned', async () => {

@@ -15,6 +15,7 @@ async function generateCsv(data) {
     hasMultipleYears
   } = buildMaterialRowData(data)
 
+  /** @type {(string | number | undefined)[][]} */
   const rows = [
     ['Tonnage by material'],
     [],
@@ -36,6 +37,7 @@ async function generateCsv(data) {
   rows.push(headerRow)
 
   for (const item of materialRows) {
+    /** @type {(string | number | undefined)[]} */
     const row = [materialRowHeading(item), item.type]
     if (hasMultipleYears) {
       row.push(item.year)

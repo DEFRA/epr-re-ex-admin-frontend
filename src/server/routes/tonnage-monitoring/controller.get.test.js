@@ -6,6 +6,8 @@ vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
 }))
 
+const mockFetchJsonFromBackend = vi.mocked(fetchJsonFromBackend)
+
 describe('tonnage-monitoring GET controller', () => {
   let mockRequest
   let mockH
@@ -42,7 +44,7 @@ describe('tonnage-monitoring GET controller', () => {
       ]
     }))
 
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-01-29T12:00:00.000Z',
       materials: mockMaterials,
       total: 2190
@@ -74,7 +76,7 @@ describe('tonnage-monitoring GET controller', () => {
   })
 
   test('Should format material names and types correctly', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-01-29T12:00:00.000Z',
       materials: [
         {
@@ -151,7 +153,7 @@ describe('tonnage-monitoring GET controller', () => {
   })
 
   test('Should format tonnage values to 2 decimal places', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-01-29T12:00:00.000Z',
       materials: [
         {
@@ -190,7 +192,7 @@ describe('tonnage-monitoring GET controller', () => {
   })
 
   test('Should handle empty materials array', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-01-29T12:00:00.000Z',
       materials: [],
       total: 0
@@ -213,7 +215,7 @@ describe('tonnage-monitoring GET controller', () => {
   test('Should display error message from session and clear it', async () => {
     mockRequest.yar.get.mockReturnValue('Download failed')
 
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-01-29T12:00:00.000Z',
       materials: [],
       total: 0
@@ -229,7 +231,7 @@ describe('tonnage-monitoring GET controller', () => {
   })
 
   test('Should throw error for unknown material', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-01-29T12:00:00.000Z',
       materials: [
         {
@@ -248,7 +250,7 @@ describe('tonnage-monitoring GET controller', () => {
   })
 
   test('Should include year column when multiple years are present', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-01-29T12:00:00.000Z',
       materials: [
         {
@@ -323,7 +325,7 @@ describe('tonnage-monitoring GET controller', () => {
   })
 
   test('Should handle materials with different month counts', async () => {
-    vi.mocked(fetchJsonFromBackend).mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       generatedAt: '2026-01-29T12:00:00.000Z',
       materials: [
         {
