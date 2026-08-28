@@ -101,6 +101,7 @@ const toSummaryLogRow = (organisationId, registrationId) => (summaryLog) => {
     uploadedAt,
     label,
     className,
+    viewUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`,
     downloadUrl: `/system-logs/download/${organisationId}/${registrationId}/${summaryLogId}`
   }
 }

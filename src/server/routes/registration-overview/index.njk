@@ -100,13 +100,14 @@
         {% if summaryLogRows and summaryLogRows.length %}
           {% set summaryLogTableRows = [] %}
           {% for row in summaryLogRows %}
-            {% set downloadHtml %}
-              <a class="govuk-link govuk-link--no-visited-state" href="{{ row.downloadUrl }}">Download</a>
+            {% set actionsHtml %}
+              <a class="govuk-link govuk-link--no-visited-state" href="{{ row.viewUrl }}">View</a>
+              <br><a class="govuk-link govuk-link--no-visited-state" href="{{ row.downloadUrl }}">Download</a>
             {% endset %}
             {% set summaryLogTableRows = summaryLogTableRows.concat([[
               { text: row.uploadedAt },
               { html: govukTag({ text: row.label, classes: row.className }) },
-              { html: downloadHtml }
+              { html: actionsHtml }
             ]]) %}
           {% endfor %}
 

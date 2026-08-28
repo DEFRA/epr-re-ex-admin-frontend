@@ -18,6 +18,7 @@ import { linkedOrganisations } from './routes/linked-organisations/index.js'
 import { prnActivity } from './routes/prn-activity/index.js'
 import { prnCancel } from './routes/prn-cancel/index.js'
 import { summaryLogUploadsReport } from './routes/summary-log/index.js'
+import { summaryLogDocument } from './routes/summary-log-document/index.js'
 import { orsUpload } from './routes/ors-upload/index.js'
 import { reportSubmissions } from './routes/report-submissions/index.js'
 import { wasteRecordsExport } from './routes/waste-records-export/index.js'
@@ -61,6 +62,7 @@ export const router = {
         prnActivity,
         ...(FEATURE_FLAGS.prnAdminCancellation ? [prnCancel] : []),
         summaryLogUploadsReport,
+        summaryLogDocument,
         orsUpload,
         reportSubmissions,
         wasteRecordsExport,

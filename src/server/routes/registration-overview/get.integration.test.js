@@ -831,6 +831,28 @@ describe('#registrationOverviewController', () => {
       )
     })
 
+    test('Should render a View link to the summary log document page', async () => {
+      useMockBackend(mockOverview, mockCalendar, {
+        summaryLogs: [mockSubmittedSummaryLog]
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+      const [firstRow] = getDataRows(getSummaryLogsTable(body))
+
+      expect(
+        within(firstRow).getByRole('link', { name: 'View' })
+      ).toHaveAttribute(
+        'href',
+        `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${mockSubmittedSummaryLog.summaryLogId}`
+      )
+    })
+
     test.each([
       ['rejected', 'Failed (Rejected)'],
       ['invalid', 'Failed (Invalid)'],
