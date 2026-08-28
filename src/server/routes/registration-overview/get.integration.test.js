@@ -831,7 +831,7 @@ describe('#registrationOverviewController', () => {
       )
     })
 
-    test('Should render a View link to the summary log document page', async () => {
+    test('Should render a View data link to the summary log document page', async () => {
       useMockBackend(mockOverview, mockCalendar, {
         summaryLogs: [mockSubmittedSummaryLog]
       })
@@ -846,7 +846,7 @@ describe('#registrationOverviewController', () => {
       const [firstRow] = getDataRows(getSummaryLogsTable(body))
 
       expect(
-        within(firstRow).getByRole('link', { name: 'View' })
+        within(firstRow).getByRole('link', { name: 'View data' })
       ).toHaveAttribute(
         'href',
         `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${mockSubmittedSummaryLog.summaryLogId}`
