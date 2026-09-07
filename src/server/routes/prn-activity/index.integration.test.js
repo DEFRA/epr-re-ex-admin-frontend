@@ -160,8 +160,10 @@ describe('prn-activity Cancel link visibility', () => {
     expect($('a:contains("Cancel")')).toHaveLength(0)
   })
 
-  test('shows the Obligation Year column header and its value (PAE-1918)', async () => {
+  test('shows the Obligation Year column directly after Accreditation Year, header and value (PAE-1918)', async () => {
     vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+    // accreditationYear 2026 from buildPrn, obligationYear 2027: distinct so
+    // each value pins its own column
     stubPrnList(buildPrn({ obligationYear: 2027 }))
 
     const { result, statusCode } = await server.inject({
@@ -172,8 +174,20 @@ describe('prn-activity Cancel link visibility', () => {
 
     expect(statusCode).toBe(200)
     const $ = cheerio.load(result)
-    expect($('th:contains("Obligation Year")')).toHaveLength(1)
-    expect($('td:contains("2027")').length).toBeGreaterThan(0)
+
+    const headers = $('thead th')
+      .map((_, el) => $(el).text().trim())
+      .get()
+    const accreditationHeaderIndex = headers.indexOf('Accreditation Year')
+    expect(headers[accreditationHeaderIndex + 1]).toBe('Obligation Year')
+
+    const cells = $('tbody tr')
+      .first()
+      .children()
+      .map((_, el) => $(el).text().trim())
+      .get()
+    const accreditationValueIndex = cells.indexOf('2026')
+    expect(cells[accreditationValueIndex + 1]).toBe('2027')
   })
 
   test('shows the Action column for an admin.write session', async () => {
