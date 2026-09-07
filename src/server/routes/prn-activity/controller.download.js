@@ -44,6 +44,7 @@ export function generateCsv(items) {
       'Position',
       'Accreditation Number',
       'Accreditation Year',
+      'Obligation Year',
       'Submitted To Regulator',
       'Organisation Name',
       'Waste Processing Type'
@@ -64,6 +65,7 @@ export function generateCsv(items) {
       sanitizeFormulaInjection(prn.issuedBy?.position || ''),
       sanitizeFormulaInjection(prn.accreditationNumber || ''),
       prn.accreditationYear ?? '',
+      prn.obligationYear ?? '',
       sanitizeFormulaInjection(prn.submittedToRegulator || ''),
       sanitizeFormulaInjection(prn.organisationName || ''),
       sanitizeFormulaInjection(prn.wasteProcessingType || '')

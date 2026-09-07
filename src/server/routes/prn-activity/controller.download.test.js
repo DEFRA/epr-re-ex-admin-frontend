@@ -22,6 +22,7 @@ const mockPrn = {
   issuedBy: { name: 'John', position: 'Manager' },
   accreditationNumber: 'ACC-2025-001',
   accreditationYear: 2025,
+  obligationYear: 2026,
   organisationName: 'Reprocessor Ltd',
   wasteProcessingType: 'reprocessor'
 }
@@ -77,13 +78,28 @@ describe('prn-activity download controller', () => {
     const csvContent = mockH.response.mock.calls[0][0]
     const lines = csvContent.split('\n')
     expect(lines[0]).toBe(
-      'PRN Number,Status,Issued To,Tonnage,Material,Process To Be Used,December Waste,Issued Date,Issued By,Position,Accreditation Number,Accreditation Year,Submitted To Regulator,Organisation Name,Waste Processing Type'
+      'PRN Number,Status,Issued To,Tonnage,Material,Process To Be Used,December Waste,Issued Date,Issued By,Position,Accreditation Number,Accreditation Year,Obligation Year,Submitted To Regulator,Organisation Name,Waste Processing Type'
     )
     expect(csvContent).toContain('PRN-001')
     expect(csvContent).toContain('Glass')
     expect(csvContent).toContain('Reprocessor Ltd')
     expect(lines[1]).toBe(
-      'PRN-001,awaiting_acceptance,Org A,100,Glass,R3,Yes,15/06/2025,John,Manager,ACC-2025-001,2025,,Reprocessor Ltd,reprocessor'
+      'PRN-001,awaiting_acceptance,Org A,100,Glass,R3,Yes,15/06/2025,John,Manager,ACC-2025-001,2025,2026,,Reprocessor Ltd,reprocessor'
+    )
+  })
+
+  test('Should leave Obligation Year empty in CSV when absent', async () => {
+    mockFetchJsonFromBackend.mockResolvedValue({
+      items: [{ ...mockPrn, obligationYear: undefined }],
+      hasMore: false
+    })
+
+    await prnActivityDownloadController.handler(mockRequest, mockH)
+
+    const csvContent = mockH.response.mock.calls[0][0]
+    const lines = csvContent.split('\n')
+    expect(lines[1]).toBe(
+      'PRN-001,awaiting_acceptance,Org A,100,Glass,R3,Yes,15/06/2025,John,Manager,ACC-2025-001,2025,,,Reprocessor Ltd,reprocessor'
     )
   })
 

@@ -160,6 +160,22 @@ describe('prn-activity Cancel link visibility', () => {
     expect($('a:contains("Cancel")')).toHaveLength(0)
   })
 
+  test('shows the Obligation Year column header and its value (PAE-1918)', async () => {
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+    stubPrnList(buildPrn({ obligationYear: 2027 }))
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: prnActivityUrl,
+      auth: { strategy: 'session', credentials: mockUserSession }
+    })
+
+    expect(statusCode).toBe(200)
+    const $ = cheerio.load(result)
+    expect($('th:contains("Obligation Year")')).toHaveLength(1)
+    expect($('td:contains("2027")').length).toBeGreaterThan(0)
+  })
+
   test('shows the Action column for an admin.write session', async () => {
     vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
     stubPrnList(buildPrn())
