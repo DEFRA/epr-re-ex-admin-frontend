@@ -111,7 +111,7 @@ describe('#wasteBalanceEventsController', () => {
           total: 100,
           available: 50,
           decemberTotal: 30,
-          decemberAvailable: 30
+          decemberAvailable: 20
         }
       },
       createdAt: '2026-01-16T14:30:00.000Z',
@@ -297,7 +297,7 @@ describe('#wasteBalanceEventsController', () => {
       expect(secondCells[5]).toHaveTextContent('100')
       expect(secondCells[6]).toHaveTextContent('50')
       expect(secondCells[7]).toHaveTextContent('30')
-      expect(secondCells[8]).toHaveTextContent('30')
+      expect(secondCells[8]).toHaveTextContent('20')
     })
 
     it('should render the subject as json inside a code element', async () => {
