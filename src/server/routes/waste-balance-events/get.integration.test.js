@@ -76,8 +76,18 @@ describe('#wasteBalanceEventsController', () => {
       kind: 'summary-log-submitted',
       summaryLog: { id: 'sl-1', creditTotal: 100 },
       balance: {
-        opening: { total: 0, available: 0 },
-        closing: { total: 100, available: 100 }
+        opening: {
+          total: 0,
+          available: 0,
+          decemberTotal: 0,
+          decemberAvailable: 0
+        },
+        closing: {
+          total: 100,
+          available: 100,
+          decemberTotal: 30,
+          decemberAvailable: 30
+        }
       },
       createdAt: '2026-01-15T10:00:00.000Z',
       createdBy: {
@@ -91,8 +101,18 @@ describe('#wasteBalanceEventsController', () => {
       kind: 'prn-created',
       prn: { id: 'prn-1', tonnage: 50 },
       balance: {
-        opening: { total: 100, available: 100 },
-        closing: { total: 100, available: 50 }
+        opening: {
+          total: 100,
+          available: 100,
+          decemberTotal: 30,
+          decemberAvailable: 30
+        },
+        closing: {
+          total: 100,
+          available: 50,
+          decemberTotal: 30,
+          decemberAvailable: 30
+        }
       },
       createdAt: '2026-01-16T14:30:00.000Z',
       createdBy: { id: 'user-1', name: 'Test User' }
@@ -239,7 +259,9 @@ describe('#wasteBalanceEventsController', () => {
         'Created by',
         'Subject',
         'Closing balance',
-        'Closing available'
+        'Closing available',
+        'December closing',
+        'December available'
       ])
     })
 
@@ -265,6 +287,8 @@ describe('#wasteBalanceEventsController', () => {
       )
       expect(firstCells[5]).toHaveTextContent('100')
       expect(firstCells[6]).toHaveTextContent('100')
+      expect(firstCells[7]).toHaveTextContent('30')
+      expect(firstCells[8]).toHaveTextContent('30')
 
       const secondCells = getAllByRole(rows[1], 'cell')
       expect(secondCells[0]).toHaveTextContent('2')
@@ -272,6 +296,8 @@ describe('#wasteBalanceEventsController', () => {
       expect(secondCells[3]).toHaveTextContent('Test User')
       expect(secondCells[5]).toHaveTextContent('100')
       expect(secondCells[6]).toHaveTextContent('50')
+      expect(secondCells[7]).toHaveTextContent('30')
+      expect(secondCells[8]).toHaveTextContent('30')
     })
 
     it('should render the subject as json inside a code element', async () => {
@@ -303,8 +329,18 @@ describe('#wasteBalanceEventsController', () => {
           kind: 'summary-log-submitted',
           summaryLog,
           balance: {
-            opening: { total: 0, available: 0 },
-            closing: { total: 100, available: 100 }
+            opening: {
+              total: 0,
+              available: 0,
+              decemberTotal: 0,
+              decemberAvailable: 0
+            },
+            closing: {
+              total: 100,
+              available: 100,
+              decemberTotal: 30,
+              decemberAvailable: 30
+            }
           },
           createdAt: '2026-01-19T10:00:00.000Z',
           createdBy: {
@@ -336,8 +372,18 @@ describe('#wasteBalanceEventsController', () => {
           kind: 'prn-created',
           prn: { id: 'prn-2', tonnage: 10 },
           balance: {
-            opening: { total: 50, available: 50 },
-            closing: { total: 50, available: 40 }
+            opening: {
+              total: 50,
+              available: 50,
+              decemberTotal: 0,
+              decemberAvailable: 0
+            },
+            closing: {
+              total: 50,
+              available: 40,
+              decemberTotal: 0,
+              decemberAvailable: 0
+            }
           },
           createdAt: '2026-01-17T09:00:00.000Z',
           createdBy: /** @type {any} */ ({ id: 'user-2' })
@@ -364,8 +410,18 @@ describe('#wasteBalanceEventsController', () => {
           kind: 'prn-issued',
           prn: { id: 'prn-3', tonnage: 20 },
           balance: {
-            opening: { total: 50, available: 40 },
-            closing: { total: 50, available: 40 }
+            opening: {
+              total: 50,
+              available: 40,
+              decemberTotal: 0,
+              decemberAvailable: 0
+            },
+            closing: {
+              total: 50,
+              available: 40,
+              decemberTotal: 0,
+              decemberAvailable: 0
+            }
           },
           createdAt: '2026-01-18T11:00:00.000Z',
           createdBy: /** @type {any} */ ({

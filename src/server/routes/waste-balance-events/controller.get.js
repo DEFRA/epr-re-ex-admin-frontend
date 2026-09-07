@@ -15,8 +15,8 @@ import {
  *   createdAt: string,
  *   createdBy: { id: string, name?: string, email?: string },
  *   balance: {
- *     opening: { total: number, available: number },
- *     closing: { total: number, available: number }
+ *     opening: { total: number, available: number, decemberTotal: number, decemberAvailable: number },
+ *     closing: { total: number, available: number, decemberTotal: number, decemberAvailable: number }
  *   },
  *   summaryLog?: { id: string, creditTotal: number },
  *   prn?: { id: string, tonnage: number }
@@ -76,7 +76,9 @@ export const wasteBalanceEventsGETController = {
       createdBy: formatActor(event.createdBy),
       subject: subjectOf(event),
       closingAmount: event.balance.closing.total,
-      closingAvailableAmount: event.balance.closing.available
+      closingAvailableAmount: event.balance.closing.available,
+      closingDecemberAmount: event.balance.closing.decemberTotal,
+      closingDecemberAvailableAmount: event.balance.closing.decemberAvailable
     }))
 
     return h.view('routes/waste-balance-events/index', {
