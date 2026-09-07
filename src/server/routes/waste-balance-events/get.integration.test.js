@@ -300,6 +300,34 @@ describe('#wasteBalanceEventsController', () => {
       expect(secondCells[8]).toHaveTextContent('20')
     })
 
+    test("Should render '-' for December amounts when the backend omits them", async () => {
+      useMockBackend(mockOverview, [
+        /** @type {any} */ ({
+          number: 6,
+          kind: 'summary-log-submitted',
+          summaryLog: { id: 'sl-2', creditTotal: 100 },
+          balance: {
+            opening: { total: 0, available: 0 },
+            closing: { total: 100, available: 100 }
+          },
+          createdAt: '2026-01-20T10:00:00.000Z',
+          createdBy: { id: 'user-1', name: 'Test User' }
+        })
+      ])
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+      const cells = getAllByRole(getDataRows(getEventsTable(body))[0], 'cell')
+
+      expect(cells[7]).toHaveTextContent('-')
+      expect(cells[8]).toHaveTextContent('-')
+    })
+
     it('should render the subject as json inside a code element', async () => {
       useMockBackend()
 
