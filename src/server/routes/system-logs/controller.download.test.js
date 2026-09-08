@@ -77,6 +77,31 @@ describe('system-log download controller', () => {
     )
   })
 
+  test('saves the file under the name the operator uploaded', async () => {
+    const presignedUrl =
+      'https://my-bucket.s3.eu-west-2.amazonaws.com/file.xlsx'
+
+    vi.mocked(fetchRedirectFromBackend).mockResolvedValue(presignedUrl)
+    mswServer.use(
+      http.get(
+        presignedUrl,
+        () =>
+          new HttpResponse(new Uint8Array([0x50, 0x4b]), {
+            headers: {
+              'Content-Disposition': 'attachment; filename="Q3 2026 paper.xlsx"'
+            }
+          })
+      )
+    )
+
+    await systemLogDownloadController.handler(mockRequest, mockH)
+
+    expect(mockResponseChain.header).toHaveBeenCalledWith(
+      'Content-Disposition',
+      'attachment; filename="Q3 2026 paper.xlsx"'
+    )
+  })
+
   test('accepts localhost URLs', async () => {
     const presignedUrl = 'http://localhost:4566/bucket/file.xlsx'
     const binaryContent = new Uint8Array([0x50, 0x4b, 0x03, 0x04])

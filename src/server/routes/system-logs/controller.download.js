@@ -33,12 +33,16 @@ export const systemLogDownloadController = {
 
     const fileContent = Buffer.from(await fileResponse.arrayBuffer())
 
+    // The backend signs the URL with the name the operator uploaded, so that
+    // is what the file is saved as. Older objects were signed before it did,
+    // and fall back to the id.
+    const disposition =
+      fileResponse.headers.get('content-disposition') ??
+      `attachment; filename="${summaryLogId}.xlsx"`
+
     return h
       .response(fileContent)
       .header('Content-Type', 'application/octet-stream')
-      .header(
-        'Content-Disposition',
-        `attachment; filename="${summaryLogId}.xlsx"`
-      )
+      .header('Content-Disposition', disposition)
   }
 }
