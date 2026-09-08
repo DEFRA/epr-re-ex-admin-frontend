@@ -151,6 +151,28 @@ describe('prn-activity controller', () => {
     expect(viewArgs.prns[0].id).toBe('prn-id-1')
   })
 
+  test('Should map obligationYear through from the backend', async () => {
+    mockFetchJsonFromBackend.mockResolvedValue({
+      items: [{ status: 'accepted', tonnage: 10, obligationYear: 2027 }]
+    })
+
+    await prnActivityController.handler(mockRequest, mockH)
+
+    const viewArgs = mockH.view.mock.calls[0][1]
+    expect(viewArgs.prns[0].obligationYear).toBe(2027)
+  })
+
+  test('Should default obligationYear to empty string when absent', async () => {
+    mockFetchJsonFromBackend.mockResolvedValue({
+      items: [{ status: 'accepted', tonnage: 10 }]
+    })
+
+    await prnActivityController.handler(mockRequest, mockH)
+
+    const viewArgs = mockH.view.mock.calls[0][1]
+    expect(viewArgs.prns[0].obligationYear).toBe('')
+  })
+
   test('Should build the cancel confirm URL from the PRN fields', async () => {
     mockFetchJsonFromBackend.mockResolvedValue({
       items: [

@@ -20,6 +20,7 @@ const mockPrn = {
   issuedBy: { name: 'John', position: 'Manager' },
   accreditationNumber: 'ACC-2025-001',
   accreditationYear: 2025,
+  obligationYear: 2026,
   organisationName: 'Reprocessor Ltd',
   wasteProcessingType: 'reprocessor'
 }
@@ -86,6 +87,9 @@ describe('prn-activity scoped download controller', () => {
 
     const csvContent = h.response.mock.calls[0][0]
     expect(csvContent).toContain('PRN-001')
+    const [headerLine, dataLine] = csvContent.split('\n')
+    expect(headerLine).toContain('Accreditation Year,Obligation Year,')
+    expect(dataLine).toContain(',2025,2026,')
     expect(responseBuilder.header).toHaveBeenCalledWith(
       'Content-Type',
       'text/csv'
