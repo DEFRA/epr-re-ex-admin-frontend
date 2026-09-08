@@ -5,6 +5,16 @@ import {
 } from '#server/common/helpers/fetch-organisation-overview.js'
 
 /**
+ * Shown when an event carries no December portion. The backend omits the
+ * December fields whenever a balance has never held December tonnage: an output
+ * accreditation, or an input balance before its first December load. Absence is
+ * a genuine "no December portion" state, not a missing value, so it reads as a
+ * dash rather than a blank cell. A materialised December portion of zero (one
+ * that existed and was resubmitted back to nil) still renders as zero.
+ */
+const ABSENT_AMOUNT = '-'
+
+/**
  * One entry of a waste balance ledger, as the backend answers it.
  *
  * An event concerns a summary log or a note, never both, and states that one
@@ -15,8 +25,8 @@ import {
  *   createdAt: string,
  *   createdBy: { id: string, name?: string, email?: string },
  *   balance: {
- *     opening: { total: number, available: number },
- *     closing: { total: number, available: number }
+ *     opening: { total: number, available: number, decemberTotal?: number, decemberAvailable?: number },
+ *     closing: { total: number, available: number, decemberTotal?: number, decemberAvailable?: number }
  *   },
  *   summaryLog?: { id: string, creditTotal: number },
  *   prn?: { id: string, tonnage: number }
@@ -76,7 +86,11 @@ export const wasteBalanceEventsGETController = {
       createdBy: formatActor(event.createdBy),
       subject: subjectOf(event),
       closingAmount: event.balance.closing.total,
-      closingAvailableAmount: event.balance.closing.available
+      closingAvailableAmount: event.balance.closing.available,
+      closingDecemberAmount:
+        event.balance.closing.decemberTotal ?? ABSENT_AMOUNT,
+      closingDecemberAvailableAmount:
+        event.balance.closing.decemberAvailable ?? ABSENT_AMOUNT
     }))
 
     return h.view('routes/waste-balance-events/index', {

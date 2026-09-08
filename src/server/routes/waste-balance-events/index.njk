@@ -18,7 +18,9 @@
               { text: row.createdBy },
               { html: subjectHtml },
               { text: row.closingAmount },
-              { text: row.closingAvailableAmount }
+              { text: row.closingAvailableAmount },
+              { text: row.closingDecemberAmount },
+              { text: row.closingDecemberAvailableAmount }
             ]]) %}
           {% endfor %}
 
@@ -32,7 +34,9 @@
               { text: "Created by" },
               { text: "Subject" },
               { text: "Closing balance" },
-              { text: "Closing available" }
+              { text: "Closing available" },
+              { text: "December closing" },
+              { text: "December available" }
             ],
             rows: tableRows
           }) }}
