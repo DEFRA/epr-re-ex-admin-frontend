@@ -65,7 +65,7 @@
     "convict": "6.2.5",
     "convict-format-with-validator": "6.2.0",
     "cssnano": "9.0.2",
-    "cssnano-preset-default": "8.0.6",
+    "cssnano-preset-default": "9.0.2",
     "date-fns": "4.4.0",
     "global-agent": "3.0.0",
     "govuk-frontend": "6.5.0",
