@@ -35,7 +35,10 @@
       {# The December split is surfaced only when the balance carries one, so an
          output accreditation reads as having no December portion rather than a
          misleading zero. A materialised zero (an eligible in-window balance with
-         an empty December pool) is a defined value and still renders. #}
+         an empty December pool) is a defined value and still renders. This relies
+         on the backend omitting the keys entirely when there is no December
+         portion: were it to send null or zero, `is defined` would be true and the
+         rows would reappear with a blank value. #}
       {% if wasteBalance and wasteBalance.decemberAmount is defined %}
         {% set summaryRows = summaryRows.concat([
           { key: { text: "December waste balance (tonnes)" }, value: { text: wasteBalance.decemberAmount } },
