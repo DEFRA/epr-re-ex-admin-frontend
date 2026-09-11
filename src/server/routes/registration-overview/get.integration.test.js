@@ -76,6 +76,20 @@ describe('#registrationOverviewController', () => {
     availableAmount: 1200
   }
 
+  const mockWasteBalanceWithDecember = {
+    amount: 1500,
+    availableAmount: 1200,
+    decemberAmount: 300,
+    decemberAvailableAmount: 250
+  }
+
+  const mockWasteBalanceEmptyDecember = {
+    amount: 1500,
+    availableAmount: 1200,
+    decemberAmount: 0,
+    decemberAvailableAmount: 0
+  }
+
   const mockOverview = {
     id: organisationId,
     companyName: 'ACME ltd',
@@ -1092,6 +1106,104 @@ describe('#registrationOverviewController', () => {
         expect(
           getSummaryRowValue(body, 'Waste balance available (tonnes)')
         ).toHaveTextContent('No data')
+      })
+
+      test('Should render December waste balance rows when the balance carries a December portion', async () => {
+        useMockBackend(
+          mockOverview,
+          mockCalendar,
+          { summaryLogs: [] },
+          {
+            [accreditationId]: mockWasteBalanceWithDecember
+          }
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+
+        expect(
+          getSummaryRowValue(body, 'December waste balance (tonnes)')
+        ).toHaveTextContent('300')
+        expect(
+          getSummaryRowValue(body, 'December waste balance available (tonnes)')
+        ).toHaveTextContent('250')
+      })
+
+      test('Should render a materialised zero December balance rather than hiding the rows', async () => {
+        useMockBackend(
+          mockOverview,
+          mockCalendar,
+          { summaryLogs: [] },
+          {
+            [accreditationId]: mockWasteBalanceEmptyDecember
+          }
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+
+        expect(
+          getSummaryRowValue(body, 'December waste balance (tonnes)')
+        ).toHaveTextContent('0')
+        expect(
+          getSummaryRowValue(body, 'December waste balance available (tonnes)')
+        ).toHaveTextContent('0')
+      })
+
+      test('Should not render December waste balance rows when the balance has no December portion', async () => {
+        useMockBackend()
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+
+        expect(
+          queryByText(body, 'December waste balance (tonnes)', {
+            selector: 'dt'
+          })
+        ).toBeNull()
+        expect(
+          queryByText(body, 'December waste balance available (tonnes)', {
+            selector: 'dt'
+          })
+        ).toBeNull()
+      })
+
+      test('Should not render December waste balance rows when the backend returns no balance', async () => {
+        useMockBackend(mockOverview, mockCalendar, { summaryLogs: [] }, {})
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+
+        expect(
+          queryByText(body, 'December waste balance (tonnes)', {
+            selector: 'dt'
+          })
+        ).toBeNull()
+        expect(
+          queryByText(body, 'December waste balance available (tonnes)', {
+            selector: 'dt'
+          })
+        ).toBeNull()
       })
     })
 

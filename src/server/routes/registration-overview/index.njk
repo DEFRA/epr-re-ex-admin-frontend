@@ -30,7 +30,22 @@
         { key: { text: "Accreditation number" }, value: { text: registration.accreditation.accreditationNumber } },
         { key: { text: "Accreditation status" }, value: { html: govukTag({ text: registration.accreditation.status }) }, actions: { items: accreditationStatusActions if SCOPES.adminWrite in scopes else [] } },
         { key: { text: "Waste balance (tonnes)" }, value: { text: wasteBalance.amount if wasteBalance else "No data" } },
-        { key: { text: "Waste balance available (tonnes)" }, value: { text: wasteBalance.availableAmount if wasteBalance else "No data" } },
+        { key: { text: "Waste balance available (tonnes)" }, value: { text: wasteBalance.availableAmount if wasteBalance else "No data" } }
+      ]) %}
+      {# The December split is surfaced only when the balance carries one, so an
+         output accreditation reads as having no December portion rather than a
+         misleading zero. A materialised zero (an eligible in-window balance with
+         an empty December pool) is a defined value and still renders. This relies
+         on the backend omitting the keys entirely when there is no December
+         portion: were it to send null or zero, `is defined` would be true and the
+         rows would reappear with a blank value. #}
+      {% if wasteBalance and wasteBalance.decemberAmount is defined %}
+        {% set summaryRows = summaryRows.concat([
+          { key: { text: "December waste balance (tonnes)" }, value: { text: wasteBalance.decemberAmount } },
+          { key: { text: "December waste balance available (tonnes)" }, value: { text: wasteBalance.decemberAvailableAmount } }
+        ]) %}
+      {% endif %}
+      {% set summaryRows = summaryRows.concat([
         { key: { text: "Waste balance events" }, value: { html: '<a class="govuk-link govuk-link--no-visited-state" href="' ~ wasteBalanceEventsUrl ~ '">View</a>' } }
       ]) %}
       {% if overseasSitesUrl %}
