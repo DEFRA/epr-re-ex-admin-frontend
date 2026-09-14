@@ -1,21 +1,13 @@
 import { beforeEach, vi } from 'vitest'
 import { createServer } from '#server/server.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import {
   createMockOidcServer,
   mockOidcResponse
 } from '#server/common/test-helpers/mock-oidc.js'
 
-const mockSignInAttemptedMetric = vi.fn()
-
-vi.mock('#server/common/helpers/metrics/index.js', async (importOriginal) => ({
-  metrics: {
-    .../** @type {{ metrics: Record<string, unknown> }} */ (
-      await importOriginal()
-    ).metrics,
-    signInAttempted: () => mockSignInAttemptedMetric()
-  }
-}))
+vi.spyOn(metrics.signIn, 'attempted').mockResolvedValue()
 
 describe('GET /auth/sign-in', () => {
   let server
@@ -49,7 +41,7 @@ describe('GET /auth/sign-in', () => {
     })
 
     it('records sign in attempt metric', () => {
-      expect(mockSignInAttemptedMetric).toHaveBeenCalledTimes(1)
+      expect(metrics.signIn.attempted).toHaveBeenCalledTimes(1)
     })
   })
 })

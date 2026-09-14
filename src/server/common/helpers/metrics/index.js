@@ -1,23 +1,31 @@
 import {
   createMetricsLogger,
-  Unit,
-  StorageResolution
+  StorageResolution,
+  Unit
 } from 'aws-embedded-metrics'
 
 import { config } from '#config/config.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
 
 /**
- * Aws embedded metrics wrapper
+ * @typedef {'signInAttempted'
+ *   | 'signInFailure'
+ *   | 'signInSuccess'
+ *   | 'signOutSuccess'} MetricName
  */
-async function metricsCounter(metricName, value = 1) {
-  const isMetricsEnabled = config.get('isMetricsEnabled')
-  if (!isMetricsEnabled) {
-    return
-  }
+
+const isMetricsEnabled = config.get('isMetricsEnabled')
+
+/**
+ * Aws embedded metrics wrapper
+ * @param {MetricName} metricName
+ */
+async function writeMetric(metricName) {
+  const value = 1
 
   try {
     const metricsLogger = createMetricsLogger()
+
     metricsLogger.putMetric(
       metricName,
       value,
@@ -30,17 +38,38 @@ async function metricsCounter(metricName, value = 1) {
   }
 }
 
+/** @returns {Promise<void>} */
+const noop = async () => {}
+
+/**
+ * @template {Record<string, (...args: never[]) => Promise<void>>} T
+ * @param {T} enabled
+ * @returns {T}
+ */
+const orNoop = (enabled) =>
+  isMetricsEnabled
+    ? enabled
+    : /** @type {T} */ (
+        Object.fromEntries(Object.keys(enabled).map((name) => [name, noop]))
+      )
+
+/**
+ * Grouping is caller-side only -- the emitted names are a CloudWatch contract
+ * that dashboards query, so they stay flat and unchanged.
+ * @type {Record<string, () => Promise<void>>}
+ */
+const signIn = {
+  attempted: () => writeMetric('signInAttempted'),
+  success: () => writeMetric('signInSuccess'),
+  failure: () => writeMetric('signInFailure')
+}
+
+/** @type {Record<string, () => Promise<void>>} */
+const signOut = {
+  success: () => writeMetric('signOutSuccess')
+}
+
 export const metrics = {
-  async signInAttempted() {
-    return metricsCounter('signInAttempted')
-  },
-  async signInSuccess() {
-    return metricsCounter('signInSuccess')
-  },
-  async signInFailure() {
-    return metricsCounter('signInFailure')
-  },
-  async signOutSuccess() {
-    return metricsCounter('signOutSuccess')
-  }
+  signIn: orNoop(signIn),
+  signOut: orNoop(signOut)
 }

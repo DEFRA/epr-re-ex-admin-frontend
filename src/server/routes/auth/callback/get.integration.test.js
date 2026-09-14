@@ -8,24 +8,16 @@ import {
   mockOidcResponse,
   privateKey
 } from '#server/common/test-helpers/mock-oidc.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { http, server as mswServer, HttpResponse } from '#vite/setup-msw.js'
 import Jwt from '@hapi/jwt'
 
-/** @import * as MetricsModule from '#server/common/helpers/metrics/index.js' */
-
 const mock = {
-  cdpAuditing: vi.fn(),
-  signInSuccessMetric: vi.fn(),
-  signInFailureMetric: vi.fn()
+  cdpAuditing: vi.fn()
 }
 
-vi.mock('#server/common/helpers/metrics/index.js', async (importOriginal) => ({
-  metrics: {
-    .../** @type {typeof MetricsModule} */ (await importOriginal()).metrics,
-    signInFailure: () => mock.signInFailureMetric(),
-    signInSuccess: () => mock.signInSuccessMetric()
-  }
-}))
+vi.spyOn(metrics.signIn, 'success').mockResolvedValue()
+vi.spyOn(metrics.signIn, 'failure').mockResolvedValue()
 
 vi.mock('@defra/cdp-auditing', () => ({
   audit: (...args) => mock.cdpAuditing(...args)
@@ -105,7 +97,7 @@ describe('GET /auth/callback', () => {
 
     it('records sign in success metric', async () => {
       await performSignInFlow(accessToken)
-      expect(mock.signInSuccessMetric).toHaveBeenCalledTimes(1)
+      expect(metrics.signIn.success).toHaveBeenCalledTimes(1)
     })
 
     it('audits a successful sign in attempt', async () => {
@@ -179,7 +171,7 @@ describe('GET /auth/callback', () => {
     })
 
     it('records sign in failure metric', () => {
-      expect(mock.signInFailureMetric).toHaveBeenCalledTimes(1)
+      expect(metrics.signIn.failure).toHaveBeenCalledTimes(1)
     })
   })
 
@@ -203,7 +195,7 @@ describe('GET /auth/callback', () => {
     })
 
     it('records sign in failure metric', () => {
-      expect(mock.signInFailureMetric).toHaveBeenCalledTimes(1)
+      expect(metrics.signIn.failure).toHaveBeenCalledTimes(1)
     })
   })
 })
