@@ -9,8 +9,8 @@ import { createLogger } from '#server/common/helpers/logging/logger.js'
 
 /**
  * @typedef {'signInAttempted'
- *   | 'signInSuccess'
  *   | 'signInFailure'
+ *   | 'signInSuccess'
  *   | 'signOutSuccess'} MetricName
  */
 
