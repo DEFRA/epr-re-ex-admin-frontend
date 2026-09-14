@@ -4,22 +4,15 @@ import { createServer } from '#server/server.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import {
   createMockOidcServer,
   mockOidcResponse
 } from '#server/common/test-helpers/mock-oidc.js'
 
-const mockSignOutSuccessMetric = vi.fn()
 const mockCdpAuditing = vi.fn()
 
-vi.mock('#server/common/helpers/metrics/index.js', async (importOriginal) => ({
-  metrics: {
-    .../** @type {{ metrics: Record<string, unknown> }} */ (
-      await importOriginal()
-    ).metrics,
-    signOutSuccess: () => mockSignOutSuccessMetric()
-  }
-}))
+vi.spyOn(metrics.signOut, 'success').mockResolvedValue()
 
 vi.mock('@defra/cdp-auditing', () => ({
   audit: (...args) => mockCdpAuditing(...args)
@@ -100,7 +93,7 @@ describe('GET /auth/sign-out', () => {
     })
 
     it('records sign out success metric', () => {
-      expect(mockSignOutSuccessMetric).toHaveBeenCalledTimes(1)
+      expect(metrics.signOut.success).toHaveBeenCalledTimes(1)
     })
   })
 })
