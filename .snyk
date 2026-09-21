@@ -1,4 +1,25 @@
 # Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
 version: v1.25.1
-ignore: {}
+# uri-js is deprecated and its latest published version (4.4.1) is the flagged
+# one, so there is no upstream patch. It reaches us only through jsoneditor's
+# bundled ajv@6 schema validation (jsoneditor requires ajv 6; ajv 8 moved to
+# fast-uri). The sink is the admin JSON editor component, not a request path.
+ignore:
+  SNYK-JS-URIJS-19963963:
+    - '*':
+        reason: >-
+          Infinite loop in uri-js, reached only via jsoneditor > ajv@6 >
+          uri-js. uri-js is deprecated and 4.4.1 (latest) is the flagged
+          version, so no upstream patch exists. jsoneditor pins ajv 6; the sink
+          is the admin JSON editor, not a request path. Risk accepted pending a
+          jsoneditor/ajv path off uri-js.
+        expires: 2027-03-21T00:00:00.000Z
+  SNYK-JS-URIJS-19963961:
+    - '*':
+        reason: >-
+          Improper output encoding in uri-js, same path (jsoneditor > ajv@6 >
+          uri-js). Deprecated package with no upstream patch (4.4.1 is latest
+          and is the flagged version). Risk accepted pending a jsoneditor/ajv
+          path off uri-js.
+        expires: 2027-03-21T00:00:00.000Z
 patch: {}
