@@ -4,6 +4,7 @@ import { config } from '#config/config.js'
 describe('setupProxy', () => {
   afterEach(() => {
     config.set('httpProxy', null)
+    delete global.GLOBAL_AGENT
   })
 
   test('Should not setup proxy if the environment variable is not set', () => {
