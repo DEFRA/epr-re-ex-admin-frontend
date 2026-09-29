@@ -129,6 +129,9 @@
     "colord": "2.9.4",
     "ioredis": "6.0.0",
     "js-yaml": "4.3.2",
+    "blankie": {
+      "@hapi/joi": "npm:joi@17.13.8"
+    },
     "jsoneditor": {
       "ajv": "6.14.0"
     },
