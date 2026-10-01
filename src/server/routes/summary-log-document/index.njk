@@ -1,0 +1,11 @@
+{% extends 'layout.njk' %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
+
+      <code class="app-json-display">{{ summaryLog | dump(2) }}</code>
+    </div>
+  </div>
+{% endblock %}

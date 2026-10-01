@@ -75,7 +75,7 @@ async function generateCsv(data) {
     ])
   }
 
-  return `${utf8Bom}${await writeToString(rows, { headers: false, quoteColumns: true })}`
+  return `${utf8Bom}${await writeToString(rows, { headers: false })}`
 }
 
 export const orsDownloadController = {

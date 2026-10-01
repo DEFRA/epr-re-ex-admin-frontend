@@ -38,7 +38,7 @@ describe('verifyToken', () => {
       req.url.includes(mockOidcResponse.jwks_uri)
     )
 
-    expect(requestsToJwks.length).toBe(1)
+    expect(requestsToJwks).toHaveLength(1)
   })
 
   test('should not throw error if the token was signed by the correct key', async () => {

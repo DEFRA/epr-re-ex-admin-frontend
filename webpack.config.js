@@ -25,7 +25,11 @@ export default {
       import: ['./javascripts/application.js', './stylesheets/application.scss']
     },
     jsoneditor: {
-      import: ['./javascripts/jsoneditor.js', './stylesheets/jsoneditor.scss']
+      import: [
+        'jsoneditor/dist/jsoneditor.css',
+        './javascripts/jsoneditor.js',
+        './stylesheets/jsoneditor.scss'
+      ]
     },
     'sign-out': {
       import: './javascripts/sign-out.js'
@@ -38,7 +42,8 @@ export default {
   devtool: NODE_ENV === 'production' ? 'source-map' : 'inline-source-map',
   watchOptions: {
     aggregateTimeout: 200,
-    poll: 1000
+    poll: 1000,
+    ignored: '**/node_modules/**'
   },
   output: {
     filename:
@@ -98,6 +103,10 @@ export default {
           {
             loader: 'css-loader',
             options: {
+              // esModule output makes css url() assets `new URL()` refs, which
+              // webpack >= 5.109 emits as asset-url literals under outputModule;
+              // mini-css-extract-plugin then renders them as "[object Object]"
+              esModule: false,
               sourceMap: NODE_ENV !== 'production'
             }
           },

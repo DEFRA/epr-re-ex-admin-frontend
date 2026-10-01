@@ -31,7 +31,7 @@ function generateCsv(data) {
     ])
   }
 
-  return writeToString(rows, { headers: false, quoteColumns: true })
+  return writeToString(rows, { headers: false })
 }
 
 export const linkedOrganisationsDownloadController = {

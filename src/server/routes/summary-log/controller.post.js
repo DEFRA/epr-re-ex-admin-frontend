@@ -49,7 +49,7 @@ function generateCsv(data, generatedAt) {
     ])
   }
 
-  return writeToString(rows, { headers: false, quoteColumns: true })
+  return writeToString(rows, { headers: false })
 }
 
 export const summaryLogUploadsReportPostController = {

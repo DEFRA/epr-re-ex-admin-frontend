@@ -1,13 +1,15 @@
 import { writeToString } from '@fast-csv/format'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { formatDate } from '#config/nunjucks/filters/format-date.js'
+import { roundForCsv } from '#server/common/helpers/round-for-csv.js'
 import {
   formatMaterialName,
   formatTonnageBand,
-  formatTonnage
+  formatRegistrationType
 } from './formatters.js'
 
 const dateFormat = "d MMMM yyyy 'at' h:mmaaa"
+const tonnageDecimals = 0
 
 async function generateCsv(data) {
   const rows = [
@@ -17,15 +19,23 @@ async function generateCsv(data) {
       'Tonnage of PRNs per accreditation, broken down by current PRN status. ' +
         'Includes awaiting authorisation, awaiting acceptance, awaiting cancellation, accepted and cancelled.'
     ],
+    [
+      'Waste balance is the waste an accreditation holds after the PRNs it has issued. ' +
+        'Available waste balance also deducts PRNs awaiting authorisation.'
+    ],
     [],
     [`Data generated at: ${formatDate(data.generatedAt, dateFormat)}`],
     [],
     [
       'Organisation Name',
       'Organisation ID',
+      'Registration Number',
+      'Registration Type',
       'Accreditation Number',
       'Material',
       'Tonnage Band',
+      'Waste balance',
+      'Available waste balance',
       'Awaiting authorisation',
       'Awaiting acceptance',
       'Awaiting cancellation',
@@ -37,19 +47,23 @@ async function generateCsv(data) {
   for (const row of data.rows) {
     rows.push([
       row.organisationName,
-      row.organisationId,
+      row.orgId,
+      row.registrationNumber,
+      formatRegistrationType(row.registrationType),
       row.accreditationNumber,
       formatMaterialName(row.material),
       formatTonnageBand(row.tonnageBand),
-      formatTonnage(row.awaitingAuthorisationTonnage),
-      formatTonnage(row.awaitingAcceptanceTonnage),
-      formatTonnage(row.awaitingCancellationTonnage),
-      formatTonnage(row.acceptedTonnage),
-      formatTonnage(row.cancelledTonnage)
+      roundForCsv(row.wasteBalance, tonnageDecimals),
+      roundForCsv(row.availableWasteBalance, tonnageDecimals),
+      roundForCsv(row.awaitingAuthorisationTonnage, tonnageDecimals),
+      roundForCsv(row.awaitingAcceptanceTonnage, tonnageDecimals),
+      roundForCsv(row.awaitingCancellationTonnage, tonnageDecimals),
+      roundForCsv(row.acceptedTonnage, tonnageDecimals),
+      roundForCsv(row.cancelledTonnage, tonnageDecimals)
     ])
   }
 
-  return writeToString(rows, { headers: false, quoteColumns: true })
+  return writeToString(rows, { headers: false })
 }
 
 export const prnTonnagePostController = {

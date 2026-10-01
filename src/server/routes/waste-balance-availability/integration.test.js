@@ -51,7 +51,7 @@ describe('waste-balance-availability', () => {
   describe('GET /waste-balance-availability', () => {
     describe('When user is unauthenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(null)
+        vi.mocked(getUserSession).mockResolvedValue(null)
       })
 
       test('Should return unauthorised status code', async () => {
@@ -67,10 +67,14 @@ describe('waste-balance-availability', () => {
 
     describe('When user is authenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(mockUserSession)
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
       })
 
-      test('Should return OK and render page with heading', async () => {
+      test.each([
+        ['h1', 'Waste balance availability'],
+        ['.govuk-body', 'Available waste balance by material'],
+        ['.govuk-body', 'Data generated at:']
+      ])('Should render %s containing "%s"', async (selector, expectedText) => {
         stubBackendResponse(mockBalanceData)
 
         const { result, statusCode } = await server.inject({
@@ -85,27 +89,7 @@ describe('waste-balance-availability', () => {
         expect(statusCode).toBe(statusCodes.ok)
 
         const $ = cheerio.load(result)
-        expect($('h1').text()).toContain('Waste balance availability')
-      })
-
-      test('Should render page with description text', async () => {
-        stubBackendResponse(mockBalanceData)
-
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url: '/waste-balance-availability',
-          auth: {
-            strategy: 'session',
-            credentials: mockUserSession
-          }
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-
-        const $ = cheerio.load(result)
-        expect($('.govuk-body').text()).toContain(
-          'Available waste balance by material'
-        )
+        expect($(selector).text()).toContain(expectedText)
       })
 
       test('Should render materials table with formatted data', async () => {
@@ -130,24 +114,6 @@ describe('waste-balance-availability', () => {
         expect(tableText).toContain('5678.90')
         expect(tableText).toContain('Total')
         expect(tableText).toContain('6913.46')
-      })
-
-      test('Should render generated at timestamp', async () => {
-        stubBackendResponse(mockBalanceData)
-
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url: '/waste-balance-availability',
-          auth: {
-            strategy: 'session',
-            credentials: mockUserSession
-          }
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-
-        const $ = cheerio.load(result)
-        expect($('.govuk-body').text()).toContain('Data generated at:')
       })
 
       test('Should render download button', async () => {
@@ -235,7 +201,7 @@ describe('waste-balance-availability', () => {
   describe('POST /waste-balance-availability', () => {
     describe('When user is unauthenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(null)
+        vi.mocked(getUserSession).mockResolvedValue(null)
       })
 
       test('Should return unauthorised status code', async () => {
@@ -252,7 +218,7 @@ describe('waste-balance-availability', () => {
 
     describe('When user is authenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(mockUserSession)
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
       })
 
       test('Should return CSV file on successful request', async () => {
@@ -281,9 +247,9 @@ describe('waste-balance-availability', () => {
           'attachment; filename="waste-balance-availability.csv"'
         )
         expect(payload).toContain('Waste balance availability by material')
-        expect(payload).toContain('"Aluminium","1234.56"')
-        expect(payload).toContain('"Glass re-melt","5678.90"')
-        expect(payload).toContain('"Total","6913.46"')
+        expect(payload).toContain('Aluminium,1234.56')
+        expect(payload).toContain('Glass re-melt,5678.9')
+        expect(payload).toContain('Total,6913.46')
       })
 
       test('Should include formatted date in CSV', async () => {

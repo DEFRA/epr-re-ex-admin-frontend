@@ -1,0 +1,5 @@
+// Keep long period-status labels (e.g. Requires resubmission) on a single line
+// rather than breaking inside the narrow reports Status column.
+.app-status-tag {
+  white-space: nowrap;
+}

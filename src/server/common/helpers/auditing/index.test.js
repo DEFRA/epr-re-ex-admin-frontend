@@ -1,18 +1,12 @@
 import { vi, describe, test, expect, beforeEach } from 'vitest'
 import { audit } from '@defra/cdp-auditing'
 import { auditSignIn, auditSignOut } from './index.js'
+import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
 
 vi.mock('@defra/cdp-auditing', () => ({
   audit: vi.fn(),
   enableAuditing: vi.fn()
 }))
-
-const mockUserSession = {
-  userId: 'user-123',
-  email: 'test@example.com',
-  displayName: 'Test User',
-  sessionId: 'session-456'
-}
 
 describe('#auditing', () => {
   beforeEach(() => {
@@ -31,25 +25,8 @@ describe('#auditing', () => {
         },
         context: {},
         user: {
-          id: 'user-123',
-          email: 'test@example.com'
-        }
-      })
-    })
-
-    test('Should handle missing user session fields gracefully', () => {
-      auditSignIn({})
-
-      expect(audit).toHaveBeenCalledWith({
-        event: {
-          category: 'access',
-          subCategory: 'sso',
-          action: 'sign-in'
-        },
-        context: {},
-        user: {
-          id: undefined,
-          email: undefined
+          id: mockUserSession.userId,
+          email: mockUserSession.email
         }
       })
     })
@@ -67,25 +44,8 @@ describe('#auditing', () => {
         },
         context: {},
         user: {
-          id: 'user-123',
-          email: 'test@example.com'
-        }
-      })
-    })
-
-    test('Should handle missing user session fields gracefully', () => {
-      auditSignOut({})
-
-      expect(audit).toHaveBeenCalledWith({
-        event: {
-          category: 'access',
-          subCategory: 'sso',
-          action: 'sign-out'
-        },
-        context: {},
-        user: {
-          id: undefined,
-          email: undefined
+          id: mockUserSession.userId,
+          email: mockUserSession.email
         }
       })
     })

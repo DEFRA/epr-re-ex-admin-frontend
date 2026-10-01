@@ -275,8 +275,8 @@ describe('inflateNullObjects', () => {
       properties: { name: { type: 'string' } }
     }
 
-    expect(inflateNullObjects(null, schema)).toBe(null)
-    expect(inflateNullObjects(undefined, schema)).toBe(undefined)
+    expect(inflateNullObjects(null, schema)).toBeNull()
+    expect(inflateNullObjects(undefined, schema)).toBeUndefined()
     expect(inflateNullObjects({ name: 'test' }, null)).toEqual({
       name: 'test'
     })

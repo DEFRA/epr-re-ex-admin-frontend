@@ -19,11 +19,11 @@ describe('#waste-records-export routes plugin', () => {
     expect(typeof wasteRecordsExport.plugin.register).toBe('function')
   })
 
-  test('registers two routes', () => {
+  test('registers three routes', () => {
     wasteRecordsExport.plugin.register(mockServer)
 
     const routes = mockServer.route.mock.calls[0][0]
-    expect(routes).toHaveLength(2)
+    expect(routes).toHaveLength(3)
   })
 
   test('registers GET /waste-records-export', () => {
@@ -46,5 +46,16 @@ describe('#waste-records-export routes plugin', () => {
       path: '/waste-records-export'
     })
     expect(routes[1]).toHaveProperty('handler')
+  })
+
+  test('registers the registration-scoped download route', () => {
+    wasteRecordsExport.plugin.register(mockServer)
+
+    const routes = mockServer.route.mock.calls[0][0]
+    expect(routes[2]).toMatchObject({
+      method: 'GET',
+      path: '/organisations/{organisationId}/registrations/{registrationId}/waste-records/download'
+    })
+    expect(routes[2]).toHaveProperty('handler')
   })
 })

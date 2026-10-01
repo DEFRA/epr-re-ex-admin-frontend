@@ -7,7 +7,7 @@ import { loggingEventActions } from '#server/common/enums/event.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 
 /**
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { HapiRequest, UserSession } from '#server/common/hapi-types.js'
  *
  * @typedef {{
  *   profile: { id: string, email: string, displayName?: string, loginHint?: string },
@@ -26,7 +26,7 @@ export default {
   handler: async function (request, h) {
     if (request.auth.error) {
       request.logger.error({ message: 'Sign-in failed' })
-      await metrics.signInFailure()
+      await metrics.signIn.failure()
     }
 
     if (!request.auth.isAuthenticated) {
@@ -51,19 +51,20 @@ export default {
           message: `Sign-in denied: user ${email} has no admin tier`,
           event: { action: loggingEventActions.signIn, reason: 'no_admin_tier' }
         })
-        await metrics.signInFailure()
+        await metrics.signIn.failure()
         return h.view('unauthorised')
       }
       request.logger.error({
         err: error,
         message: 'Failed to resolve admin scopes from backend'
       })
-      await metrics.signInFailure()
+      await metrics.signIn.failure()
       throw error
     }
 
     const sessionId = randomUUID()
 
+    /** @type {UserSession} */
     const userSession = {
       sessionId,
       userId,
@@ -89,7 +90,7 @@ export default {
       }
     })
     auditSignIn(userSession)
-    await metrics.signInSuccess()
+    await metrics.signIn.success()
 
     request.logger.info({
       message: `Sign-in complete, redirecting user to ${safeRedirect}`

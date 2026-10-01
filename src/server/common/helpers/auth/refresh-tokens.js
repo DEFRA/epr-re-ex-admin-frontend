@@ -2,12 +2,21 @@ import * as openid from 'openid-client'
 import { getScopesForAuth } from './get-scopes-for-auth.js'
 import { config } from '#config/config.js'
 
+/**
+ * @import { Configuration } from 'openid-client'
+ */
+
 const ONE_HOUR_MS = 60 * 60 * 1000
 
+/** @type {Configuration | null} */
 let cachedDiscovery = null
 let cachedAt = 0
+/** @type {Promise<Configuration> | null} */
 let inflight = null
 
+/**
+ * @returns {Promise<Configuration>}
+ */
 async function getDiscoveryConfig() {
   if (cachedDiscovery && Date.now() - cachedAt < ONE_HOUR_MS) {
     return cachedDiscovery

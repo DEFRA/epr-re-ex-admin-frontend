@@ -72,15 +72,23 @@ describe('#wasteBalanceEventsController', () => {
 
   const mockEvents = [
     {
-      id: 'evt-1',
-      registrationId: 'reg-001',
-      accreditationId,
-      organisationId,
       number: 1,
-      kind: 'SUMMARY_LOG_SUBMITTED',
-      payload: { summaryLogId: 'sl-1', creditTotal: 100 },
-      openingBalance: { amount: 0, availableAmount: 0 },
-      closingBalance: { amount: 100, availableAmount: 100 },
+      kind: 'summary-log-submitted',
+      summaryLog: { id: 'sl-1', creditTotal: 100 },
+      balance: {
+        opening: {
+          total: 0,
+          available: 0,
+          decemberTotal: 0,
+          decemberAvailable: 0
+        },
+        closing: {
+          total: 100,
+          available: 100,
+          decemberTotal: 30,
+          decemberAvailable: 30
+        }
+      },
       createdAt: '2026-01-15T10:00:00.000Z',
       createdBy: {
         id: 'user-1',
@@ -89,15 +97,23 @@ describe('#wasteBalanceEventsController', () => {
       }
     },
     {
-      id: 'evt-2',
-      registrationId: 'reg-001',
-      accreditationId,
-      organisationId,
       number: 2,
-      kind: 'PRN_CREATED',
-      payload: { prnId: 'prn-1', amount: 50 },
-      openingBalance: { amount: 100, availableAmount: 100 },
-      closingBalance: { amount: 100, availableAmount: 50 },
+      kind: 'prn-created',
+      prn: { id: 'prn-1', tonnage: 50 },
+      balance: {
+        opening: {
+          total: 100,
+          available: 100,
+          decemberTotal: 30,
+          decemberAvailable: 30
+        },
+        closing: {
+          total: 100,
+          available: 50,
+          decemberTotal: 30,
+          decemberAvailable: 20
+        }
+      },
       createdAt: '2026-01-16T14:30:00.000Z',
       createdBy: { id: 'user-1', name: 'Test User' }
     }
@@ -126,8 +142,12 @@ describe('#wasteBalanceEventsController', () => {
         () => HttpResponse.json(overviewResponse)
       ),
       http.get(
-        `${backendUrl}/v1/admin/registrations/reg-001/accreditations/${accreditationId}/waste-balance-events`,
-        () => HttpResponse.json(eventsResponse)
+        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/waste-balance-ledger`,
+        () =>
+          HttpResponse.json({
+            ledger: { organisationId, registrationId, accreditationId },
+            events: eventsResponse
+          })
       )
     )
   }
@@ -237,9 +257,11 @@ describe('#wasteBalanceEventsController', () => {
         'Kind',
         'Date',
         'Created by',
-        'Payload',
+        'Subject',
         'Closing balance',
-        'Closing available'
+        'Closing available',
+        'December closing',
+        'December available'
       ])
     })
 
@@ -259,33 +281,138 @@ describe('#wasteBalanceEventsController', () => {
 
       const firstCells = getAllByRole(rows[0], 'cell')
       expect(firstCells[0]).toHaveTextContent('1')
-      expect(firstCells[1]).toHaveTextContent('SUMMARY_LOG_SUBMITTED')
+      expect(firstCells[1]).toHaveTextContent('summary-log-submitted')
       expect(firstCells[3]).toHaveTextContent(
         'Test User (test.user@example.com)'
       )
       expect(firstCells[5]).toHaveTextContent('100')
       expect(firstCells[6]).toHaveTextContent('100')
+      expect(firstCells[7]).toHaveTextContent('30')
+      expect(firstCells[8]).toHaveTextContent('30')
 
       const secondCells = getAllByRole(rows[1], 'cell')
       expect(secondCells[0]).toHaveTextContent('2')
-      expect(secondCells[1]).toHaveTextContent('PRN_CREATED')
+      expect(secondCells[1]).toHaveTextContent('prn-created')
       expect(secondCells[3]).toHaveTextContent('Test User')
       expect(secondCells[5]).toHaveTextContent('100')
       expect(secondCells[6]).toHaveTextContent('50')
+      expect(secondCells[7]).toHaveTextContent('30')
+      expect(secondCells[8]).toHaveTextContent('20')
+    })
+
+    test("Should render '-' for December amounts when the backend omits them", async () => {
+      useMockBackend(mockOverview, [
+        /** @type {any} */ ({
+          number: 6,
+          kind: 'summary-log-submitted',
+          summaryLog: { id: 'sl-2', creditTotal: 100 },
+          balance: {
+            opening: { total: 0, available: 0 },
+            closing: { total: 100, available: 100 }
+          },
+          createdAt: '2026-01-20T10:00:00.000Z',
+          createdBy: { id: 'user-1', name: 'Test User' }
+        })
+      ])
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+      const cells = getAllByRole(getDataRows(getEventsTable(body))[0], 'cell')
+
+      expect(cells[7]).toHaveTextContent('-')
+      expect(cells[8]).toHaveTextContent('-')
+    })
+
+    it('should render the subject as json inside a code element', async () => {
+      useMockBackend()
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+      const [firstRow] = getDataRows(getEventsTable(body))
+      const subjectCell = getAllByRole(firstRow, 'cell')[4]
+
+      expect(subjectCell.querySelector('code')?.textContent).toBe(
+        '{"summaryLog":{"id":"sl-1","creditTotal":100}}'
+      )
+    })
+
+    it('should render a subject carrying markup as text, not markup', async () => {
+      const summaryLog = {
+        id: '</code><img src="x" onerror="alert(1)">',
+        creditTotal: 100
+      }
+      useMockBackend(mockOverview, [
+        {
+          number: 5,
+          kind: 'summary-log-submitted',
+          summaryLog,
+          balance: {
+            opening: {
+              total: 0,
+              available: 0,
+              decemberTotal: 0,
+              decemberAvailable: 0
+            },
+            closing: {
+              total: 100,
+              available: 100,
+              decemberTotal: 30,
+              decemberAvailable: 30
+            }
+          },
+          createdAt: '2026-01-19T10:00:00.000Z',
+          createdBy: {
+            id: 'user-1',
+            name: 'Test User',
+            email: 'test.user@example.com'
+          }
+        }
+      ])
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+      const [firstRow] = getDataRows(getEventsTable(body))
+      const subjectCell = getAllByRole(firstRow, 'cell')[4]
+
+      expect(subjectCell.querySelector('img')).toBeNull()
+      expect(subjectCell.textContent).toBe(JSON.stringify({ summaryLog }))
     })
 
     test('Should render empty Created by when actor has only id', async () => {
       useMockBackend(mockOverview, [
         {
-          id: 'evt-3',
-          registrationId: 'reg-001',
-          accreditationId,
-          organisationId,
           number: 3,
-          kind: 'PRN_CREATED',
-          payload: { prnId: 'prn-2', amount: 10 },
-          openingBalance: { amount: 50, availableAmount: 50 },
-          closingBalance: { amount: 50, availableAmount: 40 },
+          kind: 'prn-created',
+          prn: { id: 'prn-2', tonnage: 10 },
+          balance: {
+            opening: {
+              total: 50,
+              available: 50,
+              decemberTotal: 0,
+              decemberAvailable: 0
+            },
+            closing: {
+              total: 50,
+              available: 40,
+              decemberTotal: 0,
+              decemberAvailable: 0
+            }
+          },
           createdAt: '2026-01-17T09:00:00.000Z',
           createdBy: /** @type {any} */ ({ id: 'user-2' })
         }
@@ -307,15 +434,23 @@ describe('#wasteBalanceEventsController', () => {
     test('Should render email as Created by when actor has no name', async () => {
       useMockBackend(mockOverview, [
         {
-          id: 'evt-4',
-          registrationId: 'reg-001',
-          accreditationId,
-          organisationId,
           number: 4,
-          kind: 'PRN_ISSUED',
-          payload: { prnId: 'prn-3', amount: 20 },
-          openingBalance: { amount: 50, availableAmount: 40 },
-          closingBalance: { amount: 50, availableAmount: 40 },
+          kind: 'prn-issued',
+          prn: { id: 'prn-3', tonnage: 20 },
+          balance: {
+            opening: {
+              total: 50,
+              available: 40,
+              decemberTotal: 0,
+              decemberAvailable: 0
+            },
+            closing: {
+              total: 50,
+              available: 40,
+              decemberTotal: 0,
+              decemberAvailable: 0
+            }
+          },
           createdAt: '2026-01-18T11:00:00.000Z',
           createdBy: /** @type {any} */ ({
             id: 'user-3',

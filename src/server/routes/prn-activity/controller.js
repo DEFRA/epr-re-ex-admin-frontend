@@ -6,13 +6,29 @@ const statuses =
   'awaiting_authorisation,awaiting_acceptance,accepted,awaiting_cancellation,cancelled,deleted'
 
 function getDisplayName(org) {
-  if (!org) return ''
+  if (!org) {
+    return ''
+  }
   return org.tradingName || org.name || ''
+}
+
+function buildCancelConfirmUrl(prn) {
+  const params = new URLSearchParams({
+    prnNumber: prn.prnNumber || '',
+    organisationName: prn.organisationName || '',
+    issuedTo: getDisplayName(prn.issuedToOrganisation),
+    tonnage: String(prn.tonnage ?? ''),
+    material: prn.material || '',
+    accreditationNumber: prn.accreditationNumber || '',
+    accreditationYear: String(prn.accreditationYear ?? '')
+  })
+  return `/prn-activity/${prn.id}/cancel/confirm?${params}`
 }
 
 function mapPrns(data) {
   const items = data?.items || []
   return items.map((prn) => ({
+    id: prn.id || '',
     prnNumber: prn.prnNumber || '',
     status: prn.status,
     issuedTo: getDisplayName(prn.issuedToOrganisation),
@@ -25,9 +41,12 @@ function mapPrns(data) {
     issuedByPosition: prn.issuedBy?.position || '',
     accreditationNumber: prn.accreditationNumber || '',
     accreditationYear: prn.accreditationYear ?? '',
+    obligationYear: prn.obligationYear ?? '',
     submittedToRegulator: prn.submittedToRegulator || '',
     organisationName: prn.organisationName || '',
-    wasteProcessingType: prn.wasteProcessingType || ''
+    wasteProcessingType: prn.wasteProcessingType || '',
+    cancelConfirmUrl: buildCancelConfirmUrl(prn),
+    regulatorCancellable: prn.regulatorCancellable ?? false
   }))
 }
 
@@ -37,6 +56,24 @@ export function buildPrnApiUrl(cursor) {
     url += `&cursor=${encodeURIComponent(cursor)}`
   }
   return url
+}
+
+export function buildAccreditationPrnApiUrl({
+  organisationId,
+  registrationId,
+  accreditationId
+}) {
+  const path = [
+    '/v1/admin/organisations',
+    encodeURIComponent(organisationId),
+    'registrations',
+    encodeURIComponent(registrationId),
+    'accreditations',
+    encodeURIComponent(accreditationId),
+    'packaging-recycling-notes'
+  ].join('/')
+
+  return `${path}?statuses=${statuses}`
 }
 
 export const prnActivityController = {

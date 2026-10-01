@@ -2,7 +2,8 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
 import {
   formatMaterialName,
   formatTonnageBand,
-  formatTonnage
+  formatTonnage,
+  formatRegistrationType
 } from './formatters.js'
 
 export const prnTonnageResultsGetController = {
@@ -14,10 +15,14 @@ export const prnTonnageResultsGetController = {
 
     const rows = data.rows.map((row) => ({
       organisationName: row.organisationName,
-      organisationId: row.organisationId,
+      orgId: row.orgId,
+      registrationNumber: row.registrationNumber,
+      registrationType: formatRegistrationType(row.registrationType),
       accreditationNumber: row.accreditationNumber,
       material: formatMaterialName(row.material),
       tonnageBand: formatTonnageBand(row.tonnageBand),
+      wasteBalance: formatTonnage(row.wasteBalance),
+      availableWasteBalance: formatTonnage(row.availableWasteBalance),
       awaitingAuthorisationTonnage: formatTonnage(
         row.awaitingAuthorisationTonnage
       ),

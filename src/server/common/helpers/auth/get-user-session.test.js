@@ -69,29 +69,20 @@ describe('#getUserSession', () => {
     expect(result).toEqual(complexUserSession)
   })
 
-  test('Should return null when yar.get throws an error', async () => {
-    mockYarGet.mockRejectedValue(new Error('Session retrieval failed'))
+  test.each([
+    ['a generic Error', new Error('Session retrieval failed')],
+    ['a TypeError', new TypeError('Invalid session data')],
+    ['a custom error type', new Error('Custom session error')]
+  ])(
+    'Should return null when yar.get rejects with %s',
+    async (_label, error) => {
+      mockYarGet.mockRejectedValue(error)
 
-    const result = await getUserSession(mockRequest)
+      const result = await getUserSession(mockRequest)
 
-    expect(result).toBeNull()
-  })
-
-  test('Should return null for TypeError', async () => {
-    mockYarGet.mockRejectedValue(new TypeError('Invalid session data'))
-
-    const result = await getUserSession(mockRequest)
-
-    expect(result).toBeNull()
-  })
-
-  test('Should return null for custom error types', async () => {
-    mockYarGet.mockRejectedValue(new Error('Custom session error'))
-
-    const result = await getUserSession(mockRequest)
-
-    expect(result).toBeNull()
-  })
+      expect(result).toBeNull()
+    }
+  )
 
   test('Should return undefined if session does not exist', async () => {
     mockYarGet.mockResolvedValue(undefined)

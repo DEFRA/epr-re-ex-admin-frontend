@@ -7,6 +7,8 @@ vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
 }))
 
+const mockFetchJsonFromBackend = vi.mocked(fetchJsonFromBackend)
+
 describe('linked-organisations controller', () => {
   let mockRequest
   let mockH
@@ -33,7 +35,7 @@ describe('linked-organisations controller', () => {
   })
 
   test('Should fetch all linked organisations on GET', async () => {
-    fetchJsonFromBackend.mockResolvedValue([mockLinkedOrg])
+    mockFetchJsonFromBackend.mockResolvedValue([mockLinkedOrg])
 
     await linkedOrganisationsController.handler(mockRequest, mockH)
 
@@ -62,7 +64,7 @@ describe('linked-organisations controller', () => {
 
   test('Should pass search term as query param to backend', async () => {
     mockRequest.query = { search: ' acme ' }
-    fetchJsonFromBackend.mockResolvedValue([mockLinkedOrg])
+    mockFetchJsonFromBackend.mockResolvedValue([mockLinkedOrg])
 
     await linkedOrganisationsController.handler(mockRequest, mockH)
 
@@ -81,7 +83,7 @@ describe('linked-organisations controller', () => {
 
   test('Should fetch all when search term is empty', async () => {
     mockRequest.query = { search: '  ' }
-    fetchJsonFromBackend.mockResolvedValue([])
+    mockFetchJsonFromBackend.mockResolvedValue([])
 
     await linkedOrganisationsController.handler(mockRequest, mockH)
 
@@ -92,7 +94,7 @@ describe('linked-organisations controller', () => {
   })
 
   test('Should handle backend returning non-array', async () => {
-    fetchJsonFromBackend.mockResolvedValue({})
+    mockFetchJsonFromBackend.mockResolvedValue({})
 
     await linkedOrganisationsController.handler(mockRequest, mockH)
 
@@ -106,7 +108,7 @@ describe('linked-organisations controller', () => {
 
   test('Should display error message from session and clear it', async () => {
     mockRequest.yar.get.mockReturnValue('Download failed')
-    fetchJsonFromBackend.mockResolvedValue([])
+    mockFetchJsonFromBackend.mockResolvedValue([])
 
     await linkedOrganisationsController.handler(mockRequest, mockH)
 
@@ -122,7 +124,7 @@ describe('linked-organisations controller', () => {
   })
 
   test('Should pass pageTitle from route settings', async () => {
-    fetchJsonFromBackend.mockResolvedValue([])
+    mockFetchJsonFromBackend.mockResolvedValue([])
 
     await linkedOrganisationsController.handler(mockRequest, mockH)
 
@@ -136,7 +138,7 @@ describe('linked-organisations controller', () => {
 
   test('Should encode special characters in search term', async () => {
     mockRequest.query = { search: 'Acme & Co' }
-    fetchJsonFromBackend.mockResolvedValue([])
+    mockFetchJsonFromBackend.mockResolvedValue([])
 
     await linkedOrganisationsController.handler(mockRequest, mockH)
 

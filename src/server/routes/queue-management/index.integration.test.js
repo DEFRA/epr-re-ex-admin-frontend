@@ -102,7 +102,7 @@ describe('queue-management', () => {
 
     describe('When user is authenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(mockUserSession)
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
       })
 
       test('Should return OK and render page with message count', async () => {
@@ -178,7 +178,7 @@ describe('queue-management', () => {
 
         // Each message should have a details component
         const details = $('details.govuk-details')
-        expect(details.length).toBe(2)
+        expect(details).toHaveLength(2)
 
         // The first details component should contain the raw JSON body
         const firstDetailsContent = details.first().find('code').text().trim()
@@ -202,7 +202,7 @@ describe('queue-management', () => {
           'There are no messages on the dead-letter queue.'
         )
         // No table should be rendered
-        expect($('table').length).toBe(0)
+        expect($('table')).toHaveLength(0)
       })
 
       test('Should handle missing messages field gracefully', async () => {
@@ -292,7 +292,7 @@ describe('queue-management', () => {
 
     describe('When user is authenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(mockUserSession)
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
       })
 
       test('Should return OK and render confirmation page', async () => {
@@ -327,7 +327,7 @@ describe('queue-management', () => {
 
     describe('When user is authenticated', () => {
       beforeEach(() => {
-        getUserSession.mockReturnValue(mockUserSession)
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
       })
 
       test('Should call backend purge and redirect to /queue-management', async () => {

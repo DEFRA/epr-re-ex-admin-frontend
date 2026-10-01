@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "alwaysStrict": true,
+    "checkJs": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noEmit": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitAny": false,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "paths": {
+      "#config/*": ["./src/config/*"],
+      "#server/*": ["./src/server/*"],
+      "#vite/*": ["./.vite/*"]
+    },
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "strictBindCallApply": true,
+    "strictFunctionTypes": true,
+    "strictNullChecks": true,
+    "strictPropertyInitialization": true,
+    "target": "es2024"
+  }
+}

@@ -83,7 +83,7 @@ describe('#sign-out', () => {
     await import('./sign-out.js')
 
     expect(mockDocument.getElementById).toHaveBeenCalledWith('sign-out-data')
-    expect(localStorageMock.length).toBe(0)
+    expect(localStorageMock).toHaveLength(0)
     expect(mockLocation.href).toBe(mockLogoutUrl)
   })
 
@@ -96,7 +96,7 @@ describe('#sign-out', () => {
 
     await import('./sign-out.js')
 
-    expect(localStorageMock.length).toBe(0)
+    expect(localStorageMock).toHaveLength(0)
     expect(mockLocation.href).toBe('')
   })
 
@@ -105,7 +105,7 @@ describe('#sign-out', () => {
 
     await import('./sign-out.js')
 
-    expect(localStorageMock.length).toBe(0)
+    expect(localStorageMock).toHaveLength(0)
     expect(mockLocation.href).toBe('')
   })
 
@@ -139,7 +139,7 @@ describe('#sign-out', () => {
   test('Should setup via DOMContentLoaded when document is loading', async () => {
     mockDocument.readyState = 'loading'
 
-    let domContentLoadedHandler = null
+    let domContentLoadedHandler = () => {}
     mockDocument.addEventListener.mockImplementation((event, handler) => {
       if (event === 'DOMContentLoaded') {
         domContentLoadedHandler = handler
@@ -171,7 +171,7 @@ describe('#sign-out', () => {
 
     // Now it should have executed
     expect(mockDocument.getElementById).toHaveBeenCalledWith('sign-out-data')
-    expect(localStorageMock.length).toBe(0)
+    expect(localStorageMock).toHaveLength(0)
     expect(mockLocation.href).toBe(mockLogoutUrl)
 
     // Reset readyState for other tests

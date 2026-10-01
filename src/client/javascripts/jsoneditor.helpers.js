@@ -1,5 +1,4 @@
 import JSONEditor from 'jsoneditor'
-import 'jsoneditor/dist/jsoneditor.css'
 import isEqual from 'lodash/isEqual.js'
 import { buildNullTemplate, inflateNullObjects } from './jsoneditor.inflate.js'
 import { schemaTypeIncludes } from './jsoneditor.schema-utils.js'

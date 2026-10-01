@@ -61,6 +61,11 @@ describe('#buildNavigation', () => {
       },
       {
         current: false,
+        text: 'Credited tonnage',
+        href: '/credited-tonnage'
+      },
+      {
+        current: false,
         text: 'Report submissions',
         href: '/report-submissions'
       },
@@ -136,6 +141,11 @@ describe('#buildNavigation', () => {
       },
       {
         current: false,
+        text: 'Credited tonnage',
+        href: '/credited-tonnage'
+      },
+      {
+        current: false,
         text: 'Report submissions',
         href: '/report-submissions'
       },
@@ -189,6 +199,25 @@ describe('#buildNavigation', () => {
 
     expect(wasteRecordsExportIndex).toBe(reportSubmissionsIndex + 1)
     expect(systemLogsIndex).toBe(wasteRecordsExportIndex + 1)
+  })
+
+  test('Should include a credited tonnage nav entry after PRN tonnage', () => {
+    const navigation = buildNavigation(
+      mockRequest({ path: '/non-existent-path' })
+    )
+    const prnTonnageIndex = navigation.findIndex(
+      (item) => item.text === 'PRN tonnage'
+    )
+    const creditedTonnageIndex = navigation.findIndex(
+      (item) => item.text === 'Credited tonnage'
+    )
+
+    expect(creditedTonnageIndex).toBe(prnTonnageIndex + 1)
+    expect(navigation[creditedTonnageIndex]).toEqual({
+      current: false,
+      text: 'Credited tonnage',
+      href: '/credited-tonnage'
+    })
   })
 
   test('Should place overseas sites after summary log uploads', () => {

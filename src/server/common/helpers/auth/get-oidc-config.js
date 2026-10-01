@@ -1,12 +1,21 @@
 import Wreck from '@hapi/wreck'
 import { config } from '#config/config.js'
 
+/**
+ * @import { OidcConfig } from './types.js'
+ */
+
 const ONE_HOUR_MS = 60 * 60 * 1000
 
+/** @type {OidcConfig | null} */
 let cachedConfig = null
 let cachedAt = 0
+/** @type {Promise<OidcConfig> | null} */
 let inflight = null
 
+/**
+ * @returns {Promise<OidcConfig>}
+ */
 async function getOidcConfig() {
   if (cachedConfig && Date.now() - cachedAt < ONE_HOUR_MS) {
     return cachedConfig
@@ -32,6 +41,9 @@ async function getOidcConfig() {
 // global-agent). Fetching at startup makes this a canary: if the proxy
 // is misconfigured, the server fails to start rather than starting in a
 // silently broken state where users cannot log in.
+/**
+ * @returns {Promise<OidcConfig>}
+ */
 async function fetchOidcConfig() {
   const { payload } = await Wreck.get(
     config.get('entraId.oidcWellKnownConfigurationUrl'),
@@ -40,10 +52,12 @@ async function fetchOidcConfig() {
     }
   )
 
-  cachedConfig = payload
+  const oidcConfig = /** @type {OidcConfig} */ (payload)
+
+  cachedConfig = oidcConfig
   cachedAt = Date.now()
 
-  return payload
+  return oidcConfig
 }
 
 export { getOidcConfig }

@@ -35,8 +35,8 @@ export default defineConfig({
         'src/**/*.njk', // Vitest can't parse them anyway
         'src/**/*.scss',
         'src/server/common/schemas/**',
-        'src/server/common/test-helpers',
-        'src/server/components/icons'
+        'src/server/common/test-helpers/**',
+        'src/server/components/icons/**'
       ],
       thresholds: {
         lines: 100,

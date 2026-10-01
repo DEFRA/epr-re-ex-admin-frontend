@@ -1,4 +1,3 @@
-import { ProxyAgent, setGlobalDispatcher } from 'undici'
 import { bootstrap } from 'global-agent'
 
 import { createLogger } from '../logging/logger.js'
@@ -8,17 +7,14 @@ const logger = createLogger()
 
 /**
  * If HTTP_PROXY is set setupProxy() will enable it globally
- * for a number of http clients.
- * Node Fetch will still need to pass a ProxyAgent in on each call.
+ * for requests made through the http and https modules, without NO_PROXY
+ * exceptions. Node's built-in fetch is left to Node's own proxy support.
  */
 export function setupProxy() {
   const proxyUrl = config.get('httpProxy')
 
   if (proxyUrl) {
     logger.info({ message: 'setting up global proxies' })
-
-    // Undici proxy
-    setGlobalDispatcher(new ProxyAgent(proxyUrl))
 
     // global-agent patches every new https.Agent() to inherit proxy config.
     // This is needed because @hapi/wreck (used internally by @hapi/bell for

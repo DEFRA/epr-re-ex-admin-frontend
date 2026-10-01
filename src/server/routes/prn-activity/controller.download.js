@@ -7,11 +7,13 @@ import { buildPrnApiUrl } from './controller.js'
 const dateFormat = 'dd/MM/yyyy'
 
 function getDisplayName(org) {
-  if (!org) return ''
+  if (!org) {
+    return ''
+  }
   return org.tradingName || org.name || ''
 }
 
-async function fetchAllPrns(request) {
+export async function fetchAllPrns(request) {
   const allItems = []
   let cursor = null
 
@@ -27,7 +29,7 @@ async function fetchAllPrns(request) {
   return allItems
 }
 
-function generateCsv(items) {
+export function generateCsv(items) {
   const rows = [
     [
       'PRN Number',
@@ -42,6 +44,7 @@ function generateCsv(items) {
       'Position',
       'Accreditation Number',
       'Accreditation Year',
+      'Obligation Year',
       'Submitted To Regulator',
       'Organisation Name',
       'Waste Processing Type'
@@ -62,13 +65,14 @@ function generateCsv(items) {
       sanitizeFormulaInjection(prn.issuedBy?.position || ''),
       sanitizeFormulaInjection(prn.accreditationNumber || ''),
       prn.accreditationYear ?? '',
+      prn.obligationYear ?? '',
       sanitizeFormulaInjection(prn.submittedToRegulator || ''),
       sanitizeFormulaInjection(prn.organisationName || ''),
       sanitizeFormulaInjection(prn.wasteProcessingType || '')
     ])
   }
 
-  return writeToString(rows, { headers: false, quoteColumns: true })
+  return writeToString(rows, { headers: false })
 }
 
 export const prnActivityDownloadController = {

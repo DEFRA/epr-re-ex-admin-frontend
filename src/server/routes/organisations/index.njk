@@ -14,25 +14,106 @@
       <form method="post" class="app-filters">
         <h2 class="govuk-heading-m">Search for an organisation by</h2>
         <input type="hidden" name="crumb" value="{{ crumb }}" />
-        <div class="govuk-form-group">
-          {{ govukInput({
-            label: {
-              text: "Organisation name",
-              classes: "govuk-label--s"
-            },
-            id: "search",
-            name: "search",
-            type: "search",
-            value: searchTerm,
-            autocomplete: "off",
-            classes: "govuk-input--width-20"
-          }) }}
+
+        {# Every filled field narrows the results; the backend ANDs them together #}
+        <div class="govuk-grid-row">
+          <div class="govuk-grid-column-one-half">
+            {{ govukInput({
+              label: {
+                text: "Organisation name",
+                classes: "govuk-label--s"
+              },
+              id: "search",
+              name: "search",
+              type: "search",
+              value: criteria.search,
+              autocomplete: "off",
+              classes: "govuk-input--width-20"
+            }) }}
+          </div>
+          <div class="govuk-grid-column-one-half">
+            {{ govukInput({
+              label: {
+                text: "Organisation Id",
+                classes: "govuk-label--s"
+              },
+              id: "orgId",
+              name: "orgId",
+              type: "search",
+              value: criteria.orgId,
+              autocomplete: "off",
+              classes: "govuk-input--width-20"
+            }) }}
+          </div>
         </div>
+
+        <div class="govuk-grid-row">
+          <div class="govuk-grid-column-one-half">
+            {{ govukInput({
+              label: {
+                text: "Registration number",
+                classes: "govuk-label--s"
+              },
+              id: "registrationNumber",
+              name: "registrationNumber",
+              type: "search",
+              value: criteria.registrationNumber,
+              autocomplete: "off",
+              classes: "govuk-input--width-20"
+            }) }}
+          </div>
+          <div class="govuk-grid-column-one-half">
+            {{ govukInput({
+              label: {
+                text: "Registration Id",
+                classes: "govuk-label--s"
+              },
+              id: "registrationId",
+              name: "registrationId",
+              type: "search",
+              value: criteria.registrationId,
+              autocomplete: "off",
+              classes: "govuk-input--width-20"
+            }) }}
+          </div>
+        </div>
+
+        <div class="govuk-grid-row">
+          <div class="govuk-grid-column-one-half">
+            {{ govukInput({
+              label: {
+                text: "Accreditation number",
+                classes: "govuk-label--s"
+              },
+              id: "accreditationNumber",
+              name: "accreditationNumber",
+              type: "search",
+              value: criteria.accreditationNumber,
+              autocomplete: "off",
+              classes: "govuk-input--width-20"
+            }) }}
+          </div>
+          <div class="govuk-grid-column-one-half">
+            {{ govukInput({
+              label: {
+                text: "Accreditation Id",
+                classes: "govuk-label--s"
+              },
+              id: "accreditationId",
+              name: "accreditationId",
+              type: "search",
+              value: criteria.accreditationId,
+              autocomplete: "off",
+              classes: "govuk-input--width-20"
+            }) }}
+          </div>
+        </div>
+
         <div class="govuk-button-group">
           {{ govukButton({
             text: "Search"
           }) }}
-          {% if searchTerm %}
+          {% if hasCriteria %}
             <a href="/organisations" class="govuk-button govuk-button--inverse">Clear search and view all organisations</a>
           {% endif %}
           </div>
@@ -47,7 +128,7 @@
 
         {# Render a table when organisations data is provided, otherwise show a message #}
         {% if organisations and organisations.length %}
-          {% if searchTerm %}
+          {% if hasCriteria %}
             <h2 class="govuk-heading-l">{{ organisations.length }} result{% if organisations.length != 1 %}s{% endif %} found</h2>
           {% endif %}
 
@@ -58,7 +139,13 @@
             {# build cells as objects expected by govukTable #}
             {% set nameCell = { text: org.name } %}
             {% set orgIdCell = { text: orgId } %}
-            {% set registrationNumberCell = { text: org.registrationNumber } %}
+            {# One line per registration, then one per accreditation no registration references #}
+            {% set regAccHtml = '' %}
+            {% for pair in org.regAccPairs %}
+              {% set separator = '' if loop.first else '<br>' %}
+              {% set regAccHtml = regAccHtml ~ separator ~ ((pair.registrationNumber or 'None') | escape) ~ ' - ' ~ ((pair.accreditationNumber or 'None') | escape) %}
+            {% endfor %}
+            {% set regAccCell = { html: regAccHtml } %}
 
             {% set regulatorCell = { text: org.regulator | upper } %}
             {% set statusCell = { html: govukTag({
@@ -71,7 +158,7 @@
             {% set actionsHtml = actionsHtml ~ '<br><a class="govuk-link govuk-link--no-visited-state" href="/linked-organisations?search=' ~ (org.name | urlencode) ~ '">View linked organisations</a>' %}
             {% set actionCell = { html:  actionsHtml } %}
 
-            {% set row = [ nameCell, orgIdCell, registrationNumberCell, regulatorCell, statusCell, actionCell ] %}
+            {% set row = [ nameCell, orgIdCell, regAccCell, regulatorCell, statusCell, actionCell ] %}
             {% set tableRows = tableRows.concat([row]) %}
           {% endfor %}
 
@@ -81,7 +168,7 @@
             head: [
               { text: "Name" },
               { text: "Organisation ID" },
-              { text: "Registration Number" },
+              { text: "Reg/Acc Numbers" },
               { text: "Regulator" },
               { text: "Status" },
               { text: "Actions" }
@@ -97,10 +184,10 @@
           {% endif %}
 
         {% else %}
-          {% if searchTerm %}
+          {% if hasCriteria %}
             <h2 class="govuk-heading-l">0 results found</h2>
             {{ govukInsetText({
-              text: "No organisations found matching '" + searchTerm + "'. Try searching with a different name or check your spelling."
+              text: "No organisations found matching your search. Check the values you entered, or search on fewer fields."
             }) }}
           {% else %}
             {{ govukInsetText({ text: "No organisations found." }) }}

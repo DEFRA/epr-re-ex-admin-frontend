@@ -53,7 +53,7 @@ describe('organisation POST controller', () => {
 
   describe('When user is authenticated', () => {
     beforeEach(() => {
-      getUserSession.mockReturnValue(mockUserSession)
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
       mswServer.use(
         http.get(`${backendUrl}/v1/organisations/:id`, () =>
           HttpResponse.json({ id: 'stub', companyDetails: { name: 'Stub' } })

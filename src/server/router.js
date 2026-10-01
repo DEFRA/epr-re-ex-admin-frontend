@@ -16,7 +16,9 @@ import { prnTonnage } from './routes/prn-tonnage/index.js'
 import { wasteBalanceAvailability } from './routes/waste-balance-availability/index.js'
 import { linkedOrganisations } from './routes/linked-organisations/index.js'
 import { prnActivity } from './routes/prn-activity/index.js'
+import { prnCancel } from './routes/prn-cancel/index.js'
 import { summaryLogUploadsReport } from './routes/summary-log/index.js'
+import { summaryLogDocument } from './routes/summary-log-document/index.js'
 import { orsUpload } from './routes/ors-upload/index.js'
 import { reportSubmissions } from './routes/report-submissions/index.js'
 import { wasteRecordsExport } from './routes/waste-records-export/index.js'
@@ -25,8 +27,12 @@ import { reportUnsubmit } from './routes/report-unsubmit/index.js'
 import { wasteBalanceEvents } from './routes/waste-balance-events/index.js'
 import { unlinkOrganisation } from './routes/unlink-organisation/index.js'
 import { accreditationOverseasSites } from './routes/accreditation-overseas-sites/index.js'
+import { creditedTonnage } from './routes/credited-tonnage/index.js'
+import { accreditationStatusTransition } from './routes/accreditation-status-transition/index.js'
+import { registrationStatusTransition } from './routes/registration-status-transition/index.js'
 
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
+import { FEATURE_FLAGS } from './common/helpers/feature-flags.js'
 
 export const router = {
   plugin: {
@@ -54,7 +60,9 @@ export const router = {
         wasteBalanceAvailability,
         linkedOrganisations,
         prnActivity,
+        ...(FEATURE_FLAGS.prnAdminCancellation ? [prnCancel] : []),
         summaryLogUploadsReport,
+        summaryLogDocument,
         orsUpload,
         reportSubmissions,
         wasteRecordsExport,
@@ -62,7 +70,10 @@ export const router = {
         reportUnsubmit,
         wasteBalanceEvents,
         unlinkOrganisation,
-        accreditationOverseasSites
+        accreditationOverseasSites,
+        creditedTonnage,
+        accreditationStatusTransition,
+        registrationStatusTransition
       ])
 
       await server.register([serveStaticFiles])

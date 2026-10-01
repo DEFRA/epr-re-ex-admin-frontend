@@ -1,4 +1,5 @@
 import { vi } from 'vitest'
+import Boom from '@hapi/boom'
 import { prnActivityDownloadController } from './controller.download.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
@@ -21,9 +22,12 @@ const mockPrn = {
   issuedBy: { name: 'John', position: 'Manager' },
   accreditationNumber: 'ACC-2025-001',
   accreditationYear: 2025,
+  obligationYear: 2026,
   organisationName: 'Reprocessor Ltd',
   wasteProcessingType: 'reprocessor'
 }
+
+const mockFetchJsonFromBackend = vi.mocked(fetchJsonFromBackend)
 
 describe('prn-activity download controller', () => {
   let mockRequest
@@ -50,7 +54,10 @@ describe('prn-activity download controller', () => {
   })
 
   test('Should fetch PRNs with correct statuses', async () => {
-    fetchJsonFromBackend.mockResolvedValue({ items: [], hasMore: false })
+    mockFetchJsonFromBackend.mockResolvedValue({
+      items: [],
+      hasMore: false
+    })
 
     await prnActivityDownloadController.handler(mockRequest, mockH)
 
@@ -61,7 +68,7 @@ describe('prn-activity download controller', () => {
   })
 
   test('Should generate CSV with correct headers and data', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [mockPrn],
       hasMore: false
     })
@@ -71,15 +78,33 @@ describe('prn-activity download controller', () => {
     const csvContent = mockH.response.mock.calls[0][0]
     const lines = csvContent.split('\n')
     expect(lines[0]).toBe(
-      '"PRN Number","Status","Issued To","Tonnage","Material","Process To Be Used","December Waste","Issued Date","Issued By","Position","Accreditation Number","Accreditation Year","Submitted To Regulator","Organisation Name","Waste Processing Type"'
+      'PRN Number,Status,Issued To,Tonnage,Material,Process To Be Used,December Waste,Issued Date,Issued By,Position,Accreditation Number,Accreditation Year,Obligation Year,Submitted To Regulator,Organisation Name,Waste Processing Type'
     )
     expect(csvContent).toContain('PRN-001')
     expect(csvContent).toContain('Glass')
     expect(csvContent).toContain('Reprocessor Ltd')
+    expect(lines[1]).toBe(
+      'PRN-001,awaiting_acceptance,Org A,100,Glass,R3,Yes,15/06/2025,John,Manager,ACC-2025-001,2025,2026,,Reprocessor Ltd,reprocessor'
+    )
+  })
+
+  test('Should leave Obligation Year empty in CSV when absent', async () => {
+    mockFetchJsonFromBackend.mockResolvedValue({
+      items: [{ ...mockPrn, obligationYear: undefined }],
+      hasMore: false
+    })
+
+    await prnActivityDownloadController.handler(mockRequest, mockH)
+
+    const csvContent = mockH.response.mock.calls[0][0]
+    const lines = csvContent.split('\n')
+    expect(lines[1]).toBe(
+      'PRN-001,awaiting_acceptance,Org A,100,Glass,R3,Yes,15/06/2025,John,Manager,ACC-2025-001,2025,,,Reprocessor Ltd,reprocessor'
+    )
   })
 
   test('Should set correct Content-Type and Content-Disposition headers', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [mockPrn],
       hasMore: false
     })
@@ -94,7 +119,10 @@ describe('prn-activity download controller', () => {
   })
 
   test('Should handle empty items', async () => {
-    fetchJsonFromBackend.mockResolvedValue({ items: [], hasMore: false })
+    mockFetchJsonFromBackend.mockResolvedValue({
+      items: [],
+      hasMore: false
+    })
 
     await prnActivityDownloadController.handler(mockRequest, mockH)
 
@@ -105,7 +133,7 @@ describe('prn-activity download controller', () => {
   })
 
   test('Should handle null data from backend', async () => {
-    fetchJsonFromBackend.mockResolvedValue(null)
+    mockFetchJsonFromBackend.mockResolvedValue(null)
 
     await prnActivityDownloadController.handler(mockRequest, mockH)
 
@@ -115,7 +143,7 @@ describe('prn-activity download controller', () => {
   })
 
   test('Should map isDecemberWaste to Yes/No', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [
         { ...mockPrn, isDecemberWaste: true },
         { ...mockPrn, prnNumber: 'PRN-002', isDecemberWaste: false }
@@ -127,12 +155,12 @@ describe('prn-activity download controller', () => {
 
     const csvContent = mockH.response.mock.calls[0][0]
     const lines = csvContent.split('\n')
-    expect(lines[1]).toContain('"Yes"')
-    expect(lines[2]).toContain('"No"')
+    expect(lines[1]).toContain(',Yes,')
+    expect(lines[2]).toContain(',No,')
   })
 
   test('Should use tradingName over name for issuedToOrganisation', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [
         {
           ...mockPrn,
@@ -153,7 +181,7 @@ describe('prn-activity download controller', () => {
   })
 
   test('Should handle null/undefined optional fields in CSV', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [
         {
           status: 'awaiting_authorisation',
@@ -180,11 +208,11 @@ describe('prn-activity download controller', () => {
     const csvContent = mockH.response.mock.calls[0][0]
     const lines = csvContent.split('\n')
     expect(lines).toHaveLength(2)
-    expect(lines[1]).toContain('"No"')
+    expect(lines[1]).toContain(',No,')
   })
 
   test('Should return empty string when org has no name or tradingName', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [
         {
           ...mockPrn,
@@ -202,7 +230,7 @@ describe('prn-activity download controller', () => {
   })
 
   test('Should use name when tradingName is empty string', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [
         {
           ...mockPrn,
@@ -219,7 +247,7 @@ describe('prn-activity download controller', () => {
   })
 
   test('Should prefix fields starting with formula-injection characters', async () => {
-    fetchJsonFromBackend.mockResolvedValue({
+    mockFetchJsonFromBackend.mockResolvedValue({
       items: [{ ...mockPrn, accreditationNumber: '=SUM(A1)' }],
       hasMore: false
     })
@@ -231,7 +259,7 @@ describe('prn-activity download controller', () => {
   })
 
   test('Should redirect with error message on fetch failure', async () => {
-    fetchJsonFromBackend.mockRejectedValue(new Error('Network error'))
+    mockFetchJsonFromBackend.mockRejectedValue(new Error('Network error'))
 
     const result = await prnActivityDownloadController.handler(
       mockRequest,
@@ -247,9 +275,8 @@ describe('prn-activity download controller', () => {
   })
 
   test('Should use error message from backend when available', async () => {
-    const error = new Error('Backend error')
-    error.output = { payload: { message: 'Custom backend error message' } }
-    fetchJsonFromBackend.mockRejectedValue(error)
+    const error = Boom.badRequest('Custom backend error message')
+    mockFetchJsonFromBackend.mockRejectedValue(error)
 
     await prnActivityDownloadController.handler(mockRequest, mockH)
 
@@ -260,7 +287,7 @@ describe('prn-activity download controller', () => {
   })
 
   test('Should fetch all pages when hasMore is true', async () => {
-    fetchJsonFromBackend
+    mockFetchJsonFromBackend
       .mockResolvedValueOnce({
         items: [{ ...mockPrn, prnNumber: 'PRN-001' }],
         hasMore: true,

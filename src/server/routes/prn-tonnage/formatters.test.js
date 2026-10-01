@@ -1,7 +1,8 @@
 import {
   formatMaterialName,
   formatTonnageBand,
-  formatTonnage
+  formatTonnage,
+  formatRegistrationType
 } from './formatters.js'
 
 describe('prn-tonnage formatters', () => {
@@ -9,7 +10,7 @@ describe('prn-tonnage formatters', () => {
     expect(formatMaterialName('glass_re_melt')).toBe('Glass re-melt')
     expect(formatMaterialName('GLASS_RE_MELT')).toBe('Glass re-melt')
     expect(formatMaterialName('unknown_material')).toBe('unknown_material')
-    expect(formatMaterialName(undefined)).toBeUndefined()
+    expect(formatMaterialName(undefined)).toBe('')
   })
 
   test('Should format known tonnage bands and handle missing or unknown values', () => {
@@ -27,6 +28,26 @@ describe('prn-tonnage formatters', () => {
     expect(formatTonnage(12.5)).toBe('13')
     expect(formatTonnage(12.6)).toBe('13')
     expect(formatTonnage(-1.5)).toBe('-2')
-    expect(formatTonnage(null)).toBe('0')
+    expect(formatTonnage(0)).toBe('0')
+    expect(formatTonnage(-0.4)).toBe('0')
+  })
+
+  test('Should render an empty cell when tonnage is missing or not a number', () => {
+    expect(formatTonnage(null)).toBe('')
+    expect(formatTonnage(undefined)).toBe('')
+    expect(formatTonnage('')).toBe('')
+    expect(formatTonnage('not a number')).toBe('')
+  })
+
+  test('Should format known registration types and preserve unknowns', () => {
+    expect(formatRegistrationType('REPROCESSOR_INPUT')).toBe(
+      'Reprocessor input'
+    )
+    expect(formatRegistrationType('REPROCESSOR_OUTPUT')).toBe(
+      'Reprocessor output'
+    )
+    expect(formatRegistrationType('EXPORTER')).toBe('Exporter')
+    expect(formatRegistrationType('MYSTERY_TYPE')).toBe('MYSTERY_TYPE')
+    expect(formatRegistrationType(undefined)).toBe('')
   })
 })

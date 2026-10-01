@@ -2,6 +2,13 @@ import { config } from '#config/config.js'
 import { getScopesForAuth } from './get-scopes-for-auth.js'
 import { verifyToken } from '#server/common/helpers/auth/verify-token.js'
 
+/**
+ * @import { OidcConfig } from './types.js'
+ */
+
+/**
+ * @param {OidcConfig} oidcConfig
+ */
 export function getBellOptions(oidcConfig) {
   const scopes = getScopesForAuth()
 

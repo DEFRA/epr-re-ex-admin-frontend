@@ -66,7 +66,7 @@ describe('#auth routes plugin', () => {
   })
 
   test('Should register function accepts server parameter', () => {
-    expect(auth.plugin.register.length).toBe(1)
+    expect(auth.plugin.register).toHaveLength(1)
   })
 
   test('Should call server.route with array parameter', () => {
