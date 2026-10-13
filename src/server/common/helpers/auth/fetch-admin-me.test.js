@@ -1,21 +1,12 @@
-import { describe, test, beforeAll, afterAll, expect } from 'vitest'
+import { describe, test, expect } from 'vitest'
 
 import { fetchAdminMe } from './fetch-admin-me.js'
 import { config } from '#config/config.js'
 import { http, HttpResponse, server as mswServer } from '#vite/setup-msw.js'
 
 describe('#fetchAdminMe', () => {
-  const originalBackendUrl = config.get('eprBackendUrl')
-  const backendUrl = 'http://mock-backend'
+  const backendUrl = config.get('eprBackendUrl')
   const adminMeUrl = `${backendUrl}/v1/admin/me`
-
-  beforeAll(() => {
-    config.set('eprBackendUrl', backendUrl)
-  })
-
-  afterAll(() => {
-    config.set('eprBackendUrl', originalBackendUrl)
-  })
 
   test('calls /v1/admin/me with the bearer token and returns the parsed JSON', async () => {
     const expected = {
