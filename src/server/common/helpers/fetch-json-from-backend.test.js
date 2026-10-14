@@ -1,12 +1,4 @@
-import {
-  vi,
-  describe,
-  test,
-  beforeAll,
-  afterAll,
-  beforeEach,
-  expect
-} from 'vitest'
+import { vi, describe, test, beforeEach, expect } from 'vitest'
 
 import { fetchJsonFromBackend } from './fetch-json-from-backend.js'
 import { config } from '#config/config.js'
@@ -38,17 +30,8 @@ vi.mock(import('@defra/hapi-tracing'), () => ({
 }))
 
 describe('#fetchJsonFromBackend', () => {
-  const originalBackendUrl = config.get('eprBackendUrl')
-  const backendUrl = 'http://mock-backend'
+  const backendUrl = config.get('eprBackendUrl')
   vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
-
-  beforeAll(() => {
-    config.set('eprBackendUrl', backendUrl)
-  })
-
-  afterAll(() => {
-    config.set('eprBackendUrl', originalBackendUrl)
-  })
 
   beforeEach(() => {
     vi.clearAllMocks()
