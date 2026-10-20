@@ -1,4 +1,5 @@
 import { vi } from 'vitest'
+import * as cheerio from 'cheerio'
 import { createServer } from '#server/server.js'
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
@@ -107,6 +108,44 @@ describe('organisation GET controller', () => {
       })
 
       expect(result).toContain('Sorry, there is a problem with the service')
+    })
+  })
+
+  describe('When user has read-only access', () => {
+    const readOnlySession = { ...mockUserSession, scopes: ['admin.read'] }
+
+    beforeEach(() => {
+      vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
+    })
+
+    test('Should render the organisation without the editing form', async () => {
+      mswServer.use(
+        http.get(`${backendUrl}/v1/organisations/org-1`, () =>
+          HttpResponse.json({
+            id: 'org-1',
+            companyDetails: { name: 'ACME Ltd' }
+          })
+        )
+      )
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/organisations/org-1',
+        auth: {
+          strategy: 'session',
+          credentials: readOnlySession
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = cheerio.load(result)
+      expect($('h1').text()).toBe('ACME Ltd')
+      expect($('#jsoneditor').attr('data-readonly')).toBe('true')
+      expect($('main').text()).toContain(
+        'You do not have permission to edit this organisation.'
+      )
+      expect($('#jsoneditor-form')).toHaveLength(0)
+      expect($('button:contains("Save")')).toHaveLength(0)
     })
   })
 })

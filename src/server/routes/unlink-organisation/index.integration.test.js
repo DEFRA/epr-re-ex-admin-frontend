@@ -151,6 +151,39 @@ describe('unlink-organisation', () => {
     expect(headers.location).toBe(overviewUrl)
   })
 
+  test('cancelling the confirm page leaves the organisation linked', async () => {
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+    stubOverview(linkedOverview)
+    const unlinkRequest = vi.fn(() => new HttpResponse(null, { status: 204 }))
+    mswServer.use(
+      http.delete(
+        `${backendUrl}/v1/organisations/${organisationId}/link`,
+        unlinkRequest
+      )
+    )
+
+    const confirmPage = await server.inject({
+      method: 'GET',
+      url: confirmUrl,
+      auth: writeAuth
+    })
+    const cancelHref = cheerio
+      .load(confirmPage.result)('a:contains("Cancel")')
+      .attr('href')
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: cancelHref,
+      auth: writeAuth
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    const $ = cheerio.load(result)
+    expect($('a:contains("Unlink organisation")').attr('href')).toBe(confirmUrl)
+    expect(result).toContain('Lost Ark Adventures Ltd')
+    expect(unlinkRequest).not.toHaveBeenCalled()
+  })
+
   test('POST is rejected with 401 when unauthenticated', async () => {
     const { statusCode } = await server.inject({
       method: 'POST',

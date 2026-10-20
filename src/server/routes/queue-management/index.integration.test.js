@@ -9,6 +9,8 @@ import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { http, server as mswServer, HttpResponse } from '#vite/setup-msw.js'
 import * as cheerio from 'cheerio'
 
+/** @import { UserSession } from '#server/common/hapi-types.js' */
+
 vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
   getUserSession: vi.fn().mockReturnValue(null)
 }))
@@ -273,6 +275,40 @@ describe('queue-management', () => {
 
         expect(statusCode).toBe(statusCodes.internalServerError)
         expect(result).toContain('Sorry, there is a problem with the service')
+      })
+    })
+
+    describe('Clear all messages button', () => {
+      /** @param {UserSession} session */
+      const renderQueueManagement = async (session) => {
+        vi.mocked(getUserSession).mockResolvedValue(session)
+        stubDlqMessages(sampleMessages)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: '/queue-management',
+          auth: { strategy: 'session', credentials: session }
+        })
+
+        return cheerio.load(result)
+      }
+
+      test('Should show the button when user can purge the dead-letter queue', async () => {
+        const $ = await renderQueueManagement(mockUserSession)
+
+        expect($('a:contains("Clear all messages")').attr('href')).toBe(
+          '/queue-management/confirm-clear'
+        )
+      })
+
+      test('Should not show the button when user cannot purge the dead-letter queue', async () => {
+        const $ = await renderQueueManagement({
+          ...mockUserSession,
+          scopes: ['admin.read', 'admin.write']
+        })
+
+        expect($('table')).toHaveLength(1)
+        expect($('a:contains("Clear all messages")')).toHaveLength(0)
       })
     })
   })
