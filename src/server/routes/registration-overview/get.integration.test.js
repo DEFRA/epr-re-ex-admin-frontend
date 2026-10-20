@@ -92,6 +92,7 @@ describe('#registrationOverviewController', () => {
 
   const mockOverview = {
     id: organisationId,
+    organisationNumber: '500123',
     companyName: 'ACME ltd',
     registrations: [mockRegistration]
   }
@@ -626,11 +627,36 @@ describe('#registrationOverviewController', () => {
         within(firstRow).getByRole('link', { name: 'View' })
       ).toHaveAttribute(
         'href',
-        `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1`
+        `/organisations/500123/registrations/REG-50030-001/accreditations/2026/reports/monthly/1/submissions/1`
       )
 
       expect(within(secondRow).getByText('Due')).toHaveClass('govuk-tag')
       expect(within(secondRow).queryByRole('link')).toBeNull()
+    })
+
+    test('Should link a registered-only report under the registration', async () => {
+      useMockBackend()
+      mswServer.use(
+        http.get(
+          `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
+          () => HttpResponse.json({ ...mockCalendar, cadence: 'quarterly' })
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const [firstRow] = getDataRows(getReportsTable(renderPage(result)))
+
+      expect(
+        within(firstRow).getByRole('link', { name: 'View' })
+      ).toHaveAttribute(
+        'href',
+        '/organisations/500123/registrations/REG-50030-001/reports/2026/quarterly/1/submissions/1'
+      )
     })
 
     test('Should request the reports calendar with the expand=submissions arg', async () => {
@@ -681,13 +707,13 @@ describe('#registrationOverviewController', () => {
         within(dataRows[0]).getByRole('link', { name: 'View' })
       ).toHaveAttribute(
         'href',
-        `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1`
+        `/organisations/500123/registrations/REG-50030-001/accreditations/2026/reports/monthly/1/submissions/1`
       )
       expect(
         within(dataRows[1]).getByRole('link', { name: 'View' })
       ).toHaveAttribute(
         'href',
-        `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/2`
+        `/organisations/500123/registrations/REG-50030-001/accreditations/2026/reports/monthly/1/submissions/2`
       )
     })
 
@@ -1228,7 +1254,7 @@ describe('#registrationOverviewController', () => {
 
         expect(unsubmitLink).toHaveAttribute(
           'href',
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/unsubmit/confirm`
+          `/organisations/500123/registrations/REG-50030-001/accreditations/2026/reports/monthly/1/submissions/1/unsubmit/confirm`
         )
       })
 
@@ -1274,7 +1300,7 @@ describe('#registrationOverviewController', () => {
           within(currentRow).getByRole('link', { name: 'Unsubmit' })
         ).toHaveAttribute(
           'href',
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/2/unsubmit/confirm`
+          `/organisations/500123/registrations/REG-50030-001/accreditations/2026/reports/monthly/1/submissions/2/unsubmit/confirm`
         )
       })
 

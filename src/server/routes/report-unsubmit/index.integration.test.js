@@ -15,26 +15,31 @@ vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
 
 describe('report-unsubmit', () => {
   const backendUrl = config.get('eprBackendUrl')
-  const organisationId = 'aaa111bbb222ccc333ddd4444'
-  const registrationId = 'bbb222ccc333ddd444eee5555'
+  const organisationId = '69c3b4f0abda9efa68dd6697'
+  const registrationId = '69c3b4f0abda9efa68dd669b'
+  const organisationNumber = '500123'
+  const registrationNumber = 'R25SR500020912PA'
   const year = '2026'
   const cadence = 'monthly'
   const period = '1'
   const submissionNumber = '1'
 
-  const BASE_URL = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`
+  const REGISTRATION_URL = `/organisations/${organisationNumber}/registrations/${registrationNumber}`
+  const BASE_URL = `${REGISTRATION_URL}/accreditations/${year}/reports/${cadence}/${period}/submissions/${submissionNumber}`
   const confirmUrl = `${BASE_URL}/unsubmit/confirm`
   const postUrl = `${BASE_URL}/unsubmit`
   const resultUrl = `${BASE_URL}/unsubmit/result`
-  const overviewUrl = `/organisations/${organisationId}/registrations/${registrationId}/overview`
+  const overviewUrl = `${REGISTRATION_URL}/overview`
+  const overviewByIdsUrl = `/organisations/${organisationId}/registrations/${registrationId}/overview`
 
   const mockOverview = {
     id: organisationId,
+    organisationNumber,
     companyName: 'ACME Ltd',
     registrations: [
       {
         id: registrationId,
-        registrationNumber: 'E25SR500020912PA',
+        registrationNumber,
         status: 'approved',
         processingType: 'exporter',
         material: 'paper',
@@ -81,16 +86,12 @@ describe('report-unsubmit', () => {
     resubmissionRequired = undefined
   } = {}) =>
     mswServer.use(
-      http.get(
-        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`,
-        () =>
-          HttpResponse.json({
-            status: {
-              currentStatus,
-              ...(unsubmittedAt ? { unsubmitted: { at: unsubmittedAt } } : {})
-            },
-            ...(resubmissionRequired ? { resubmissionRequired } : {})
-          })
+      http.get(`${backendUrl}${BASE_URL}`, () =>
+        HttpResponse.json({
+          status: currentStatus,
+          ...(unsubmittedAt ? { unsubmittedAt } : {}),
+          ...(resubmissionRequired ? { resubmissionRequired } : {})
+        })
       )
     )
 
@@ -113,9 +114,8 @@ describe('report-unsubmit', () => {
 
   const stubCalendar = (reportingPeriods = [submittedSubmission(1)]) =>
     mswServer.use(
-      http.get(
-        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
-        () => HttpResponse.json({ cadence, reportingPeriods })
+      http.get(`${backendUrl}${REGISTRATION_URL}/reports/calendar`, () =>
+        HttpResponse.json({ cadence, reportingPeriods })
       )
     )
 
@@ -126,17 +126,15 @@ describe('report-unsubmit', () => {
 
   const stubUnsubmitSuccess = () =>
     mswServer.use(
-      http.post(
-        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/unsubmit`,
-        () => HttpResponse.json({ status: 'ready_to_submit' })
+      http.post(`${backendUrl}${postUrl}`, () =>
+        HttpResponse.json({ status: 'ready_to_submit' })
       )
     )
 
   const stubUnsubmitFailure = (status = 409) =>
     mswServer.use(
-      http.post(
-        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/unsubmit`,
-        () => HttpResponse.json({ error: 'Conflict' }, { status })
+      http.post(`${backendUrl}${postUrl}`, () =>
+        HttpResponse.json({ error: 'Conflict' }, { status })
       )
     )
 
@@ -156,7 +154,10 @@ describe('report-unsubmit', () => {
     }
   }
 
+  // The registration overview is still served by id, so the flash is read
+  // there once the natural-key address has redirected to it.
   const expectOverviewFlash = async (redirectCookie, message) => {
+    stubOverview()
     mswServer.use(
       http.get(
         `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
@@ -170,7 +171,7 @@ describe('report-unsubmit', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: overviewUrl,
+      url: overviewByIdsUrl,
       headers: { cookie: redirectCookie },
       auth: authOptions
     })
@@ -205,7 +206,6 @@ describe('report-unsubmit', () => {
 
   test('confirm page shows report details and unsubmit action', async () => {
     vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
-    stubOverview()
     stubReport({ currentStatus: 'submitted', unsubmittedAt: undefined })
 
     const { result, statusCode } = await server.inject({
@@ -217,35 +217,88 @@ describe('report-unsubmit', () => {
     expect(statusCode).toBe(statusCodes.ok)
     const $ = cheerio.load(result)
     expect($('h1').text().trim()).toBe('Unsubmit report')
-    expect(result).toContain('E25SR500020912PA')
+    expect(result).toContain('R25SR500020912PA')
     expect(result).toContain('January')
     expect($('body').text()).toMatch(/Submission:\s*1/)
     expect($('form').attr('action')).toBe(postUrl)
     expect($('a:contains("Cancel")').attr('href')).toBe(overviewUrl)
   })
 
-  test('confirm page returns 404 when the registration is missing from the overview', async () => {
-    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
-    mswServer.use(
-      http.get(
-        `${backendUrl}/v1/organisations/${organisationId}/overview`,
-        () => HttpResponse.json({ ...mockOverview, registrations: [] })
-      )
-    )
-    stubReport({ currentStatus: 'submitted', unsubmittedAt: undefined })
+  describe('reached by an old id URL', () => {
+    const oldBase = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`
 
-    const { statusCode } = await server.inject({
-      method: 'GET',
-      url: confirmUrl,
-      auth: authOptions
+    test('the confirm page is sent on to its natural-key address', async () => {
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+      stubOverview()
+
+      const toRegistration = await server.inject({
+        method: 'GET',
+        url: `${oldBase}/unsubmit/confirm`,
+        auth: authOptions
+      })
+      const toAccreditation = await server.inject({
+        method: 'GET',
+        url: toRegistration.headers.location,
+        auth: authOptions
+      })
+
+      expect(toRegistration.statusCode).toBe(statusCodes.found)
+      expect(toAccreditation.statusCode).toBe(statusCodes.found)
+      expect(toAccreditation.headers.location).toBe(confirmUrl)
     })
 
-    expect(statusCode).toBe(statusCodes.notFound)
+    test('the unsubmit is resent to its natural-key address with its body', async () => {
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+      stubOverview()
+      stubReport({ currentStatus: 'submitted', unsubmittedAt: undefined })
+      const { cookie, crumb } = await getCsrfToken(
+        server,
+        confirmUrl,
+        authOptions
+      )
+
+      /** @param {string} url */
+      const resend = (url) =>
+        server.inject({
+          method: 'POST',
+          url,
+          auth: authOptions,
+          headers: { cookie },
+          payload: { crumb }
+        })
+
+      const toRegistration = await resend(`${oldBase}/unsubmit`)
+      const toAccreditation = await resend(toRegistration.headers.location)
+
+      expect(toRegistration.statusCode).toBe(statusCodes.temporaryRedirect)
+      expect(toRegistration.headers.location).toBe(
+        `${REGISTRATION_URL}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/unsubmit`
+      )
+      expect(toAccreditation.statusCode).toBe(statusCodes.temporaryRedirect)
+      expect(toAccreditation.headers.location).toBe(postUrl)
+    })
+
+    test('is not found when the organisation has no such registration', async () => {
+      vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+      mswServer.use(
+        http.get(
+          `${backendUrl}/v1/organisations/${organisationId}/overview`,
+          () => HttpResponse.json({ ...mockOverview, registrations: [] })
+        )
+      )
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: `${oldBase}/unsubmit/confirm`,
+        auth: authOptions
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
   })
 
   test('confirm page redirects to overview for a non-submitted report', async () => {
     vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
-    stubOverview()
     stubReport({ currentStatus: 'ready_to_submit', unsubmittedAt: undefined })
 
     const { response, redirectCookie } = await getConfirm()
@@ -275,7 +328,6 @@ describe('report-unsubmit', () => {
     'should redirect to overview for a report flagged for resubmission by $flaggedBy',
     async ({ resubmissionRequired }) => {
       vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
-      stubOverview()
       stubReport({
         currentStatus: 'submitted',
         unsubmittedAt: undefined,
@@ -295,7 +347,6 @@ describe('report-unsubmit', () => {
 
   it('should redirect to overview for a submission superseded by a later one', async () => {
     vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
-    stubOverview()
     stubReport({ currentStatus: 'submitted', unsubmittedAt: undefined })
     stubCalendar([submittedSubmission(1), submittedSubmission(2)])
 
@@ -311,7 +362,6 @@ describe('report-unsubmit', () => {
 
   test('submitting the confirmation redirects to the success page', async () => {
     vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
-    stubOverview()
     stubReport({ currentStatus: 'submitted', unsubmittedAt: undefined })
     stubUnsubmitSuccess()
 
@@ -323,7 +373,6 @@ describe('report-unsubmit', () => {
 
   test('backend failure shows the unsubmit failed page', async () => {
     vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
-    stubOverview()
     stubReport({ currentStatus: 'submitted', unsubmittedAt: undefined })
     stubUnsubmitFailure()
 
@@ -337,7 +386,6 @@ describe('report-unsubmit', () => {
 
   it('should say why the unsubmit was refused when the backend rejects it', async () => {
     vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
-    stubOverview()
     stubReport({ currentStatus: 'submitted', unsubmittedAt: undefined })
     stubUnsubmitFailure(statusCodes.conflict)
 
@@ -350,7 +398,6 @@ describe('report-unsubmit', () => {
 
   it('should not offer a reason when the backend fails for any other cause', async () => {
     vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
-    stubOverview()
     stubReport({ currentStatus: 'submitted', unsubmittedAt: undefined })
     stubUnsubmitFailure(statusCodes.internalServerError)
 
@@ -364,7 +411,6 @@ describe('report-unsubmit', () => {
 
   test('success page confirms the report was unsubmitted', async () => {
     vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
-    stubOverview()
     stubReport()
 
     const { result, statusCode } = await server.inject({
@@ -376,7 +422,7 @@ describe('report-unsubmit', () => {
     expect(statusCode).toBe(statusCodes.ok)
     const $ = cheerio.load(result)
     expect($('.govuk-panel__title').text().trim()).toBe('Report unsubmitted')
-    expect(result).toContain('E25SR500020912PA')
+    expect(result).toContain('R25SR500020912PA')
     expect($('body').text()).toMatch(/Submission:\s*1/)
     expect($('a:contains("Back to registration overview")').attr('href')).toBe(
       overviewUrl
@@ -385,7 +431,6 @@ describe('report-unsubmit', () => {
 
   test('result page redirects to overview when accessed without completing unsubmit', async () => {
     vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
-    stubOverview()
     stubReport({ currentStatus: 'submitted', unsubmittedAt: undefined })
 
     const { statusCode, headers } = await server.inject({

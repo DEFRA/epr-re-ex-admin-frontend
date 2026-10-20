@@ -6,5 +6,6 @@ export const errorCodes = {
   externalFetchFailed: 'external_fetch_failed',
   externalRedirectInvalid: 'external_redirect_invalid',
   registrationNotFound: 'registration_not_found',
-  accreditationNotFound: 'accreditation_not_found'
+  accreditationNotFound: 'accreditation_not_found',
+  recordKeyUnresolved: 'record_key_unresolved'
 }

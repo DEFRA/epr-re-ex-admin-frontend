@@ -1,15 +1,16 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
-import {
-  fetchOrganisationOverview,
-  findRegistration
-} from '#server/common/helpers/fetch-organisation-overview.js'
 import { PAGE_TITLE } from './constants.js'
 import { formatPeriod } from '#server/common/helpers/format-reporting-period.js'
 import { toReportingPeriods } from '#server/common/helpers/reporting-periods.js'
 import {
   periodSubmissionPath,
+  periodSubmissionUnsubmitPath,
   reportsCalendarPath
 } from '#server/common/helpers/backend-paths.js'
+import {
+  registrationBreadcrumbs,
+  registrationOverviewUrl
+} from '#server/common/helpers/page-urls.js'
 
 /**
  * @import { PeriodSubmissionRequest } from '#server/common/hapi-types.js'
@@ -29,12 +30,12 @@ const isResubmissionRequired = (resubmissionRequired) =>
  * it would accept it. Surfaced as a flash error on the overview rather than
  * letting the confirmation promise an outcome that cannot be delivered.
  * Mirrors the three refusals in reports/routes/unsubmit.js.
- * @param {{ resubmissionRequired?: Record<string, unknown>, status: { currentStatus: string } }} report
+ * @param {{ resubmissionRequired?: Record<string, unknown>, status: string }} report
  * @param {{ isSuperseded?: boolean } | undefined} calendarPeriod
  * @returns {string | null}
  */
 const refusalReason = (report, calendarPeriod) => {
-  if (report.status.currentStatus !== 'submitted') {
+  if (report.status !== 'submitted') {
     return 'This report cannot be unsubmitted because it is no longer submitted.'
   }
   if (isResubmissionRequired(report.resubmissionRequired)) {
@@ -80,16 +81,10 @@ const fetchCalendarPeriod = async (request) => {
 export const reportUnsubmitConfirmGetController = {
   /** @param {PeriodSubmissionRequest} request */
   async handler(request, h) {
-    const {
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber
-    } = request.params
+    const { registrationNumber, year, cadence, period, submissionNumber } =
+      request.params
 
-    const overviewUrl = `/organisations/${organisationId}/registrations/${registrationId}/overview`
+    const overviewUrl = registrationOverviewUrl(request.params)
 
     const [report, calendarPeriod] = await Promise.all([
       fetchPeriodSubmission(request),
@@ -102,30 +97,13 @@ export const reportUnsubmitConfirmGetController = {
       return h.redirect(overviewUrl)
     }
 
-    const overview = await fetchOrganisationOverview(request, organisationId)
-    const registration = findRegistration(
-      overview,
-      organisationId,
-      registrationId
-    )
-
     return h.view('routes/report-unsubmit/confirm', {
       pageTitle: request.route.settings.app?.pageTitle,
       heading: PAGE_TITLE,
-      breadcrumbs: [
-        { text: 'Organisations', href: '/organisations' },
-        {
-          text: 'Organisation overview',
-          href: `/organisations/${organisationId}/overview`
-        },
-        {
-          text: 'Registration overview',
-          href: overviewUrl
-        }
-      ],
+      breadcrumbs: registrationBreadcrumbs(request.params),
       overviewUrl,
-      postUrl: `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/unsubmit`,
-      registrationNumber: registration.registrationNumber,
+      postUrl: periodSubmissionUnsubmitPath(request.params),
+      registrationNumber,
       formattedPeriod: formatPeriod(period, cadence),
       year,
       submissionNumber

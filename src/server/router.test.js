@@ -78,7 +78,8 @@ describe('router plugin', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     server = {
-      register: vi.fn().mockResolvedValue(undefined)
+      register: vi.fn().mockResolvedValue(undefined),
+      ext: vi.fn()
     }
   })
 

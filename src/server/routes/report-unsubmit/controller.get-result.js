@@ -1,10 +1,10 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
-import {
-  fetchOrganisationOverview,
-  findRegistration
-} from '#server/common/helpers/fetch-organisation-overview.js'
 import { formatPeriod } from '#server/common/helpers/format-reporting-period.js'
 import { periodSubmissionPath } from '#server/common/helpers/backend-paths.js'
+import {
+  registrationBreadcrumbs,
+  registrationOverviewUrl
+} from '#server/common/helpers/page-urls.js'
 
 /**
  * @import { PeriodSubmissionRequest } from '#server/common/hapi-types.js'
@@ -13,16 +13,10 @@ import { periodSubmissionPath } from '#server/common/helpers/backend-paths.js'
 export const reportUnsubmitResultGetController = {
   /** @param {PeriodSubmissionRequest} request */
   async handler(request, h) {
-    const {
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber
-    } = request.params
+    const { registrationNumber, year, cadence, period, submissionNumber } =
+      request.params
 
-    const overviewUrl = `/organisations/${organisationId}/registrations/${registrationId}/overview`
+    const overviewUrl = registrationOverviewUrl(request.params)
 
     const report = await fetchJsonFromBackend(
       request,
@@ -31,33 +25,18 @@ export const reportUnsubmitResultGetController = {
     )
 
     const success =
-      report.status.currentStatus === 'ready_to_submit' &&
-      Boolean(report.status.unsubmitted?.at)
+      report.status === 'ready_to_submit' && Boolean(report.unsubmittedAt)
 
     if (!success) {
       return h.redirect(overviewUrl)
     }
 
-    const overview = await fetchOrganisationOverview(request, organisationId)
-    const registration = findRegistration(
-      overview,
-      organisationId,
-      registrationId
-    )
-
     return h.view('routes/report-unsubmit/result', {
       pageTitle: request.route.settings.app?.pageTitle,
       success: true,
-      breadcrumbs: [
-        { text: 'Organisations', href: '/organisations' },
-        {
-          text: 'Organisation overview',
-          href: `/organisations/${organisationId}/overview`
-        },
-        { text: 'Registration overview', href: overviewUrl }
-      ],
+      breadcrumbs: registrationBreadcrumbs(request.params),
       overviewUrl,
-      registrationNumber: registration.registrationNumber,
+      registrationNumber,
       formattedPeriod: formatPeriod(period, cadence),
       year,
       submissionNumber

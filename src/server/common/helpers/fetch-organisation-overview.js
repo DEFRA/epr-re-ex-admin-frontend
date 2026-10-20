@@ -7,8 +7,9 @@ import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 /**
  * @typedef {{
  *   id: string,
- *   accreditationNumber: string,
- *   status: string
+ *   accreditationNumber: string | null,
+ *   status: string,
+ *   year: number | null
  * }} Accreditation
  *
  * @typedef {{
@@ -30,6 +31,7 @@ import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
  *
  * @typedef {{
  *   id: string,
+ *   organisationNumber: string,
  *   companyName: string,
  *   registrations: Registration[],
  *   linkedDefraOrganisation?: LinkedDefraOrganisation
