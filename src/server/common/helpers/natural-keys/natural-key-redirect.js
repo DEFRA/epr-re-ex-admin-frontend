@@ -49,18 +49,18 @@ const readKeys = (pathSegments, segments, form) =>
 const swapKeys = async (request, form, keys) => {
   if (form === 'ids') {
     const ids = /** @type {RecordIds} */ (keys)
-    const overview = await findOverviewById(request, ids.organisationId)
+    const overviewById = await findOverviewById(request, ids.organisationId)
 
-    return overview && toNaturalKeys(overview, ids)
+    return overviewById && toNaturalKeys(overviewById, ids)
   }
 
   const naturalKeys = /** @type {NaturalKeys} */ (keys)
-  const overview = await findOverviewByNumber(
+  const overviewByNumber = await findOverviewByNumber(
     request,
     naturalKeys.organisationNumber
   )
 
-  return overview && toIds(overview, naturalKeys)
+  return overviewByNumber && toIds(overviewByNumber, naturalKeys)
 }
 
 /**

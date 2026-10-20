@@ -28,7 +28,7 @@ export const REPORT_SUBMISSION_PATHS = [
  * @returns {{ method: Lifecycle.Method }}
  */
 export const atReportAddress = (action = '') => ({
-  method: (request, h) => {
+  method: async (request, h) => {
     const params = /** @type {PeriodSubmissionParams} */ (request.params)
     const address = `${periodSubmissionPath(params)}${action}`
 

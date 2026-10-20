@@ -1,5 +1,5 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
-import { periodSubmissionPath } from '#server/common/helpers/backend-paths.js'
+import { periodSubmissionDetailPath } from '#server/common/helpers/backend-paths.js'
 import { registrationBreadcrumbs } from '#server/common/helpers/page-urls.js'
 
 /**
@@ -13,7 +13,7 @@ export const reportDetailGETController = {
 
     const data = await fetchJsonFromBackend(
       request,
-      periodSubmissionPath(request.params),
+      periodSubmissionDetailPath(request.params),
       {}
     )
 

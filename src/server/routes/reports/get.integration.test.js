@@ -176,6 +176,21 @@ describe('#reportDetailController', () => {
       expect(JSON.parse(code.text())).toEqual(mockReport)
     })
 
+    test('Should ask for the report with all of its detail', async () => {
+      /** @type {URL | undefined} */
+      let requested
+      mswServer.use(
+        http.get(`${backendUrl}${url}`, ({ request }) => {
+          requested = new URL(request.url)
+          return HttpResponse.json(mockReport)
+        })
+      )
+
+      await server.inject({ method: 'GET', url, auth })
+
+      expect(requested?.searchParams.get('expand')).toBe('detail')
+    })
+
     test('Should show 500 error page when backend returns a non-OK response', async () => {
       mswServer.use(
         http.get(`${backendUrl}${url}`, () => {

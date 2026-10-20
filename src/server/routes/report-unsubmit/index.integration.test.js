@@ -89,8 +89,13 @@ describe('report-unsubmit', () => {
       http.get(`${backendUrl}${BASE_URL}`, () =>
         HttpResponse.json({
           status: currentStatus,
-          ...(unsubmittedAt ? { unsubmittedAt } : {}),
-          ...(resubmissionRequired ? { resubmissionRequired } : {})
+          ...(resubmissionRequired ? { resubmissionRequired } : {}),
+          detail: {
+            status: {
+              currentStatus,
+              ...(unsubmittedAt ? { unsubmitted: { at: unsubmittedAt } } : {})
+            }
+          }
         })
       )
     )

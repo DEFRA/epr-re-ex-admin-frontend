@@ -1,6 +1,6 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { formatPeriod } from '#server/common/helpers/format-reporting-period.js'
-import { periodSubmissionPath } from '#server/common/helpers/backend-paths.js'
+import { periodSubmissionDetailPath } from '#server/common/helpers/backend-paths.js'
 import {
   registrationBreadcrumbs,
   registrationOverviewUrl
@@ -20,12 +20,13 @@ export const reportUnsubmitResultGetController = {
 
     const report = await fetchJsonFromBackend(
       request,
-      periodSubmissionPath(request.params),
+      periodSubmissionDetailPath(request.params),
       {}
     )
 
     const success =
-      report.status === 'ready_to_submit' && Boolean(report.unsubmittedAt)
+      report.status === 'ready_to_submit' &&
+      Boolean(report.detail.status.unsubmitted?.at)
 
     if (!success) {
       return h.redirect(overviewUrl)

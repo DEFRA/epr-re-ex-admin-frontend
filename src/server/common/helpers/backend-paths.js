@@ -43,6 +43,14 @@ export const periodSubmissionPath = (params) => {
 }
 
 /**
+ * A single submission's report with all of it the backend holds, not just the
+ * resource it serves the operator.
+ * @param {PeriodSubmissionParams} params
+ */
+export const periodSubmissionDetailPath = (params) =>
+  `${periodSubmissionPath(params)}?expand=detail`
+
+/**
  * The unsubmit action on a single submission.
  * @param {PeriodSubmissionParams} params
  */
