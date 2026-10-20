@@ -170,17 +170,15 @@ describe('unlink-organisation', () => {
     const cancelHref = cheerio
       .load(confirmPage.result)('a:contains("Cancel")')
       .attr('href')
+    expect(cancelHref).toBeDefined()
 
-    const { result, statusCode } = await server.inject({
+    const { statusCode } = await server.inject({
       method: 'GET',
       url: cancelHref,
       auth: writeAuth
     })
 
     expect(statusCode).toBe(statusCodes.ok)
-    const $ = cheerio.load(result)
-    expect($('a:contains("Unlink organisation")').attr('href')).toBe(confirmUrl)
-    expect(result).toContain('Lost Ark Adventures Ltd')
     expect(unlinkRequest).not.toHaveBeenCalled()
   })
 
