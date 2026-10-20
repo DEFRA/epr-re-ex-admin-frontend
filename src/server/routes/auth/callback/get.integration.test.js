@@ -37,18 +37,22 @@ describe('GET /auth/callback', () => {
     vi.clearAllMocks()
   })
 
-  const performSignInFlow = async (accessToken, adminMeOverride) => {
+  const performSignInFlow = async (
+    accessToken,
+    adminMeOverride,
+    signInHeaders = {}
+  ) => {
     const signInResponse = await server.inject({
       method: 'GET',
-      url: '/auth/sign-in'
+      url: '/auth/sign-in',
+      headers: signInHeaders
     })
     const ssoUrl = new URL(signInResponse.headers['location'])
 
-    // bell-entra-id={cookieValue}; HttpOnly; SameSite=Strict; Path=/
-    const bellCookie = signInResponse.headers['set-cookie']
-      .toString()
-      .split('=')[1]
-      .split(';')[0]
+    const cookies = [signInResponse.headers['set-cookie']]
+      .flat()
+      .map((setCookie) => setCookie.split(';')[0])
+      .join('; ')
 
     mswServer.use(
       http.post(mockOidcResponse.token_endpoint, () => {
@@ -75,9 +79,7 @@ describe('GET /auth/callback', () => {
     return await server.inject({
       method: 'GET',
       url: `/auth/callback?state=${stateParam}&code=${code}&refresh=1`,
-      headers: {
-        cookie: `bell-entra-id=${bellCookie}`
-      }
+      headers: { cookie: cookies }
     })
   }
 
@@ -93,6 +95,14 @@ describe('GET /auth/callback', () => {
       const response = await performSignInFlow(accessToken)
       expect(response.statusCode).toBe(statusCodes.found)
       expect(response.headers['location']).toEqual('/')
+    })
+
+    it('redirects to the page the user was on when they chose to sign in', async () => {
+      const response = await performSignInFlow(accessToken, undefined, {
+        referer: `${config.get('appBaseUrl')}/organisations?search=ACME`
+      })
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers['location']).toEqual('/organisations?search=ACME')
     })
 
     it('records sign in success metric', async () => {
