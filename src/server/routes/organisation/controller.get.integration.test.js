@@ -139,6 +139,8 @@ describe('organisation GET controller', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       const $ = cheerio.load(result)
+      expect($('h1').text()).toBe('ACME Ltd')
+      expect($('#jsoneditor').attr('data-readonly')).toBe('true')
       expect($('main').text()).toContain(
         'You do not have permission to edit this organisation.'
       )

@@ -37,6 +37,11 @@ describe('GET /auth/callback', () => {
     vi.clearAllMocks()
   })
 
+  /**
+   * @param {Record<string, unknown>} accessToken
+   * @param {Response} [adminMeOverride]
+   * @param {Record<string, string>} [signInHeaders]
+   */
   const performSignInFlow = async (
     accessToken,
     adminMeOverride,
