@@ -9,6 +9,8 @@ import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { http, server as mswServer, HttpResponse } from '#vite/setup-msw.js'
 import * as cheerio from 'cheerio'
 
+/** @import { UserSession } from '#server/common/hapi-types.js' */
+
 vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
   getUserSession: vi.fn().mockReturnValue(null)
 }))
@@ -277,6 +279,7 @@ describe('queue-management', () => {
     })
 
     describe('Clear all messages button', () => {
+      /** @param {UserSession} session */
       const renderQueueManagement = async (session) => {
         vi.mocked(getUserSession).mockResolvedValue(session)
         stubDlqMessages(sampleMessages)
