@@ -293,23 +293,29 @@ describe('queue-management', () => {
         return cheerio.load(result)
       }
 
-      test('Should show the button when user can purge the dead-letter queue', async () => {
-        const $ = await renderQueueManagement(mockUserSession)
+      test.each([
+        [['admin.read', 'admin.dlq.purge']],
+        [['admin.read', 'admin.write', 'admin.dlq.purge']]
+      ])(
+        'Should show the button for scopes %j, which can purge the dead-letter queue',
+        async (scopes) => {
+          const $ = await renderQueueManagement({ ...mockUserSession, scopes })
 
-        expect($('a:contains("Clear all messages")').attr('href')).toBe(
-          '/queue-management/confirm-clear'
-        )
-      })
+          expect($('a:contains("Clear all messages")').attr('href')).toBe(
+            '/queue-management/confirm-clear'
+          )
+        }
+      )
 
-      test('Should not show the button when user cannot purge the dead-letter queue', async () => {
-        const $ = await renderQueueManagement({
-          ...mockUserSession,
-          scopes: ['admin.read', 'admin.write']
-        })
+      test.each([[['admin.read']], [['admin.read', 'admin.write']]])(
+        'Should not show the button for scopes %j, which cannot purge the dead-letter queue',
+        async (scopes) => {
+          const $ = await renderQueueManagement({ ...mockUserSession, scopes })
 
-        expect($('table')).toHaveLength(1)
-        expect($('a:contains("Clear all messages")')).toHaveLength(0)
-      })
+          expect($('table')).toHaveLength(1)
+          expect($('a:contains("Clear all messages")')).toHaveLength(0)
+        }
+      )
     })
   })
 
