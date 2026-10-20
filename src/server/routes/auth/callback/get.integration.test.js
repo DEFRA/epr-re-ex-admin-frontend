@@ -56,7 +56,6 @@ describe('GET /auth/callback', () => {
 
     const cookies = [signInResponse.headers['set-cookie']]
       .flat()
-      .filter(Boolean)
       .map((setCookie) => setCookie.split(';')[0])
       .join('; ')
 

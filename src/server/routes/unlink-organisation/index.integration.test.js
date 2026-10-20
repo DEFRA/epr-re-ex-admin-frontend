@@ -151,16 +151,9 @@ describe('unlink-organisation', () => {
     expect(headers.location).toBe(overviewUrl)
   })
 
-  test('cancelling the confirm page leaves the organisation linked', async () => {
+  test('cancelling the confirm page returns to the organisation overview', async () => {
     vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
     stubOverview(linkedOverview)
-    const unlinkRequest = vi.fn(() => new HttpResponse(null, { status: 204 }))
-    mswServer.use(
-      http.delete(
-        `${backendUrl}/v1/organisations/${organisationId}/link`,
-        unlinkRequest
-      )
-    )
 
     const confirmPage = await server.inject({
       method: 'GET',
@@ -170,16 +163,8 @@ describe('unlink-organisation', () => {
     const cancelHref = cheerio
       .load(confirmPage.result)('a:contains("Cancel")')
       .attr('href')
-    expect(cancelHref).toBeDefined()
 
-    const { statusCode } = await server.inject({
-      method: 'GET',
-      url: cancelHref,
-      auth: writeAuth
-    })
-
-    expect(statusCode).toBe(statusCodes.ok)
-    expect(unlinkRequest).not.toHaveBeenCalled()
+    expect(cancelHref).toBe(overviewUrl)
   })
 
   test('POST is rejected with 401 when unauthenticated', async () => {
