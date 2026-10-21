@@ -1,4 +1,9 @@
-import { accreditationPath, periodSubmissionPath } from './backend-paths.js'
+import {
+  accreditationPath,
+  organisationPath,
+  periodSubmissionPath,
+  registrationPath
+} from './backend-paths.js'
 
 /**
  * @import { PeriodSubmissionParams } from './backend-paths.js'
@@ -12,17 +17,14 @@ import { accreditationPath, periodSubmissionPath } from './backend-paths.js'
 /**
  * @param {{ organisationNumber: string }} keys
  */
-export const organisationOverviewUrl = ({ organisationNumber }) =>
-  `/organisations/${organisationNumber}/overview`
+export const organisationOverviewUrl = (keys) =>
+  `${organisationPath(keys)}/overview`
 
 /**
  * @param {{ organisationNumber: string, registrationNumber: string }} keys
  */
-export const registrationOverviewUrl = ({
-  organisationNumber,
-  registrationNumber
-}) =>
-  `/organisations/${organisationNumber}/registrations/${registrationNumber}/overview`
+export const registrationOverviewUrl = (keys) =>
+  `${registrationPath(keys)}/overview`
 
 /**
  * The breadcrumbs of a page under a registration.

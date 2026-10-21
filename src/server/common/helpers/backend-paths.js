@@ -21,10 +21,17 @@
  */
 
 /**
+ * Numbers have no guaranteed format, so each is encoded as one path segment.
+ * @param {Pick<PeriodSubmissionParams, 'organisationNumber'>} params
+ */
+export const organisationPath = ({ organisationNumber }) =>
+  `/organisations/${encodeURIComponent(organisationNumber)}`
+
+/**
  * @param {Pick<PeriodSubmissionParams, 'organisationNumber' | 'registrationNumber'>} params
  */
-export const registrationPath = ({ organisationNumber, registrationNumber }) =>
-  `/organisations/${organisationNumber}/registrations/${registrationNumber}`
+export const registrationPath = (params) =>
+  `${organisationPath(params)}/registrations/${encodeURIComponent(params.registrationNumber)}`
 
 /**
  * @param {Pick<PeriodSubmissionParams, 'organisationNumber' | 'registrationNumber' | 'year'>} params

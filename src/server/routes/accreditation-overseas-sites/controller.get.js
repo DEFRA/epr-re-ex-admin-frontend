@@ -1,4 +1,5 @@
 import { errorCodes } from '#server/common/enums/error-codes.js'
+import { organisationPath } from '#server/common/helpers/backend-paths.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 import {
@@ -35,7 +36,7 @@ export const accreditationOverseasSitesGETController = {
 
     const organisation = await fetchJsonFromBackend(
       request,
-      `/organisations/${organisationNumber}`,
+      organisationPath(request.params),
       {}
     )
     const registration = organisation.registrations[registrationNumber]

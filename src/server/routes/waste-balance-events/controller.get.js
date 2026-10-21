@@ -1,5 +1,8 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
-import { accreditationPath } from '#server/common/helpers/backend-paths.js'
+import {
+  accreditationPath,
+  organisationPath
+} from '#server/common/helpers/backend-paths.js'
 import { registrationBreadcrumbs } from '#server/common/helpers/page-urls.js'
 
 /**
@@ -58,12 +61,12 @@ const formatActor = (actor) => {
 
 export const wasteBalanceEventsGETController = {
   async handler(request, h) {
-    const { organisationNumber, registrationNumber, year } = request.params
+    const { registrationNumber, year } = request.params
 
     // The ledger read is not found unless the accreditation is, so the
     // organisation read holds it.
     const [organisation, { events }] = await Promise.all([
-      fetchJsonFromBackend(request, `/organisations/${organisationNumber}`, {}),
+      fetchJsonFromBackend(request, organisationPath(request.params), {}),
       /** @type {Promise<{ events: LedgerEvent[] }>} */ (
         fetchJsonFromBackend(
           request,

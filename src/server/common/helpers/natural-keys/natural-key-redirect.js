@@ -36,7 +36,7 @@ const readKeys = (pathSegments, segments, form) =>
   Object.fromEntries(
     segments.map(({ index, record }) => [
       FIELDS[form][record],
-      pathSegments[index]
+      decodeURIComponent(pathSegments[index])
     ])
   )
 
@@ -98,7 +98,9 @@ export const naturalKeyRedirect = async (request, h) => {
   }
 
   for (const { index, record } of route.segments) {
-    pathSegments[index] = swapped[FIELDS[route.form][record]]
+    pathSegments[index] = encodeURIComponent(
+      swapped[FIELDS[route.form][record]]
+    )
   }
 
   return redirectKeepingMethod(request, h, pathSegments.join('/'))

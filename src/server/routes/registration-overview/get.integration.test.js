@@ -54,7 +54,7 @@ describe('#registrationOverviewController', () => {
    *   processingType: string,
    *   material: string,
    *   site: string,
-   *   accreditation: { id: string, accreditationNumber: string | null, status: string, year: number } | null
+   *   accreditation: { id: string, accreditationNumber: string | null, status: string, year?: number } | null
    * }}
    */
   const mockRegistration = {
@@ -599,6 +599,30 @@ describe('#registrationOverviewController', () => {
       expect(queryByText(body, 'PRN activity', { selector: 'dt' })).toBeNull()
     })
 
+    test('Should keep a registration number holding slashes as one segment of its links', async () => {
+      useMockBackend({
+        ...mockOverview,
+        registrations: [
+          { ...mockRegistration, registrationNumber: 'FAKE/REG500123/ALPHA' }
+        ]
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const link = within(
+        getSummaryRowValue(renderPage(result), 'Waste balance events')
+      ).getByRole('link', { name: 'View' })
+
+      expect(link).toHaveAttribute(
+        'href',
+        '/organisations/500123/registrations/FAKE%2FREG500123%2FALPHA/accreditations/2026/waste-balance-events'
+      )
+    })
+
     test('Should show the accreditation links as not applicable when the accreditation is not approved', async () => {
       useMockBackend({
         ...mockOverview,
@@ -607,7 +631,7 @@ describe('#registrationOverviewController', () => {
             ...mockRegistration,
             processingType: 'exporter',
             accreditation: {
-              ...mockRegistration.accreditation,
+              id: accreditationId,
               accreditationNumber: null,
               status: 'created'
             }
