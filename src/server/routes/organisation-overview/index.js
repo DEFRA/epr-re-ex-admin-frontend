@@ -7,7 +7,7 @@ export const organisationOverview = {
       server.route([
         {
           method: 'GET',
-          path: '/organisations/{id}/overview',
+          path: '/organisations/{organisationId}/overview',
           ...organisationOverviewGETController,
           options: {
             app: { pageTitle: 'Organisation Overview' }

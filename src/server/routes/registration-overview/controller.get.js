@@ -4,7 +4,11 @@ import {
   findRegistration
 } from '#server/common/helpers/fetch-organisation-overview.js'
 import { toReportingPeriods } from '#server/common/helpers/reporting-periods.js'
-import { reportsCalendarPath } from '#server/common/helpers/backend-paths.js'
+import { reportsCalendarPathByIds } from '#server/common/helpers/backend-paths.js'
+import {
+  reportSubmissionUrl,
+  reportUnsubmitUrl
+} from '#server/common/helpers/page-urls.js'
 import {
   periodStatus,
   reportStatus
@@ -44,39 +48,43 @@ const PERIOD_STATUS_LABELS = {
  * it - a submitted report that is neither superseded nor flagged for
  * resubmission. Hiding it is UX; the backend enforces both rules and the
  * admin.write scope.
- * @param {string} organisationId
- * @param {string} registrationId
+ * @param {{ organisationNumber: string, registrationNumber: string }} keys
  * @param {string} cadence
  * @param {boolean} hasAdminWrite
  */
-const toReportRow =
-  (organisationId, registrationId, cadence, hasAdminWrite) => (period) => {
-    const submissionUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/${period.year}/${cadence}/${period.period}/submissions/${period.submissionNumber}`
-
-    const canUnsubmit =
-      hasAdminWrite &&
-      period.report?.status === reportStatus.submitted &&
-      !period.isSuperseded &&
-      !period.isFlaggedForResubmission
-
-    // A resubmission draft keeps the period in its requires-resubmission state
-    // rather than reporting the draft's own status, matching what the operator
-    // sees in epr-frontend. Otherwise the framing vanishes the moment the draft
-    // is started, leaving no sign why the submitted row lost its Unsubmit link.
-    const status =
-      period.periodStatus === periodStatus.requiresResubmission
-        ? period.periodStatus
-        : (period.report?.status ?? period.periodStatus)
-
-    return {
-      formattedPeriod: period.formattedPeriod,
-      submissionNumber: period.report ? period.submissionNumber : '',
-      dueDate: period.dueDate,
-      statusText: PERIOD_STATUS_LABELS[status] ?? status,
-      viewUrl: period.report ? submissionUrl : null,
-      unsubmitUrl: canUnsubmit ? `${submissionUrl}/unsubmit/confirm` : null
-    }
+const toReportRow = (keys, cadence, hasAdminWrite) => (period) => {
+  const submission = {
+    ...keys,
+    year: String(period.year),
+    cadence,
+    period: String(period.period),
+    submissionNumber: String(period.submissionNumber)
   }
+
+  const canUnsubmit =
+    hasAdminWrite &&
+    period.report?.status === reportStatus.submitted &&
+    !period.isSuperseded &&
+    !period.isFlaggedForResubmission
+
+  // A resubmission draft keeps the period in its requires-resubmission state
+  // rather than reporting the draft's own status, matching what the operator
+  // sees in epr-frontend. Otherwise the framing vanishes the moment the draft
+  // is started, leaving no sign why the submitted row lost its Unsubmit link.
+  const status =
+    period.periodStatus === periodStatus.requiresResubmission
+      ? period.periodStatus
+      : (period.report?.status ?? period.periodStatus)
+
+  return {
+    formattedPeriod: period.formattedPeriod,
+    submissionNumber: period.report ? period.submissionNumber : '',
+    dueDate: period.dueDate,
+    statusText: PERIOD_STATUS_LABELS[status] ?? status,
+    viewUrl: period.report ? reportSubmissionUrl(submission) : null,
+    unsubmitUrl: canUnsubmit ? `${reportUnsubmitUrl(submission)}/confirm` : null
+  }
+}
 
 const STATUS_DISPLAY = {
   submitted: { label: 'Success', className: GREEN_TAG },
@@ -172,7 +180,11 @@ export const registrationOverviewGETController = {
 
     const [overview, calendar, { summaryLogs }] = await Promise.all([
       fetchOrganisationOverview(request, organisationId),
-      fetchJsonFromBackend(request, reportsCalendarPath(request.params), {}),
+      fetchJsonFromBackend(
+        request,
+        reportsCalendarPathByIds({ organisationId, registrationId }),
+        {}
+      ),
       fetchJsonFromBackend(
         request,
         `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs`,
@@ -221,8 +233,10 @@ export const registrationOverviewGETController = {
         calendar.cadence
       ).map(
         toReportRow(
-          organisationId,
-          registrationId,
+          {
+            organisationNumber: overview.organisationNumber,
+            registrationNumber: registration.registrationNumber
+          },
           calendar.cadence,
           request.auth.credentials.scopes.includes(SCOPES.adminWrite)
         )

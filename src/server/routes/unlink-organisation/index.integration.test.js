@@ -15,7 +15,7 @@ vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
 
 describe('unlink-organisation', () => {
   const backendUrl = config.get('eprBackendUrl')
-  const organisationId = 'aaa111bbb222ccc333ddd4444'
+  const organisationId = '6507f1f77bcf86cd79943901'
   const overviewUrl = `/organisations/${organisationId}/overview`
   const confirmUrl = `/organisations/${organisationId}/unlink-defra-id/confirm`
   const postUrl = `/organisations/${organisationId}/unlink-defra-id`

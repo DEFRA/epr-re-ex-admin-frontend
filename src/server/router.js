@@ -31,6 +31,7 @@ import { creditedTonnage } from './routes/credited-tonnage/index.js'
 import { accreditationStatusTransition } from './routes/accreditation-status-transition/index.js'
 import { registrationStatusTransition } from './routes/registration-status-transition/index.js'
 
+import { naturalKeyRedirect } from './common/helpers/natural-keys/natural-key-redirect.js'
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
 import { FEATURE_FLAGS } from './common/helpers/feature-flags.js'
 
@@ -39,6 +40,8 @@ export const router = {
     name: 'router',
     async register(server) {
       await server.register([inert])
+
+      server.ext('onPostAuth', naturalKeyRedirect)
 
       await server.register([health])
 

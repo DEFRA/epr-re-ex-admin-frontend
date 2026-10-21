@@ -17,12 +17,12 @@ describe('#reportDetailController', () => {
   const backendUrl = 'http://mock-backend'
   const organisationId = '69c3b4f0abda9efa68dd6697'
   const registrationId = '69c3b4f0abda9efa68dd669b'
-  const year = '2026'
-  const cadence = 'monthly'
-  const period = '1'
-  const submissionNumber = '1'
-  const url = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`
-  const backendReportUrl = `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`
+  const organisationNumber = '500123'
+  const registrationNumber = 'R26ER5001180041PL'
+  const registration = `/organisations/${organisationNumber}/registrations/${registrationNumber}`
+  const url = `${registration}/accreditations/2026/reports/monthly/1/submissions/1`
+  const registeredOnlyUrl = `${registration}/reports/2026/quarterly/1/submissions/1`
+  const auth = { strategy: 'session', credentials: mockUserSession }
   let server
 
   beforeAll(async () => {
@@ -42,10 +42,18 @@ describe('#reportDetailController', () => {
   })
 
   const mockReport = {
-    id: 'b41148de-8a76-4214-b68d-4b786400fb90',
-    status: 'ready_to_submit',
-    submissionNumber: 1
+    year: 2026,
+    cadence: 'monthly',
+    period: 1,
+    submissionNumber: 1,
+    status: 'ready_to_submit'
   }
+
+  /** @param {string} path */
+  const serveReportAt = (path) =>
+    mswServer.use(
+      http.get(`${backendUrl}${path}`, () => HttpResponse.json(mockReport))
+    )
 
   describe('When user is unauthenticated', () => {
     test('Should return unauthorised status code', async () => {
@@ -60,34 +68,76 @@ describe('#reportDetailController', () => {
       vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
     })
 
-    test('Should return OK', async () => {
-      mswServer.use(
-        http.get(`${backendUrl}${backendReportUrl}`, () =>
-          HttpResponse.json(mockReport)
-        )
-      )
+    test('Should read an accredited report from its natural-key route', async () => {
+      serveReportAt(url)
+
+      const { statusCode } = await server.inject({ method: 'GET', url, auth })
+
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('Should read a registered-only report from its natural-key route', async () => {
+      serveReportAt(registeredOnlyUrl)
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url,
-        auth: { strategy: 'session', credentials: mockUserSession }
+        url: registeredOnlyUrl,
+        auth
       })
 
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('Should render summary of which report is being viewed as heading', async () => {
+    test('Should send an accredited report reached under the registration to the accreditation', async () => {
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `${registration}/reports/2026/monthly/1/submissions/1`,
+        auth
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe(url)
+    })
+
+    test('Should send a registered-only report reached under the accreditation to the registration', async () => {
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `${registration}/accreditations/2026/reports/quarterly/1/submissions/1`,
+        auth
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe(registeredOnlyUrl)
+    })
+
+    test('Should send an old id URL to the natural-key URL', async () => {
       mswServer.use(
-        http.get(`${backendUrl}${backendReportUrl}`, () =>
-          HttpResponse.json(mockReport)
+        http.get(
+          `${backendUrl}/v1/organisations/${organisationId}/overview`,
+          () =>
+            HttpResponse.json({
+              id: organisationId,
+              organisationNumber,
+              companyName: 'ACME ltd',
+              registrations: [{ id: registrationId, registrationNumber }]
+            })
         )
       )
 
-      const { result } = await server.inject({
+      const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url,
-        auth: { strategy: 'session', credentials: mockUserSession }
+        url: `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1`,
+        auth
       })
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe(registeredOnlyUrl)
+    })
+
+    test('Should render summary of which report is being viewed as heading', async () => {
+      serveReportAt(url)
+
+      const { result } = await server.inject({ method: 'GET', url, auth })
 
       const $ = cheerio.load(result)
       expect($('h1').text().trim()).toEqual(
@@ -96,17 +146,9 @@ describe('#reportDetailController', () => {
     })
 
     test('Should render breadcrumbs for Organisations, Organisation overview and Registration overview', async () => {
-      mswServer.use(
-        http.get(`${backendUrl}${backendReportUrl}`, () =>
-          HttpResponse.json(mockReport)
-        )
-      )
+      serveReportAt(url)
 
-      const { result } = await server.inject({
-        method: 'GET',
-        url,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
+      const { result } = await server.inject({ method: 'GET', url, auth })
 
       const $ = cheerio.load(result)
       const breadcrumbLinks = $('.govuk-breadcrumbs__link')
@@ -115,26 +157,18 @@ describe('#reportDetailController', () => {
       expect($(breadcrumbLinks[0]).attr('href')).toEqual('/organisations')
       expect($(breadcrumbLinks[1]).text()).toEqual('Organisation overview')
       expect($(breadcrumbLinks[1]).attr('href')).toEqual(
-        `/organisations/${organisationId}/overview`
+        `/organisations/${organisationNumber}/overview`
       )
       expect($(breadcrumbLinks[2]).text()).toEqual('Registration overview')
       expect($(breadcrumbLinks[2]).attr('href')).toEqual(
-        `/organisations/${organisationId}/registrations/${registrationId}/overview`
+        `${registration}/overview`
       )
     })
 
     test('Should render the report JSON in a code block', async () => {
-      mswServer.use(
-        http.get(`${backendUrl}${backendReportUrl}`, () =>
-          HttpResponse.json(mockReport)
-        )
-      )
+      serveReportAt(url)
 
-      const { result } = await server.inject({
-        method: 'GET',
-        url,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
+      const { result } = await server.inject({ method: 'GET', url, auth })
 
       const $ = cheerio.load(result)
       const code = $('[data-testid="report-json"]')
@@ -142,18 +176,29 @@ describe('#reportDetailController', () => {
       expect(JSON.parse(code.text())).toEqual(mockReport)
     })
 
+    test('Should ask for the report with all of its detail', async () => {
+      /** @type {URL | undefined} */
+      let requested
+      mswServer.use(
+        http.get(`${backendUrl}${url}`, ({ request }) => {
+          requested = new URL(request.url)
+          return HttpResponse.json(mockReport)
+        })
+      )
+
+      await server.inject({ method: 'GET', url, auth })
+
+      expect(requested?.searchParams.get('expand')).toBe('detail')
+    })
+
     test('Should show 500 error page when backend returns a non-OK response', async () => {
       mswServer.use(
-        http.get(`${backendUrl}${backendReportUrl}`, () => {
+        http.get(`${backendUrl}${url}`, () => {
           throw HttpResponse.text('', { status: 500 })
         })
       )
 
-      const { result } = await server.inject({
-        method: 'GET',
-        url,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
+      const { result } = await server.inject({ method: 'GET', url, auth })
 
       expect(result).toEqual(
         expect.stringContaining('Sorry, there is a problem with the service')

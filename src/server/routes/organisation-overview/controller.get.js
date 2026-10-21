@@ -2,7 +2,7 @@ import { fetchOrganisationOverview } from '#server/common/helpers/fetch-organisa
 
 export const organisationOverviewGETController = {
   async handler(request, h) {
-    const id = request.params.id
+    const id = request.params.organisationId
 
     const data = await fetchOrganisationOverview(request, id)
 

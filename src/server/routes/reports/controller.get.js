@@ -1,5 +1,6 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
-import { periodSubmissionPath } from '#server/common/helpers/backend-paths.js'
+import { periodSubmissionDetailPath } from '#server/common/helpers/backend-paths.js'
+import { registrationBreadcrumbs } from '#server/common/helpers/page-urls.js'
 
 /**
  * @import { PeriodSubmissionRequest } from '#server/common/hapi-types.js'
@@ -8,18 +9,11 @@ import { periodSubmissionPath } from '#server/common/helpers/backend-paths.js'
 export const reportDetailGETController = {
   /** @param {PeriodSubmissionRequest} request */
   async handler(request, h) {
-    const {
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber
-    } = request.params
+    const { year, cadence, period, submissionNumber } = request.params
 
     const data = await fetchJsonFromBackend(
       request,
-      periodSubmissionPath(request.params),
+      periodSubmissionDetailPath(request.params),
       {}
     )
 
@@ -27,17 +21,7 @@ export const reportDetailGETController = {
     const heading = `Report – ${year} ${cadence} period ${period} submission ${submissionNumber}`
 
     return h.view('routes/reports/index', {
-      breadcrumbs: [
-        { text: 'Organisations', href: '/organisations' },
-        {
-          text: 'Organisation overview',
-          href: `/organisations/${organisationId}/overview`
-        },
-        {
-          text: 'Registration overview',
-          href: `/organisations/${organisationId}/registrations/${registrationId}/overview`
-        }
-      ],
+      breadcrumbs: registrationBreadcrumbs(request.params),
       pageTitle,
       heading,
       reportJson: JSON.stringify(data, null, 2)
