@@ -6,8 +6,10 @@ import {
 import { toReportingPeriods } from '#server/common/helpers/reporting-periods.js'
 import { reportsCalendarPathByIds } from '#server/common/helpers/backend-paths.js'
 import {
+  overseasSitesUrl,
   reportSubmissionUrl,
-  reportUnsubmitUrl
+  reportUnsubmitUrl,
+  wasteBalanceEventsUrl
 } from '#server/common/helpers/page-urls.js'
 import {
   periodStatus,
@@ -16,9 +18,11 @@ import {
 import { SCOPES } from '#server/common/helpers/auth/scopes.js'
 import { accreditationStatusActions } from '#server/routes/accreditation-status-transition/transitions.js'
 import { registrationStatusActions } from '#server/routes/registration-status-transition/transitions.js'
+import { toNaturalKeys } from '#server/common/helpers/natural-keys/swap-keys.js'
 
 /**
  * @import { PeriodStatus } from '#server/common/constants/report-status.js'
+ * @import { OrganisationOverview } from '#server/common/helpers/fetch-organisation-overview.js'
  */
 
 const GREEN_TAG = 'govuk-tag--green'
@@ -131,15 +135,34 @@ const fetchWasteBalance = async (request, organisationId, accreditationId) => {
 /**
  * The links and status actions the page derives from the registration. The
  * accreditation-scoped ones are null when there is no accreditation, and
- * overseas sites additionally only apply to exporters.
+ * overseas sites additionally only apply to exporters. A link to a record that
+ * has no number yet, as it is not approved, is null too: the template shows it
+ * as not applicable.
+ * @param {OrganisationOverview} overview
  * @param {string} organisationId
  * @param {string} registrationId
  * @param {Record<string, any>} registration
  */
-const toRegistrationLinks = (organisationId, registrationId, registration) => {
+const toRegistrationLinks = (
+  overview,
+  organisationId,
+  registrationId,
+  registration
+) => {
   const registrationUrl = `/organisations/${organisationId}/registrations/${registrationId}`
   const accreditationUrl = registration.accreditation
     ? `${registrationUrl}/accreditations/${registration.accreditation.id}`
+    : null
+  const registrationKeys = toNaturalKeys(overview, {
+    organisationId,
+    registrationId
+  })
+  const approvedAccreditation = registration.accreditation
+    ? toNaturalKeys(overview, {
+        organisationId,
+        registrationId,
+        accreditationId: registration.accreditation.id
+      })
     : null
 
   return {
@@ -156,16 +179,15 @@ const toRegistrationLinks = (organisationId, registrationId, registration) => {
       registration.status,
       registrationUrl
     ),
-    wasteBalanceEventsUrl: accreditationUrl
-      ? `${accreditationUrl}/waste-balance-events`
-      : null,
+    isExporter: registration.processingType === EXPORTER_PROCESSING_TYPE,
+    wasteBalanceEventsUrl:
+      approvedAccreditation && wasteBalanceEventsUrl(approvedAccreditation),
     overseasSitesUrl:
-      accreditationUrl &&
-      registration.processingType === EXPORTER_PROCESSING_TYPE
-        ? `${accreditationUrl}/overseas-sites`
-        : null,
-    wasteRecordsDownloadUrl: `${registrationUrl}/waste-records/download`,
-    prnActivityDownloadUrl: accreditationUrl
+      approvedAccreditation && overseasSitesUrl(approvedAccreditation),
+    wasteRecordsDownloadUrl: registrationKeys
+      ? `${registrationUrl}/waste-records/download`
+      : null,
+    prnActivityDownloadUrl: approvedAccreditation
       ? `${accreditationUrl}/prn-activity/download`
       : null
   }
@@ -227,7 +249,12 @@ export const registrationOverviewGETController = {
       organisationId,
       registrationId,
       registration,
-      ...toRegistrationLinks(organisationId, registrationId, registration),
+      ...toRegistrationLinks(
+        overview,
+        organisationId,
+        registrationId,
+        registration
+      ),
       reportRows: toReportingPeriods(
         calendar.reportingPeriods,
         calendar.cadence

@@ -1,3 +1,4 @@
+import { accreditationParams } from '#server/common/helpers/natural-keys/accreditation-params.js'
 import { accreditationOverseasSitesGETController } from './controller.get.js'
 
 export const accreditationOverseasSites = {
@@ -7,10 +8,11 @@ export const accreditationOverseasSites = {
       server.route([
         {
           method: 'GET',
-          path: '/organisations/{organisationId}/registrations/{registrationId}/accreditations/{accreditationId}/overseas-sites',
+          path: '/organisations/{organisationNumber}/registrations/{registrationNumber}/accreditations/{year}/overseas-sites',
           ...accreditationOverseasSitesGETController,
           options: {
-            app: { pageTitle: 'Overseas sites' }
+            app: { pageTitle: 'Overseas sites' },
+            validate: { params: accreditationParams }
           }
         }
       ])

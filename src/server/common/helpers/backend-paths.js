@@ -21,10 +21,23 @@
  */
 
 /**
+ * Numbers have no guaranteed format, so each is encoded as one path segment.
+ * @param {Pick<PeriodSubmissionParams, 'organisationNumber'>} params
+ */
+export const organisationPath = ({ organisationNumber }) =>
+  `/organisations/${encodeURIComponent(organisationNumber)}`
+
+/**
  * @param {Pick<PeriodSubmissionParams, 'organisationNumber' | 'registrationNumber'>} params
  */
-export const registrationPath = ({ organisationNumber, registrationNumber }) =>
-  `/organisations/${organisationNumber}/registrations/${registrationNumber}`
+export const registrationPath = (params) =>
+  `${organisationPath(params)}/registrations/${encodeURIComponent(params.registrationNumber)}`
+
+/**
+ * @param {Pick<PeriodSubmissionParams, 'organisationNumber' | 'registrationNumber' | 'year'>} params
+ */
+export const accreditationPath = (params) =>
+  `${registrationPath(params)}/accreditations/${encodeURIComponent(params.year)}`
 
 /**
  * A single submission's report, addressed as the backend addresses it: an
@@ -34,10 +47,15 @@ export const registrationPath = ({ organisationNumber, registrationNumber }) =>
  * @param {PeriodSubmissionParams} params
  */
 export const periodSubmissionPath = (params) => {
-  const { year, cadence, period, submissionNumber } = params
+  const [year, cadence, period, submissionNumber] = [
+    params.year,
+    params.cadence,
+    params.period,
+    params.submissionNumber
+  ].map(encodeURIComponent)
   const reports =
-    cadence === 'monthly'
-      ? `${registrationPath(params)}/accreditations/${year}/reports/${cadence}`
+    params.cadence === 'monthly'
+      ? `${accreditationPath(params)}/reports/${cadence}`
       : `${registrationPath(params)}/reports/${year}/${cadence}`
   return `${reports}/${period}/submissions/${submissionNumber}`
 }

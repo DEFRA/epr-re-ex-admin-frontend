@@ -54,7 +54,7 @@ describe('#registrationOverviewController', () => {
    *   processingType: string,
    *   material: string,
    *   site: string,
-   *   accreditation: { id: string, accreditationNumber: string, status: string } | null
+   *   accreditation: { id: string, accreditationNumber: string | null, status: string, year?: number | null } | null
    * }}
    */
   const mockRegistration = {
@@ -67,7 +67,8 @@ describe('#registrationOverviewController', () => {
     accreditation: {
       id: accreditationId,
       accreditationNumber: 'ACC-50030-001',
-      status: 'approved'
+      status: 'approved',
+      year: 2026
     }
   }
 
@@ -470,7 +471,7 @@ describe('#registrationOverviewController', () => {
 
       expect(link).toHaveAttribute(
         'href',
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/waste-balance-events`
+        `/organisations/500123/registrations/REG-50030-001/accreditations/2026/waste-balance-events`
       )
     })
 
@@ -494,7 +495,7 @@ describe('#registrationOverviewController', () => {
 
       expect(link).toHaveAttribute(
         'href',
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/overseas-sites`
+        `/organisations/500123/registrations/REG-50030-001/accreditations/2026/overseas-sites`
       )
     })
 
@@ -596,6 +597,132 @@ describe('#registrationOverviewController', () => {
         })
       ).toBeInTheDocument()
       expect(queryByText(body, 'PRN activity', { selector: 'dt' })).toBeNull()
+    })
+
+    test('Should keep a registration number holding slashes as one segment of its links', async () => {
+      useMockBackend({
+        ...mockOverview,
+        registrations: [
+          { ...mockRegistration, registrationNumber: 'FAKE/REG500123/ALPHA' }
+        ]
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const link = within(
+        getSummaryRowValue(renderPage(result), 'Waste balance events')
+      ).getByRole('link', { name: 'View' })
+
+      expect(link).toHaveAttribute(
+        'href',
+        '/organisations/500123/registrations/FAKE%2FREG500123%2FALPHA/accreditations/2026/waste-balance-events'
+      )
+    })
+
+    test('Should show the accreditation links as not applicable when the accreditation is not approved', async () => {
+      useMockBackend({
+        ...mockOverview,
+        registrations: [
+          {
+            ...mockRegistration,
+            processingType: 'exporter',
+            accreditation: {
+              id: accreditationId,
+              accreditationNumber: null,
+              status: 'created'
+            }
+          }
+        ]
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+
+      for (const row of [
+        'Waste balance events',
+        'Overseas sites',
+        'PRN activity'
+      ]) {
+        expect(getSummaryRowValue(body, row)).toHaveTextContent(
+          'N/A as not approved'
+        )
+      }
+      expect(
+        within(getSummaryRowValue(body, 'Waste records')).getByRole('link', {
+          name: 'Download'
+        })
+      ).toBeInTheDocument()
+    })
+
+    test('Should show the accreditation links as not applicable when the accreditation has no year', async () => {
+      useMockBackend({
+        ...mockOverview,
+        registrations: [
+          {
+            ...mockRegistration,
+            accreditation: {
+              id: accreditationId,
+              accreditationNumber: 'ACC-50030-001',
+              status: 'approved',
+              year: null
+            }
+          }
+        ]
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+
+      for (const row of ['Waste balance events', 'PRN activity']) {
+        expect(getSummaryRowValue(body, row)).toHaveTextContent(
+          'N/A as not approved'
+        )
+      }
+    })
+
+    test('Should show every record link as not applicable when the registration is not approved', async () => {
+      useMockBackend({
+        ...mockOverview,
+        registrations: [
+          {
+            ...mockRegistration,
+            registrationNumber: undefined,
+            status: 'created'
+          }
+        ]
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+
+      for (const row of [
+        'Waste balance events',
+        'Waste records',
+        'PRN activity'
+      ]) {
+        expect(getSummaryRowValue(body, row)).toHaveTextContent(
+          'N/A as not approved'
+        )
+      }
     })
 
     test('Should render the reporting periods table', async () => {

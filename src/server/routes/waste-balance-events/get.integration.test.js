@@ -21,10 +21,11 @@ vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
 describe('#wasteBalanceEventsController', () => {
   const originalBackendUrl = config.get('eprBackendUrl')
   const backendUrl = 'http://mock-backend'
-  const organisationId = '69c3b4f0abda9efa68dd6697'
-  const registrationId = 'reg-001'
-  const accreditationId = '69c3b4f0abda9efa68dd6698'
-  const url = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/waste-balance-events`
+  const organisationNumber = '500123'
+  const registrationNumber = 'R26ER5001180041PL'
+  const registration = `/organisations/${organisationNumber}/registrations/${registrationNumber}`
+  const accreditation = `${registration}/accreditations/2026`
+  const url = `${accreditation}/waste-balance-events`
   let server
 
   beforeAll(async () => {
@@ -43,31 +44,13 @@ describe('#wasteBalanceEventsController', () => {
     vi.clearAllMocks()
   })
 
-  /** @type {{ id: string, companyName: string, registrations: Array<{ id: string, registrationNumber: string, status: string, processingType: string, material: string, site: string, accreditation: { id: string, accreditationNumber: string, status: string } | null }> }} */
-  const mockOverview = {
-    id: organisationId,
-    companyName: 'ACME ltd',
-    registrations: [
-      {
-        id: 'reg-001',
-        registrationNumber: 'REG-50030-001',
-        status: 'approved',
-        processingType: 'reprocessing',
-        material: 'glass',
-        site: 'Site A',
-        accreditation: {
-          id: accreditationId,
-          accreditationNumber: 'ACC-50030-001',
-          status: 'approved'
-        }
+  const mockOrganisation = {
+    name: 'ACME ltd',
+    registrations: {
+      [registrationNumber]: {
+        accreditations: { 2026: { accreditationNumber: 'ACC-50030-001' } }
       }
-    ]
-  }
-
-  const mockOverviewNoMatchingRegistration = {
-    id: organisationId,
-    companyName: 'ACME ltd',
-    registrations: []
+    }
   }
 
   const mockEvents = [
@@ -132,22 +115,13 @@ describe('#wasteBalanceEventsController', () => {
 
   const getDataRows = (table) => getAllByRole(table, 'row').slice(1)
 
-  const useMockBackend = (
-    overviewResponse = mockOverview,
-    eventsResponse = mockEvents
-  ) => {
+  const useMockBackend = (eventsResponse = mockEvents) => {
     mswServer.use(
-      http.get(
-        `${backendUrl}/v1/organisations/${organisationId}/overview`,
-        () => HttpResponse.json(overviewResponse)
+      http.get(`${backendUrl}/organisations/${organisationNumber}`, () =>
+        HttpResponse.json(mockOrganisation)
       ),
-      http.get(
-        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/waste-balance-ledger`,
-        () =>
-          HttpResponse.json({
-            ledger: { organisationId, registrationId, accreditationId },
-            events: eventsResponse
-          })
+      http.get(`${backendUrl}${accreditation}/ledger`, () =>
+        HttpResponse.json({ events: eventsResponse })
       )
     )
   }
@@ -193,8 +167,23 @@ describe('#wasteBalanceEventsController', () => {
       )
     })
 
-    test('Should return 404 when registration is not found', async () => {
-      useMockBackend(mockOverviewNoMatchingRegistration)
+    test('Should refuse a year that is not four digits', async () => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: `${registration}/accreditations/..%2F..%2Fadmin/waste-balance-events`,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+    })
+
+    test('Should return 404 when the backend finds no such accreditation', async () => {
+      useMockBackend()
+      mswServer.use(
+        http.get(`${backendUrl}${accreditation}/ledger`, () =>
+          HttpResponse.json({}, { status: 404 })
+        )
+      )
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -228,11 +217,11 @@ describe('#wasteBalanceEventsController', () => {
         { text: 'Organisations', href: '/organisations' },
         {
           text: 'Organisation overview',
-          href: `/organisations/${organisationId}/overview`
+          href: `/organisations/${organisationNumber}/overview`
         },
         {
           text: 'Registration overview',
-          href: `/organisations/${organisationId}/registrations/reg-001/overview`
+          href: `${registration}/overview`
         }
       ])
     })
@@ -301,7 +290,7 @@ describe('#wasteBalanceEventsController', () => {
     })
 
     test("Should render '-' for December amounts when the backend omits them", async () => {
-      useMockBackend(mockOverview, [
+      useMockBackend([
         /** @type {any} */ ({
           number: 6,
           kind: 'summary-log-submitted',
@@ -351,7 +340,7 @@ describe('#wasteBalanceEventsController', () => {
         id: '</code><img src="x" onerror="alert(1)">',
         creditTotal: 100
       }
-      useMockBackend(mockOverview, [
+      useMockBackend([
         {
           number: 5,
           kind: 'summary-log-submitted',
@@ -394,7 +383,7 @@ describe('#wasteBalanceEventsController', () => {
     })
 
     test('Should render empty Created by when actor has only id', async () => {
-      useMockBackend(mockOverview, [
+      useMockBackend([
         {
           number: 3,
           kind: 'prn-created',
@@ -432,7 +421,7 @@ describe('#wasteBalanceEventsController', () => {
     })
 
     test('Should render email as Created by when actor has no name', async () => {
-      useMockBackend(mockOverview, [
+      useMockBackend([
         {
           number: 4,
           kind: 'prn-issued',
@@ -473,7 +462,7 @@ describe('#wasteBalanceEventsController', () => {
     })
 
     test('Should render "No waste balance events" when events list is empty', async () => {
-      useMockBackend(mockOverview, [])
+      useMockBackend([])
 
       const { result } = await server.inject({
         method: 'GET',
@@ -490,13 +479,11 @@ describe('#wasteBalanceEventsController', () => {
     })
 
     test('Should show 500 error page when backend returns a non-OK response', async () => {
+      useMockBackend()
       mswServer.use(
-        http.get(
-          `${backendUrl}/v1/organisations/${organisationId}/overview`,
-          () => {
-            throw HttpResponse.text('', { status: 500 })
-          }
-        )
+        http.get(`${backendUrl}/organisations/${organisationNumber}`, () => {
+          throw HttpResponse.text('', { status: 500 })
+        })
       )
 
       const { result } = await server.inject({

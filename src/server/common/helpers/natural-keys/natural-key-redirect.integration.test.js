@@ -88,9 +88,9 @@ describe('natural-key redirect to pages still served by id', () => {
         `/organisations/${organisationId}/registrations/${registrationId}/overview`
       ],
       [
-        'accreditation waste balance events',
-        `${registration}/accreditations/2026/waste-balance-events`,
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/waste-balance-events`
+        'accreditation PRN activity download',
+        `${registration}/accreditations/2026/prn-activity/download`,
+        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/prn-activity/download`
       ]
     ])('sends the %s to its id address', async (_, url, location) => {
       const { statusCode, headers } = await get(url)
@@ -114,6 +114,19 @@ describe('natural-key redirect to pages still served by id', () => {
 
       const { statusCode, headers } = await get(
         `/organisations/${organisationNumber}/registrations/REG-50030-001/overview`
+      )
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe(
+        `/organisations/${organisationId}/registrations/${registrationId}/overview`
+      )
+    })
+
+    it('sends a registration numbered with slashes to its id address', async () => {
+      stubOverview('FAKE/REG500123/ALPHA')
+
+      const { statusCode, headers } = await get(
+        `/organisations/${organisationNumber}/registrations/FAKE%2FREG500123%2FALPHA/overview`
       )
 
       expect(statusCode).toBe(statusCodes.found)
@@ -159,6 +172,19 @@ describe('natural-key redirect to pages still served by id', () => {
     )
 
     expect(statusCode).toBe(statusCodes.notFound)
+  })
+
+  it('sends an old id URL to a natural-key URL that keeps a slashed number as one segment', async () => {
+    stubOverview('FAKE/REG500123/ALPHA')
+
+    const { statusCode, headers } = await get(
+      `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/waste-balance-events`
+    )
+
+    expect(statusCode).toBe(statusCodes.found)
+    expect(headers.location).toBe(
+      `/organisations/${organisationNumber}/registrations/FAKE%2FREG500123%2FALPHA/accreditations/2026/waste-balance-events`
+    )
   })
 
   it('is not found for an old id URL whose organisation the backend does not find', async () => {

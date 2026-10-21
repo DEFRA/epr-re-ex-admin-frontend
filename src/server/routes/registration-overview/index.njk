@@ -4,6 +4,14 @@
 {% from "govuk/components/tag/macro.njk" import govukTag %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 
+{% macro linkOrNotApproved(url, text) -%}
+  {%- if url -%}
+    <a class="govuk-link govuk-link--no-visited-state" href="{{ url }}">{{ text }}</a>
+  {%- else -%}
+    N/A as not approved
+  {%- endif -%}
+{%- endmacro %}
+
 {% block content %}
   <div class="govuk-width-container">
     {% if error %}
@@ -46,23 +54,21 @@
         ]) %}
       {% endif %}
       {% set summaryRows = summaryRows.concat([
-        { key: { text: "Waste balance events" }, value: { html: '<a class="govuk-link govuk-link--no-visited-state" href="' ~ wasteBalanceEventsUrl ~ '">View</a>' } }
+        { key: { text: "Waste balance events" }, value: { html: linkOrNotApproved(wasteBalanceEventsUrl, "View") } }
       ]) %}
-      {% if overseasSitesUrl %}
+      {% if isExporter %}
         {% set summaryRows = summaryRows.concat([
-          { key: { text: "Overseas sites" }, value: { html: '<a class="govuk-link govuk-link--no-visited-state" href="' ~ overseasSitesUrl ~ '">View</a>' } }
+          { key: { text: "Overseas sites" }, value: { html: linkOrNotApproved(overseasSitesUrl, "View") } }
         ]) %}
       {% endif %}
     {% endif %}
 
-    {% if wasteRecordsDownloadUrl %}
+    {% set summaryRows = summaryRows.concat([
+      { key: { text: "Waste records" }, value: { html: linkOrNotApproved(wasteRecordsDownloadUrl, "Download") } }
+    ]) %}
+    {% if registration.accreditation %}
       {% set summaryRows = summaryRows.concat([
-        { key: { text: "Waste records" }, value: { html: '<a class="govuk-link govuk-link--no-visited-state" href="' ~ wasteRecordsDownloadUrl ~ '">Download</a>' } }
-      ]) %}
-    {% endif %}
-    {% if prnActivityDownloadUrl %}
-      {% set summaryRows = summaryRows.concat([
-        { key: { text: "PRN activity" }, value: { html: '<a class="govuk-link govuk-link--no-visited-state" href="' ~ prnActivityDownloadUrl ~ '">Download</a>' } }
+        { key: { text: "PRN activity" }, value: { html: linkOrNotApproved(prnActivityDownloadUrl, "Download") } }
       ]) %}
     {% endif %}
 
