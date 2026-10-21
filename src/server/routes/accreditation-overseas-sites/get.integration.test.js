@@ -14,7 +14,7 @@ import {
 import { Window } from 'happy-dom'
 import { vi } from 'vitest'
 
-/** @import { OverseasSites } from './controller.get.js' */
+/** @import { OverseasSites, SiteApprovals } from './controller.get.js' */
 
 vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
   getUserSession: vi.fn().mockReturnValue(null)
@@ -24,9 +24,13 @@ describe('#accreditationOverseasSitesController', () => {
   const originalBackendUrl = config.get('eprBackendUrl')
   const backendUrl = 'http://mock-backend'
   const organisationId = '69c3b4f0abda9efa68dd6697'
-  const registrationId = 'reg-001'
+  const registrationId = '69c3b4f0abda9efa68dd669b'
   const accreditationId = '69c3b4f0abda9efa68dd6698'
-  const url = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/overseas-sites`
+  const organisationNumber = '500123'
+  const registrationNumber = 'E26ER5001180041GL'
+  const registration = `/organisations/${organisationNumber}/registrations/${registrationNumber}`
+  const url = `${registration}/accreditations/2026/overseas-sites`
+  const auth = { strategy: 'session', credentials: mockUserSession }
   let server
 
   beforeAll(async () => {
@@ -45,57 +49,65 @@ describe('#accreditationOverseasSitesController', () => {
     vi.clearAllMocks()
   })
 
-  const mockOverview = {
-    id: organisationId,
-    companyName: 'ACME ltd',
-    registrations: [
-      {
-        id: 'reg-001',
-        registrationNumber: 'REG-50030-001',
-        status: 'approved',
-        processingType: 'reprocessing',
-        material: 'glass',
-        site: 'Site A',
-        accreditation: {
-          id: accreditationId,
-          accreditationNumber: 'ACC-50030-001',
-          status: 'approved'
-        }
-      }
-    ]
-  }
-
-  const mockOverviewNoMatchingRegistration = {
-    id: organisationId,
-    companyName: 'ACME ltd',
-    registrations: []
-  }
-
   /** @type {OverseasSites} */
   const mockSites = {
     '001': {
       name: 'Beta Reprocessor',
-      country: 'Germany',
       address: {
+        country: 'Germany',
         line1: '2 Teststrasse',
         line2: 'Zone 2',
         townOrCity: 'Berlin',
         stateOrRegion: 'Berlin-Mitte',
         postcode: '10115'
       },
-      coordinates: '52.5200,13.4050',
-      validFrom: '2024-01-01T00:00:00.000Z'
+      coordinates: '52.5200,13.4050'
     },
     '002': {
       name: 'Gamma Recycling',
-      country: 'France',
       address: {
+        country: 'France',
         line1: '5 Rue de Test',
         townOrCity: 'Lyon'
-      },
-      coordinates: null,
-      validFrom: '2024-06-15T00:00:00.000Z'
+      }
     }
+  }
+
+  /** @type {SiteApprovals} */
+  const mockApprovals = {
+    '001': { status: 'approved', approvedOn: '2024-01-01' },
+    '002': { status: 'approved', approvedOn: '2024-06-15' }
+  }
+
+  /**
+   * @param {OverseasSites} sites
+   * @param {SiteApprovals} approvals
+   */
+  const exporterOrganisation = (sites, approvals) => ({
+    name: 'ACME ltd',
+    registrations: {
+      [registrationNumber]: {
+        material: 'glass',
+        overseasSites: sites,
+        accreditations: {
+          2026: {
+            accreditationNumber: 'ACC-50030-001',
+            overseasSites: approvals
+          }
+        }
+      }
+    }
+  })
+
+  /** @param {object} organisation */
+  const useMockBackend = (
+    organisation = exporterOrganisation(mockSites, mockApprovals)
+  ) => {
+    mswServer.use(
+      http.get(`${backendUrl}/organisations/${organisationNumber}`, () =>
+        HttpResponse.json(organisation)
+      )
+    )
   }
 
   const renderPage = (html) => {
@@ -110,26 +122,6 @@ describe('#accreditationOverseasSitesController', () => {
     getByRole(container, 'table', { name: 'Overseas sites' })
 
   const getDataRows = (table) => getAllByRole(table, 'row').slice(1)
-
-  /**
-   * @param {typeof mockOverview} [overviewResponse]
-   * @param {OverseasSites} [sitesResponse]
-   */
-  const useMockBackend = (
-    overviewResponse = mockOverview,
-    sitesResponse = mockSites
-  ) => {
-    mswServer.use(
-      http.get(
-        `${backendUrl}/v1/organisations/${organisationId}/overview`,
-        () => HttpResponse.json(overviewResponse)
-      ),
-      http.get(
-        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/overseas-sites`,
-        () => HttpResponse.json(sitesResponse)
-      )
-    )
-  }
 
   describe('When user is unauthenticated', () => {
     test('Should return unauthorised status code', async () => {
@@ -147,11 +139,7 @@ describe('#accreditationOverseasSitesController', () => {
     test('Should return OK', async () => {
       useMockBackend()
 
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
+      const { statusCode } = await server.inject({ method: 'GET', url, auth })
 
       expect(statusCode).toBe(statusCodes.ok)
     })
@@ -159,27 +147,40 @@ describe('#accreditationOverseasSitesController', () => {
     test('Should render the heading with company name and accreditation number', async () => {
       useMockBackend()
 
-      const { result } = await server.inject({
-        method: 'GET',
-        url,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
+      const { result } = await server.inject({ method: 'GET', url, auth })
 
-      const body = renderPage(result)
-
-      expect(getByRole(body, 'heading', { level: 1 })).toHaveTextContent(
-        'ACME ltd - ACC-50030-001'
-      )
+      expect(
+        getByRole(renderPage(result), 'heading', { level: 1 })
+      ).toHaveTextContent('ACME ltd - ACC-50030-001')
     })
 
-    test('Should return 404 when registration is not found', async () => {
-      useMockBackend(mockOverviewNoMatchingRegistration)
+    test.each([
+      [
+        'the registration is not found',
+        { name: 'ACME ltd', registrations: {} }
+      ],
+      [
+        'the registration has no accreditation for the year',
+        {
+          name: 'ACME ltd',
+          registrations: { [registrationNumber]: { accreditations: {} } }
+        }
+      ],
+      [
+        'the accreditation is a reprocessor’s',
+        {
+          name: 'ACME ltd',
+          registrations: {
+            [registrationNumber]: {
+              accreditations: { 2026: { accreditationNumber: 'ACC-1' } }
+            }
+          }
+        }
+      ]
+    ])('Should return 404 when %s', async (_, organisation) => {
+      useMockBackend(organisation)
 
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
+      const { statusCode } = await server.inject({ method: 'GET', url, auth })
 
       expect(statusCode).toBe(statusCodes.notFound)
     })
@@ -187,14 +188,9 @@ describe('#accreditationOverseasSitesController', () => {
     test('Should render breadcrumbs back to registration overview', async () => {
       useMockBackend()
 
-      const { result } = await server.inject({
-        method: 'GET',
-        url,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
+      const { result } = await server.inject({ method: 'GET', url, auth })
 
-      const body = renderPage(result)
-      const breadcrumbs = getByRole(body, 'navigation', {
+      const breadcrumbs = getByRole(renderPage(result), 'navigation', {
         name: 'Breadcrumb'
       })
 
@@ -207,29 +203,54 @@ describe('#accreditationOverseasSitesController', () => {
         { text: 'Organisations', href: '/organisations' },
         {
           text: 'Organisation overview',
-          href: `/organisations/${organisationId}/overview`
+          href: `/organisations/${organisationNumber}/overview`
         },
-        {
-          text: 'Registration overview',
-          href: `/organisations/${organisationId}/registrations/reg-001/overview`
-        }
+        { text: 'Registration overview', href: `${registration}/overview` }
       ])
+    })
+
+    test('Should send an old id URL to the natural-key URL', async () => {
+      mswServer.use(
+        http.get(
+          `${backendUrl}/v1/organisations/${organisationId}/overview`,
+          () =>
+            HttpResponse.json({
+              id: organisationId,
+              organisationNumber,
+              companyName: 'ACME ltd',
+              registrations: [
+                {
+                  id: registrationId,
+                  registrationNumber,
+                  accreditation: {
+                    id: accreditationId,
+                    accreditationNumber: 'ACC-50030-001',
+                    year: 2026
+                  }
+                }
+              ]
+            })
+        )
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/overseas-sites`,
+        auth
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe(url)
     })
 
     test('Should render the site columns without the constant identifier columns', async () => {
       useMockBackend()
 
-      const { result } = await server.inject({
-        method: 'GET',
-        url,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
-
-      const body = renderPage(result)
+      const { result } = await server.inject({ method: 'GET', url, auth })
 
       expect(
-        getAllByRole(getSitesTable(body), 'columnheader').map((h) =>
-          h.textContent?.trim()
+        getAllByRole(getSitesTable(renderPage(result)), 'columnheader').map(
+          (h) => h.textContent?.trim()
         )
       ).toEqual([
         'ORS ID',
@@ -249,21 +270,14 @@ describe('#accreditationOverseasSitesController', () => {
     test('Should render a site row keyed by its ORS id with site detail', async () => {
       useMockBackend()
 
-      const { result } = await server.inject({
-        method: 'GET',
-        url,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
+      const { result } = await server.inject({ method: 'GET', url, auth })
 
-      const body = renderPage(result)
-      const rows = getDataRows(getSitesTable(body))
+      const rows = getDataRows(getSitesTable(renderPage(result)))
 
       expect(rows).toHaveLength(2)
-
-      const cells = getAllByRole(rows[0], 'cell').map((cell) =>
-        cell.textContent?.trim()
-      )
-      expect(cells).toEqual([
+      expect(
+        getAllByRole(rows[0], 'cell').map((cell) => cell.textContent?.trim())
+      ).toEqual([
         '001',
         'glass',
         'Germany',
@@ -278,71 +292,17 @@ describe('#accreditationOverseasSitesController', () => {
       ])
     })
 
-    test('Should show the valid-from date for an approved site', async () => {
-      useMockBackend()
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
-
-      const body = renderPage(result)
-      const cells = getAllByRole(getDataRows(getSitesTable(body))[0], 'cell')
-
-      expect(cells[10]).toHaveTextContent('1 January 2024')
-    })
-
-    test('Should show a dash valid-from for an unapproved site', async () => {
-      useMockBackend(mockOverview, {
-        '004': {
-          name: 'Delta Processing',
-          country: 'Spain',
-          address: { line1: '9 Calle Test', townOrCity: 'Madrid' },
-          coordinates: null,
-          validFrom: null
-        }
-      })
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
-
-      const body = renderPage(result)
-      const cells = getAllByRole(getDataRows(getSitesTable(body))[0], 'cell')
-
-      expect(cells[3]).toHaveTextContent('Delta Processing')
-      expect(cells[10]).toHaveTextContent('-')
-    })
-
     test('Should distinguish approved from unapproved sites by their valid-from date', async () => {
-      useMockBackend(mockOverview, {
-        '001': {
-          name: 'Beta Reprocessor',
-          country: 'Germany',
-          address: { line1: '2 Teststrasse', townOrCity: 'Berlin' },
-          coordinates: null,
-          validFrom: '2024-01-01T00:00:00.000Z'
-        },
-        '004': {
-          name: 'Delta Processing',
-          country: 'Spain',
-          address: { line1: '9 Calle Test', townOrCity: 'Madrid' },
-          coordinates: null,
-          validFrom: null
-        }
-      })
+      useMockBackend(
+        exporterOrganisation(mockSites, {
+          '001': { status: 'approved', approvedOn: '2024-01-01' },
+          '002': { status: 'pending' }
+        })
+      )
 
-      const { result } = await server.inject({
-        method: 'GET',
-        url,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
+      const { result } = await server.inject({ method: 'GET', url, auth })
 
-      const body = renderPage(result)
-      const rows = getDataRows(getSitesTable(body))
+      const rows = getDataRows(getSitesTable(renderPage(result)))
 
       expect(getAllByRole(rows[0], 'cell')[10]).toHaveTextContent(
         '1 January 2024'
@@ -353,14 +313,12 @@ describe('#accreditationOverseasSitesController', () => {
     test('Should render a dash for absent address lines', async () => {
       useMockBackend()
 
-      const { result } = await server.inject({
-        method: 'GET',
-        url,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
+      const { result } = await server.inject({ method: 'GET', url, auth })
 
-      const body = renderPage(result)
-      const cells = getAllByRole(getDataRows(getSitesTable(body))[1], 'cell')
+      const cells = getAllByRole(
+        getDataRows(getSitesTable(renderPage(result)))[1],
+        'cell'
+      )
 
       expect(cells[4]).toHaveTextContent('5 Rue de Test')
       expect(cells[5]).toHaveTextContent('-')
@@ -370,42 +328,10 @@ describe('#accreditationOverseasSitesController', () => {
       expect(cells[9]).toHaveTextContent('-')
     })
 
-    test('Should render an unresolved site with its id, dashes for unknown detail and dash valid-from', async () => {
-      useMockBackend(mockOverview, {
-        '003': {
-          name: null,
-          country: null,
-          address: null,
-          coordinates: null,
-          validFrom: null
-        }
-      })
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
-
-      const body = renderPage(result)
-      const cells = getAllByRole(getDataRows(getSitesTable(body))[0], 'cell')
-
-      expect(cells[0]).toHaveTextContent('003')
-      expect(cells[2]).toHaveTextContent('-')
-      expect(cells[3]).toHaveTextContent('-')
-      expect(cells[4]).toHaveTextContent('-')
-      expect(cells[9]).toHaveTextContent('-')
-      expect(cells[10]).toHaveTextContent('-')
-    })
-
     test('Should render empty-state when there are no overseas sites', async () => {
-      useMockBackend(mockOverview, {})
+      useMockBackend(exporterOrganisation({}, {}))
 
-      const { result } = await server.inject({
-        method: 'GET',
-        url,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
+      const { result } = await server.inject({ method: 'GET', url, auth })
 
       const body = renderPage(result)
 
@@ -415,24 +341,18 @@ describe('#accreditationOverseasSitesController', () => {
 
     test('Should show 500 error page when backend returns a non-OK response', async () => {
       mswServer.use(
-        http.get(
-          `${backendUrl}/v1/organisations/${organisationId}/overview`,
-          () => {
-            throw HttpResponse.text('', { status: 500 })
-          }
-        )
+        http.get(`${backendUrl}/organisations/${organisationNumber}`, () => {
+          throw HttpResponse.text('', { status: 500 })
+        })
       )
 
-      const { result } = await server.inject({
-        method: 'GET',
-        url,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
-
-      const body = renderPage(result)
+      const { result } = await server.inject({ method: 'GET', url, auth })
 
       expect(
-        getByText(body, 'Sorry, there is a problem with the service')
+        getByText(
+          renderPage(result),
+          'Sorry, there is a problem with the service'
+        )
       ).toBeInTheDocument()
     })
   })

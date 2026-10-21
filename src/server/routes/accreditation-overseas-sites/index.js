@@ -7,7 +7,7 @@ export const accreditationOverseasSites = {
       server.route([
         {
           method: 'GET',
-          path: '/organisations/{organisationId}/registrations/{registrationId}/accreditations/{accreditationId}/overseas-sites',
+          path: '/organisations/{organisationNumber}/registrations/{registrationNumber}/accreditations/{year}/overseas-sites',
           ...accreditationOverseasSitesGETController,
           options: {
             app: { pageTitle: 'Overseas sites' }

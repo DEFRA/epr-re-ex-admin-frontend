@@ -88,9 +88,9 @@ describe('natural-key redirect to pages still served by id', () => {
         `/organisations/${organisationId}/registrations/${registrationId}/overview`
       ],
       [
-        'accreditation waste balance events',
-        `${registration}/accreditations/2026/waste-balance-events`,
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/waste-balance-events`
+        'accreditation PRN activity download',
+        `${registration}/accreditations/2026/prn-activity/download`,
+        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/prn-activity/download`
       ]
     ])('sends the %s to its id address', async (_, url, location) => {
       const { statusCode, headers } = await get(url)

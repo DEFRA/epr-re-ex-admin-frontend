@@ -1,100 +1,95 @@
+import { errorCodes } from '#server/common/enums/error-codes.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
-import {
-  fetchOrganisationOverview,
-  findRegistration
-} from '#server/common/helpers/fetch-organisation-overview.js'
+import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 import {
   toDisplayValue,
   toValidFromDisplayValue
 } from '#server/common/helpers/overseas-site-display.js'
+import { registrationBreadcrumbs } from '#server/common/helpers/page-urls.js'
 
 /**
  * @typedef {{
- *   line1?: string,
- *   line2?: string,
- *   townOrCity?: string,
- *   stateOrRegion?: string,
- *   postcode?: string
- * }} OverseasSiteAddress
- *
- * @typedef {{
  *   name: string,
- *   country: string,
- *   address: OverseasSiteAddress,
- *   coordinates: string | null,
- *   validFrom: string | null
- * }} ResolvedOverseasSite
+ *   address: {
+ *     country: string,
+ *     line1: string,
+ *     line2?: string,
+ *     townOrCity: string,
+ *     stateOrRegion?: string,
+ *     postcode?: string
+ *   },
+ *   coordinates?: string
+ * }} OverseasSite
  *
- * @typedef {{
- *   name: null,
- *   country: null,
- *   address: null,
- *   coordinates: null,
- *   validFrom: null
- * }} UnresolvedOverseasSite
+ * @typedef {{ status: 'pending' } | { status: 'approved', approvedOn: string }} SiteApproval
  *
- * @typedef {ResolvedOverseasSite | UnresolvedOverseasSite} OverseasSite
- *
- * Sites keyed by their three-digit ORS id, the natural key scoped to the
- * accreditation.
+ * A registration's sites and an accreditation's approvals of them, each keyed
+ * by three-digit ORS id.
  * @typedef {Record<string, OverseasSite>} OverseasSites
+ * @typedef {Record<string, SiteApproval>} SiteApprovals
  */
 
 export const accreditationOverseasSitesGETController = {
   async handler(request, h) {
-    const { organisationId, registrationId, accreditationId } = request.params
+    const { organisationNumber, registrationNumber, year } = request.params
 
-    const overview = await fetchOrganisationOverview(request, organisationId)
-    const registration = findRegistration(
-      overview,
-      organisationId,
-      registrationId
-    )
-
-    /** @type {OverseasSites} */
-    const sites = await fetchJsonFromBackend(
+    const organisation = await fetchJsonFromBackend(
       request,
-      `/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/overseas-sites`,
+      `/organisations/${organisationNumber}`,
       {}
     )
+    const registration = organisation.registrations[registrationNumber]
+    const accreditation = registration?.accreditations[year]
 
-    const heading = `${overview.companyName} - ${registration.accreditation?.accreditationNumber}`
+    // Only an exporter's accreditation approves overseas sites.
+    if (!accreditation?.overseasSites) {
+      throw notFound(
+        'Accreditation not found',
+        errorCodes.accreditationNotFound,
+        {
+          event: {
+            action: 'fetch_accreditation',
+            reason: `organisationNumber=${organisationNumber} registrationNumber=${registrationNumber} year=${year}`
+          }
+        }
+      )
+    }
+
+    /** @type {OverseasSites} */
+    const sites = registration.overseasSites
+    /** @type {SiteApprovals} */
+    const approvals = accreditation.overseasSites
 
     const packagingWasteCategory = toDisplayValue(registration.material)
 
     const siteRows = Object.keys(sites)
       .sort((a, b) => a.localeCompare(b))
       .map((orsId) => {
-        const site = sites[orsId]
+        const { name, address, coordinates } = sites[orsId]
+        const approval = approvals[orsId]
         return [
-          { text: toDisplayValue(orsId) },
+          { text: orsId },
           { text: packagingWasteCategory },
-          { text: toDisplayValue(site.country) },
-          { text: toDisplayValue(site.name) },
-          { text: toDisplayValue(site.address?.line1) },
-          { text: toDisplayValue(site.address?.line2) },
-          { text: toDisplayValue(site.address?.townOrCity) },
-          { text: toDisplayValue(site.address?.stateOrRegion) },
-          { text: toDisplayValue(site.address?.postcode) },
-          { text: toDisplayValue(site.coordinates) },
-          { text: toValidFromDisplayValue(site.validFrom) }
+          { text: address.country },
+          { text: name },
+          { text: address.line1 },
+          { text: toDisplayValue(address.line2) },
+          { text: address.townOrCity },
+          { text: toDisplayValue(address.stateOrRegion) },
+          { text: toDisplayValue(address.postcode) },
+          { text: toDisplayValue(coordinates) },
+          {
+            text: toValidFromDisplayValue(
+              approval.status === 'approved' ? approval.approvedOn : null
+            )
+          }
         ]
       })
 
     return h.view('routes/accreditation-overseas-sites/index', {
-      breadcrumbs: [
-        { text: 'Organisations', href: '/organisations' },
-        {
-          text: 'Organisation overview',
-          href: `/organisations/${organisationId}/overview`
-        },
-        {
-          text: 'Registration overview',
-          href: `/organisations/${organisationId}/registrations/${registrationId}/overview`
-        }
-      ],
+      breadcrumbs: registrationBreadcrumbs(request.params),
       pageTitle: request.route.settings.app.pageTitle,
-      heading,
+      heading: `${organisation.name} - ${accreditation.accreditationNumber}`,
       siteRows
     })
   }

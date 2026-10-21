@@ -27,6 +27,12 @@ export const registrationPath = ({ organisationNumber, registrationNumber }) =>
   `/organisations/${organisationNumber}/registrations/${registrationNumber}`
 
 /**
+ * @param {Pick<PeriodSubmissionParams, 'organisationNumber' | 'registrationNumber' | 'year'>} params
+ */
+export const accreditationPath = (params) =>
+  `${registrationPath(params)}/accreditations/${params.year}`
+
+/**
  * A single submission's report, addressed as the backend addresses it: an
  * accredited (monthly) report under the accreditation for its year, a
  * registered-only (quarterly) one under the registration. The admin page for

@@ -1,8 +1,6 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
-import {
-  fetchOrganisationOverview,
-  findRegistration
-} from '#server/common/helpers/fetch-organisation-overview.js'
+import { accreditationPath } from '#server/common/helpers/backend-paths.js'
+import { registrationBreadcrumbs } from '#server/common/helpers/page-urls.js'
 
 /**
  * Shown when an event carries no December portion. The backend omits the
@@ -60,24 +58,25 @@ const formatActor = (actor) => {
 
 export const wasteBalanceEventsGETController = {
   async handler(request, h) {
-    const { organisationId, registrationId, accreditationId } = request.params
+    const { organisationNumber, registrationNumber, year } = request.params
 
-    const overview = await fetchOrganisationOverview(request, organisationId)
-    const registration = findRegistration(
-      overview,
-      organisationId,
-      registrationId
-    )
-
-    const { events } = /** @type {{ events: LedgerEvent[] }} */ (
-      await fetchJsonFromBackend(
-        request,
-        `/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/waste-balance-ledger`,
-        {}
+    // The ledger read is not found unless the accreditation is, so the
+    // organisation read holds it.
+    const [organisation, { events }] = await Promise.all([
+      fetchJsonFromBackend(request, `/organisations/${organisationNumber}`, {}),
+      /** @type {Promise<{ events: LedgerEvent[] }>} */ (
+        fetchJsonFromBackend(
+          request,
+          `${accreditationPath(request.params)}/ledger`,
+          {}
+        )
       )
-    )
+    ])
 
-    const heading = `${overview.companyName} - ${registration.accreditation?.accreditationNumber}`
+    const { accreditationNumber } =
+      organisation.registrations[registrationNumber].accreditations[year]
+
+    const heading = `${organisation.name} - ${accreditationNumber}`
 
     const eventRows = events.map((event) => ({
       number: event.number,
@@ -94,17 +93,7 @@ export const wasteBalanceEventsGETController = {
     }))
 
     return h.view('routes/waste-balance-events/index', {
-      breadcrumbs: [
-        { text: 'Organisations', href: '/organisations' },
-        {
-          text: 'Organisation overview',
-          href: `/organisations/${organisationId}/overview`
-        },
-        {
-          text: 'Registration overview',
-          href: `/organisations/${organisationId}/registrations/${registrationId}/overview`
-        }
-      ],
+      breadcrumbs: registrationBreadcrumbs(request.params),
       pageTitle: request.route.settings.app.pageTitle,
       heading,
       eventRows

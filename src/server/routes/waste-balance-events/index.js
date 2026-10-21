@@ -7,7 +7,7 @@ export const wasteBalanceEvents = {
       server.route([
         {
           method: 'GET',
-          path: '/organisations/{organisationId}/registrations/{registrationId}/accreditations/{accreditationId}/waste-balance-events',
+          path: '/organisations/{organisationNumber}/registrations/{registrationNumber}/accreditations/{year}/waste-balance-events',
           ...wasteBalanceEventsGETController,
           options: {
             app: { pageTitle: 'Waste balance events' }
