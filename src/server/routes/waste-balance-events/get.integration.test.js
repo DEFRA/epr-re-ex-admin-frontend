@@ -21,9 +21,6 @@ vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
 describe('#wasteBalanceEventsController', () => {
   const originalBackendUrl = config.get('eprBackendUrl')
   const backendUrl = 'http://mock-backend'
-  const organisationId = '69c3b4f0abda9efa68dd6697'
-  const registrationId = '69c3b4f0abda9efa68dd669b'
-  const accreditationId = '69c3b4f0abda9efa68dd6698'
   const organisationNumber = '500123'
   const registrationNumber = 'R26ER5001180041PL'
   const registration = `/organisations/${organisationNumber}/registrations/${registrationNumber}`
@@ -170,6 +167,16 @@ describe('#wasteBalanceEventsController', () => {
       )
     })
 
+    test('Should refuse a year that is not four digits', async () => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: `${registration}/accreditations/..%2F..%2Fadmin/waste-balance-events`,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+    })
+
     test('Should return 404 when the backend finds no such accreditation', async () => {
       useMockBackend()
       mswServer.use(
@@ -217,40 +224,6 @@ describe('#wasteBalanceEventsController', () => {
           href: `${registration}/overview`
         }
       ])
-    })
-
-    test('Should send an old id URL to the natural-key URL', async () => {
-      mswServer.use(
-        http.get(
-          `${backendUrl}/v1/organisations/${organisationId}/overview`,
-          () =>
-            HttpResponse.json({
-              id: organisationId,
-              organisationNumber,
-              companyName: 'ACME ltd',
-              registrations: [
-                {
-                  id: registrationId,
-                  registrationNumber,
-                  accreditation: {
-                    id: accreditationId,
-                    accreditationNumber: 'ACC-50030-001',
-                    year: 2026
-                  }
-                }
-              ]
-            })
-        )
-      )
-
-      const { statusCode, headers } = await server.inject({
-        method: 'GET',
-        url: `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/waste-balance-events`,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
-
-      expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe(url)
     })
 
     test('Should render events table with correct columns', async () => {

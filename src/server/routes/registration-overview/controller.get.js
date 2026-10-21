@@ -18,9 +18,12 @@ import {
 import { SCOPES } from '#server/common/helpers/auth/scopes.js'
 import { accreditationStatusActions } from '#server/routes/accreditation-status-transition/transitions.js'
 import { registrationStatusActions } from '#server/routes/registration-status-transition/transitions.js'
+import { toNaturalKeys } from '#server/common/helpers/natural-keys/swap-keys.js'
 
 /**
  * @import { PeriodStatus } from '#server/common/constants/report-status.js'
+ * @import { OrganisationOverview } from '#server/common/helpers/fetch-organisation-overview.js'
+ * @import { NaturalKeys } from '#server/common/helpers/natural-keys/swap-keys.js'
  */
 
 const GREEN_TAG = 'govuk-tag--green'
@@ -136,13 +139,13 @@ const fetchWasteBalance = async (request, organisationId, accreditationId) => {
  * overseas sites additionally only apply to exporters. A link to a record that
  * has no number yet, as it is not approved, is null too: the template shows it
  * as not applicable.
- * @param {string} organisationNumber
+ * @param {OrganisationOverview} overview
  * @param {string} organisationId
  * @param {string} registrationId
  * @param {Record<string, any>} registration
  */
 const toRegistrationLinks = (
-  organisationNumber,
+  overview,
   organisationId,
   registrationId,
   registration
@@ -151,15 +154,18 @@ const toRegistrationLinks = (
   const accreditationUrl = registration.accreditation
     ? `${registrationUrl}/accreditations/${registration.accreditation.id}`
     : null
-  const { registrationNumber } = registration
-  const approvedAccreditation =
-    registrationNumber && registration.accreditation?.accreditationNumber
-      ? {
-          organisationNumber,
-          registrationNumber,
-          year: String(registration.accreditation.year)
-        }
-      : null
+  const registrationKeys = toNaturalKeys(overview, {
+    organisationId,
+    registrationId
+  })
+  const approvedAccreditation = /** @type {Required<NaturalKeys> | null} */ (
+    accreditationUrl &&
+      toNaturalKeys(overview, {
+        organisationId,
+        registrationId,
+        accreditationId: registration.accreditation.id
+      })
+  )
 
   return {
     // The template only attaches these to their status rows for users holding
@@ -180,7 +186,7 @@ const toRegistrationLinks = (
       approvedAccreditation && wasteBalanceEventsUrl(approvedAccreditation),
     overseasSitesUrl:
       approvedAccreditation && overseasSitesUrl(approvedAccreditation),
-    wasteRecordsDownloadUrl: registrationNumber
+    wasteRecordsDownloadUrl: registrationKeys
       ? `${registrationUrl}/waste-records/download`
       : null,
     prnActivityDownloadUrl: approvedAccreditation
@@ -246,7 +252,7 @@ export const registrationOverviewGETController = {
       registrationId,
       registration,
       ...toRegistrationLinks(
-        overview.organisationNumber,
+        overview,
         organisationId,
         registrationId,
         registration

@@ -1,3 +1,4 @@
+import { accreditationParams } from '#server/common/helpers/natural-keys/accreditation-params.js'
 import { wasteBalanceEventsGETController } from './controller.get.js'
 
 export const wasteBalanceEvents = {
@@ -10,7 +11,8 @@ export const wasteBalanceEvents = {
           path: '/organisations/{organisationNumber}/registrations/{registrationNumber}/accreditations/{year}/waste-balance-events',
           ...wasteBalanceEventsGETController,
           options: {
-            app: { pageTitle: 'Waste balance events' }
+            app: { pageTitle: 'Waste balance events' },
+            validate: { params: accreditationParams }
           }
         }
       ])

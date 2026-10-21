@@ -54,7 +54,7 @@ describe('#registrationOverviewController', () => {
    *   processingType: string,
    *   material: string,
    *   site: string,
-   *   accreditation: { id: string, accreditationNumber: string | null, status: string, year?: number } | null
+   *   accreditation: { id: string, accreditationNumber: string | null, status: string, year?: number | null } | null
    * }}
    */
   const mockRegistration = {
@@ -661,6 +661,37 @@ describe('#registrationOverviewController', () => {
           name: 'Download'
         })
       ).toBeInTheDocument()
+    })
+
+    test('Should show the accreditation links as not applicable when the accreditation has no year', async () => {
+      useMockBackend({
+        ...mockOverview,
+        registrations: [
+          {
+            ...mockRegistration,
+            accreditation: {
+              id: accreditationId,
+              accreditationNumber: 'ACC-50030-001',
+              status: 'approved',
+              year: null
+            }
+          }
+        ]
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+
+      for (const row of ['Waste balance events', 'PRN activity']) {
+        expect(getSummaryRowValue(body, row)).toHaveTextContent(
+          'N/A as not approved'
+        )
+      }
     })
 
     test('Should show every record link as not applicable when the registration is not approved', async () => {

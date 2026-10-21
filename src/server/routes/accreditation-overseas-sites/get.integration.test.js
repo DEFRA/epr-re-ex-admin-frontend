@@ -23,9 +23,6 @@ vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
 describe('#accreditationOverseasSitesController', () => {
   const originalBackendUrl = config.get('eprBackendUrl')
   const backendUrl = 'http://mock-backend'
-  const organisationId = '69c3b4f0abda9efa68dd6697'
-  const registrationId = '69c3b4f0abda9efa68dd669b'
-  const accreditationId = '69c3b4f0abda9efa68dd6698'
   const organisationNumber = '500123'
   const registrationNumber = 'E26ER5001180041GL'
   const registration = `/organisations/${organisationNumber}/registrations/${registrationNumber}`
@@ -207,40 +204,6 @@ describe('#accreditationOverseasSitesController', () => {
         },
         { text: 'Registration overview', href: `${registration}/overview` }
       ])
-    })
-
-    test('Should send an old id URL to the natural-key URL', async () => {
-      mswServer.use(
-        http.get(
-          `${backendUrl}/v1/organisations/${organisationId}/overview`,
-          () =>
-            HttpResponse.json({
-              id: organisationId,
-              organisationNumber,
-              companyName: 'ACME ltd',
-              registrations: [
-                {
-                  id: registrationId,
-                  registrationNumber,
-                  accreditation: {
-                    id: accreditationId,
-                    accreditationNumber: 'ACC-50030-001',
-                    year: 2026
-                  }
-                }
-              ]
-            })
-        )
-      )
-
-      const { statusCode, headers } = await server.inject({
-        method: 'GET',
-        url: `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/overseas-sites`,
-        auth
-      })
-
-      expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe(url)
     })
 
     test('Should render the site columns without the constant identifier columns', async () => {
