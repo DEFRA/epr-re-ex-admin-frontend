@@ -1,10 +1,12 @@
+import Boom from '@hapi/boom'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import {
   fetchOrganisationOverview,
   findRegistration
 } from '#server/common/helpers/fetch-organisation-overview.js'
 import { toReportingPeriods } from '#server/common/helpers/reporting-periods.js'
-import { reportsCalendarPathByIds } from '#server/common/helpers/backend-paths.js'
+import { reportsCalendarPath } from '#server/common/helpers/backend-paths.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
 import {
   overseasSitesUrl,
   reportSubmissionUrl,
@@ -23,6 +25,8 @@ import { toNaturalKeys } from '#server/common/helpers/natural-keys/swap-keys.js'
 /**
  * @import { PeriodStatus } from '#server/common/constants/report-status.js'
  * @import { OrganisationOverview } from '#server/common/helpers/fetch-organisation-overview.js'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { RegistrationKeys } from '#server/common/helpers/natural-keys/swap-keys.js'
  */
 
 const GREEN_TAG = 'govuk-tag--green'
@@ -133,6 +137,27 @@ const fetchWasteBalance = async (request, organisationId, accreditationId) => {
 }
 
 /**
+ * The registration's reporting calendar, or `null` when the backend does not
+ * serve the registration, as with one missing data the read model needs.
+ * @param {HapiRequest} request
+ * @param {RegistrationKeys} registrationKeys
+ */
+const fetchCalendar = async (request, registrationKeys) => {
+  try {
+    return await fetchJsonFromBackend(
+      request,
+      reportsCalendarPath(registrationKeys),
+      {}
+    )
+  } catch (err) {
+    if (Boom.isBoom(err, statusCodes.notFound)) {
+      return null
+    }
+    throw err
+  }
+}
+
+/**
  * The links and status actions the page derives from the registration. The
  * accreditation-scoped ones are null when there is no accreditation, and
  * overseas sites additionally only apply to exporters. A link to a record that
@@ -200,13 +225,8 @@ export const registrationOverviewGETController = {
     const errorMessage = request.yar.get('error')
     await request.yar.clear('error')
 
-    const [overview, calendar, { summaryLogs }] = await Promise.all([
+    const [overview, { summaryLogs }] = await Promise.all([
       fetchOrganisationOverview(request, organisationId),
-      fetchJsonFromBackend(
-        request,
-        reportsCalendarPathByIds({ organisationId, registrationId }),
-        {}
-      ),
       fetchJsonFromBackend(
         request,
         `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs`,
@@ -220,13 +240,22 @@ export const registrationOverviewGETController = {
       registrationId
     )
 
-    const wasteBalance = registration.accreditation
-      ? await fetchWasteBalance(
-          request,
-          organisationId,
-          registration.accreditation.id
-        )
-      : null
+    const registrationKeys = toNaturalKeys(overview, {
+      organisationId,
+      registrationId
+    })
+
+    const [calendar, wasteBalance] = await Promise.all([
+      // A registration with no number yet has no reports.
+      registrationKeys ? fetchCalendar(request, registrationKeys) : null,
+      registration.accreditation
+        ? fetchWasteBalance(
+            request,
+            organisationId,
+            registration.accreditation.id
+          )
+        : null
+    ])
 
     const pageTitle = request.route.settings.app.pageTitle
 
@@ -255,19 +284,18 @@ export const registrationOverviewGETController = {
         registrationId,
         registration
       ),
-      reportRows: toReportingPeriods(
-        calendar.reportingPeriods,
-        calendar.cadence
-      ).map(
-        toReportRow(
-          {
-            organisationNumber: overview.organisationNumber,
-            registrationNumber: registration.registrationNumber
-          },
-          calendar.cadence,
-          request.auth.credentials.scopes.includes(SCOPES.adminWrite)
-        )
-      ),
+      reportRows: calendar
+        ? toReportingPeriods(calendar.reportingPeriods, calendar.cadence).map(
+            toReportRow(
+              {
+                organisationNumber: overview.organisationNumber,
+                registrationNumber: registration.registrationNumber
+              },
+              calendar.cadence,
+              request.auth.credentials.scopes.includes(SCOPES.adminWrite)
+            )
+          )
+        : [],
       summaryLogRows,
       wasteBalance,
       error: errorMessage
