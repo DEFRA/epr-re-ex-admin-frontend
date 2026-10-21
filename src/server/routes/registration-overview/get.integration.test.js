@@ -98,6 +98,8 @@ describe('#registrationOverviewController', () => {
     registrations: [mockRegistration]
   }
 
+  const calendarUrl = `${backendUrl}/organisations/:organisationNumber/registrations/:registrationNumber/reports/calendar`
+
   const mockCalendar = {
     cadence: 'monthly',
     reportingPeriods: [
@@ -311,10 +313,7 @@ describe('#registrationOverviewController', () => {
         `${backendUrl}/v1/organisations/${organisationId}/overview`,
         () => HttpResponse.json(overviewResponse)
       ),
-      http.get(
-        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
-        () => HttpResponse.json(calendarResponse)
-      ),
+      http.get(calendarUrl, () => HttpResponse.json(calendarResponse)),
       http.get(
         `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs`,
         () => HttpResponse.json(summaryLogsResponse)
@@ -764,9 +763,8 @@ describe('#registrationOverviewController', () => {
     test('Should link a registered-only report under the registration', async () => {
       useMockBackend()
       mswServer.use(
-        http.get(
-          `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
-          () => HttpResponse.json({ ...mockCalendar, cadence: 'quarterly' })
+        http.get(calendarUrl, () =>
+          HttpResponse.json({ ...mockCalendar, cadence: 'quarterly' })
         )
       )
 
@@ -786,18 +784,15 @@ describe('#registrationOverviewController', () => {
       )
     })
 
-    test('Should request the reports calendar with the expand=submissions arg', async () => {
+    test('Should request the reports calendar by number with the expand=submissions arg', async () => {
       /** @type {URL | undefined} */
       let calendarRequestUrl
       useMockBackend()
       mswServer.use(
-        http.get(
-          `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
-          ({ request }) => {
-            calendarRequestUrl = new URL(request.url)
-            return HttpResponse.json(mockCalendar)
-          }
-        )
+        http.get(calendarUrl, ({ request }) => {
+          calendarRequestUrl = new URL(request.url)
+          return HttpResponse.json(mockCalendar)
+        })
       )
 
       await server.inject({
@@ -806,16 +801,82 @@ describe('#registrationOverviewController', () => {
         auth: { strategy: 'session', credentials: mockUserSession }
       })
 
+      expect(calendarRequestUrl?.pathname).toBe(
+        '/organisations/500123/registrations/REG-50030-001/reports/calendar'
+      )
       expect(calendarRequestUrl?.searchParams.get('expand')).toBe('submissions')
+    })
+
+    test('Should not render the reports table when the registration has no number', async () => {
+      useMockBackend({
+        ...mockOverview,
+        registrations: [
+          {
+            ...mockRegistration,
+            registrationNumber: undefined,
+            status: 'created'
+          }
+        ]
+      })
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(
+        queryByRole(renderPage(result), 'table', { name: 'Reports' })
+      ).toBeNull()
+    })
+
+    test('Should not render the reports table when the backend serves no calendar for the registration', async () => {
+      useMockBackend()
+      mswServer.use(
+        http.get(calendarUrl, () =>
+          HttpResponse.json({}, { status: statusCodes.notFound })
+        )
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(
+        queryByRole(renderPage(result), 'table', { name: 'Reports' })
+      ).toBeNull()
+    })
+
+    test('Should show 500 error page when the reports calendar backend returns a non-OK response', async () => {
+      useMockBackend()
+      mswServer.use(
+        http.get(calendarUrl, () => {
+          throw HttpResponse.text('', { status: 500 })
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      expect(
+        getByText(
+          renderPage(result),
+          'Sorry, there is a problem with the service'
+        )
+      ).toBeInTheDocument()
     })
 
     test('Should render every submission for a period as its own reachable row', async () => {
       useMockBackend()
       mswServer.use(
-        http.get(
-          `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
-          () => HttpResponse.json(mockCalendarWithHistory)
-        )
+        http.get(calendarUrl, () => HttpResponse.json(mockCalendarWithHistory))
       )
 
       const { result } = await server.inject({
@@ -847,10 +908,7 @@ describe('#registrationOverviewController', () => {
     test('Should show requires_resubmission status for a skeleton resubmission row', async () => {
       useMockBackend()
       mswServer.use(
-        http.get(
-          `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
-          () => HttpResponse.json(mockCalendarWithSkeleton)
-        )
+        http.get(calendarUrl, () => HttpResponse.json(mockCalendarWithSkeleton))
       )
 
       const { result } = await server.inject({
@@ -896,18 +954,16 @@ describe('#registrationOverviewController', () => {
     it('should fall back to the raw status when it has no label', async () => {
       useMockBackend()
       mswServer.use(
-        http.get(
-          `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
-          () =>
-            HttpResponse.json({
-              cadence: 'monthly',
-              reportingPeriods: [
-                {
-                  ...mockCalendarNotYetEnded.reportingPeriods[0],
-                  periodStatus: 'awaiting_the_unknown'
-                }
-              ]
-            })
+        http.get(calendarUrl, () =>
+          HttpResponse.json({
+            cadence: 'monthly',
+            reportingPeriods: [
+              {
+                ...mockCalendarNotYetEnded.reportingPeriods[0],
+                periodStatus: 'awaiting_the_unknown'
+              }
+            ]
+          })
         )
       )
 
@@ -928,10 +984,7 @@ describe('#registrationOverviewController', () => {
     test('Should render a blank status cell when periodStatus is null and there is no report', async () => {
       useMockBackend()
       mswServer.use(
-        http.get(
-          `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
-          () => HttpResponse.json(mockCalendarNotYetEnded)
-        )
+        http.get(calendarUrl, () => HttpResponse.json(mockCalendarNotYetEnded))
       )
 
       const { result } = await server.inject({
@@ -1090,10 +1143,7 @@ describe('#registrationOverviewController', () => {
           `${backendUrl}/v1/organisations/${organisationId}/overview`,
           () => HttpResponse.json(mockOverview)
         ),
-        http.get(
-          `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
-          () => HttpResponse.json(mockCalendar)
-        ),
+        http.get(calendarUrl, () => HttpResponse.json(mockCalendar)),
         http.get(
           `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs`,
           () => {
@@ -1134,10 +1184,6 @@ describe('#registrationOverviewController', () => {
           () => {
             throw HttpResponse.text('', { status: 500 })
           }
-        ),
-        http.get(
-          `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
-          () => HttpResponse.json(mockCalendar)
         ),
         http.get(
           `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs`,
@@ -1227,10 +1273,7 @@ describe('#registrationOverviewController', () => {
             `${backendUrl}/v1/organisations/${organisationId}/overview`,
             () => HttpResponse.json(mockOverview)
           ),
-          http.get(
-            `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
-            () => HttpResponse.json(mockCalendar)
-          ),
+          http.get(calendarUrl, () => HttpResponse.json(mockCalendar)),
           http.get(
             `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs`,
             () => HttpResponse.json({ summaryLogs: [] })

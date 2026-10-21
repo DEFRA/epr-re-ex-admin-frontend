@@ -160,12 +160,8 @@ describe('accreditation-status-transition', () => {
       )
     )
 
-  const stubCalendarAndSummaryLogs = () => {
+  const stubSummaryLogsAndWasteBalance = () => {
     mswServer.use(
-      http.get(
-        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar`,
-        () => HttpResponse.json({ cadence: 'monthly', reportingPeriods: [] })
-      ),
       http.get(
         `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs`,
         () => HttpResponse.json({ summaryLogs: [] })
@@ -231,7 +227,7 @@ describe('accreditation-status-transition', () => {
 
   const expectOverviewFlash = async (redirectCookie, message) => {
     stubOverview()
-    stubCalendarAndSummaryLogs()
+    stubSummaryLogsAndWasteBalance()
     const { result } = await server.inject({
       method: 'GET',
       url: overviewUrl,

@@ -77,17 +77,9 @@ export const periodSubmissionUnsubmitPath = (params) =>
 
 /**
  * The reporting calendar, expanded so every submission of a period is listed
- * rather than collapsed to the current one - the view the unsubmit
- * confirmation needs to spot a superseded submission.
+ * rather than collapsed to the current one - the view both the registration
+ * overview and the unsubmit confirmation need to spot a superseded submission.
  * @param {Pick<PeriodSubmissionParams, 'organisationNumber' | 'registrationNumber'>} params
  */
 export const reportsCalendarPath = (params) =>
   `${registrationPath(params)}/reports/calendar?expand=submissions`
-
-/**
- * The same calendar by database ids, for the registration overview, which
- * also shows registrations that have no number yet.
- * @param {{ organisationId: string, registrationId: string }} ids
- */
-export const reportsCalendarPathByIds = ({ organisationId, registrationId }) =>
-  `/v1/organisations/${organisationId}/registrations/${registrationId}/reports/calendar?expand=submissions`
