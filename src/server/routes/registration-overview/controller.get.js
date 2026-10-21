@@ -137,15 +137,12 @@ const fetchWasteBalance = async (request, organisationId, accreditationId) => {
 }
 
 /**
- * The registration's reporting calendar, or `null` when it has no number or
- * the backend does not serve it.
+ * The registration's reporting calendar, or `null` when the backend does not
+ * serve the registration, as with one missing data the read model needs.
  * @param {HapiRequest} request
- * @param {RegistrationKeys | null} registrationKeys
+ * @param {RegistrationKeys} registrationKeys
  */
 const fetchCalendar = async (request, registrationKeys) => {
-  if (!registrationKeys) {
-    return null
-  }
   try {
     return await fetchJsonFromBackend(
       request,
@@ -243,11 +240,14 @@ export const registrationOverviewGETController = {
       registrationId
     )
 
+    const registrationKeys = toNaturalKeys(overview, {
+      organisationId,
+      registrationId
+    })
+
     const [calendar, wasteBalance] = await Promise.all([
-      fetchCalendar(
-        request,
-        toNaturalKeys(overview, { organisationId, registrationId })
-      ),
+      // A registration with no number yet has no reports.
+      registrationKeys ? fetchCalendar(request, registrationKeys) : null,
       registration.accreditation
         ? fetchWasteBalance(
             request,
