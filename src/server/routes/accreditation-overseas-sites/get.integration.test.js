@@ -273,6 +273,31 @@ describe('#accreditationOverseasSitesController', () => {
       expect(getAllByRole(rows[1], 'cell')[10]).toHaveTextContent('-')
     })
 
+    test('Should list only the sites the accreditation lists', async () => {
+      useMockBackend(
+        exporterOrganisation(mockSites, {
+          '002': { status: 'approved', approvedOn: '2024-06-15' }
+        })
+      )
+
+      const { result } = await server.inject({ method: 'GET', url, auth })
+
+      const rows = getDataRows(getSitesTable(renderPage(result)))
+
+      expect(rows).toHaveLength(1)
+      expect(getAllByRole(rows[0], 'cell')[0]).toHaveTextContent('002')
+    })
+
+    test('Should refuse a year that is not four digits', async () => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: `${registration}/accreditations/..%2F..%2Fadmin/overseas-sites`,
+        auth
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+    })
+
     test('Should render a dash for absent address lines', async () => {
       useMockBackend()
 

@@ -63,11 +63,12 @@ export const accreditationOverseasSitesGETController = {
 
     const packagingWasteCategory = toDisplayValue(registration.material)
 
-    const siteRows = Object.keys(sites)
-      .sort((a, b) => a.localeCompare(b))
-      .map((orsId) => {
+    // The accreditation lists the sites accredited for its year, each one the
+    // registration holds (ADR 0052).
+    const siteRows = Object.entries(approvals)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([orsId, approval]) => {
         const { name, address, coordinates } = sites[orsId]
-        const approval = approvals[orsId]
         return [
           { text: orsId },
           { text: packagingWasteCategory },

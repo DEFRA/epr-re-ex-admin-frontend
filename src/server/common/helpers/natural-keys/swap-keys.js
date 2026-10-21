@@ -3,6 +3,8 @@
  *
  * @typedef {{ organisationId: string, registrationId?: string, accreditationId?: string }} RecordIds
  * @typedef {{ organisationNumber: string, registrationNumber?: string, year?: string }} NaturalKeys
+ * @typedef {{ organisationNumber: string, registrationNumber: string }} RegistrationKeys
+ * @typedef {RegistrationKeys & { year: string }} AccreditationKeys
  */
 
 /**
@@ -25,14 +27,29 @@ const accreditationYear = (accreditation) =>
     : null
 
 /**
+ * @overload
+ * @param {OrganisationOverview} overview
+ * @param {{ organisationId: string, registrationId: string, accreditationId: string }} ids
+ * @returns {AccreditationKeys | null}
+ */
+/**
+ * @overload
+ * @param {OrganisationOverview} overview
+ * @param {{ organisationId: string, registrationId: string }} ids
+ * @returns {RegistrationKeys | null}
+ */
+/**
+ * @overload
  * @param {OrganisationOverview} overview
  * @param {RecordIds} ids
  * @returns {NaturalKeys | null}
  */
-export const toNaturalKeys = (
-  overview,
-  { registrationId, accreditationId }
-) => {
+/**
+ * @param {OrganisationOverview} overview
+ * @param {RecordIds} ids
+ * @returns {NaturalKeys | null}
+ */
+export function toNaturalKeys(overview, { registrationId, accreditationId }) {
   const { organisationNumber } = overview
 
   if (registrationId === undefined) {

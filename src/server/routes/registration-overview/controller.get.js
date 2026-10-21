@@ -23,7 +23,6 @@ import { toNaturalKeys } from '#server/common/helpers/natural-keys/swap-keys.js'
 /**
  * @import { PeriodStatus } from '#server/common/constants/report-status.js'
  * @import { OrganisationOverview } from '#server/common/helpers/fetch-organisation-overview.js'
- * @import { NaturalKeys } from '#server/common/helpers/natural-keys/swap-keys.js'
  */
 
 const GREEN_TAG = 'govuk-tag--green'
@@ -158,14 +157,13 @@ const toRegistrationLinks = (
     organisationId,
     registrationId
   })
-  const approvedAccreditation = /** @type {Required<NaturalKeys> | null} */ (
-    accreditationUrl &&
-      toNaturalKeys(overview, {
+  const approvedAccreditation = registration.accreditation
+    ? toNaturalKeys(overview, {
         organisationId,
         registrationId,
         accreditationId: registration.accreditation.id
       })
-  )
+    : null
 
   return {
     // The template only attaches these to their status rows for users holding
