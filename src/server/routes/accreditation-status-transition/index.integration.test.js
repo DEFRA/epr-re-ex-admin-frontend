@@ -110,9 +110,9 @@ const TRANSITION_CASES = [
 
 describe('accreditation-status-transition', () => {
   const backendUrl = config.get('eprBackendUrl')
-  const organisationId = 'aaa111bbb222ccc333ddd4444'
-  const registrationId = 'eee555fff666ggg777hhh8888'
-  const accreditationId = 'iii999jjj000kkk111lll2222'
+  const organisationId = '6507f1f77bcf86cd79943901'
+  const registrationId = '6507f1f77bcf86cd79943902'
+  const accreditationId = '6507f1f77bcf86cd79943903'
   const overviewUrl = `/organisations/${organisationId}/registrations/${registrationId}/overview`
   const backendStatusHistoryUrl = `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/status-history`
 

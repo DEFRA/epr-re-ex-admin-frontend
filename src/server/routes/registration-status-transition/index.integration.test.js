@@ -84,8 +84,8 @@ const TRANSITION_CASES = [
 
 describe('registration-status-transition', () => {
   const backendUrl = config.get('eprBackendUrl')
-  const organisationId = 'aaa111bbb222ccc333ddd4444'
-  const registrationId = 'eee555fff666ggg777hhh8888'
+  const organisationId = '6507f1f77bcf86cd79943901'
+  const registrationId = '6507f1f77bcf86cd79943902'
   const overviewUrl = `/organisations/${organisationId}/registrations/${registrationId}/overview`
   const backendStatusHistoryUrl = `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/status-history`
 

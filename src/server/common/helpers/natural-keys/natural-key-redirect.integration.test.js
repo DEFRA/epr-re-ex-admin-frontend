@@ -42,7 +42,8 @@ describe('natural-key redirect to pages still served by id', () => {
       http.get(`${backendUrl}/v1/organisations`, () => HttpResponse.json(body))
     )
 
-  const stubOverview = () =>
+  /** @param {string} [number] */
+  const stubOverview = (number = registrationNumber) =>
     mswServer.use(
       http.get(
         `${backendUrl}/v1/organisations/${organisationId}/overview`,
@@ -54,7 +55,7 @@ describe('natural-key redirect to pages still served by id', () => {
             registrations: [
               {
                 id: registrationId,
-                registrationNumber,
+                registrationNumber: number,
                 accreditation: {
                   id: accreditationId,
                   accreditationNumber: 'A26ER5001180114PL',
@@ -105,6 +106,19 @@ describe('natural-key redirect to pages still served by id', () => {
 
       expect(headers.location).toBe(
         `/organisations/${organisationId}/overview?tab=users`
+      )
+    })
+
+    it('sends a registration numbered in no particular format to its id address', async () => {
+      stubOverview('REG-50030-001')
+
+      const { statusCode, headers } = await get(
+        `/organisations/${organisationNumber}/registrations/REG-50030-001/overview`
+      )
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe(
+        `/organisations/${organisationId}/registrations/${registrationId}/overview`
       )
     })
 

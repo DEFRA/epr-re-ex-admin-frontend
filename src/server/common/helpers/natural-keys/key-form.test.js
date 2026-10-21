@@ -106,10 +106,12 @@ describe(urlKeyForm, () => {
     ).toBeNull()
   })
 
-  it.each([
-    ['org-123', 'reg-001', 'acc-001'],
-    ['123', '456', '789']
-  ])('reads neither form from made-up ids %s, %s, %s', (...values) => {
-    expect(urlKeyForm(pathOf(values), accreditationSegments)).toBeNull()
+  it('reads natural keys that follow no particular format', () => {
+    expect(
+      urlKeyForm(
+        pathOf(['500123', 'REG-50030-001', '2026']),
+        accreditationSegments
+      )
+    ).toBe('naturalKeys')
   })
 })

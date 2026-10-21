@@ -1,6 +1,6 @@
 import { errorCodes } from '#server/common/enums/error-codes.js'
-import { statusCodes } from '#server/common/constants/status-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
+import { redirectKeepingMethod } from '#server/common/helpers/redirect-keeping-method.js'
 import { findOverviewById, findOverviewByNumber } from './find-overview.js'
 import { routeKeyForm, urlKeyForm } from './key-form.js'
 import { toIds, toNaturalKeys } from './swap-keys.js'
@@ -65,8 +65,7 @@ const swapKeys = async (request, form, keys) => {
 
 /**
  * Sends a page URL holding ids to its route's natural-key address, and the
- * reverse, while pages move to natural keys (ADR 0053). A read is a 302;
- * anything else is a 307, so the browser resends its body.
+ * reverse, while pages move to natural keys (ADR 0053).
  * @param {HapiRequest} request
  * @param {ResponseToolkit} h
  */
@@ -102,12 +101,5 @@ export const naturalKeyRedirect = async (request, h) => {
     pathSegments[index] = swapped[FIELDS[route.form][record]]
   }
 
-  return h
-    .redirect(`${pathSegments.join('/')}${request.url.search}`)
-    .code(
-      request.method === 'get'
-        ? statusCodes.found
-        : statusCodes.temporaryRedirect
-    )
-    .takeover()
+  return redirectKeepingMethod(request, h, pathSegments.join('/'))
 }

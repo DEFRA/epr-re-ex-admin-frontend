@@ -1,5 +1,5 @@
-import { statusCodes } from '#server/common/constants/status-codes.js'
-import { periodSubmissionPath } from './backend-paths.js'
+import { reportSubmissionUrl } from './page-urls.js'
+import { redirectKeepingMethod } from './redirect-keeping-method.js'
 
 /**
  * @import { Lifecycle } from '@hapi/hapi'
@@ -30,19 +30,12 @@ export const REPORT_SUBMISSION_PATHS = [
 export const atReportAddress = (action = '') => ({
   method: async (request, h) => {
     const params = /** @type {PeriodSubmissionParams} */ (request.params)
-    const address = `${periodSubmissionPath(params)}${action}`
+    const address = `${reportSubmissionUrl(params)}${action}`
 
     if (request.path === address) {
       return h.continue
     }
 
-    return h
-      .redirect(`${address}${request.url.search}`)
-      .code(
-        request.method === 'get'
-          ? statusCodes.found
-          : statusCodes.temporaryRedirect
-      )
-      .takeover()
+    return redirectKeepingMethod(request, h, address)
   }
 })

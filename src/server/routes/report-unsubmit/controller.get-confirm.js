@@ -4,12 +4,12 @@ import { formatPeriod } from '#server/common/helpers/format-reporting-period.js'
 import { toReportingPeriods } from '#server/common/helpers/reporting-periods.js'
 import {
   periodSubmissionPath,
-  periodSubmissionUnsubmitPath,
   reportsCalendarPath
 } from '#server/common/helpers/backend-paths.js'
 import {
   registrationBreadcrumbs,
-  registrationOverviewUrl
+  registrationOverviewUrl,
+  reportUnsubmitUrl
 } from '#server/common/helpers/page-urls.js'
 
 /**
@@ -102,7 +102,7 @@ export const reportUnsubmitConfirmGetController = {
       heading: PAGE_TITLE,
       breadcrumbs: registrationBreadcrumbs(request.params),
       overviewUrl,
-      postUrl: periodSubmissionUnsubmitPath(request.params),
+      postUrl: reportUnsubmitUrl(request.params),
       registrationNumber,
       formattedPeriod: formatPeriod(period, cadence),
       year,

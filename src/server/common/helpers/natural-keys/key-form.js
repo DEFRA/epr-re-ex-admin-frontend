@@ -43,13 +43,6 @@ const KEYED_PARAMS = {
 
 const ID = /^[0-9a-f]{24}$/
 
-/** @type {Record<KeyedRecord, RegExp>} */
-const NATURAL_KEY = {
-  organisation: /^\d+$/,
-  registration: /^R\d{2}[A-Z0-9]+$/,
-  accreditation: /^\d{4}$/
-}
-
 /**
  * The key form a route addresses its records by, or `null` when it names none
  * or mixes the two.
@@ -81,27 +74,21 @@ export const routeKeyForm = (routePath) => {
 }
 
 /**
+ * Natural keys have no guaranteed format, so anything not an id is one.
  * @param {string} value
- * @param {KeyedRecord} record
- * @returns {KeyForm | null}
+ * @returns {KeyForm}
  */
-const keyFormOf = (value, record) => {
-  if (ID.test(value)) {
-    return 'ids'
-  }
-
-  return NATURAL_KEY[record].test(value) ? 'naturalKeys' : null
-}
+const keyFormOf = (value) => (ID.test(value) ? 'ids' : 'naturalKeys')
 
 /**
- * The key form of a URL's values, or `null` unless every one is that form.
+ * The key form of a URL's values, or `null` when they mix the two.
  * @param {string[]} pathSegments - `request.path.split('/')`
  * @param {KeyedSegment[]} segments
  * @returns {KeyForm | null}
  */
 export const urlKeyForm = (pathSegments, segments) => {
   const forms = new Set(
-    segments.map(({ index, record }) => keyFormOf(pathSegments[index], record))
+    segments.map(({ index }) => keyFormOf(pathSegments[index]))
   )
 
   return forms.size === 1 ? [...forms][0] : null

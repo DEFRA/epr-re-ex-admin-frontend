@@ -4,10 +4,11 @@ import {
   findRegistration
 } from '#server/common/helpers/fetch-organisation-overview.js'
 import { toReportingPeriods } from '#server/common/helpers/reporting-periods.js'
+import { reportsCalendarPathByIds } from '#server/common/helpers/backend-paths.js'
 import {
-  periodSubmissionPath,
-  reportsCalendarPathByIds
-} from '#server/common/helpers/backend-paths.js'
+  reportSubmissionUrl,
+  reportUnsubmitUrl
+} from '#server/common/helpers/page-urls.js'
 import {
   periodStatus,
   reportStatus
@@ -52,13 +53,13 @@ const PERIOD_STATUS_LABELS = {
  * @param {boolean} hasAdminWrite
  */
 const toReportRow = (keys, cadence, hasAdminWrite) => (period) => {
-  const submissionUrl = periodSubmissionPath({
+  const submission = {
     ...keys,
     year: String(period.year),
     cadence,
     period: String(period.period),
     submissionNumber: String(period.submissionNumber)
-  })
+  }
 
   const canUnsubmit =
     hasAdminWrite &&
@@ -80,8 +81,8 @@ const toReportRow = (keys, cadence, hasAdminWrite) => (period) => {
     submissionNumber: period.report ? period.submissionNumber : '',
     dueDate: period.dueDate,
     statusText: PERIOD_STATUS_LABELS[status] ?? status,
-    viewUrl: period.report ? submissionUrl : null,
-    unsubmitUrl: canUnsubmit ? `${submissionUrl}/unsubmit/confirm` : null
+    viewUrl: period.report ? reportSubmissionUrl(submission) : null,
+    unsubmitUrl: canUnsubmit ? `${reportUnsubmitUrl(submission)}/confirm` : null
   }
 }
 
