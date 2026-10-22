@@ -5,7 +5,10 @@ import {
   findRegistration
 } from '#server/common/helpers/fetch-organisation-overview.js'
 import { toReportingPeriods } from '#server/common/helpers/reporting-periods.js'
-import { reportsCalendarPath } from '#server/common/helpers/backend-paths.js'
+import {
+  registrationPath,
+  reportsCalendarPath
+} from '#server/common/helpers/backend-paths.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import {
   overseasSitesUrl,
@@ -137,6 +140,19 @@ const fetchWasteBalance = async (request, organisationId, accreditationId) => {
 }
 
 /**
+ * @param {HapiRequest} request
+ * @param {RegistrationKeys} registrationKeys
+ */
+const fetchSummaryLogs = async (request, registrationKeys) => {
+  const { summaryLogs } = await fetchJsonFromBackend(
+    request,
+    `${registrationPath(registrationKeys)}/summary-logs`,
+    {}
+  )
+  return summaryLogs
+}
+
+/**
  * The registration's reporting calendar, or `null` when the backend does not
  * serve the registration, as with one missing data the read model needs.
  * @param {HapiRequest} request
@@ -225,14 +241,7 @@ export const registrationOverviewGETController = {
     const errorMessage = request.yar.get('error')
     await request.yar.clear('error')
 
-    const [overview, { summaryLogs }] = await Promise.all([
-      fetchOrganisationOverview(request, organisationId),
-      fetchJsonFromBackend(
-        request,
-        `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs`,
-        {}
-      )
-    ])
+    const overview = await fetchOrganisationOverview(request, organisationId)
 
     const registration = findRegistration(
       overview,
@@ -245,8 +254,9 @@ export const registrationOverviewGETController = {
       registrationId
     })
 
-    const [calendar, wasteBalance] = await Promise.all([
-      // A registration with no number yet has no reports.
+    const [summaryLogs, calendar, wasteBalance] = await Promise.all([
+      // A registration with no number yet has no summary logs or reports.
+      registrationKeys ? fetchSummaryLogs(request, registrationKeys) : [],
       registrationKeys ? fetchCalendar(request, registrationKeys) : null,
       registration.accreditation
         ? fetchWasteBalance(
