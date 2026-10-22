@@ -99,6 +99,7 @@ describe('#registrationOverviewController', () => {
   }
 
   const calendarUrl = `${backendUrl}/organisations/:organisationNumber/registrations/:registrationNumber/reports/calendar`
+  const summaryLogsUrl = `${backendUrl}/organisations/:organisationNumber/registrations/:registrationNumber/summary-logs`
 
   const mockCalendar = {
     cadence: 'monthly',
@@ -314,10 +315,7 @@ describe('#registrationOverviewController', () => {
         () => HttpResponse.json(overviewResponse)
       ),
       http.get(calendarUrl, () => HttpResponse.json(calendarResponse)),
-      http.get(
-        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs`,
-        () => HttpResponse.json(summaryLogsResponse)
-      ),
+      http.get(summaryLogsUrl, () => HttpResponse.json(summaryLogsResponse)),
       http.get(
         `${backendUrl}/v1/organisations/${organisationId}/waste-balances`,
         () => HttpResponse.json(wasteBalanceResponse)
@@ -1073,33 +1071,6 @@ describe('#registrationOverviewController', () => {
       )
     })
 
-    test('Should show View data as not applicable when the registration has no number', async () => {
-      useMockBackend(
-        {
-          ...mockOverview,
-          registrations: [
-            { ...mockRegistration, registrationNumber: undefined }
-          ]
-        },
-        mockCalendar,
-        { summaryLogs: [mockSubmittedSummaryLog] }
-      )
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
-
-      const body = renderPage(result)
-      const [firstRow] = getDataRows(getSummaryLogsTable(body))
-
-      expect(
-        within(firstRow).queryByRole('link', { name: 'View data' })
-      ).not.toBeInTheDocument()
-      expect(firstRow).toHaveTextContent('N/A as not approved')
-    })
-
     test.each([
       ['rejected', 'Failed (Rejected)'],
       ['invalid', 'Failed (Invalid)'],
@@ -1164,6 +1135,30 @@ describe('#registrationOverviewController', () => {
       expect(getByText(body, 'No summary logs')).toBeInTheDocument()
     })
 
+    test('Should render "No summary logs" without asking the backend when the registration has no number', async () => {
+      useMockBackend(
+        {
+          ...mockOverview,
+          registrations: [
+            { ...mockRegistration, registrationNumber: undefined }
+          ]
+        },
+        mockCalendar,
+        { summaryLogs: [mockSubmittedSummaryLog] }
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+
+      expect(queryByRole(body, 'table', { name: 'Summary logs' })).toBeNull()
+      expect(getByText(body, 'No summary logs')).toBeInTheDocument()
+    })
+
     test('Should show 500 error page when the summary-logs backend returns a non-OK response', async () => {
       mswServer.use(
         http.get(
@@ -1172,11 +1167,12 @@ describe('#registrationOverviewController', () => {
         ),
         http.get(calendarUrl, () => HttpResponse.json(mockCalendar)),
         http.get(
-          `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs`,
-          () => {
-            throw HttpResponse.text('', { status: 500 })
-          }
-        )
+          `${backendUrl}/v1/organisations/${organisationId}/waste-balances`,
+          () => HttpResponse.json({ [accreditationId]: mockWasteBalance })
+        ),
+        http.get(summaryLogsUrl, () => {
+          throw HttpResponse.text('', { status: 500 })
+        })
       )
 
       const { result } = await server.inject({
@@ -1212,10 +1208,7 @@ describe('#registrationOverviewController', () => {
             throw HttpResponse.text('', { status: 500 })
           }
         ),
-        http.get(
-          `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs`,
-          () => HttpResponse.json({ summaryLogs: [] })
-        )
+        http.get(summaryLogsUrl, () => HttpResponse.json({ summaryLogs: [] }))
       )
 
       const { result } = await server.inject({
@@ -1301,9 +1294,8 @@ describe('#registrationOverviewController', () => {
             () => HttpResponse.json(mockOverview)
           ),
           http.get(calendarUrl, () => HttpResponse.json(mockCalendar)),
-          http.get(
-            `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs`,
-            () => HttpResponse.json({ summaryLogs: [] })
+          http.get(summaryLogsUrl, () =>
+            HttpResponse.json({ summaryLogs: [] })
           ),
           http.get(
             `${backendUrl}/v1/organisations/${organisationId}/waste-balances`,

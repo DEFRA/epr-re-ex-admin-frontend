@@ -163,7 +163,7 @@ describe('accreditation-status-transition', () => {
   const stubSummaryLogsAndWasteBalance = () => {
     mswServer.use(
       http.get(
-        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs`,
+        `${backendUrl}/organisations/:organisationNumber/registrations/:registrationNumber/summary-logs`,
         () => HttpResponse.json({ summaryLogs: [] })
       ),
       http.get(

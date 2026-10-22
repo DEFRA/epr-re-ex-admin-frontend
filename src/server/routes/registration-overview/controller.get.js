@@ -5,7 +5,10 @@ import {
   findRegistration
 } from '#server/common/helpers/fetch-organisation-overview.js'
 import { toReportingPeriods } from '#server/common/helpers/reporting-periods.js'
-import { reportsCalendarPath } from '#server/common/helpers/backend-paths.js'
+import {
+  registrationPath,
+  reportsCalendarPath
+} from '#server/common/helpers/backend-paths.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import {
   overseasSitesUrl,
@@ -109,7 +112,7 @@ const STATUS_DISPLAY = {
  * govukTag macro so the tag markup has a single source.
  * @param {string} organisationId
  * @param {string} registrationId
- * @param {RegistrationKeys | null} registrationKeys
+ * @param {RegistrationKeys} registrationKeys
  */
 const toSummaryLogRow =
   (organisationId, registrationId, registrationKeys) => (summaryLog) => {
@@ -120,9 +123,7 @@ const toSummaryLogRow =
       uploadedAt,
       label,
       className,
-      viewUrl:
-        registrationKeys &&
-        summaryLogUrl({ ...registrationKeys, summaryLogId }),
+      viewUrl: summaryLogUrl({ ...registrationKeys, summaryLogId }),
       downloadUrl: `/system-logs/download/${organisationId}/${registrationId}/${summaryLogId}`
     }
   }
@@ -139,6 +140,28 @@ const fetchWasteBalance = async (request, organisationId, accreditationId) => {
     request.logger.warn({ message: 'Failed to fetch waste balance', err })
     return null
   }
+}
+
+/**
+ * @param {HapiRequest} request
+ * @param {string} organisationId
+ * @param {string} registrationId
+ * @param {RegistrationKeys} registrationKeys
+ */
+const fetchSummaryLogRows = async (
+  request,
+  organisationId,
+  registrationId,
+  registrationKeys
+) => {
+  const { summaryLogs } = await fetchJsonFromBackend(
+    request,
+    `${registrationPath(registrationKeys)}/summary-logs`,
+    {}
+  )
+  return summaryLogs.map(
+    toSummaryLogRow(organisationId, registrationId, registrationKeys)
+  )
 }
 
 /**
@@ -230,14 +253,7 @@ export const registrationOverviewGETController = {
     const errorMessage = request.yar.get('error')
     await request.yar.clear('error')
 
-    const [overview, { summaryLogs }] = await Promise.all([
-      fetchOrganisationOverview(request, organisationId),
-      fetchJsonFromBackend(
-        request,
-        `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs`,
-        {}
-      )
-    ])
+    const overview = await fetchOrganisationOverview(request, organisationId)
 
     const registration = findRegistration(
       overview,
@@ -250,8 +266,16 @@ export const registrationOverviewGETController = {
       registrationId
     })
 
-    const [calendar, wasteBalance] = await Promise.all([
-      // A registration with no number yet has no reports.
+    const [summaryLogRows, calendar, wasteBalance] = await Promise.all([
+      // A registration with no number yet has no summary logs or reports.
+      registrationKeys
+        ? fetchSummaryLogRows(
+            request,
+            organisationId,
+            registrationId,
+            registrationKeys
+          )
+        : [],
       registrationKeys ? fetchCalendar(request, registrationKeys) : null,
       registration.accreditation
         ? fetchWasteBalance(
@@ -265,10 +289,6 @@ export const registrationOverviewGETController = {
     const pageTitle = request.route.settings.app.pageTitle
 
     const heading = `${overview.companyName} - ${registration.registrationNumber ?? registration.id}`
-
-    const summaryLogRows = summaryLogs.map(
-      toSummaryLogRow(organisationId, registrationId, registrationKeys)
-    )
 
     return h.view('routes/registration-overview/index', {
       breadcrumbs: [

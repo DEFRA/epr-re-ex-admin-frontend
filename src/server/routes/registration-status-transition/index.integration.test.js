@@ -132,7 +132,7 @@ describe('registration-status-transition', () => {
   const stubSummaryLogs = () => {
     mswServer.use(
       http.get(
-        `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs`,
+        `${backendUrl}/organisations/:organisationNumber/registrations/:registrationNumber/summary-logs`,
         () => HttpResponse.json({ summaryLogs: [] })
       )
     )

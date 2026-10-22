@@ -122,7 +122,7 @@
           {% set summaryLogTableRows = [] %}
           {% for row in summaryLogRows %}
             {% set actionsHtml %}
-              {{ linkOrNotApproved(row.viewUrl, "View data") }}
+              <a class="govuk-link govuk-link--no-visited-state" href="{{ row.viewUrl }}">View data</a>
               <br><a class="govuk-link govuk-link--no-visited-state" href="{{ row.downloadUrl }}">Download</a>
             {% endset %}
             {% set summaryLogTableRows = summaryLogTableRows.concat([[
