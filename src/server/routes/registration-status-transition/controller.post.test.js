@@ -49,7 +49,7 @@ describe('createTransitionPostController without grant fields', () => {
     }
   })
 
-  test('posts only fromStatus/toStatus and redirects to the overview', async () => {
+  test('posts only toStatus and redirects to the overview', async () => {
     mockFetchJsonFromBackend.mockResolvedValue({ status: 'cancelled' })
 
     const controller = createTransitionPostController('cancel', fakeTransition)
@@ -60,7 +60,7 @@ describe('createTransitionPostController without grant fields', () => {
       `/v1/organisations/${organisationId}/registrations/${registrationId}/status-history`,
       {
         method: 'POST',
-        body: JSON.stringify({ fromStatus: 'approved', toStatus: 'cancelled' })
+        body: JSON.stringify({ toStatus: 'cancelled' })
       }
     )
     expect(mockH.redirect).toHaveBeenCalledWith(overviewUrl)

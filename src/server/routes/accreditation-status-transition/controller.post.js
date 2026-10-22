@@ -23,11 +23,8 @@ export const createTransitionPostController = (action, transition) => ({
     const { organisationId, registrationId, accreditationId } = request.params
     const overviewUrl = `/organisations/${organisationId}/registrations/${registrationId}/overview`
 
-    /** @type {{ fromStatus: string, toStatus: string, validFrom?: string, validTo?: string, accreditationNumber?: string }} */
-    const body = {
-      fromStatus: transition.fromStatus,
-      toStatus: transition.toStatus
-    }
+    /** @type {{ toStatus: string, validFrom?: string, validTo?: string, accreditationNumber?: string }} */
+    const body = { toStatus: transition.toStatus }
 
     /** @type {GrantFormValues | undefined} */
     let grantValues

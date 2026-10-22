@@ -43,7 +43,7 @@ const defineTransition = ({ problemVerb, buttonClasses = '', ...entry }) => ({
 /**
  * Registration status transitions the admin UI can action, keyed by the URL
  * action segment. Each entry drives a confirm page and a POST of
- * `{ fromStatus, toStatus, ...params }` to the backend status-history
+ * `{ toStatus, ...params }` to the backend status-history
  * endpoint.
  * @type {Record<string, RegistrationStatusTransition>}
  */

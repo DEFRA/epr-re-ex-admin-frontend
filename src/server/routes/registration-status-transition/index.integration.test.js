@@ -29,7 +29,6 @@ const TRANSITION_CASES = [
       registrationNumber: 'REG999999'
     },
     expectedBody: {
-      fromStatus: 'created',
       toStatus: 'approved',
       validFrom: '2026-08-01',
       registrationNumber: 'REG999999'
@@ -45,7 +44,7 @@ const TRANSITION_CASES = [
     fallbackError:
       'There was a problem rejecting the registration. Please try again.',
     formPayload: {},
-    expectedBody: { fromStatus: 'created', toStatus: 'rejected' }
+    expectedBody: { toStatus: 'rejected' }
   },
   {
     action: 'reopen',
@@ -56,7 +55,7 @@ const TRANSITION_CASES = [
     fallbackError:
       'There was a problem reopening the registration. Please try again.',
     formPayload: {},
-    expectedBody: { fromStatus: 'rejected', toStatus: 'created' }
+    expectedBody: { toStatus: 'created' }
   },
   {
     action: 'cancel',
@@ -67,7 +66,7 @@ const TRANSITION_CASES = [
     fallbackError:
       'There was a problem cancelling the registration. Please try again.',
     formPayload: {},
-    expectedBody: { fromStatus: 'approved', toStatus: 'cancelled' }
+    expectedBody: { toStatus: 'cancelled' }
   },
   {
     action: 'reinstate',
@@ -78,7 +77,7 @@ const TRANSITION_CASES = [
     fallbackError:
       'There was a problem reinstating the registration. Please try again.',
     formPayload: {},
-    expectedBody: { fromStatus: 'cancelled', toStatus: 'approved' }
+    expectedBody: { toStatus: 'approved' }
   }
 ]
 
