@@ -14,9 +14,11 @@ vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
 describe('GET summary log document', () => {
   const organisationId = '69c3b4f0abda9efa68dd6697'
   const registrationId = '69c3b4f0abda9efa68dd669b'
+  const organisationNumber = '500123'
+  const registrationNumber = 'R26ER5001180041PL'
   const summaryLogId = 'sl-123'
-  const url = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
-  const documentPath = `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/document`
+  const url = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}`
+  const documentPath = `${url}/document`
 
   let server
 
@@ -103,9 +105,33 @@ describe('GET summary log document', () => {
       expect(statusCode).toBe(statusCodes.ok)
 
       const overviewCrumb = $(
-        `.govuk-breadcrumbs a[href="/organisations/${organisationId}/registrations/${registrationId}/overview"]`
+        `.govuk-breadcrumbs a[href="/organisations/${organisationNumber}/registrations/${registrationNumber}/overview"]`
       )
       expect(overviewCrumb).toHaveLength(1)
+    })
+
+    test('Should send an old id URL to the natural-key URL', async () => {
+      mswServer.use(
+        http.get(
+          `${config.get('eprBackendUrl')}/v1/organisations/${organisationId}/overview`,
+          () =>
+            HttpResponse.json({
+              id: organisationId,
+              organisationNumber,
+              companyName: 'ACME ltd',
+              registrations: [{ id: registrationId, registrationNumber }]
+            })
+        )
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe(url)
     })
 
     test('Should render the standard not-found page when the backend returns 404', async () => {

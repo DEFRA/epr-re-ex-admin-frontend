@@ -55,6 +55,12 @@ export const overseasSitesUrl = (keys) =>
   `${accreditationPath(keys)}/overseas-sites`
 
 /**
+ * @param {{ organisationNumber: string, registrationNumber: string, summaryLogId: string }} keys
+ */
+export const summaryLogUrl = (keys) =>
+  `${registrationPath(keys)}/summary-logs/${encodeURIComponent(keys.summaryLogId)}`
+
+/**
  * @param {PeriodSubmissionParams} params
  */
 export const reportUnsubmitUrl = (params) =>
