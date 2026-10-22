@@ -1071,33 +1071,6 @@ describe('#registrationOverviewController', () => {
       )
     })
 
-    test('Should show View data as not applicable when the registration has no number', async () => {
-      useMockBackend(
-        {
-          ...mockOverview,
-          registrations: [
-            { ...mockRegistration, registrationNumber: undefined }
-          ]
-        },
-        mockCalendar,
-        { summaryLogs: [mockSubmittedSummaryLog] }
-      )
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
-
-      const body = renderPage(result)
-      const [firstRow] = getDataRows(getSummaryLogsTable(body))
-
-      expect(
-        within(firstRow).queryByRole('link', { name: 'View data' })
-      ).not.toBeInTheDocument()
-      expect(firstRow).toHaveTextContent('N/A as not approved')
-    })
-
     test.each([
       ['rejected', 'Failed (Rejected)'],
       ['invalid', 'Failed (Invalid)'],

@@ -112,7 +112,7 @@ const STATUS_DISPLAY = {
  * govukTag macro so the tag markup has a single source.
  * @param {string} organisationId
  * @param {string} registrationId
- * @param {RegistrationKeys | null} registrationKeys
+ * @param {RegistrationKeys} registrationKeys
  */
 const toSummaryLogRow =
   (organisationId, registrationId, registrationKeys) => (summaryLog) => {
@@ -123,9 +123,7 @@ const toSummaryLogRow =
       uploadedAt,
       label,
       className,
-      viewUrl:
-        registrationKeys &&
-        summaryLogUrl({ ...registrationKeys, summaryLogId }),
+      viewUrl: summaryLogUrl({ ...registrationKeys, summaryLogId }),
       downloadUrl: `/system-logs/download/${organisationId}/${registrationId}/${summaryLogId}`
     }
   }
@@ -146,15 +144,24 @@ const fetchWasteBalance = async (request, organisationId, accreditationId) => {
 
 /**
  * @param {HapiRequest} request
+ * @param {string} organisationId
+ * @param {string} registrationId
  * @param {RegistrationKeys} registrationKeys
  */
-const fetchSummaryLogs = async (request, registrationKeys) => {
+const fetchSummaryLogRows = async (
+  request,
+  organisationId,
+  registrationId,
+  registrationKeys
+) => {
   const { summaryLogs } = await fetchJsonFromBackend(
     request,
     `${registrationPath(registrationKeys)}/summary-logs`,
     {}
   )
-  return summaryLogs
+  return summaryLogs.map(
+    toSummaryLogRow(organisationId, registrationId, registrationKeys)
+  )
 }
 
 /**
@@ -259,9 +266,16 @@ export const registrationOverviewGETController = {
       registrationId
     })
 
-    const [summaryLogs, calendar, wasteBalance] = await Promise.all([
+    const [summaryLogRows, calendar, wasteBalance] = await Promise.all([
       // A registration with no number yet has no summary logs or reports.
-      registrationKeys ? fetchSummaryLogs(request, registrationKeys) : [],
+      registrationKeys
+        ? fetchSummaryLogRows(
+            request,
+            organisationId,
+            registrationId,
+            registrationKeys
+          )
+        : [],
       registrationKeys ? fetchCalendar(request, registrationKeys) : null,
       registration.accreditation
         ? fetchWasteBalance(
@@ -275,10 +289,6 @@ export const registrationOverviewGETController = {
     const pageTitle = request.route.settings.app.pageTitle
 
     const heading = `${overview.companyName} - ${registration.registrationNumber ?? registration.id}`
-
-    const summaryLogRows = summaryLogs.map(
-      toSummaryLogRow(organisationId, registrationId, registrationKeys)
-    )
 
     return h.view('routes/registration-overview/index', {
       breadcrumbs: [
