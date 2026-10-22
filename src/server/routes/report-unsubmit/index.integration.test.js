@@ -119,8 +119,17 @@ describe('report-unsubmit', () => {
 
   const stubCalendar = (reportingPeriods = [submittedSubmission(1)]) =>
     mswServer.use(
-      http.get(`${backendUrl}${REGISTRATION_URL}/reports/calendar`, () =>
-        HttpResponse.json({ cadence, reportingPeriods })
+      http.get(`${backendUrl}${REGISTRATION_URL}/reports/:year/calendar`, () =>
+        HttpResponse.json({
+          year: 2026,
+          accredited: {
+            accreditationNumber: 'ACC-1',
+            reportingPeriods: reportingPeriods.map((item) => ({
+              ...item,
+              cadence
+            }))
+          }
+        })
       )
     )
 

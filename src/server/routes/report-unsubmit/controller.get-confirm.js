@@ -2,10 +2,8 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
 import { PAGE_TITLE } from './constants.js'
 import { formatPeriod } from '#server/common/helpers/format-reporting-period.js'
 import { toReportingPeriods } from '#server/common/helpers/reporting-periods.js'
-import {
-  periodSubmissionPath,
-  reportsCalendarPath
-} from '#server/common/helpers/backend-paths.js'
+import { periodSubmissionPath } from '#server/common/helpers/backend-paths.js'
+import { fetchReportingPeriods } from '#server/common/helpers/fetch-reporting-periods.js'
 import {
   registrationBreadcrumbs,
   registrationOverviewUrl,
@@ -62,17 +60,14 @@ const fetchPeriodSubmission = (request) =>
  * @param {PeriodSubmissionRequest} request
  */
 const fetchCalendarPeriod = async (request) => {
-  const { year, period, submissionNumber } = request.params
+  const { year, cadence, period, submissionNumber } = request.params
 
-  const calendar = await fetchJsonFromBackend(
-    request,
-    reportsCalendarPath(request.params),
-    {}
-  )
+  const reportingPeriods = await fetchReportingPeriods(request, request.params)
 
-  return toReportingPeriods(calendar.reportingPeriods, calendar.cadence).find(
+  return toReportingPeriods(reportingPeriods).find(
     (item) =>
       item.year === Number(year) &&
+      item.cadence === cadence &&
       item.period === Number(period) &&
       item.submissionNumber === Number(submissionNumber)
   )
