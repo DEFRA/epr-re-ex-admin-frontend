@@ -14,6 +14,7 @@ import {
   overseasSitesUrl,
   reportSubmissionUrl,
   reportUnsubmitUrl,
+  summaryLogUrl,
   wasteBalanceEventsUrl
 } from '#server/common/helpers/page-urls.js'
 import {
@@ -111,19 +112,23 @@ const STATUS_DISPLAY = {
  * govukTag macro so the tag markup has a single source.
  * @param {string} organisationId
  * @param {string} registrationId
+ * @param {RegistrationKeys | null} registrationKeys
  */
-const toSummaryLogRow = (organisationId, registrationId) => (summaryLog) => {
-  const { summaryLogId, uploadedAt, status } = summaryLog
-  const { label, className } = STATUS_DISPLAY[status]
+const toSummaryLogRow =
+  (organisationId, registrationId, registrationKeys) => (summaryLog) => {
+    const { summaryLogId, uploadedAt, status } = summaryLog
+    const { label, className } = STATUS_DISPLAY[status]
 
-  return {
-    uploadedAt,
-    label,
-    className,
-    viewUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`,
-    downloadUrl: `/system-logs/download/${organisationId}/${registrationId}/${summaryLogId}`
+    return {
+      uploadedAt,
+      label,
+      className,
+      viewUrl:
+        registrationKeys &&
+        summaryLogUrl({ ...registrationKeys, summaryLogId }),
+      downloadUrl: `/system-logs/download/${organisationId}/${registrationId}/${summaryLogId}`
+    }
   }
-}
 
 const fetchWasteBalance = async (request, organisationId, accreditationId) => {
   try {
@@ -272,7 +277,7 @@ export const registrationOverviewGETController = {
     const heading = `${overview.companyName} - ${registration.registrationNumber ?? registration.id}`
 
     const summaryLogRows = summaryLogs.map(
-      toSummaryLogRow(organisationId, registrationId)
+      toSummaryLogRow(organisationId, registrationId, registrationKeys)
     )
 
     return h.view('routes/registration-overview/index', {

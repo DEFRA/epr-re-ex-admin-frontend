@@ -1,4 +1,6 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { registrationPath } from '#server/common/helpers/backend-paths.js'
+import { registrationBreadcrumbs } from '#server/common/helpers/page-urls.js'
 
 /**
  * Renders the whole stored summary log document as pretty-printed JSON for
@@ -13,22 +15,16 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  */
 export const summaryLogDocumentGetController = {
   async handler(request, h) {
-    const { organisationId, registrationId, summaryLogId } = request.params
+    const { summaryLogId } = request.params
 
     const summaryLog = await fetchJsonFromBackend(
       request,
-      `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/document`
+      `${registrationPath(request.params)}/summary-logs/${encodeURIComponent(summaryLogId)}/document`
     )
 
     return h.view('routes/summary-log-document/index', {
       pageTitle: request.route.settings.app.pageTitle,
-      breadcrumbs: [
-        { text: 'Organisations', href: '/organisations' },
-        {
-          text: 'Registration overview',
-          href: `/organisations/${organisationId}/registrations/${registrationId}/overview`
-        }
-      ],
+      breadcrumbs: registrationBreadcrumbs(request.params),
       summaryLog
     })
   }

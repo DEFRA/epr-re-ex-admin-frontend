@@ -1067,8 +1067,35 @@ describe('#registrationOverviewController', () => {
         within(firstRow).getByRole('link', { name: 'View data' })
       ).toHaveAttribute(
         'href',
-        `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${mockSubmittedSummaryLog.summaryLogId}`
+        `/organisations/500123/registrations/REG-50030-001/summary-logs/${mockSubmittedSummaryLog.summaryLogId}`
       )
+    })
+
+    test('Should show View data as not applicable when the registration has no number', async () => {
+      useMockBackend(
+        {
+          ...mockOverview,
+          registrations: [
+            { ...mockRegistration, registrationNumber: undefined }
+          ]
+        },
+        mockCalendar,
+        { summaryLogs: [mockSubmittedSummaryLog] }
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+      const [firstRow] = getDataRows(getSummaryLogsTable(body))
+
+      expect(
+        within(firstRow).queryByRole('link', { name: 'View data' })
+      ).not.toBeInTheDocument()
+      expect(firstRow).toHaveTextContent('N/A as not approved')
     })
 
     test.each([
