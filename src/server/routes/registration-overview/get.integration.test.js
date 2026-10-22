@@ -1045,7 +1045,7 @@ describe('#registrationOverviewController', () => {
         within(firstRow).getByRole('link', { name: 'Download' })
       ).toHaveAttribute(
         'href',
-        `/system-logs/download/${organisationId}/${registrationId}/${mockSubmittedSummaryLog.summaryLogId}`
+        `/organisations/500123/registrations/REG-50030-001/summary-logs/${mockSubmittedSummaryLog.summaryLogId}/file`
       )
     })
 

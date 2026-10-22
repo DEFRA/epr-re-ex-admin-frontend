@@ -19,6 +19,7 @@ import { prnActivity } from './routes/prn-activity/index.js'
 import { prnCancel } from './routes/prn-cancel/index.js'
 import { summaryLogUploadsReport } from './routes/summary-log/index.js'
 import { summaryLogDocument } from './routes/summary-log-document/index.js'
+import { summaryLogFile } from './routes/summary-log-file/index.js'
 import { orsUpload } from './routes/ors-upload/index.js'
 import { reportSubmissions } from './routes/report-submissions/index.js'
 import { wasteRecordsExport } from './routes/waste-records-export/index.js'
@@ -66,6 +67,7 @@ export const router = {
         ...(FEATURE_FLAGS.prnAdminCancellation ? [prnCancel] : []),
         summaryLogUploadsReport,
         summaryLogDocument,
+        summaryLogFile,
         orsUpload,
         reportSubmissions,
         wasteRecordsExport,

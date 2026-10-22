@@ -62,12 +62,12 @@ describe(routeKeyForm, () => {
     })
   })
 
-  it.each([
-    '/organisations/{id}',
-    '/system-logs/download/{organisationId}/{registrationId}/{summaryLogId}'
-  ])('ignores %s, which names no record by its keys', (routePath) => {
-    expect(routeKeyForm(routePath)).toBeNull()
-  })
+  it.each(['/organisations/{id}', '/system-logs'])(
+    'ignores %s, which names no record by its keys',
+    (routePath) => {
+      expect(routeKeyForm(routePath)).toBeNull()
+    }
+  )
 
   it('ignores a route that mixes ids and natural keys', () => {
     expect(
