@@ -11,7 +11,7 @@ vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
   getUserSession: vi.fn().mockReturnValue(null)
 }))
 
-describe('GET /system-logs/download/{organisationId}/{registrationId}/{summaryLogId}', () => {
+describe('GET /organisations/{organisationNumber}/registrations/{registrationNumber}/summary-logs/{summaryLogId}/file', () => {
   let server
 
   beforeAll(async () => {
@@ -28,15 +28,23 @@ describe('GET /system-logs/download/{organisationId}/{registrationId}/{summaryLo
     vi.clearAllMocks()
   })
 
-  const downloadUrl = '/system-logs/download/org-123/reg-456/sl-789'
+  const organisationId = '69c3b4f0abda9efa68dd6697'
+  const registrationId = '69c3b4f0abda9efa68dd669b'
+  const organisationNumber = '500123'
+  const registrationNumber = 'R26ER5001180041PL'
+  const summaryLogId = 'sl-789'
 
-  const backendDownloadPath = `${config.get('eprBackendUrl')}/v1/organisations/org-123/registrations/reg-456/summary-logs/sl-789/file`
+  const fileUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}/summary-logs/${summaryLogId}/file`
+
+  const backendFilePath = `${config.get('eprBackendUrl')}${fileUrl}`
+
+  const auth = { strategy: 'session', credentials: mockUserSession }
 
   describe('when user is unauthenticated', () => {
     test('returns unauthorised status code', async () => {
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: downloadUrl
+        url: fileUrl
       })
 
       expect(statusCode).toBe(statusCodes.unauthorised)
@@ -57,7 +65,7 @@ describe('GET /system-logs/download/{organisationId}/{registrationId}/{summaryLo
 
       mswServer.use(
         http.get(
-          backendDownloadPath,
+          backendFilePath,
           () =>
             new HttpResponse(null, {
               status: 302,
@@ -72,11 +80,8 @@ describe('GET /system-logs/download/{organisationId}/{registrationId}/{summaryLo
 
       const { statusCode, headers, rawPayload } = await server.inject({
         method: 'GET',
-        url: downloadUrl,
-        auth: {
-          strategy: 'session',
-          credentials: mockUserSession
-        }
+        url: fileUrl,
+        auth
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -85,6 +90,30 @@ describe('GET /system-logs/download/{organisationId}/{registrationId}/{summaryLo
         'attachment; filename="sl-789.xlsx"'
       )
       expect([...rawPayload]).toEqual([...binaryContent])
+    })
+
+    test('sends an old id URL, as the system logs page links, to the natural-key URL', async () => {
+      mswServer.use(
+        http.get(
+          `${config.get('eprBackendUrl')}/v1/organisations/${organisationId}/overview`,
+          () =>
+            HttpResponse.json({
+              id: organisationId,
+              organisationNumber,
+              companyName: 'ACME ltd',
+              registrations: [{ id: registrationId, registrationNumber }]
+            })
+        )
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/file`,
+        auth
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe(fileUrl)
     })
   })
 })

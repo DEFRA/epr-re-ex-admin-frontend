@@ -110,23 +110,21 @@ const STATUS_DISPLAY = {
  * Builds the view model for a summary log row. STATUS_DISPLAY keeps the
  * status-to-label-and-colour decision; the template renders it through the
  * govukTag macro so the tag markup has a single source.
- * @param {string} organisationId
- * @param {string} registrationId
  * @param {RegistrationKeys} registrationKeys
  */
-const toSummaryLogRow =
-  (organisationId, registrationId, registrationKeys) => (summaryLog) => {
-    const { summaryLogId, uploadedAt, status } = summaryLog
-    const { label, className } = STATUS_DISPLAY[status]
+const toSummaryLogRow = (registrationKeys) => (summaryLog) => {
+  const { summaryLogId, uploadedAt, status } = summaryLog
+  const { label, className } = STATUS_DISPLAY[status]
+  const viewUrl = summaryLogUrl({ ...registrationKeys, summaryLogId })
 
-    return {
-      uploadedAt,
-      label,
-      className,
-      viewUrl: summaryLogUrl({ ...registrationKeys, summaryLogId }),
-      downloadUrl: `/system-logs/download/${organisationId}/${registrationId}/${summaryLogId}`
-    }
+  return {
+    uploadedAt,
+    label,
+    className,
+    viewUrl,
+    downloadUrl: `${viewUrl}/file`
   }
+}
 
 const fetchWasteBalance = async (request, organisationId, accreditationId) => {
   try {
@@ -144,24 +142,15 @@ const fetchWasteBalance = async (request, organisationId, accreditationId) => {
 
 /**
  * @param {HapiRequest} request
- * @param {string} organisationId
- * @param {string} registrationId
  * @param {RegistrationKeys} registrationKeys
  */
-const fetchSummaryLogRows = async (
-  request,
-  organisationId,
-  registrationId,
-  registrationKeys
-) => {
+const fetchSummaryLogRows = async (request, registrationKeys) => {
   const { summaryLogs } = await fetchJsonFromBackend(
     request,
     `${registrationPath(registrationKeys)}/summary-logs`,
     {}
   )
-  return summaryLogs.map(
-    toSummaryLogRow(organisationId, registrationId, registrationKeys)
-  )
+  return summaryLogs.map(toSummaryLogRow(registrationKeys))
 }
 
 /**
@@ -268,14 +257,7 @@ export const registrationOverviewGETController = {
 
     const [summaryLogRows, calendar, wasteBalance] = await Promise.all([
       // A registration with no number yet has no summary logs or reports.
-      registrationKeys
-        ? fetchSummaryLogRows(
-            request,
-            organisationId,
-            registrationId,
-            registrationKeys
-          )
-        : [],
+      registrationKeys ? fetchSummaryLogRows(request, registrationKeys) : [],
       registrationKeys ? fetchCalendar(request, registrationKeys) : null,
       registration.accreditation
         ? fetchWasteBalance(

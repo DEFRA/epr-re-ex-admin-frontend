@@ -1,5 +1,5 @@
 import { vi } from 'vitest'
-import { systemLogDownloadController } from './controller.download.js'
+import { summaryLogFileGetController } from './controller.get.js'
 import { fetchRedirectFromBackend } from '#server/common/helpers/fetch-redirect-from-backend.js'
 import { http, server as mswServer, HttpResponse } from '#vite/setup-msw.js'
 
@@ -7,7 +7,7 @@ vi.mock('#server/common/helpers/fetch-redirect-from-backend.js', () => ({
   fetchRedirectFromBackend: vi.fn()
 }))
 
-describe('system-log download controller', () => {
+describe('summary-log file controller', () => {
   let mockRequest
   let mockH
   let mockResponseChain
@@ -17,8 +17,8 @@ describe('system-log download controller', () => {
 
     mockRequest = {
       params: {
-        organisationId: 'org-123',
-        registrationId: 'reg-456',
+        organisationNumber: '500123',
+        registrationNumber: 'R26ER5001180041PL',
         summaryLogId: 'sl-789'
       }
     }
@@ -44,11 +44,11 @@ describe('system-log download controller', () => {
       )
     )
 
-    await systemLogDownloadController.handler(mockRequest, mockH)
+    await summaryLogFileGetController.handler(mockRequest, mockH)
 
     expect(fetchRedirectFromBackend).toHaveBeenCalledWith(
       mockRequest,
-      '/v1/organisations/org-123/registrations/reg-456/summary-logs/sl-789/file'
+      '/organisations/500123/registrations/R26ER5001180041PL/summary-logs/sl-789/file'
     )
   })
 
@@ -62,7 +62,7 @@ describe('system-log download controller', () => {
     vi.mocked(fetchRedirectFromBackend).mockResolvedValue(presignedUrl)
     mswServer.use(http.get(presignedUrl, () => new HttpResponse(binaryContent)))
 
-    await systemLogDownloadController.handler(mockRequest, mockH)
+    await summaryLogFileGetController.handler(mockRequest, mockH)
 
     const responseArg = mockH.response.mock.calls[0][0]
     expect(Buffer.isBuffer(responseArg)).toBe(true)
@@ -84,7 +84,7 @@ describe('system-log download controller', () => {
     vi.mocked(fetchRedirectFromBackend).mockResolvedValue(presignedUrl)
     mswServer.use(http.get(presignedUrl, () => new HttpResponse(binaryContent)))
 
-    await systemLogDownloadController.handler(mockRequest, mockH)
+    await summaryLogFileGetController.handler(mockRequest, mockH)
 
     const responseArg = mockH.response.mock.calls[0][0]
     expect(Buffer.isBuffer(responseArg)).toBe(true)
@@ -98,7 +98,7 @@ describe('system-log download controller', () => {
     vi.mocked(fetchRedirectFromBackend).mockResolvedValue(presignedUrl)
     mswServer.use(http.get(presignedUrl, () => new HttpResponse(binaryContent)))
 
-    await systemLogDownloadController.handler(mockRequest, mockH)
+    await summaryLogFileGetController.handler(mockRequest, mockH)
 
     const responseArg = mockH.response.mock.calls[0][0]
     expect(Buffer.isBuffer(responseArg)).toBe(true)
@@ -111,7 +111,7 @@ describe('system-log download controller', () => {
     )
 
     await expect(
-      systemLogDownloadController.handler(mockRequest, mockH)
+      summaryLogFileGetController.handler(mockRequest, mockH)
     ).rejects.toThrow('Invalid download URL')
   })
 
@@ -125,7 +125,7 @@ describe('system-log download controller', () => {
     )
 
     await expect(
-      systemLogDownloadController.handler(mockRequest, mockH)
+      summaryLogFileGetController.handler(mockRequest, mockH)
     ).rejects.toThrow('Failed to fetch file from storage')
   })
 })

@@ -127,7 +127,8 @@
           {% endif %}
 
           {% if systemLog.context.summaryLogId %}
-            {% set downloadHref = '/system-logs/download/' ~ (systemLog.context.organisationId | urlencode) ~ '/' ~ (systemLog.context.registrationId | urlencode) ~ '/' ~ (systemLog.context.summaryLogId | urlencode) %}
+            {# Logs hold ids; the file route redirects them to its natural-key address #}
+            {% set downloadHref = '/organisations/' ~ (systemLog.context.organisationId | urlencode) ~ '/registrations/' ~ (systemLog.context.registrationId | urlencode) ~ '/summary-logs/' ~ (systemLog.context.summaryLogId | urlencode) ~ '/file' %}
             {% set downloadHtml = '<a href="' ~ downloadHref ~ '" class="govuk-link">Download file</a>' %}
             {% set rows = rows.concat([ { key: { text: "File" }, value: { html: downloadHtml } } ]) %}
           {% endif %}

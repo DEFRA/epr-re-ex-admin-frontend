@@ -165,7 +165,7 @@ describe('GET /system-logs', () => {
         expect(statusCode).toBe(statusCodes.ok)
 
         const downloadLink = $(
-          'a[href="/system-logs/download/org-123/reg-456/sl-789"]'
+          'a[href="/organisations/org-123/registrations/reg-456/summary-logs/sl-789/file"]'
         )
         expect(downloadLink).toHaveLength(1)
         expect(downloadLink.text().trim()).toBe('Download file')
@@ -192,7 +192,7 @@ describe('GET /system-logs', () => {
 
         expect(statusCode).toBe(statusCodes.ok)
 
-        const downloadLink = $('a[href*="/system-logs/download/"]')
+        const downloadLink = $('a[href$="/file"]')
         expect(downloadLink).toHaveLength(0)
       })
     })
