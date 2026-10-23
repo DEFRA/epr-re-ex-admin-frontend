@@ -114,7 +114,7 @@ export const REGISTRATION_STATUS_TRANSITIONS = {
 /**
  * Summary-list action items for every transition available from the given
  * registration status. Single source of truth for which actions the
- * registration overview offers on the Status row per status.
+ * JSON editor page offers per status.
  * @param {string} status - Current registration status
  * @param {string} baseUrl - Registration URL prefix, `.../registrations/{id}`
  * @returns {Array<{href: string, text: string, visuallyHiddenText: string}>}

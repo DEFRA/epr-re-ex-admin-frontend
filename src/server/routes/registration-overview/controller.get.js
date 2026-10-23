@@ -24,8 +24,6 @@ import {
   reportStatus
 } from '#server/common/constants/report-status.js'
 import { SCOPES } from '#server/common/helpers/auth/scopes.js'
-import { accreditationStatusActions } from '#server/routes/accreditation-status-transition/transitions.js'
-import { registrationStatusActions } from '#server/routes/registration-status-transition/transitions.js'
 import { toNaturalKeys } from '#server/common/helpers/natural-keys/swap-keys.js'
 
 /**
@@ -181,7 +179,7 @@ const fetchPeriods = async (request, registrationKeys) => {
 }
 
 /**
- * The links and status actions the page derives from the registration. The
+ * The links the page derives from the registration. The
  * accreditation-scoped ones are null when there is no accreditation, and
  * overseas sites additionally only apply to exporters. A link to a record that
  * has no number yet, as it is not approved, is null too: the template shows it
@@ -198,24 +196,8 @@ const toRegistrationLinks = (
   { registrationKeys, accreditationKeys: approvedAccreditation }
 ) => {
   const registrationUrl = `/organisations/${organisationId}/registrations/${registrationId}`
-  const accreditationUrl = registration.accreditation
-    ? `${registrationUrl}/accreditations/${registration.accreditation.id}`
-    : null
 
   return {
-    // The template only attaches these to their status rows for users holding
-    // admin.write (hiding is UX - the backend enforces scope).
-    accreditationStatusActions: accreditationUrl
-      ? accreditationStatusActions(
-          registration.accreditation.status,
-          accreditationUrl,
-          registration.status
-        )
-      : [],
-    registrationStatusActions: registrationStatusActions(
-      registration.status,
-      registrationUrl
-    ),
     isExporter: registration.processingType === EXPORTER_PROCESSING_TYPE,
     wasteBalanceEventsUrl:
       approvedAccreditation && wasteBalanceEventsUrl(approvedAccreditation),

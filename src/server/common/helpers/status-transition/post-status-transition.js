@@ -14,7 +14,7 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
  * own error copy differ; the request/response handling is identical.
  *
  * Returns `null` on success, or when a 5xx/network failure has already been
- * flashed on the request's session (the caller redirects to the overview
+ * flashed on the request's session (the caller redirects to the JSON editor page
  * either way). Returns `{ backendError }` when a client-side (4xx) rejection
  * of grant fields should instead re-render the confirm page, preserving what
  * the admin typed.
@@ -55,7 +55,7 @@ export const postStatusTransition = async (
 
     // A backend rejection of the grant fields re-renders the confirm page
     // so the admin keeps what they typed; 5xx and network failures still
-    // flash on the overview, where retrying immediately won't help.
+    // flash on the JSON editor page, where retrying immediately won't help.
     if (grantValues && statusCode < statusCodes.internalServerError) {
       return { backendError: errorMessage }
     }

@@ -66,7 +66,9 @@ describe('organisation GET controller', () => {
         },
         // Include characters that need escaping
         notes:
-          'Line separator: \u2028 Paragraph separator: \u2029 HTML comment: -->'
+          'Line separator: \u2028 Paragraph separator: \u2029 HTML comment: -->',
+        registrations: [],
+        accreditations: []
       }
 
       const getOrganisationHandler = http.get(
@@ -109,6 +111,81 @@ describe('organisation GET controller', () => {
 
       expect(result).toContain('Sorry, there is a problem with the service')
     })
+
+    describe('status changes', () => {
+      const organisationWithRecords = {
+        id: 'org-1',
+        companyDetails: { name: 'ACME Ltd' },
+        registrations: [
+          {
+            id: 'reg-1',
+            registrationNumber: 'R26ER1',
+            status: 'approved',
+            accreditationId: 'acc-1'
+          },
+          { id: 'reg-2', status: 'created' }
+        ],
+        accreditations: [
+          { id: 'acc-1', accreditationNumber: 'A26ER1', status: 'approved' },
+          { id: 'acc-2', accreditationNumber: 'A26ER2', status: 'created' }
+        ]
+      }
+
+      const loadPage = async (credentials = mockUserSession) => {
+        mswServer.use(
+          http.get(`${backendUrl}/v1/organisations/org-1`, () =>
+            HttpResponse.json(organisationWithRecords)
+          )
+        )
+        const { result } = await server.inject({
+          method: 'GET',
+          url: '/organisations/org-1',
+          auth: { strategy: 'session', credentials }
+        })
+        return cheerio.load(result)
+      }
+
+      /** @param {cheerio.CheerioAPI} $ */
+      const tableRows = ($, caption) =>
+        $(`#status-changes table:has(caption:contains("${caption}")) tbody tr`)
+          .toArray()
+          .map((row) =>
+            $(row)
+              .find('td')
+              .toArray()
+              .map((cell) => $(cell).text().trim())
+          )
+
+      test('lists every registration, unapproved ones included, with its linked accreditation number and status changes', async () => {
+        const $ = await loadPage()
+
+        expect(tableRows($, 'Registrations')).toEqual([
+          ['reg-1', 'R26ER1', 'A26ER1', 'approved', 'Cancel registration'],
+          [
+            'reg-2',
+            '',
+            '',
+            'created',
+            'Approve registrationReject registration'
+          ]
+        ])
+        expect(
+          $('#status-changes a:contains("Cancel")').first().attr('href')
+        ).toBe('/organisations/org-1/registrations/reg-1/cancel/confirm')
+      })
+
+      test('lists every accreditation with its linked registration number and status changes', async () => {
+        const $ = await loadPage()
+
+        expect(tableRows($, 'Accreditations')).toEqual([
+          ['acc-1', 'A26ER1', 'R26ER1', 'approved', 'Suspend accreditation'],
+          ['acc-2', 'A26ER2', '', 'created', 'Not linked to a registration']
+        ])
+        expect($('#status-changes a:contains("Suspend")').attr('href')).toBe(
+          '/organisations/org-1/registrations/reg-1/accreditations/acc-1/suspend/confirm'
+        )
+      })
+    })
   })
 
   describe('When user has read-only access', () => {
@@ -123,7 +200,11 @@ describe('organisation GET controller', () => {
         http.get(`${backendUrl}/v1/organisations/org-1`, () =>
           HttpResponse.json({
             id: 'org-1',
-            companyDetails: { name: 'ACME Ltd' }
+            companyDetails: { name: 'ACME Ltd' },
+            registrations: [
+              { id: 'reg-1', registrationNumber: 'R26ER1', status: 'approved' }
+            ],
+            accreditations: []
           })
         )
       )
@@ -146,6 +227,32 @@ describe('organisation GET controller', () => {
       )
       expect($('#jsoneditor-form')).toHaveLength(0)
       expect($('button:contains("Save")')).toHaveLength(0)
+    })
+
+    test('Should list the registrations without status changes', async () => {
+      mswServer.use(
+        http.get(`${backendUrl}/v1/organisations/org-1`, () =>
+          HttpResponse.json({
+            id: 'org-1',
+            companyDetails: { name: 'ACME Ltd' },
+            registrations: [
+              { id: 'reg-1', registrationNumber: 'R26ER1', status: 'approved' }
+            ],
+            accreditations: []
+          })
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/organisations/org-1',
+        auth: { strategy: 'session', credentials: readOnlySession }
+      })
+
+      const $ = cheerio.load(result)
+      expect($('#status-changes th:contains("Actions")')).toHaveLength(0)
+      expect($('#status-changes td:contains("R26ER1")')).toHaveLength(1)
+      expect($('#status-changes a')).toHaveLength(0)
     })
   })
 })

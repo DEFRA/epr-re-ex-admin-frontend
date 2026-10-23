@@ -12,7 +12,7 @@ const CONFIRM_VIEW = 'routes/registration-status-transition/confirm'
  * Builds the POST controller for a status transition action. Posts the
  * transition's from/to statuses (plus grant fields where the transition
  * collects them) to the backend status-history endpoint and redirects to the
- * registration overview, flashing any backend error. Invalid grant fields —
+ * organisation's JSON editor page, flashing any backend error. Invalid grant fields —
  * and backend rejections of them — re-render the confirm page with an error
  * summary instead.
  * @param {string} action - URL action segment (e.g. 'approve')
@@ -21,7 +21,7 @@ const CONFIRM_VIEW = 'routes/registration-status-transition/confirm'
 export const createTransitionPostController = (action, transition) => ({
   async handler(request, h) {
     const { organisationId, registrationId } = request.params
-    const overviewUrl = `/organisations/${organisationId}/registrations/${registrationId}/overview`
+    const returnUrl = `/organisations/${organisationId}`
 
     /** @type {{ fromStatus: string, toStatus: string, validFrom?: string, registrationNumber?: string }} */
     const body = {
@@ -72,6 +72,6 @@ export const createTransitionPostController = (action, transition) => ({
         .code(statusCodes.badRequest)
     }
 
-    return h.redirect(overviewUrl)
+    return h.redirect(returnUrl)
   }
 })

@@ -42,7 +42,9 @@ describe('organisation GET controller - Unit Tests - Flash message handling', ()
   test('Should handle successful GET with no flash messages', async () => {
     const mockOrgData = {
       id: 'test-org-id',
-      companyDetails: { name: 'Test Org' }
+      companyDetails: { name: 'Test Org' },
+      registrations: [],
+      accreditations: []
     }
 
     fetchJsonFromBackend.mockResolvedValue(mockOrgData)
@@ -63,14 +65,19 @@ describe('organisation GET controller - Unit Tests - Flash message handling', ()
     expect(mockH.view).toHaveBeenCalledWith('routes/organisation/index', {
       pageTitle: 'Organisation Details',
       heading: 'Test Org',
-      organisationJson: JSON.stringify(mockOrgData)
+      organisationJson: JSON.stringify(mockOrgData),
+      statusChangeError: null,
+      registrationRows: [],
+      accreditationRows: []
     })
   })
 
   test('Should include errorList from session', async () => {
     const mockOrgData = {
       id: 'test-org-id',
-      companyDetails: { name: 'Test Org' }
+      companyDetails: { name: 'Test Org' },
+      registrations: [],
+      accreditations: []
     }
 
     const mockErrorList = [
@@ -100,7 +107,9 @@ describe('organisation GET controller - Unit Tests - Flash message handling', ()
   test('Should include success message from session', async () => {
     const mockOrgData = {
       id: 'test-org-id',
-      companyDetails: { name: 'Test Org' }
+      companyDetails: { name: 'Test Org' },
+      registrations: [],
+      accreditations: []
     }
 
     fetchJsonFromBackend.mockResolvedValue(mockOrgData)
@@ -124,7 +133,9 @@ describe('organisation GET controller - Unit Tests - Flash message handling', ()
   test('Should include both errorList and success message if both exist', async () => {
     const mockOrgData = {
       id: 'test-org-id',
-      companyDetails: { name: 'Test Org' }
+      companyDetails: { name: 'Test Org' },
+      registrations: [],
+      accreditations: []
     }
 
     const mockErrorList = [{ text: 'Test Error' }]

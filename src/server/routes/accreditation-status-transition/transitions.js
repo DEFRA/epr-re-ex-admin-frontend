@@ -137,7 +137,7 @@ export const ACCREDITATION_STATUS_TRANSITIONS = {
 /**
  * Summary-list action items for every transition available from the given
  * accreditation status. Single source of truth for which actions the
- * registration overview offers per status. Actions that move the
+ * JSON editor page offers per status. Actions that move the
  * accreditation to approved are only offered when the linked registration is
  * itself approved (PAE-1800).
  * @param {string} status - Current accreditation status
