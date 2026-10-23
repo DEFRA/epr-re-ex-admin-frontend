@@ -73,7 +73,7 @@ describe('#fetchJsonFromBackend', () => {
     })
 
     test('returns null when backend responds with 204 No Content', async () => {
-      const path = '/v1/organisations/org-1/link'
+      const path = '/organisations/500001/link'
       const url = `${backendUrl}${path}`
       const deleteHandler = http.delete(url, () => {
         return new HttpResponse(null, { status: 204 })
