@@ -100,6 +100,7 @@ describe('#registrationOverviewController', () => {
 
   const calendarUrl = `${backendUrl}/organisations/:organisationNumber/registrations/:registrationNumber/reports/:year/calendar`
   const summaryLogsUrl = `${backendUrl}/organisations/:organisationNumber/registrations/:registrationNumber/summary-logs`
+  const wasteBalanceUrl = `${backendUrl}/organisations/:organisationNumber/registrations/:registrationNumber/accreditations/:year/waste-balance`
 
   /**
    * Serves one kind's periods as the year calendar does, each stamped with its
@@ -325,9 +326,7 @@ describe('#registrationOverviewController', () => {
     summaryLogsResponse = {
       summaryLogs: /** @type {Array<typeof mockSubmittedSummaryLog>} */ ([])
     },
-    wasteBalanceResponse = /** @type {Record<string, typeof mockWasteBalance>} */ ({
-      [accreditationId]: mockWasteBalance
-    })
+    wasteBalanceResponse = mockWasteBalance
   ) => {
     mswServer.use(
       http.get(
@@ -338,10 +337,7 @@ describe('#registrationOverviewController', () => {
         HttpResponse.json(asYearCalendar(calendarResponse))
       ),
       http.get(summaryLogsUrl, () => HttpResponse.json(summaryLogsResponse)),
-      http.get(
-        `${backendUrl}/v1/organisations/${organisationId}/waste-balances`,
-        () => HttpResponse.json(wasteBalanceResponse)
-      )
+      http.get(wasteBalanceUrl, () => HttpResponse.json(wasteBalanceResponse))
     )
   }
 
@@ -1275,10 +1271,7 @@ describe('#registrationOverviewController', () => {
         http.get(calendarUrl, () =>
           HttpResponse.json(asYearCalendar(mockCalendar))
         ),
-        http.get(
-          `${backendUrl}/v1/organisations/${organisationId}/waste-balances`,
-          () => HttpResponse.json({ [accreditationId]: mockWasteBalance })
-        ),
+        http.get(wasteBalanceUrl, () => HttpResponse.json(mockWasteBalance)),
         http.get(summaryLogsUrl, () => {
           throw HttpResponse.text('', { status: 500 })
         })
@@ -1377,8 +1370,21 @@ describe('#registrationOverviewController', () => {
         ).toBeNull()
       })
 
-      test('Should render "No data" in waste balance rows when the backend returns no balance', async () => {
-        useMockBackend(mockOverview, mockCalendar, { summaryLogs: [] }, {})
+      test('Should render "No data" in waste balance rows when the accreditation has no number', async () => {
+        useMockBackend({
+          ...mockOverview,
+          registrations: [
+            {
+              ...mockRegistration,
+              accreditation: {
+                id: accreditationId,
+                accreditationNumber: null,
+                status: 'created',
+                year: null
+              }
+            }
+          ]
+        })
 
         const { result } = await server.inject({
           method: 'GET',
@@ -1408,11 +1414,34 @@ describe('#registrationOverviewController', () => {
           http.get(summaryLogsUrl, () =>
             HttpResponse.json({ summaryLogs: [] })
           ),
-          http.get(
-            `${backendUrl}/v1/organisations/${organisationId}/waste-balances`,
-            () => {
-              throw HttpResponse.text('', { status: 500 })
-            }
+          http.get(wasteBalanceUrl, () => {
+            throw HttpResponse.text('', { status: 500 })
+          })
+        )
+
+        const { statusCode, result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const body = renderPage(result)
+
+        expect(
+          getSummaryRowValue(body, 'Waste balance (tonnes)')
+        ).toHaveTextContent('No data')
+        expect(
+          getSummaryRowValue(body, 'Waste balance available (tonnes)')
+        ).toHaveTextContent('No data')
+      })
+
+      test('Should render "No data" in waste balance rows when the backend does not serve the accreditation', async () => {
+        useMockBackend()
+        mswServer.use(
+          http.get(wasteBalanceUrl, () =>
+            HttpResponse.json({}, { status: statusCodes.notFound })
           )
         )
 
@@ -1439,9 +1468,7 @@ describe('#registrationOverviewController', () => {
           mockOverview,
           mockCalendar,
           { summaryLogs: [] },
-          {
-            [accreditationId]: mockWasteBalanceWithDecember
-          }
+          mockWasteBalanceWithDecember
         )
 
         const { result } = await server.inject({
@@ -1465,9 +1492,7 @@ describe('#registrationOverviewController', () => {
           mockOverview,
           mockCalendar,
           { summaryLogs: [] },
-          {
-            [accreditationId]: mockWasteBalanceEmptyDecember
-          }
+          mockWasteBalanceEmptyDecember
         )
 
         const { result } = await server.inject({
@@ -1509,8 +1534,13 @@ describe('#registrationOverviewController', () => {
         ).toBeNull()
       })
 
-      test('Should not render December waste balance rows when the backend returns no balance', async () => {
-        useMockBackend(mockOverview, mockCalendar, { summaryLogs: [] }, {})
+      test('Should not render December waste balance rows when the waste balance endpoint errors', async () => {
+        useMockBackend()
+        mswServer.use(
+          http.get(wasteBalanceUrl, () => {
+            throw HttpResponse.text('', { status: 500 })
+          })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
