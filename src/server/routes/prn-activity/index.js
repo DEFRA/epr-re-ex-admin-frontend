@@ -1,12 +1,7 @@
-import Joi from 'joi'
-
+import { accreditationParams } from '#server/common/helpers/natural-keys/accreditation-params.js'
 import { prnActivityController } from './controller.js'
 import { prnActivityDownloadController } from './controller.download.js'
 import { prnActivityScopedDownloadController } from './controller.scoped-download.js'
-
-const idParam = Joi.string()
-  .pattern(/^[\w-]+$/)
-  .required()
 
 export const prnActivity = {
   plugin: {
@@ -28,16 +23,10 @@ export const prnActivity = {
         },
         {
           method: 'GET',
-          path: '/organisations/{organisationId}/registrations/{registrationId}/accreditations/{accreditationId}/prn-activity/download',
+          path: '/organisations/{organisationNumber}/registrations/{registrationNumber}/accreditations/{year}/prn-activity/download',
           ...prnActivityScopedDownloadController,
           options: {
-            validate: {
-              params: Joi.object({
-                organisationId: idParam,
-                registrationId: idParam,
-                accreditationId: idParam
-              })
-            }
+            validate: { params: accreditationParams }
           }
         }
       ])
