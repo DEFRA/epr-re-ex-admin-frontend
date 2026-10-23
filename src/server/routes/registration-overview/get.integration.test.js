@@ -98,8 +98,28 @@ describe('#registrationOverviewController', () => {
     registrations: [mockRegistration]
   }
 
-  const calendarUrl = `${backendUrl}/organisations/:organisationNumber/registrations/:registrationNumber/reports/calendar`
+  const calendarUrl = `${backendUrl}/organisations/:organisationNumber/registrations/:registrationNumber/reports/:year/calendar`
   const summaryLogsUrl = `${backendUrl}/organisations/:organisationNumber/registrations/:registrationNumber/summary-logs`
+
+  /**
+   * Serves one kind's periods as the year calendar does, each stamped with its
+   * cadence.
+   * @param {{ cadence: string, reportingPeriods: object[] }} calendar
+   */
+  const asYearCalendar = ({ cadence, reportingPeriods }) => {
+    const periods = reportingPeriods.map((period) => ({ ...period, cadence }))
+    return {
+      year: 2026,
+      ...(cadence === 'monthly'
+        ? {
+            accredited: {
+              accreditationNumber: 'ACC-1',
+              reportingPeriods: periods
+            }
+          }
+        : { registeredOnly: { reportingPeriods: periods } })
+    }
+  }
 
   const mockCalendar = {
     cadence: 'monthly',
@@ -314,7 +334,9 @@ describe('#registrationOverviewController', () => {
         `${backendUrl}/v1/organisations/${organisationId}/overview`,
         () => HttpResponse.json(overviewResponse)
       ),
-      http.get(calendarUrl, () => HttpResponse.json(calendarResponse)),
+      http.get(calendarUrl, () =>
+        HttpResponse.json(asYearCalendar(calendarResponse))
+      ),
       http.get(summaryLogsUrl, () => HttpResponse.json(summaryLogsResponse)),
       http.get(
         `${backendUrl}/v1/organisations/${organisationId}/waste-balances`,
@@ -590,7 +612,7 @@ describe('#registrationOverviewController', () => {
 
       expect(link).toHaveAttribute(
         'href',
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/prn-activity/download`
+        '/organisations/500123/registrations/REG-50030-001/accreditations/2026/prn-activity/download'
       )
     })
 
@@ -782,7 +804,9 @@ describe('#registrationOverviewController', () => {
       useMockBackend()
       mswServer.use(
         http.get(calendarUrl, () =>
-          HttpResponse.json({ ...mockCalendar, cadence: 'quarterly' })
+          HttpResponse.json(
+            asYearCalendar({ ...mockCalendar, cadence: 'quarterly' })
+          )
         )
       )
 
@@ -802,14 +826,69 @@ describe('#registrationOverviewController', () => {
       )
     })
 
-    test('Should request the reports calendar by number with the expand=submissions arg', async () => {
+    test('Should list registered-only and accredited reports together, each linked and superseded by its own cadence', async () => {
+      useMockBackend()
+      mswServer.use(
+        http.get(calendarUrl, () =>
+          HttpResponse.json({
+            year: 2026,
+            registeredOnly: {
+              reportingPeriods: [
+                {
+                  ...mockCalendarWithSubmittedReport.reportingPeriods[0],
+                  cadence: 'quarterly',
+                  endDate: '2026-03-31',
+                  submissionNumber: 2,
+                  report: {
+                    ...mockCalendarWithSubmittedReport.reportingPeriods[0]
+                      .report,
+                    submissionNumber: 2
+                  }
+                }
+              ]
+            },
+            accredited: {
+              accreditationNumber: 'ACC-1',
+              reportingPeriods: [
+                {
+                  ...mockCalendarWithSubmittedReport.reportingPeriods[0],
+                  cadence: 'monthly'
+                }
+              ]
+            }
+          })
+        )
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const rows = getDataRows(getReportsTable(renderPage(result)))
+
+      expect(
+        rows.map((row) =>
+          within(row).getByRole('link', { name: 'View' }).getAttribute('href')
+        )
+      ).toStrictEqual([
+        '/organisations/500123/registrations/REG-50030-001/reports/2026/quarterly/1/submissions/2',
+        '/organisations/500123/registrations/REG-50030-001/accreditations/2026/reports/monthly/1/submissions/1'
+      ])
+      expect(
+        rows.map((row) => within(row).queryByRole('link', { name: /Unsubmit/ }))
+      ).toStrictEqual([expect.anything(), expect.anything()])
+    })
+
+    test("Should request the current year's reports calendar by number with the expand=submissions arg", async () => {
       /** @type {URL | undefined} */
       let calendarRequestUrl
       useMockBackend()
       mswServer.use(
         http.get(calendarUrl, ({ request }) => {
           calendarRequestUrl = new URL(request.url)
-          return HttpResponse.json(mockCalendar)
+          return HttpResponse.json(asYearCalendar(mockCalendar))
         })
       )
 
@@ -820,7 +899,7 @@ describe('#registrationOverviewController', () => {
       })
 
       expect(calendarRequestUrl?.pathname).toBe(
-        '/organisations/500123/registrations/REG-50030-001/reports/calendar'
+        `/organisations/500123/registrations/REG-50030-001/reports/${new Date().getUTCFullYear()}/calendar`
       )
       expect(calendarRequestUrl?.searchParams.get('expand')).toBe('submissions')
     })
@@ -894,7 +973,9 @@ describe('#registrationOverviewController', () => {
     test('Should render every submission for a period as its own reachable row', async () => {
       useMockBackend()
       mswServer.use(
-        http.get(calendarUrl, () => HttpResponse.json(mockCalendarWithHistory))
+        http.get(calendarUrl, () =>
+          HttpResponse.json(asYearCalendar(mockCalendarWithHistory))
+        )
       )
 
       const { result } = await server.inject({
@@ -926,7 +1007,9 @@ describe('#registrationOverviewController', () => {
     test('Should show requires_resubmission status for a skeleton resubmission row', async () => {
       useMockBackend()
       mswServer.use(
-        http.get(calendarUrl, () => HttpResponse.json(mockCalendarWithSkeleton))
+        http.get(calendarUrl, () =>
+          HttpResponse.json(asYearCalendar(mockCalendarWithSkeleton))
+        )
       )
 
       const { result } = await server.inject({
@@ -973,15 +1056,17 @@ describe('#registrationOverviewController', () => {
       useMockBackend()
       mswServer.use(
         http.get(calendarUrl, () =>
-          HttpResponse.json({
-            cadence: 'monthly',
-            reportingPeriods: [
-              {
-                ...mockCalendarNotYetEnded.reportingPeriods[0],
-                periodStatus: 'awaiting_the_unknown'
-              }
-            ]
-          })
+          HttpResponse.json(
+            asYearCalendar({
+              cadence: 'monthly',
+              reportingPeriods: [
+                {
+                  ...mockCalendarNotYetEnded.reportingPeriods[0],
+                  periodStatus: 'awaiting_the_unknown'
+                }
+              ]
+            })
+          )
         )
       )
 
@@ -1002,7 +1087,9 @@ describe('#registrationOverviewController', () => {
     test('Should render a blank status cell when periodStatus is null and there is no report', async () => {
       useMockBackend()
       mswServer.use(
-        http.get(calendarUrl, () => HttpResponse.json(mockCalendarNotYetEnded))
+        http.get(calendarUrl, () =>
+          HttpResponse.json(asYearCalendar(mockCalendarNotYetEnded))
+        )
       )
 
       const { result } = await server.inject({
@@ -1185,7 +1272,9 @@ describe('#registrationOverviewController', () => {
           `${backendUrl}/v1/organisations/${organisationId}/overview`,
           () => HttpResponse.json(mockOverview)
         ),
-        http.get(calendarUrl, () => HttpResponse.json(mockCalendar)),
+        http.get(calendarUrl, () =>
+          HttpResponse.json(asYearCalendar(mockCalendar))
+        ),
         http.get(
           `${backendUrl}/v1/organisations/${organisationId}/waste-balances`,
           () => HttpResponse.json({ [accreditationId]: mockWasteBalance })
@@ -1313,7 +1402,9 @@ describe('#registrationOverviewController', () => {
             `${backendUrl}/v1/organisations/${organisationId}/overview`,
             () => HttpResponse.json(mockOverview)
           ),
-          http.get(calendarUrl, () => HttpResponse.json(mockCalendar)),
+          http.get(calendarUrl, () =>
+            HttpResponse.json(asYearCalendar(mockCalendar))
+          ),
           http.get(summaryLogsUrl, () =>
             HttpResponse.json({ summaryLogs: [] })
           ),

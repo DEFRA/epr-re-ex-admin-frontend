@@ -58,24 +58,6 @@ export function buildPrnApiUrl(cursor) {
   return url
 }
 
-export function buildAccreditationPrnApiUrl({
-  organisationId,
-  registrationId,
-  accreditationId
-}) {
-  const path = [
-    '/v1/admin/organisations',
-    encodeURIComponent(organisationId),
-    'registrations',
-    encodeURIComponent(registrationId),
-    'accreditations',
-    encodeURIComponent(accreditationId),
-    'packaging-recycling-notes'
-  ].join('/')
-
-  return `${path}?statuses=${statuses}`
-}
-
 export const prnActivityController = {
   async handler(request, h) {
     const errorMessage = request.yar.get('error')
