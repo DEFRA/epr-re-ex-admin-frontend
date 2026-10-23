@@ -1,6 +1,34 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { accreditationPath } from '#server/common/helpers/backend-paths.js'
+import { registrationOverviewUrl } from '#server/common/helpers/page-urls.js'
 import { generateCsv } from './controller.download.js'
-import { buildAccreditationPrnApiUrl } from './controller.js'
+
+/**
+ * A PRN as the backend serves it under its accreditation, put into the row
+ * shape the PRN activity CSV reads.
+ * @param {Record<string, any>} prn
+ */
+const toCsvRow = (prn) => {
+  const { accreditation } = prn.issuer.registration
+
+  return {
+    prnNumber: prn.prnNumber,
+    status: prn.status.current,
+    issuedToOrganisation: prn.issuedToOrganisation,
+    tonnage: prn.tonnage,
+    material: accreditation.material,
+    processToBeUsed: prn.processToBeUsed,
+    isDecemberWaste: prn.isDecemberWaste,
+    issuedAt: prn.issued?.at,
+    issuedBy: prn.issued?.by,
+    accreditationNumber: accreditation.accreditationNumber,
+    accreditationYear: accreditation.accreditationYear,
+    obligationYear: prn.obligationYear,
+    submittedToRegulator: accreditation.submittedToRegulator.code,
+    organisationName: prn.issuer.name,
+    wasteProcessingType: accreditation.wasteProcessingType
+  }
+}
 
 /**
  * Downloads PRN activity for a single accreditation as CSV. Triggered from the
@@ -8,25 +36,21 @@ import { buildAccreditationPrnApiUrl } from './controller.js'
  */
 export const prnActivityScopedDownloadController = {
   async handler(request, h) {
-    const { organisationId, registrationId, accreditationId } = request.params
+    const { registrationNumber, year } = request.params
 
     try {
       const data = await fetchJsonFromBackend(
         request,
-        buildAccreditationPrnApiUrl({
-          organisationId,
-          registrationId,
-          accreditationId
-        })
+        `${accreditationPath(request.params)}/packaging-recycling-notes`
       )
-      const csv = await generateCsv(data?.items || [])
+      const csv = await generateCsv((data?.items || []).map(toCsvRow))
 
       return h
         .response(csv)
         .header('Content-Type', 'text/csv')
         .header(
           'Content-Disposition',
-          `attachment; filename="prn-activity-${accreditationId}.csv"`
+          `attachment; filename="prn-activity-${registrationNumber}-${year}.csv"`
         )
     } catch (error) {
       const errorMessage =
@@ -35,9 +59,7 @@ export const prnActivityScopedDownloadController = {
 
       request.yar.set('error', errorMessage)
 
-      return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/overview`
-      )
+      return h.redirect(registrationOverviewUrl(request.params))
     }
   }
 }
