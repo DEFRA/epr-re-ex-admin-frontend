@@ -11,9 +11,12 @@
   <link href="{{ getAssetPath('jsoneditor.css') }}" rel="stylesheet">
 {% endblock %}
 
-{% macro statusActionsHtml(actions) -%}
-  {%- for action in actions -%}
+{% macro statusActionsHtml(row) -%}
+  {%- for action in row.actions -%}
     <a class="govuk-link govuk-link--no-visited-state govuk-!-margin-right-3" href="{{ action.href }}">{{ action.text }}<span class="govuk-visually-hidden"> {{ action.visuallyHiddenText }}</span></a>
+  {%- endfor -%}
+  {%- for note in row.notes -%}
+    <p class="govuk-hint govuk-!-margin-bottom-0">{{ note }}</p>
   {%- endfor -%}
 {%- endmacro %}
 
@@ -39,7 +42,7 @@
       { html: govukTag({ text: row.status }) }
     ] %}
     {% if showActions %}
-      {% set cells = cells.concat([{ html: statusActionsHtml(row.actions) }]) %}
+      {% set cells = cells.concat([{ html: statusActionsHtml(row) }]) %}
     {% endif %}
     {% set tableRows = tableRows.concat([cells]) %}
   {% endfor %}

@@ -126,7 +126,8 @@ describe('organisation GET controller', () => {
           { id: 'reg-2', status: 'created' }
         ],
         accreditations: [
-          { id: 'acc-1', accreditationNumber: 'A26ER1', status: 'approved' }
+          { id: 'acc-1', accreditationNumber: 'A26ER1', status: 'approved' },
+          { id: 'acc-2', accreditationNumber: 'A26ER2', status: 'created' }
         ]
       }
 
@@ -177,7 +178,8 @@ describe('organisation GET controller', () => {
         const $ = await loadPage()
 
         expect(tableRows($, 'Accreditations')).toEqual([
-          ['acc-1', 'A26ER1', 'R26ER1', 'approved', 'Suspend accreditation']
+          ['acc-1', 'A26ER1', 'R26ER1', 'approved', 'Suspend accreditation'],
+          ['acc-2', 'A26ER2', '', 'created', 'Not linked to a registration']
         ])
         expect($('#status-changes a:contains("Suspend")').attr('href')).toBe(
           '/organisations/org-1/registrations/reg-1/accreditations/acc-1/suspend/confirm'

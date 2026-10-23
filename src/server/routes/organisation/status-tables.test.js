@@ -1,4 +1,8 @@
-import { toStatusTables } from './status-tables.js'
+import {
+  NOT_LINKED,
+  REGISTRATION_NOT_APPROVED,
+  toStatusTables
+} from './status-tables.js'
 
 const base = '/organisations/org-1/registrations'
 
@@ -31,7 +35,8 @@ describe('toStatusTables', () => {
             text: 'Cancel',
             visuallyHiddenText: 'registration'
           }
-        ]
+        ],
+        notes: []
       }
     ])
   })
@@ -69,7 +74,8 @@ describe('toStatusTables', () => {
             text: 'Cancel',
             visuallyHiddenText: 'accreditation'
           }
-        ]
+        ],
+        notes: []
       }
     ])
   })
@@ -95,8 +101,36 @@ describe('toStatusTables', () => {
     expect(accreditationRows[0]).toMatchObject({
       number: '',
       linkedNumber: '',
-      actions: [expect.objectContaining({ text: 'Reject' })]
+      actions: [expect.objectContaining({ text: 'Reject' })],
+      notes: [REGISTRATION_NOT_APPROVED]
     })
+  })
+
+  test('says why a cancelled accreditation cannot be reinstated while its registration is cancelled', () => {
+    const { accreditationRows } = toStatusTables({
+      id: 'org-1',
+      registrations: [
+        { id: 'reg-1', status: 'cancelled', accreditationId: 'acc-1' }
+      ],
+      accreditations: [{ id: 'acc-1', status: 'cancelled' }]
+    })
+
+    expect(accreditationRows[0]).toMatchObject({
+      actions: [],
+      notes: [REGISTRATION_NOT_APPROVED]
+    })
+  })
+
+  test('says nothing when no status change is held back by the registration', () => {
+    const { accreditationRows } = toStatusTables({
+      id: 'org-1',
+      registrations: [
+        { id: 'reg-1', status: 'cancelled', accreditationId: 'acc-1' }
+      ],
+      accreditations: [{ id: 'acc-1', status: 'suspended' }]
+    })
+
+    expect(accreditationRows[0].notes).toEqual([])
   })
 
   test('offers no status changes for an accreditation no registration links to', () => {
@@ -112,7 +146,8 @@ describe('toStatusTables', () => {
     expect(accreditationRows[0]).toMatchObject({
       number: 'A26ER9',
       linkedNumber: '',
-      actions: []
+      actions: [],
+      notes: [NOT_LINKED]
     })
   })
 })
