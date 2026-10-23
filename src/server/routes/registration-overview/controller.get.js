@@ -138,7 +138,10 @@ const fetchWasteBalance = async (request, accreditationKeys) => {
       {}
     )
   } catch (err) {
-    request.logger.warn({ message: 'Failed to fetch waste balance', err })
+    // A 404 is an accreditation the backend does not serve, not an outage
+    if (!Boom.isBoom(err, statusCodes.notFound)) {
+      request.logger.warn({ message: 'Failed to fetch waste balance', err })
+    }
     return null
   }
 }

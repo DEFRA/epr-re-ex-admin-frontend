@@ -1417,6 +1417,32 @@ describe('#registrationOverviewController', () => {
         ).toHaveTextContent('No data')
       })
 
+      test('Should render "No data" in waste balance rows when the backend does not serve the accreditation', async () => {
+        useMockBackend()
+        mswServer.use(
+          http.get(wasteBalanceUrl, () =>
+            HttpResponse.json({}, { status: statusCodes.notFound })
+          )
+        )
+
+        const { statusCode, result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const body = renderPage(result)
+
+        expect(
+          getSummaryRowValue(body, 'Waste balance (tonnes)')
+        ).toHaveTextContent('No data')
+        expect(
+          getSummaryRowValue(body, 'Waste balance available (tonnes)')
+        ).toHaveTextContent('No data')
+      })
+
       test('Should render December waste balance rows when the balance carries a December portion', async () => {
         useMockBackend(
           mockOverview,
