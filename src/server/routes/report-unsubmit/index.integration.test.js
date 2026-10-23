@@ -370,6 +370,70 @@ describe('report-unsubmit', () => {
     )
   })
 
+  it('should read the calendar of the year in the URL', async () => {
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+    const earlierBase = BASE_URL.replace(`/${year}/`, '/2025/')
+    const inEarlierYear = (n) => ({ ...submittedSubmission(n), year: 2025 })
+    mswServer.use(
+      http.get(`${backendUrl}${earlierBase}`, () =>
+        HttpResponse.json({ status: 'submitted' })
+      ),
+      http.get(
+        `${backendUrl}${REGISTRATION_URL}/reports/:year/calendar`,
+        ({ params }) =>
+          HttpResponse.json({
+            year: Number(params.year),
+            ...(params.year === '2025' && {
+              accredited: {
+                accreditationNumber: 'ACC-1',
+                reportingPeriods: [inEarlierYear(1), inEarlierYear(2)].map(
+                  (item) => ({ ...item, cadence })
+                )
+              }
+            })
+          })
+      )
+    )
+
+    const { statusCode, headers } = await server.inject({
+      method: 'GET',
+      url: `${earlierBase}/unsubmit/confirm`,
+      auth: authOptions
+    })
+
+    expect(statusCode).toBe(statusCodes.found)
+    expect(headers.location).toBe(overviewUrl)
+  })
+
+  it('should not take a superseded quarter for the month that starts with it', async () => {
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+    stubReport({ currentStatus: 'submitted', unsubmittedAt: undefined })
+    const inFirstQuarter = (n) => ({
+      ...submittedSubmission(n),
+      cadence: 'quarterly',
+      endDate: '2026-03-31',
+      dueDate: '2026-04-20'
+    })
+    mswServer.use(
+      http.get(`${backendUrl}${REGISTRATION_URL}/reports/:year/calendar`, () =>
+        HttpResponse.json({
+          year: 2026,
+          registeredOnly: {
+            reportingPeriods: [inFirstQuarter(1), inFirstQuarter(2)]
+          },
+          accredited: {
+            accreditationNumber: 'ACC-1',
+            reportingPeriods: [{ ...submittedSubmission(1), cadence }]
+          }
+        })
+      )
+    )
+
+    const { response } = await getConfirm()
+
+    expect(response.statusCode).toBe(statusCodes.ok)
+  })
+
   test('submitting the confirmation redirects to the success page', async () => {
     vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
     stubReport({ currentStatus: 'submitted', unsubmittedAt: undefined })

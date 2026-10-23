@@ -62,7 +62,10 @@ const fetchPeriodSubmission = (request) =>
 const fetchCalendarPeriod = async (request) => {
   const { year, cadence, period, submissionNumber } = request.params
 
-  const reportingPeriods = await fetchReportingPeriods(request, request.params)
+  const reportingPeriods = await fetchReportingPeriods(request, {
+    ...request.params,
+    year: Number(year)
+  })
 
   return toReportingPeriods(reportingPeriods).find(
     (item) =>

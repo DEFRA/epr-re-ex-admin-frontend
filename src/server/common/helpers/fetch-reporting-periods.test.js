@@ -11,7 +11,8 @@ vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
 const mockRequest = /** @type {HapiRequest} */ ({})
 const keys = {
   organisationNumber: '500123',
-  registrationNumber: 'REG-50030-001'
+  registrationNumber: 'REG-50030-001',
+  year: 2025
 }
 const quarter = { cadence: 'quarterly', period: 1, startDate: '2026-01-01' }
 const march = { cadence: 'monthly', period: 3, startDate: '2026-03-01' }
@@ -22,24 +23,16 @@ const mockFetchJsonFromBackend = vi.mocked(fetchJsonFromBackend)
 describe('fetchReportingPeriods', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.useFakeTimers({
-      now: new Date('2027-01-05T10:00:00.000Z'),
-      toFake: ['Date']
-    })
   })
 
-  afterEach(() => {
-    vi.useRealTimers()
-  })
-
-  test("reads the current year's calendar with every submission", async () => {
-    mockFetchJsonFromBackend.mockResolvedValue({ year: 2027 })
+  test("reads the year's calendar with every submission", async () => {
+    mockFetchJsonFromBackend.mockResolvedValue({ year: 2025 })
 
     await fetchReportingPeriods(mockRequest, keys)
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
       mockRequest,
-      '/organisations/500123/registrations/REG-50030-001/reports/2027/calendar?expand=submissions',
+      '/organisations/500123/registrations/REG-50030-001/reports/2025/calendar?expand=submissions',
       {}
     )
   })

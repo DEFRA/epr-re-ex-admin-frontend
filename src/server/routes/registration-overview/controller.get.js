@@ -158,7 +158,11 @@ const fetchSummaryLogRows = async (request, registrationKeys) => {
  */
 const fetchPeriods = async (request, registrationKeys) => {
   try {
-    return await fetchReportingPeriods(request, registrationKeys)
+    return await fetchReportingPeriods(request, {
+      ...registrationKeys,
+      // Current year until PAE-2153 lists every year.
+      year: new Date().getUTCFullYear()
+    })
   } catch (err) {
     if (Boom.isBoom(err, statusCodes.notFound)) {
       return null
