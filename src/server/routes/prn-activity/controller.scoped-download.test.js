@@ -66,14 +66,14 @@ describe('prn-activity scoped download controller', () => {
     }
   })
 
-  test("Should fetch the accreditation's PRNs by its natural keys", async () => {
+  test("Should fetch the accreditation's PRNs by its natural keys, leaving out drafts and discarded PRNs", async () => {
     mockFetchJsonFromBackend.mockResolvedValue({ items: [] })
 
     await prnActivityScopedDownloadController.handler(request, h)
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
       request,
-      '/organisations/500123/registrations/R26ER5001180041PL/accreditations/2025/packaging-recycling-notes'
+      '/organisations/500123/registrations/R26ER5001180041PL/accreditations/2025/packaging-recycling-notes?statuses=awaiting_authorisation,awaiting_acceptance,accepted,awaiting_cancellation,cancelled'
     )
   })
 

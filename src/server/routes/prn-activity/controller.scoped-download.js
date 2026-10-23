@@ -3,6 +3,9 @@ import { accreditationPath } from '#server/common/helpers/backend-paths.js'
 import { registrationOverviewUrl } from '#server/common/helpers/page-urls.js'
 import { generateCsv } from './controller.download.js'
 
+const statuses =
+  'awaiting_authorisation,awaiting_acceptance,accepted,awaiting_cancellation,cancelled'
+
 /**
  * A PRN as the backend serves it under its accreditation, put into the row
  * shape the PRN activity CSV reads.
@@ -41,7 +44,7 @@ export const prnActivityScopedDownloadController = {
     try {
       const data = await fetchJsonFromBackend(
         request,
-        `${accreditationPath(request.params)}/packaging-recycling-notes`
+        `${accreditationPath(request.params)}/packaging-recycling-notes?statuses=${statuses}`
       )
       const csv = await generateCsv((data?.items || []).map(toCsvRow))
 
