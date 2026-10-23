@@ -113,7 +113,7 @@ describe('GET /system-logs', () => {
       )
 
       const { $, statusCode } = await loadPage(
-        new URLSearchParams({ referenceNumber: 'ORG-123' })
+        new URLSearchParams({ organisationNumber: '123' })
       )
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -159,7 +159,7 @@ describe('GET /system-logs', () => {
         )
 
         const { $, statusCode } = await loadPage(
-          new URLSearchParams({ referenceNumber: 'ORG-123' })
+          new URLSearchParams({ organisationNumber: '123' })
         )
 
         expect(statusCode).toBe(statusCodes.ok)
@@ -187,7 +187,7 @@ describe('GET /system-logs', () => {
         )
 
         const { $, statusCode } = await loadPage(
-          new URLSearchParams({ referenceNumber: 'ORG-123' })
+          new URLSearchParams({ organisationNumber: '123' })
         )
 
         expect(statusCode).toBe(statusCodes.ok)
@@ -216,7 +216,7 @@ describe('GET /system-logs', () => {
         )
 
         const { $, statusCode } = await loadPage(
-          new URLSearchParams({ referenceNumber: 'ORG-123' })
+          new URLSearchParams({ organisationNumber: '123' })
         )
 
         expect(statusCode).toBe(statusCodes.ok)
@@ -249,7 +249,7 @@ describe('GET /system-logs', () => {
         )
 
         const { $, statusCode } = await loadPage(
-          new URLSearchParams({ referenceNumber: 'ORG-123' })
+          new URLSearchParams({ organisationNumber: '123' })
         )
 
         expect(statusCode).toBe(statusCodes.ok)
@@ -283,7 +283,7 @@ describe('GET /system-logs', () => {
         )
 
         const { $, statusCode } = await loadPage(
-          new URLSearchParams({ referenceNumber: 'ORG-123' })
+          new URLSearchParams({ organisationNumber: '123' })
         )
 
         expect(statusCode).toBe(statusCodes.ok)
@@ -315,7 +315,7 @@ describe('GET /system-logs', () => {
         )
 
         const { $, statusCode } = await loadPage(
-          new URLSearchParams({ referenceNumber: 'ORG-123' })
+          new URLSearchParams({ organisationNumber: '123' })
         )
 
         expect(statusCode).toBe(statusCodes.ok)
@@ -570,7 +570,7 @@ describe('GET /system-logs', () => {
           )
 
           const { $, statusCode } = await loadPage(
-            new URLSearchParams({ referenceNumber: 'ORG-123' })
+            new URLSearchParams({ organisationNumber: '123' })
           )
 
           expect(statusCode).toBe(statusCodes.ok)
@@ -615,7 +615,7 @@ describe('GET /system-logs', () => {
           )
 
           const { $, statusCode } = await loadPage(
-            new URLSearchParams({ referenceNumber: 'ORG-123' })
+            new URLSearchParams({ organisationNumber: '123' })
           )
 
           expect(statusCode).toBe(statusCodes.ok)
@@ -639,7 +639,7 @@ describe('GET /system-logs', () => {
     })
 
     describe('search parameters', () => {
-      it('passes referenceNumber to the backend as organisationId', async () => {
+      it('passes organisationNumber to the backend and rehydrates it in the form', async () => {
         const backendCalls = stubBackendResponse(
           HttpResponse.json({
             systemLogs: [{ createdBy: {}, event: {}, context: {} }],
@@ -649,13 +649,13 @@ describe('GET /system-logs', () => {
         )
 
         const { $, statusCode } = await loadPage(
-          new URLSearchParams({ referenceNumber: '12345' })
+          new URLSearchParams({ organisationNumber: '12345' })
         )
 
         expect(statusCode).toEqual(statusCodes.ok)
         expect(backendCalls).toHaveLength(1)
-        expect(backendCalls[0].query).toEqual({ organisationId: '12345' })
-        expect($('form input[name=referenceNumber]').val()).toEqual('12345')
+        expect(backendCalls[0].query).toEqual({ organisationNumber: '12345' })
+        expect($('form input[name=organisationNumber]').val()).toEqual('12345')
       })
 
       it('passes userId to the backend and rehydrates it in the form', async () => {
@@ -684,14 +684,14 @@ describe('GET /system-logs', () => {
 
         await loadPage(
           new URLSearchParams({
-            referenceNumber: 'ORG-1',
+            organisationNumber: '1',
             userId: 'user-1',
             subCategory: 'reports'
           })
         )
 
         expect(backendCalls[0].query).toEqual({
-          organisationId: 'ORG-1',
+          organisationNumber: '1',
           userId: 'user-1',
           subCategory: 'reports'
         })
@@ -704,7 +704,7 @@ describe('GET /system-logs', () => {
 
         const { $, statusCode } = await loadPage(
           new URLSearchParams({
-            referenceNumber: '',
+            organisationNumber: '',
             userId: '',
             subCategory: ''
           })
@@ -714,7 +714,34 @@ describe('GET /system-logs', () => {
         expect(backendCalls).toHaveLength(0)
         expect($.text()).toContain('There is a problem')
         expect($.text()).toContain(
-          'Enter an organisation reference number, user ID or event type'
+          'Enter an organisation number, user ID or event type'
+        )
+      })
+
+      it('shows an error on the organisation number alone and does not call the backend when it is not a number', async () => {
+        const backendCalls = stubBackendResponse(
+          HttpResponse.json({ systemLogs: [] })
+        )
+
+        const { $, statusCode } = await loadPage(
+          new URLSearchParams({
+            organisationNumber: '507f1f77bcf86cd799439011',
+            userId: 'user-1'
+          })
+        )
+
+        expect(statusCode).toEqual(statusCodes.ok)
+        expect(backendCalls).toHaveLength(0)
+        expect($('.govuk-error-summary').text()).toContain(
+          'Organisation number must only include numbers 0 to 9'
+        )
+        expect($('#organisationNumber-error').text()).toContain(
+          'Organisation number must only include numbers 0 to 9'
+        )
+        expect($('#userId-error')).toHaveLength(0)
+        expect($('#subCategory-error')).toHaveLength(0)
+        expect($('form input[name=organisationNumber]').val()).toEqual(
+          '507f1f77bcf86cd799439011'
         )
       })
     })
@@ -727,7 +754,7 @@ describe('GET /system-logs', () => {
 
         await loadPage(
           new URLSearchParams({
-            referenceNumber: '12345',
+            organisationNumber: '12345',
             cursor: 'abc123def456abc123def456',
             direction: 'next'
           })
@@ -735,7 +762,7 @@ describe('GET /system-logs', () => {
 
         expect(backendCalls).toHaveLength(1)
         expect(backendCalls[0].query).toEqual({
-          organisationId: '12345',
+          organisationNumber: '12345',
           cursor: 'abc123def456abc123def456',
           direction: 'next'
         })
@@ -748,7 +775,7 @@ describe('GET /system-logs', () => {
 
         await loadPage(
           new URLSearchParams({
-            referenceNumber: '12345',
+            organisationNumber: '12345',
             cursor: 'abc123def456abc123def456',
             direction: 'prev'
           })
@@ -756,7 +783,7 @@ describe('GET /system-logs', () => {
 
         expect(backendCalls).toHaveLength(1)
         expect(backendCalls[0].query).toEqual({
-          organisationId: '12345',
+          organisationNumber: '12345',
           cursor: 'abc123def456abc123def456',
           direction: 'prev'
         })
@@ -774,14 +801,14 @@ describe('GET /system-logs', () => {
 
         const { $ } = await loadPage(
           new URLSearchParams({
-            referenceNumber: '12345',
+            organisationNumber: '12345',
             userId: 'user-9',
             subCategory: 'reports'
           })
         )
 
         const href = $('.govuk-pagination__next a').attr('href')
-        expect(href).toContain('referenceNumber=12345')
+        expect(href).toContain('organisationNumber=12345')
         expect(href).toContain('userId=user-9')
         expect(href).toContain('subCategory=reports')
         expect(href).toContain('cursor=aaa111bbb222ccc333ddd444')
@@ -800,14 +827,14 @@ describe('GET /system-logs', () => {
 
         const { $ } = await loadPage(
           new URLSearchParams({
-            referenceNumber: '12345',
+            organisationNumber: '12345',
             cursor: 'abc123def456abc123def456',
             direction: 'next'
           })
         )
 
         const href = $('.govuk-pagination__prev a').attr('href')
-        expect(href).toContain('referenceNumber=12345')
+        expect(href).toContain('organisationNumber=12345')
         expect(href).toContain('cursor=eee555fff666aaa777bbb888')
         expect(href).toContain('direction=prev')
       })
@@ -822,7 +849,7 @@ describe('GET /system-logs', () => {
         )
 
         const { $ } = await loadPage(
-          new URLSearchParams({ referenceNumber: '12345' })
+          new URLSearchParams({ organisationNumber: '12345' })
         )
 
         expect($('.govuk-pagination')).toHaveLength(0)
@@ -861,7 +888,7 @@ describe('GET /system-logs', () => {
       )
 
       const { $, statusCode } = await loadPage(
-        new URLSearchParams({ referenceNumber: 'ORG-123' })
+        new URLSearchParams({ organisationNumber: '123' })
       )
 
       expect(statusCode).toBe(statusCodes.unauthorised)
@@ -877,7 +904,7 @@ describe('GET /system-logs', () => {
       )
 
       const { $, statusCode } = await loadPage(
-        new URLSearchParams({ referenceNumber: 'ORG-123' })
+        new URLSearchParams({ organisationNumber: '123' })
       )
 
       expect(statusCode).toBe(statusCodes.internalServerError)
