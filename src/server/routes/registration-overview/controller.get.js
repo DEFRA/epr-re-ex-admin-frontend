@@ -5,10 +5,8 @@ import {
   findRegistration
 } from '#server/common/helpers/fetch-organisation-overview.js'
 import { toReportingPeriods } from '#server/common/helpers/reporting-periods.js'
-import {
-  registrationPath,
-  reportsCalendarPath
-} from '#server/common/helpers/backend-paths.js'
+import { registrationPath } from '#server/common/helpers/backend-paths.js'
+import { fetchReportingPeriods } from '#server/common/helpers/fetch-reporting-periods.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import {
   overseasSitesUrl,
@@ -61,14 +59,13 @@ const PERIOD_STATUS_LABELS = {
  * resubmission. Hiding it is UX; the backend enforces both rules and the
  * admin.write scope.
  * @param {{ organisationNumber: string, registrationNumber: string }} keys
- * @param {string} cadence
  * @param {boolean} hasAdminWrite
  */
-const toReportRow = (keys, cadence, hasAdminWrite) => (period) => {
+const toReportRow = (keys, hasAdminWrite) => (period) => {
   const submission = {
     ...keys,
     year: String(period.year),
-    cadence,
+    cadence: period.cadence,
     period: String(period.period),
     submissionNumber: String(period.submissionNumber)
   }
@@ -154,18 +151,18 @@ const fetchSummaryLogRows = async (request, registrationKeys) => {
 }
 
 /**
- * The registration's reporting calendar, or `null` when the backend does not
+ * The registration's reporting periods, or `null` when the backend does not
  * serve the registration, as with one missing data the read model needs.
  * @param {HapiRequest} request
  * @param {RegistrationKeys} registrationKeys
  */
-const fetchCalendar = async (request, registrationKeys) => {
+const fetchPeriods = async (request, registrationKeys) => {
   try {
-    return await fetchJsonFromBackend(
-      request,
-      reportsCalendarPath(registrationKeys),
-      {}
-    )
+    return await fetchReportingPeriods(request, {
+      ...registrationKeys,
+      // Current year until PAE-2153 lists every year.
+      year: new Date().getUTCFullYear()
+    })
   } catch (err) {
     if (Boom.isBoom(err, statusCodes.notFound)) {
       return null
@@ -255,10 +252,10 @@ export const registrationOverviewGETController = {
       registrationId
     })
 
-    const [summaryLogRows, calendar, wasteBalance] = await Promise.all([
+    const [summaryLogRows, reportingPeriods, wasteBalance] = await Promise.all([
       // A registration with no number yet has no summary logs or reports.
       registrationKeys ? fetchSummaryLogRows(request, registrationKeys) : [],
-      registrationKeys ? fetchCalendar(request, registrationKeys) : null,
+      registrationKeys ? fetchPeriods(request, registrationKeys) : null,
       registration.accreditation
         ? fetchWasteBalance(
             request,
@@ -291,14 +288,13 @@ export const registrationOverviewGETController = {
         registrationId,
         registration
       ),
-      reportRows: calendar
-        ? toReportingPeriods(calendar.reportingPeriods, calendar.cadence).map(
+      reportRows: reportingPeriods
+        ? toReportingPeriods(reportingPeriods).map(
             toReportRow(
               {
                 organisationNumber: overview.organisationNumber,
                 registrationNumber: registration.registrationNumber
               },
-              calendar.cadence,
               request.auth.credentials.scopes.includes(SCOPES.adminWrite)
             )
           )
