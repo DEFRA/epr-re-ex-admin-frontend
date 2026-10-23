@@ -55,6 +55,12 @@ export const overseasSitesUrl = (keys) =>
   `${accreditationPath(keys)}/overseas-sites`
 
 /**
+ * @param {{ organisationNumber: string, registrationNumber: string, year: string }} keys
+ */
+export const prnActivityDownloadUrl = (keys) =>
+  `${accreditationPath(keys)}/prn-activity/download`
+
+/**
  * @param {{ organisationNumber: string, registrationNumber: string, summaryLogId: string }} keys
  */
 export const summaryLogUrl = (keys) =>

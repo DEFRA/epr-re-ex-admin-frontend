@@ -10,6 +10,7 @@ import { fetchReportingPeriods } from '#server/common/helpers/fetch-reporting-pe
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import {
   overseasSitesUrl,
+  prnActivityDownloadUrl,
   reportSubmissionUrl,
   reportUnsubmitUrl,
   summaryLogUrl,
@@ -226,9 +227,8 @@ const toRegistrationLinks = (
     wasteRecordsDownloadUrl: registrationKeys
       ? `${registrationUrl}/waste-records/download`
       : null,
-    prnActivityDownloadUrl: approvedAccreditation
-      ? `${accreditationUrl}/prn-activity/download`
-      : null
+    prnActivityDownloadUrl:
+      approvedAccreditation && prnActivityDownloadUrl(approvedAccreditation)
   }
 }
 

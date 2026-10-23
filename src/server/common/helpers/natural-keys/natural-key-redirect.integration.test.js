@@ -86,11 +86,6 @@ describe('natural-key redirect to pages still served by id', () => {
         'registration overview',
         `${registration}/overview`,
         `/organisations/${organisationId}/registrations/${registrationId}/overview`
-      ],
-      [
-        'accreditation PRN activity download',
-        `${registration}/accreditations/2026/prn-activity/download`,
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/prn-activity/download`
       ]
     ])('sends the %s to its id address', async (_, url, location) => {
       const { statusCode, headers } = await get(url)
@@ -184,6 +179,19 @@ describe('natural-key redirect to pages still served by id', () => {
     expect(statusCode).toBe(statusCodes.found)
     expect(headers.location).toBe(
       `/organisations/${organisationNumber}/registrations/FAKE%2FREG500123%2FALPHA/accreditations/2026/waste-balance-events`
+    )
+  })
+
+  it('sends an old id URL for the accreditation PRN activity download to its natural-key URL', async () => {
+    stubOverview()
+
+    const { statusCode, headers } = await get(
+      `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/prn-activity/download`
+    )
+
+    expect(statusCode).toBe(statusCodes.found)
+    expect(headers.location).toBe(
+      `${registration}/accreditations/2026/prn-activity/download`
     )
   })
 

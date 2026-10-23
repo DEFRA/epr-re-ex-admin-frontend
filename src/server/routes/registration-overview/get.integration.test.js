@@ -592,7 +592,7 @@ describe('#registrationOverviewController', () => {
 
       expect(link).toHaveAttribute(
         'href',
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/prn-activity/download`
+        '/organisations/500123/registrations/REG-50030-001/accreditations/2026/prn-activity/download'
       )
     })
 
