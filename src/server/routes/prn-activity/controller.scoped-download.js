@@ -7,6 +7,21 @@ const statuses =
   'awaiting_authorisation,awaiting_acceptance,accepted,awaiting_cancellation,cancelled'
 
 /**
+ * The backend names glass by its recycling process; the CSV says glass, as the
+ * all-PRNs download does.
+ * @param {string} material
+ */
+const toCsvMaterial = (material) =>
+  material.startsWith('glass') ? 'glass' : material
+
+/**
+ * @param {Record<string, any>} a
+ * @param {Record<string, any>} b
+ */
+const oldestFirst = (a, b) =>
+  new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+
+/**
  * A PRN as the backend serves it under its accreditation, put into the row
  * shape the PRN activity CSV reads.
  * @param {Record<string, any>} prn
@@ -19,7 +34,7 @@ const toCsvRow = (prn) => {
     status: prn.status.current,
     issuedToOrganisation: prn.issuedToOrganisation,
     tonnage: prn.tonnage,
-    material: accreditation.material,
+    material: toCsvMaterial(accreditation.material),
     processToBeUsed: prn.processToBeUsed,
     isDecemberWaste: prn.isDecemberWaste,
     issuedAt: prn.issued?.at,
@@ -46,7 +61,9 @@ export const prnActivityScopedDownloadController = {
         request,
         `${accreditationPath(request.params)}/packaging-recycling-notes?statuses=${statuses}`
       )
-      const csv = await generateCsv((data?.items || []).map(toCsvRow))
+      const csv = await generateCsv(
+        (data?.items || []).toSorted(oldestFirst).map(toCsvRow)
+      )
 
       return h
         .response(csv)

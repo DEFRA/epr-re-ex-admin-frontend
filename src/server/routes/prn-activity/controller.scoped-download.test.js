@@ -95,7 +95,7 @@ describe('prn-activity scoped download controller', () => {
     const csvContent = h.response.mock.calls[0][0]
     const [, dataLine] = csvContent.split('\n')
     expect(dataLine).toBe(
-      'PRN-001,awaiting_acceptance,Org A,100,glass_re_melt,R5,Yes,15/06/2025,John,Manager,ACC-2025-001,2025,2026,ea,Reprocessor Ltd,reprocessor'
+      'PRN-001,awaiting_acceptance,Org A,100,glass,R5,Yes,15/06/2025,John,Manager,ACC-2025-001,2025,2026,ea,Reprocessor Ltd,reprocessor'
     )
     expect(responseBuilder.header).toHaveBeenCalledWith(
       'Content-Type',
@@ -105,6 +105,40 @@ describe('prn-activity scoped download controller', () => {
       'Content-Disposition',
       'attachment; filename="prn-activity-R26ER5001180041PL-2025.csv"'
     )
+  })
+
+  test('Should write other materials as the backend names them', async () => {
+    const plasticPrn = structuredClone(mockPrn)
+    plasticPrn.issuer.registration.accreditation.material = 'plastic'
+    mockFetchJsonFromBackend.mockResolvedValue({ items: [plasticPrn] })
+
+    await prnActivityScopedDownloadController.handler(request, h)
+
+    const [, dataLine] = h.response.mock.calls[0][0].split('\n')
+    expect(dataLine).toContain(',100,plastic,')
+  })
+
+  test('Should write the PRNs oldest first', async () => {
+    mockFetchJsonFromBackend.mockResolvedValue({
+      items: [
+        {
+          ...mockPrn,
+          prnNumber: 'PRN-NEW',
+          createdAt: '2025-07-01T10:00:00.000Z'
+        },
+        {
+          ...mockPrn,
+          prnNumber: 'PRN-OLD',
+          createdAt: '2025-05-01T10:00:00.000Z'
+        }
+      ]
+    })
+
+    await prnActivityScopedDownloadController.handler(request, h)
+
+    const [, first, second] = h.response.mock.calls[0][0].split('\n')
+    expect(first).toMatch(/^PRN-OLD,/)
+    expect(second).toMatch(/^PRN-NEW,/)
   })
 
   test('Should leave issue columns blank for a PRN that has not been issued', async () => {
