@@ -24,6 +24,7 @@ describe('unlink-organisation', () => {
 
   const linkedOverview = {
     id: organisationId,
+    organisationNumber: '500123',
     companyName: 'ACME Ltd',
     registrations: [],
     linkedDefraOrganisation: {
@@ -36,6 +37,7 @@ describe('unlink-organisation', () => {
 
   const unlinkedOverview = {
     id: organisationId,
+    organisationNumber: '500123',
     companyName: 'ACME Ltd',
     registrations: []
   }
@@ -67,14 +69,14 @@ describe('unlink-organisation', () => {
   const stubDeleteSuccess = () =>
     mswServer.use(
       http.delete(
-        `${backendUrl}/v1/organisations/${organisationId}/link`,
+        `${backendUrl}/organisations/500123/link`,
         () => new HttpResponse(null, { status: 204 })
       )
     )
 
   const stubDeleteFailure = (status = 409) =>
     mswServer.use(
-      http.delete(`${backendUrl}/v1/organisations/${organisationId}/link`, () =>
+      http.delete(`${backendUrl}/organisations/500123/link`, () =>
         HttpResponse.json({ error: 'Conflict' }, { status })
       )
     )
