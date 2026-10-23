@@ -188,9 +188,6 @@ const toRegistrationLinks = (
   registration
 ) => {
   const registrationUrl = `/organisations/${organisationId}/registrations/${registrationId}`
-  const accreditationUrl = registration.accreditation
-    ? `${registrationUrl}/accreditations/${registration.accreditation.id}`
-    : null
   const registrationKeys = toNaturalKeys(overview, {
     organisationId,
     registrationId
