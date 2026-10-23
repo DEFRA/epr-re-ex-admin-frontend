@@ -1,4 +1,6 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { fetchOrganisationOverview } from '#server/common/helpers/fetch-organisation-overview.js'
+import { organisationPath } from '#server/common/helpers/backend-paths.js'
 
 export const unlinkOrganisationPostController = {
   async handler(request, h) {
@@ -6,9 +8,13 @@ export const unlinkOrganisationPostController = {
     const overviewUrl = `/organisations/${organisationId}/overview`
 
     try {
+      const { organisationNumber } = await fetchOrganisationOverview(
+        request,
+        organisationId
+      )
       await fetchJsonFromBackend(
         request,
-        `/v1/organisations/${organisationId}/link`,
+        `${organisationPath({ organisationNumber })}/link`,
         { method: 'DELETE' }
       )
       request.yar.set('unlinkResult', 'success')
