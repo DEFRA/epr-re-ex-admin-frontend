@@ -73,7 +73,7 @@ export const buildConfirmView = (
     values,
     errors,
     errorList,
-    overviewUrl: `/organisations/${organisationId}/registrations/${registrationId}/overview`,
+    returnUrl: `/organisations/${organisationId}`,
     postUrl: `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/${action}`
   }
 }

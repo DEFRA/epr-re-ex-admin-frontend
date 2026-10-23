@@ -11,9 +11,57 @@
   <link href="{{ getAssetPath('jsoneditor.css') }}" rel="stylesheet">
 {% endblock %}
 
+{% macro statusActionsHtml(actions) -%}
+  {%- for action in actions -%}
+    <a class="govuk-link govuk-link--no-visited-state govuk-!-margin-right-3" href="{{ action.href }}">{{ action.text }}<span class="govuk-visually-hidden"> {{ action.visuallyHiddenText }}</span></a>
+  {%- endfor -%}
+{%- endmacro %}
+
+{% macro statusTable(caption, numberHeading, linkedNumberHeading, rows, showActions) %}
+  {% from "govuk/components/table/macro.njk" import govukTable %}
+  {% from "govuk/components/tag/macro.njk" import govukTag %}
+  {% set head = [
+    { text: "ID" },
+    { text: numberHeading },
+    { text: linkedNumberHeading },
+    { text: "Status" }
+  ] %}
+  {% if showActions %}
+    {% set head = head.concat([{ text: "Actions" }]) %}
+  {% endif %}
+
+  {% set tableRows = [] %}
+  {% for row in rows %}
+    {% set cells = [
+      { text: row.id },
+      { text: row.number },
+      { text: row.linkedNumber },
+      { html: govukTag({ text: row.status }) }
+    ] %}
+    {% if showActions %}
+      {% set cells = cells.concat([{ html: statusActionsHtml(row.actions) }]) %}
+    {% endif %}
+    {% set tableRows = tableRows.concat([cells]) %}
+  {% endfor %}
+
+  {{ govukTable({
+    caption: caption,
+    captionClasses: "govuk-table__caption--m",
+    head: head,
+    rows: tableRows
+  }) }}
+{% endmacro %}
+
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
+
+      {% if statusChangeError %}
+        {{ govukErrorSummary({
+          titleText: "There is a problem",
+          errorList: [{ text: statusChangeError }]
+        }) }}
+      {% endif %}
 
       <div class="govuk-body" data-testid="app-page-body">
         <h1 class="govuk-heading-xl">{{ heading }}</h1>
@@ -82,8 +130,14 @@
         <p class="govuk-body govuk-!-margin-top-4">You do not have permission to edit this organisation.</p>
       {% endif %}
     </div>
+  </div>
 
-
+  <div class="govuk-grid-row govuk-!-margin-top-6">
+    <div class="govuk-grid-column-full" id="status-changes">
+      {% set showActions = SCOPES.adminWrite in scopes %}
+      {{ statusTable("Registrations", "Registration number", "Accreditation number", registrationRows, showActions) }}
+      {{ statusTable("Accreditations", "Accreditation number", "Registration number", accreditationRows, showActions) }}
+    </div>
   </div>
 {% endblock %}
 
