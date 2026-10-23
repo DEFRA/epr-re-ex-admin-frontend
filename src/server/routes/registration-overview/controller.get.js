@@ -6,6 +6,7 @@ import {
 } from '#server/common/helpers/fetch-organisation-overview.js'
 import { toReportingPeriods } from '#server/common/helpers/reporting-periods.js'
 import {
+  accreditationPath,
   registrationPath,
   reportsCalendarPath
 } from '#server/common/helpers/backend-paths.js'
@@ -28,9 +29,8 @@ import { toNaturalKeys } from '#server/common/helpers/natural-keys/swap-keys.js'
 
 /**
  * @import { PeriodStatus } from '#server/common/constants/report-status.js'
- * @import { OrganisationOverview } from '#server/common/helpers/fetch-organisation-overview.js'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
- * @import { RegistrationKeys } from '#server/common/helpers/natural-keys/swap-keys.js'
+ * @import { AccreditationKeys, RegistrationKeys } from '#server/common/helpers/natural-keys/swap-keys.js'
  */
 
 const GREEN_TAG = 'govuk-tag--green'
@@ -126,14 +126,17 @@ const toSummaryLogRow = (registrationKeys) => (summaryLog) => {
   }
 }
 
-const fetchWasteBalance = async (request, organisationId, accreditationId) => {
+/**
+ * @param {HapiRequest} request
+ * @param {AccreditationKeys} accreditationKeys
+ */
+const fetchWasteBalance = async (request, accreditationKeys) => {
   try {
-    const balanceMap = await fetchJsonFromBackend(
+    return await fetchJsonFromBackend(
       request,
-      `/v1/organisations/${organisationId}/waste-balances?accreditationIds=${accreditationId}`,
+      `${accreditationPath(accreditationKeys)}/waste-balance`,
       {}
     )
-    return balanceMap[accreditationId] ?? null
   } catch (err) {
     request.logger.warn({ message: 'Failed to fetch waste balance', err })
     return null
@@ -180,31 +183,20 @@ const fetchCalendar = async (request, registrationKeys) => {
  * overseas sites additionally only apply to exporters. A link to a record that
  * has no number yet, as it is not approved, is null too: the template shows it
  * as not applicable.
- * @param {OrganisationOverview} overview
  * @param {string} organisationId
  * @param {string} registrationId
  * @param {Record<string, any>} registration
+ * @param {{ registrationKeys: RegistrationKeys | null, accreditationKeys: AccreditationKeys | null }} keys
  */
 const toRegistrationLinks = (
-  overview,
   organisationId,
   registrationId,
-  registration
+  registration,
+  { registrationKeys, accreditationKeys: approvedAccreditation }
 ) => {
   const registrationUrl = `/organisations/${organisationId}/registrations/${registrationId}`
   const accreditationUrl = registration.accreditation
     ? `${registrationUrl}/accreditations/${registration.accreditation.id}`
-    : null
-  const registrationKeys = toNaturalKeys(overview, {
-    organisationId,
-    registrationId
-  })
-  const approvedAccreditation = registration.accreditation
-    ? toNaturalKeys(overview, {
-        organisationId,
-        registrationId,
-        accreditationId: registration.accreditation.id
-      })
     : null
 
   return {
@@ -255,17 +247,20 @@ export const registrationOverviewGETController = {
       registrationId
     })
 
+    const accreditationKeys = registration.accreditation
+      ? toNaturalKeys(overview, {
+          organisationId,
+          registrationId,
+          accreditationId: registration.accreditation.id
+        })
+      : null
+
     const [summaryLogRows, calendar, wasteBalance] = await Promise.all([
       // A registration with no number yet has no summary logs or reports.
       registrationKeys ? fetchSummaryLogRows(request, registrationKeys) : [],
       registrationKeys ? fetchCalendar(request, registrationKeys) : null,
-      registration.accreditation
-        ? fetchWasteBalance(
-            request,
-            organisationId,
-            registration.accreditation.id
-          )
-        : null
+      // An accreditation with no number yet has no waste balance.
+      accreditationKeys ? fetchWasteBalance(request, accreditationKeys) : null
     ])
 
     const pageTitle = request.route.settings.app.pageTitle
@@ -285,12 +280,10 @@ export const registrationOverviewGETController = {
       organisationId,
       registrationId,
       registration,
-      ...toRegistrationLinks(
-        overview,
-        organisationId,
-        registrationId,
-        registration
-      ),
+      ...toRegistrationLinks(organisationId, registrationId, registration, {
+        registrationKeys,
+        accreditationKeys
+      }),
       reportRows: calendar
         ? toReportingPeriods(calendar.reportingPeriods, calendar.cadence).map(
             toReportRow(

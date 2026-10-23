@@ -160,15 +160,11 @@ describe('accreditation-status-transition', () => {
       )
     )
 
-  const stubSummaryLogsAndWasteBalance = () => {
+  const stubSummaryLogs = () => {
     mswServer.use(
       http.get(
         `${backendUrl}/organisations/:organisationNumber/registrations/:registrationNumber/summary-logs`,
         () => HttpResponse.json({ summaryLogs: [] })
-      ),
-      http.get(
-        `${backendUrl}/v1/organisations/${organisationId}/waste-balances`,
-        () => HttpResponse.json({ [accreditationId]: null })
       )
     )
   }
@@ -227,7 +223,7 @@ describe('accreditation-status-transition', () => {
 
   const expectOverviewFlash = async (redirectCookie, message) => {
     stubOverview()
-    stubSummaryLogsAndWasteBalance()
+    stubSummaryLogs()
     const { result } = await server.inject({
       method: 'GET',
       url: overviewUrl,
