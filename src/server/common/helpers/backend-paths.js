@@ -76,10 +76,11 @@ export const periodSubmissionUnsubmitPath = (params) =>
   `${periodSubmissionPath(params)}/unsubmit`
 
 /**
- * The reporting calendar, expanded so every submission of a period is listed
- * rather than collapsed to the current one - the view both the registration
- * overview and the unsubmit confirmation need to spot a superseded submission.
- * @param {Pick<PeriodSubmissionParams, 'organisationNumber' | 'registrationNumber'>} params
+ * A year's reporting calendar, expanded so every submission of a period is
+ * listed rather than collapsed to the current one - the view both the
+ * registration overview and the unsubmit confirmation need to spot a superseded
+ * submission.
+ * @param {Pick<PeriodSubmissionParams, 'organisationNumber' | 'registrationNumber'> & { year: number }} params
  */
 export const reportsCalendarPath = (params) =>
-  `${registrationPath(params)}/reports/calendar?expand=submissions`
+  `${registrationPath(params)}/reports/${params.year}/calendar?expand=submissions`
