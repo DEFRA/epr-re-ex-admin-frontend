@@ -33,7 +33,7 @@ describe('toStatusTables', () => {
           {
             href: `${base}/reg-1/cancel/confirm`,
             text: 'Cancel',
-            visuallyHiddenText: 'registration'
+            visuallyHiddenText: 'registration R26ER1'
           }
         ],
         notes: []
@@ -67,12 +67,12 @@ describe('toStatusTables', () => {
           {
             href: `${base}/reg-1/accreditations/acc-1/reapprove/confirm`,
             text: 'Reapprove',
-            visuallyHiddenText: 'accreditation'
+            visuallyHiddenText: 'accreditation A26ER1'
           },
           {
             href: `${base}/reg-1/accreditations/acc-1/cancel/confirm`,
             text: 'Cancel',
-            visuallyHiddenText: 'accreditation'
+            visuallyHiddenText: 'accreditation A26ER1'
           }
         ],
         notes: []
@@ -80,7 +80,7 @@ describe('toStatusTables', () => {
     ])
   })
 
-  test('leaves the numbers blank for unapproved records and still offers their status changes', () => {
+  test('names unnumbered records by their ID and still offers their status changes', () => {
     const { registrationRows, accreditationRows } = toStatusTables({
       id: 'org-1',
       registrations: [
@@ -91,17 +91,25 @@ describe('toStatusTables', () => {
 
     expect(registrationRows[0]).toMatchObject({
       number: '',
-      linkedNumber: '',
+      linkedNumber: 'acc-1',
       actions: [
-        expect.objectContaining({ text: 'Approve' }),
+        expect.objectContaining({
+          text: 'Approve',
+          visuallyHiddenText: 'registration reg-1'
+        }),
         expect.objectContaining({ text: 'Reject' })
       ]
     })
     // Approving an accreditation needs an approved registration (PAE-1800).
     expect(accreditationRows[0]).toMatchObject({
       number: '',
-      linkedNumber: '',
-      actions: [expect.objectContaining({ text: 'Reject' })],
+      linkedNumber: 'reg-1',
+      actions: [
+        expect.objectContaining({
+          text: 'Reject',
+          visuallyHiddenText: 'accreditation acc-1'
+        })
+      ],
       notes: [REGISTRATION_NOT_APPROVED]
     })
   })

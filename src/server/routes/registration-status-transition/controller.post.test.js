@@ -63,7 +63,7 @@ describe('createTransitionPostController without grant fields', () => {
         body: JSON.stringify({ fromStatus: 'approved', toStatus: 'cancelled' })
       }
     )
-    expect(mockH.redirect).toHaveBeenCalledWith(returnUrl)
+    expect(mockH.redirect).toHaveBeenCalledWith(`${returnUrl}#status-changes`)
     expect(result).toBe('redirect-response')
   })
 
@@ -79,6 +79,6 @@ describe('createTransitionPostController without grant fields', () => {
       'error',
       fakeTransition.errorMessage
     )
-    expect(mockH.redirect).toHaveBeenCalledWith(returnUrl)
+    expect(mockH.redirect).toHaveBeenCalledWith(`${returnUrl}#status-changes`)
   })
 })

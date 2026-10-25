@@ -72,6 +72,6 @@ export const createTransitionPostController = (action, transition) => ({
         .code(statusCodes.badRequest)
     }
 
-    return h.redirect(returnUrl)
+    return h.redirect(`${returnUrl}#status-changes`)
   }
 })

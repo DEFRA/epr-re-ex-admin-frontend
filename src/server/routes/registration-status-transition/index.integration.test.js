@@ -268,7 +268,9 @@ describe('registration-status-transition', () => {
 
         const { postResponse } = await postTransition(action, formPayload)
         expect(postResponse.statusCode).toBe(statusCodes.found)
-        expect(postResponse.headers.location).toBe(returnUrl)
+        expect(postResponse.headers.location).toBe(
+          `${returnUrl}#status-changes`
+        )
         expect(receivedBodies).toEqual([expectedBody])
       })
 
@@ -283,7 +285,9 @@ describe('registration-status-transition', () => {
           formPayload
         )
         expect(postResponse.statusCode).toBe(statusCodes.found)
-        expect(postResponse.headers.location).toBe(returnUrl)
+        expect(postResponse.headers.location).toBe(
+          `${returnUrl}#status-changes`
+        )
 
         await expectReturnFlash(redirectCookie, fallbackError)
       })
@@ -299,7 +303,9 @@ describe('registration-status-transition', () => {
 
         const { postResponse, redirectCookie } = await postTransition(action)
         expect(postResponse.statusCode).toBe(statusCodes.found)
-        expect(postResponse.headers.location).toBe(returnUrl)
+        expect(postResponse.headers.location).toBe(
+          `${returnUrl}#status-changes`
+        )
 
         await expectReturnFlash(
           redirectCookie,
@@ -313,7 +319,9 @@ describe('registration-status-transition', () => {
 
         const { postResponse, redirectCookie } = await postTransition(action)
         expect(postResponse.statusCode).toBe(statusCodes.found)
-        expect(postResponse.headers.location).toBe(returnUrl)
+        expect(postResponse.headers.location).toBe(
+          `${returnUrl}#status-changes`
+        )
 
         await expectReturnFlash(redirectCookie, fallbackError)
       })
@@ -328,7 +336,9 @@ describe('registration-status-transition', () => {
 
         const { postResponse, redirectCookie } = await postTransition(action)
         expect(postResponse.statusCode).toBe(statusCodes.found)
-        expect(postResponse.headers.location).toBe(returnUrl)
+        expect(postResponse.headers.location).toBe(
+          `${returnUrl}#status-changes`
+        )
 
         await expectReturnFlash(redirectCookie, fallbackError)
       })
@@ -565,7 +575,7 @@ describe('registration-status-transition', () => {
         validFormPayload
       )
       expect(postResponse.statusCode).toBe(statusCodes.found)
-      expect(postResponse.headers.location).toBe(returnUrl)
+      expect(postResponse.headers.location).toBe(`${returnUrl}#status-changes`)
 
       await expectReturnFlash(redirectCookie, fallbackError)
     })

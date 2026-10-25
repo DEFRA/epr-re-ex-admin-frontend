@@ -38,9 +38,24 @@ const accreditationNotes = (accreditation, registration) => {
 }
 
 /**
+ * A record's number, or its ID until it is numbered.
+ * @param {StoredRegistration} registration
+ * @returns {string}
+ */
+const registrationLabel = ({ registrationNumber, id }) =>
+  registrationNumber ?? id
+
+/**
+ * @param {StoredAccreditation} accreditation
+ * @returns {string}
+ */
+const accreditationLabel = ({ accreditationNumber, id }) =>
+  accreditationNumber ?? id
+
+/**
  * Every registration and accreditation in the organisation, with the status
- * changes each can take and why any are held back. A row's linked number is
- * the number of the record it is linked to.
+ * changes each can take and why any are held back. A row's linked number
+ * names the record it is linked to.
  * @param {{
  *   id: string,
  *   registrations: StoredRegistration[],
@@ -61,11 +76,12 @@ export const toStatusTables = ({ id, registrations, accreditations }) => {
     return {
       id: registration.id,
       number: registration.registrationNumber ?? '',
-      linkedNumber: accreditation?.accreditationNumber ?? '',
+      linkedNumber: accreditation ? accreditationLabel(accreditation) : '',
       status: registration.status,
       actions: registrationStatusActions(
         registration.status,
-        registrationUrl(registration)
+        registrationUrl(registration),
+        registrationLabel(registration)
       ),
       notes: []
     }
@@ -79,13 +95,14 @@ export const toStatusTables = ({ id, registrations, accreditations }) => {
     return {
       id: accreditation.id,
       number: accreditation.accreditationNumber ?? '',
-      linkedNumber: registration?.registrationNumber ?? '',
+      linkedNumber: registration ? registrationLabel(registration) : '',
       status: accreditation.status,
       actions: registration
         ? accreditationStatusActions(
             accreditation.status,
             `${registrationUrl(registration)}/accreditations/${accreditation.id}`,
-            registration.status
+            registration.status,
+            accreditationLabel(accreditation)
           )
         : [],
       notes: accreditationNotes(accreditation, registration)

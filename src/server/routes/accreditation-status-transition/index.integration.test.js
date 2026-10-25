@@ -304,7 +304,9 @@ describe('accreditation-status-transition', () => {
 
         const { postResponse } = await postTransition(action, formPayload)
         expect(postResponse.statusCode).toBe(statusCodes.found)
-        expect(postResponse.headers.location).toBe(returnUrl)
+        expect(postResponse.headers.location).toBe(
+          `${returnUrl}#status-changes`
+        )
         expect(receivedBodies).toEqual([expectedBody])
       })
 
@@ -319,7 +321,9 @@ describe('accreditation-status-transition', () => {
           formPayload
         )
         expect(postResponse.statusCode).toBe(statusCodes.found)
-        expect(postResponse.headers.location).toBe(returnUrl)
+        expect(postResponse.headers.location).toBe(
+          `${returnUrl}#status-changes`
+        )
 
         await expectReturnFlash(redirectCookie, fallbackError)
       })
@@ -335,7 +339,9 @@ describe('accreditation-status-transition', () => {
 
         const { postResponse, redirectCookie } = await postTransition(action)
         expect(postResponse.statusCode).toBe(statusCodes.found)
-        expect(postResponse.headers.location).toBe(returnUrl)
+        expect(postResponse.headers.location).toBe(
+          `${returnUrl}#status-changes`
+        )
 
         await expectReturnFlash(
           redirectCookie,
@@ -349,7 +355,9 @@ describe('accreditation-status-transition', () => {
 
         const { postResponse, redirectCookie } = await postTransition(action)
         expect(postResponse.statusCode).toBe(statusCodes.found)
-        expect(postResponse.headers.location).toBe(returnUrl)
+        expect(postResponse.headers.location).toBe(
+          `${returnUrl}#status-changes`
+        )
 
         await expectReturnFlash(redirectCookie, fallbackError)
       })
@@ -364,7 +372,9 @@ describe('accreditation-status-transition', () => {
 
         const { postResponse, redirectCookie } = await postTransition(action)
         expect(postResponse.statusCode).toBe(statusCodes.found)
-        expect(postResponse.headers.location).toBe(returnUrl)
+        expect(postResponse.headers.location).toBe(
+          `${returnUrl}#status-changes`
+        )
 
         await expectReturnFlash(redirectCookie, fallbackError)
       })
@@ -659,7 +669,7 @@ describe('accreditation-status-transition', () => {
         validFormPayload
       )
       expect(postResponse.statusCode).toBe(statusCodes.found)
-      expect(postResponse.headers.location).toBe(returnUrl)
+      expect(postResponse.headers.location).toBe(`${returnUrl}#status-changes`)
 
       await expectReturnFlash(
         redirectCookie,

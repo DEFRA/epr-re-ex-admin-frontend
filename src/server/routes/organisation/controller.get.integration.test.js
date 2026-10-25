@@ -160,13 +160,19 @@ describe('organisation GET controller', () => {
         const $ = await loadPage()
 
         expect(tableRows($, 'Registrations')).toEqual([
-          ['reg-1', 'R26ER1', 'A26ER1', 'approved', 'Cancel registration'],
+          [
+            'reg-1',
+            'R26ER1',
+            'A26ER1',
+            'approved',
+            'Cancel registration R26ER1'
+          ],
           [
             'reg-2',
             '',
             '',
             'created',
-            'Approve registrationReject registration'
+            'Approve registration reg-2Reject registration reg-2'
           ]
         ])
         expect(
@@ -178,7 +184,13 @@ describe('organisation GET controller', () => {
         const $ = await loadPage()
 
         expect(tableRows($, 'Accreditations')).toEqual([
-          ['acc-1', 'A26ER1', 'R26ER1', 'approved', 'Suspend accreditation'],
+          [
+            'acc-1',
+            'A26ER1',
+            'R26ER1',
+            'approved',
+            'Suspend accreditation A26ER1'
+          ],
           ['acc-2', 'A26ER2', '', 'created', 'Not linked to a registration']
         ])
         expect($('#status-changes a:contains("Suspend")').attr('href')).toBe(
