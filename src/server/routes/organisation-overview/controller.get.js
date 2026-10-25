@@ -1,10 +1,34 @@
-import { fetchOrganisationOverview } from '#server/common/helpers/fetch-organisation-overview.js'
+import { organisationPath } from '#server/common/helpers/backend-paths.js'
+import {
+  fetchOrganisationView,
+  registrationRows
+} from '#server/common/helpers/fetch-organisation-view.js'
+import { registrationOverviewUrl } from '#server/common/helpers/page-urls.js'
+
+/**
+ * @import { LinkedDefraOrganisationView } from '#server/common/helpers/fetch-organisation-view.js'
+ */
+
+/**
+ * The linked Defra ID organisation as the template reads it.
+ * @param {LinkedDefraOrganisationView} [linked]
+ */
+const toLinkedDefraOrganisation = (linked) =>
+  linked && {
+    orgName: linked.defraOrganisation.name,
+    orgId: linked.defraOrganisation.id,
+    linkedAt: linked.linkedAt,
+    linkedBy: { email: linked.linkedBy.email }
+  }
 
 export const organisationOverviewGETController = {
   async handler(request, h) {
-    const id = request.params.organisationId
+    const { organisationNumber } = request.params
 
-    const data = await fetchOrganisationOverview(request, id)
+    const organisation = await fetchOrganisationView(
+      request,
+      organisationNumber
+    )
 
     const unlinkResult = request.yar.get('unlinkResult')
     request.yar.clear('unlinkResult')
@@ -14,10 +38,18 @@ export const organisationOverviewGETController = {
     return h.view('routes/organisation-overview/index', {
       breadcrumbs: [{ text: 'Organisations', href: '/organisations' }],
       pageTitle,
-      heading: data.companyName,
-      organisationId: id,
-      registrations: data.registrations,
-      linkedDefraOrganisation: data.linkedDefraOrganisation,
+      heading: organisation.name,
+      registrations: registrationRows(organisation).map((row) => ({
+        ...row,
+        viewUrl: registrationOverviewUrl({
+          organisationNumber,
+          registrationNumber: row.registrationNumber
+        })
+      })),
+      linkedDefraOrganisation: toLinkedDefraOrganisation(
+        organisation.linkedDefraOrganisation
+      ),
+      unlinkUrl: `${organisationPath({ organisationNumber })}/unlink-defra-id/confirm`,
       unlinkResult
     })
   }

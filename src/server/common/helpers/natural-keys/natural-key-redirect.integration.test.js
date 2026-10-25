@@ -11,7 +11,7 @@ vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
   getUserSession: vi.fn().mockReturnValue(null)
 }))
 
-describe('natural-key redirect to pages still served by id', () => {
+describe('natural-key redirect from id addresses', () => {
   const originalBackendUrl = config.get('eprBackendUrl')
   const backendUrl = 'http://mock-backend'
   const organisationId = '69c3b4f0abda9efa68dd6697'
@@ -19,7 +19,9 @@ describe('natural-key redirect to pages still served by id', () => {
   const accreditationId = '69c3b4f0abda9efa68dd6698'
   const organisationNumber = '500123'
   const registrationNumber = 'R26ER5001180041PL'
-  const registration = `/organisations/${organisationNumber}/registrations/${registrationNumber}`
+  const organisation = `/organisations/${organisationNumber}`
+  const registration = `${organisation}/registrations/${registrationNumber}`
+  const registrationById = `/organisations/${organisationId}/registrations/${registrationId}`
   const auth = { strategy: 'session', credentials: mockUserSession }
   let server
 
@@ -36,191 +38,128 @@ describe('natural-key redirect to pages still served by id', () => {
     await server.stop({ timeout: 0 })
   })
 
-  /** @param {Parameters<typeof HttpResponse.json>[0]} body */
-  const stubSearch = (body) =>
+  /** @param {string | null} [number] */
+  const stubOrganisation = (number = registrationNumber) =>
     mswServer.use(
-      http.get(`${backendUrl}/v1/organisations`, () => HttpResponse.json(body))
-    )
-
-  /** @param {string} [number] */
-  const stubOverview = (number = registrationNumber) =>
-    mswServer.use(
-      http.get(
-        `${backendUrl}/v1/organisations/${organisationId}/overview`,
-        () =>
-          HttpResponse.json({
-            id: organisationId,
-            organisationNumber,
-            companyName: 'ACME ltd',
-            registrations: [
-              {
-                id: registrationId,
-                registrationNumber: number,
-                accreditation: {
-                  id: accreditationId,
-                  accreditationNumber: 'A26ER5001180114PL',
-                  year: 2026
-                }
-              }
-            ]
-          })
+      http.get(`${backendUrl}/v1/organisations/${organisationId}`, () =>
+        HttpResponse.json({
+          id: organisationId,
+          orgId: 500123,
+          registrations: [
+            { id: registrationId, registrationNumber: number, accreditationId }
+          ],
+          accreditations: [
+            {
+              id: accreditationId,
+              accreditationNumber: 'A26ER5001180114PL',
+              validFrom: '2026-03-01'
+            }
+          ]
+        })
       )
     )
 
   /** @param {string} url */
   const get = (url) => server.inject({ method: 'GET', url, auth })
 
-  describe('when the number finds the organisation', () => {
-    beforeEach(() => {
-      stubSearch({ items: [{ id: organisationId, orgId: 500123 }] })
-      stubOverview()
-    })
-
-    it.each([
-      [
-        'organisation overview',
-        `/organisations/${organisationNumber}/overview`,
-        `/organisations/${organisationId}/overview`
-      ],
-      [
-        'registration overview',
-        `${registration}/overview`,
-        `/organisations/${organisationId}/registrations/${registrationId}/overview`
-      ]
-    ])('sends the %s to its id address', async (_, url, location) => {
-      const { statusCode, headers } = await get(url)
-
-      expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe(location)
-    })
-
-    it('keeps the query string', async () => {
-      const { headers } = await get(
-        `/organisations/${organisationNumber}/overview?tab=users`
-      )
-
-      expect(headers.location).toBe(
-        `/organisations/${organisationId}/overview?tab=users`
-      )
-    })
-
-    it('sends a registration numbered in no particular format to its id address', async () => {
-      stubOverview('REG-50030-001')
-
-      const { statusCode, headers } = await get(
-        `/organisations/${organisationNumber}/registrations/REG-50030-001/overview`
-      )
-
-      expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe(
-        `/organisations/${organisationId}/registrations/${registrationId}/overview`
-      )
-    })
-
-    it('sends a registration numbered with slashes to its id address', async () => {
-      stubOverview('FAKE/REG500123/ALPHA')
-
-      const { statusCode, headers } = await get(
-        `/organisations/${organisationNumber}/registrations/FAKE%2FREG500123%2FALPHA/overview`
-      )
-
-      expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe(
-        `/organisations/${organisationId}/registrations/${registrationId}/overview`
-      )
-    })
-
-    it('is not found for a registration the organisation does not hold', async () => {
-      const { statusCode } = await get(
-        `/organisations/${organisationNumber}/registrations/R26ER9999999999PL/overview`
-      )
-
-      expect(statusCode).toBe(statusCodes.notFound)
-    })
-  })
-
   it.each([
-    ['finds no organisation', { items: [] }],
     [
-      'finds a different organisation',
-      { items: [{ id: organisationId, orgId: 5001239 }] }
-    ]
-  ])('is not found when the search %s', async (_, page) => {
-    stubSearch(page)
-
-    const { statusCode } = await get(
-      `/organisations/${organisationNumber}/overview`
-    )
-
-    expect(statusCode).toBe(statusCodes.notFound)
-  })
-
-  it('is not found when the backend refuses the search', async () => {
-    mswServer.use(
-      http.get(`${backendUrl}/v1/organisations`, () =>
-        HttpResponse.json({}, { status: statusCodes.forbidden })
-      )
-    )
-
-    const { statusCode } = await get(
-      `/organisations/${organisationNumber}/overview`
-    )
-
-    expect(statusCode).toBe(statusCodes.notFound)
-  })
-
-  it('sends an old id URL to a natural-key URL that keeps a slashed number as one segment', async () => {
-    stubOverview('FAKE/REG500123/ALPHA')
-
-    const { statusCode, headers } = await get(
-      `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/waste-balance-events`
-    )
-
-    expect(statusCode).toBe(statusCodes.found)
-    expect(headers.location).toBe(
-      `/organisations/${organisationNumber}/registrations/FAKE%2FREG500123%2FALPHA/accreditations/2026/waste-balance-events`
-    )
-  })
-
-  it('sends an old id URL for the accreditation PRN activity download to its natural-key URL', async () => {
-    stubOverview()
-
-    const { statusCode, headers } = await get(
-      `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/prn-activity/download`
-    )
-
-    expect(statusCode).toBe(statusCodes.found)
-    expect(headers.location).toBe(
+      'organisation overview',
+      `/organisations/${organisationId}/overview`,
+      `${organisation}/overview`
+    ],
+    [
+      'registration overview',
+      `${registrationById}/overview`,
+      `${registration}/overview`
+    ],
+    [
+      'unlink confirmation',
+      `/organisations/${organisationId}/unlink-defra-id/confirm`,
+      `${organisation}/unlink-defra-id/confirm`
+    ],
+    [
+      'waste records download',
+      `${registrationById}/waste-records/download`,
+      `${registration}/waste-records/download`
+    ],
+    [
+      'PRN activity download',
+      `${registrationById}/accreditations/${accreditationId}/prn-activity/download`,
       `${registration}/accreditations/2026/prn-activity/download`
+    ]
+  ])('sends the %s to its natural-key address', async (_, url, location) => {
+    stubOrganisation()
+
+    const { statusCode, headers } = await get(url)
+
+    expect(statusCode).toBe(statusCodes.found)
+    expect(headers.location).toBe(location)
+  })
+
+  it('keeps the query string', async () => {
+    stubOrganisation()
+
+    const { headers } = await get(
+      `/organisations/${organisationId}/overview?tab=users`
+    )
+
+    expect(headers.location).toBe(`${organisation}/overview?tab=users`)
+  })
+
+  it('keeps a slashed number as one segment', async () => {
+    stubOrganisation('FAKE/REG500123/ALPHA')
+
+    const { statusCode, headers } = await get(
+      `${registrationById}/accreditations/${accreditationId}/waste-balance-events`
+    )
+
+    expect(statusCode).toBe(statusCodes.found)
+    expect(headers.location).toBe(
+      `${organisation}/registrations/FAKE%2FREG500123%2FALPHA/accreditations/2026/waste-balance-events`
     )
   })
 
-  it('is not found for an old id URL whose organisation the backend does not find', async () => {
+  it('is not found for a registration with no number', async () => {
+    stubOrganisation(null)
+
+    const { statusCode } = await get(`${registrationById}/overview`)
+
+    expect(statusCode).toBe(statusCodes.notFound)
+  })
+
+  it('is not found for an organisation the backend does not find', async () => {
     mswServer.use(
-      http.get(
-        `${backendUrl}/v1/organisations/${organisationId}/overview`,
-        () => HttpResponse.json({}, { status: statusCodes.notFound })
+      http.get(`${backendUrl}/v1/organisations/${organisationId}`, () =>
+        HttpResponse.json({}, { status: statusCodes.notFound })
       )
     )
 
     const { statusCode } = await get(
-      `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1`
+      `${registrationById}/reports/2026/quarterly/1/submissions/1`
     )
 
     expect(statusCode).toBe(statusCodes.notFound)
   })
 
-  it('fails when the backend cannot search', async () => {
+  it('fails when the backend cannot look the organisation up', async () => {
     mswServer.use(
-      http.get(`${backendUrl}/v1/organisations`, () =>
+      http.get(`${backendUrl}/v1/organisations/${organisationId}`, () =>
         HttpResponse.json({}, { status: statusCodes.internalServerError })
       )
     )
 
     const { statusCode } = await get(
-      `/organisations/${organisationNumber}/overview`
+      `/organisations/${organisationId}/overview`
     )
 
     expect(statusCode).toBe(statusCodes.internalServerError)
+  })
+
+  it('leaves a natural-key address on a page still served by id alone', async () => {
+    const { statusCode, headers } = await get(`${registration}/approve/confirm`)
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(headers.location).toBeUndefined()
   })
 })

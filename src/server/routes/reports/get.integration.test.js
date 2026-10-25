@@ -112,15 +112,13 @@ describe('#reportDetailController', () => {
 
     test('Should send an old id URL to the natural-key URL', async () => {
       mswServer.use(
-        http.get(
-          `${backendUrl}/v1/organisations/${organisationId}/overview`,
-          () =>
-            HttpResponse.json({
-              id: organisationId,
-              organisationNumber,
-              companyName: 'ACME ltd',
-              registrations: [{ id: registrationId, registrationNumber }]
-            })
+        http.get(`${backendUrl}/v1/organisations/${organisationId}`, () =>
+          HttpResponse.json({
+            id: organisationId,
+            orgId: 500123,
+            registrations: [{ id: registrationId, registrationNumber }],
+            accreditations: []
+          })
         )
       )
 

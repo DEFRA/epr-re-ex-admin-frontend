@@ -1,5 +1,7 @@
 import { proxyCsvStream } from '#server/common/helpers/proxy-csv-stream.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
+import { registrationPath } from '#server/common/helpers/backend-paths.js'
+import { registrationOverviewUrl } from '#server/common/helpers/page-urls.js'
 
 const logger = createLogger()
 
@@ -9,18 +11,11 @@ const logger = createLogger()
  */
 export const wasteRecordsRegistrationDownloadController = {
   async handler(request, h) {
-    const { organisationId, registrationId } = request.params
-
-    const query = new URLSearchParams({
-      organisationId,
-      registrationId
-    })
-
     try {
       return await proxyCsvStream(
         request,
         h,
-        `/v1/admin/waste-records/export.csv?${query}`,
+        `${registrationPath(request.params)}/waste-records/export.csv`,
         'waste-records.csv'
       )
     } catch (error) {
@@ -34,9 +29,7 @@ export const wasteRecordsRegistrationDownloadController = {
         'There was a problem downloading the waste records. Please try again.'
 
       request.yar.set('error', errorMessage)
-      return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/overview`
-      )
+      return h.redirect(registrationOverviewUrl(request.params))
     }
   }
 }

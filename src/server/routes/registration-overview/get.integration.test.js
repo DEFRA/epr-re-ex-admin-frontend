@@ -25,7 +25,11 @@ describe('#registrationOverviewController', () => {
   const backendUrl = 'http://mock-backend'
   const organisationId = '69c3b4f0abda9efa68dd6697'
   const registrationId = '69c3b4f0abda9efa68dd669b'
-  const url = `/organisations/${organisationId}/registrations/${registrationId}/overview`
+  const organisationNumber = '500123'
+  const registrationNumber = 'REG-50030-001'
+  const registrationUrl = `/organisations/${organisationNumber}/registrations/${registrationNumber}`
+  const url = `${registrationUrl}/overview`
+  const organisationViewUrl = `${backendUrl}/organisations/${organisationNumber}`
   let server
 
   beforeAll(async () => {
@@ -44,32 +48,30 @@ describe('#registrationOverviewController', () => {
     vi.clearAllMocks()
   })
 
-  const accreditationId = '69c3b4f0abda9efa68dd6698'
-
-  /**
-   * @type {{
-   *   id: string,
-   *   registrationNumber: string | undefined,
-   *   status: string,
-   *   processingType: string,
-   *   material: string,
-   *   site: string,
-   *   accreditation: { id: string, accreditationNumber: string | null, status: string, year?: number | null } | null
-   * }}
-   */
   const mockRegistration = {
-    id: registrationId,
-    registrationNumber: 'REG-50030-001',
-    status: 'approved',
-    processingType: 'reprocessor',
     material: 'glass',
-    site: 'Site A',
-    accreditation: {
-      id: accreditationId,
-      accreditationNumber: 'ACC-50030-001',
-      status: 'approved',
-      year: 2026
+    status: { current: 'approved' },
+    validFrom: '2026-01-01',
+    wasteProcessingType: 'reprocessor',
+    reprocessingType: 'input',
+    site: {
+      address: { line1: 'Site A', town: 'Leeds', postcode: 'LS1 1AA' }
+    },
+    accreditations: {
+      2026: {
+        accreditationNumber: 'ACC-50030-001',
+        status: { current: 'approved' }
+      }
     }
+  }
+
+  const mockExporterRegistration = {
+    material: 'glass',
+    status: { current: 'approved' },
+    validFrom: '2026-01-01',
+    wasteProcessingType: 'exporter',
+    overseasSites: {},
+    accreditations: mockRegistration.accreditations
   }
 
   const mockWasteBalance = {
@@ -91,12 +93,20 @@ describe('#registrationOverviewController', () => {
     decemberAvailableAmount: 0
   }
 
-  const mockOverview = {
-    id: organisationId,
-    organisationNumber: '500123',
-    companyName: 'ACME ltd',
-    registrations: [mockRegistration]
-  }
+  /**
+   * @param {object} registration
+   * @param {string} [number]
+   */
+  const organisationHolding = (registration, number = registrationNumber) => ({
+    name: 'ACME ltd',
+    displayName: 'ACME',
+    organisationNumber,
+    status: { current: 'approved' },
+    submittedToRegulator: { code: 'ea' },
+    registrations: { [number]: registration }
+  })
+
+  const mockOrganisation = organisationHolding(mockRegistration)
 
   const calendarUrl = `${backendUrl}/organisations/:organisationNumber/registrations/:registrationNumber/reports/:year/calendar`
   const summaryLogsUrl = `${backendUrl}/organisations/:organisationNumber/registrations/:registrationNumber/summary-logs`
@@ -321,7 +331,7 @@ describe('#registrationOverviewController', () => {
   }
 
   const useMockBackend = (
-    overviewResponse = mockOverview,
+    organisationResponse = mockOrganisation,
     calendarResponse = mockCalendar,
     summaryLogsResponse = {
       summaryLogs: /** @type {Array<typeof mockSubmittedSummaryLog>} */ ([])
@@ -329,9 +339,8 @@ describe('#registrationOverviewController', () => {
     wasteBalanceResponse = mockWasteBalance
   ) => {
     mswServer.use(
-      http.get(
-        `${backendUrl}/v1/organisations/${organisationId}/overview`,
-        () => HttpResponse.json(overviewResponse)
+      http.get(organisationViewUrl, () =>
+        HttpResponse.json(organisationResponse)
       ),
       http.get(calendarUrl, () =>
         HttpResponse.json(asYearCalendar(calendarResponse))
@@ -382,25 +391,6 @@ describe('#registrationOverviewController', () => {
       )
     })
 
-    test('Should fall back to registration id in heading when registrationNumber is missing', async () => {
-      useMockBackend({
-        ...mockOverview,
-        registrations: [{ ...mockRegistration, registrationNumber: undefined }]
-      })
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
-
-      const body = renderPage(result)
-
-      expect(getByRole(body, 'heading', { level: 1 })).toHaveTextContent(
-        `ACME ltd - ${registrationId}`
-      )
-    })
-
     test('Should render breadcrumbs for Organisations and Overview', async () => {
       useMockBackend()
 
@@ -422,7 +412,7 @@ describe('#registrationOverviewController', () => {
         { text: 'Organisations', href: '/organisations' },
         {
           text: 'Organisation overview',
-          href: `/organisations/${organisationId}/overview`
+          href: `/organisations/${organisationNumber}/overview`
         }
       ])
     })
@@ -442,7 +432,7 @@ describe('#registrationOverviewController', () => {
         within(getSummaryRowValue(body, 'Status')).getByText('approved')
       ).toHaveClass('govuk-tag')
       expect(getSummaryRowValue(body, 'Processing type')).toHaveTextContent(
-        'reprocessor'
+        'reprocessor - input'
       )
       expect(getSummaryRowValue(body, 'Material')).toHaveTextContent('glass')
       expect(getSummaryRowValue(body, 'Site')).toHaveTextContent('Site A')
@@ -511,10 +501,7 @@ describe('#registrationOverviewController', () => {
     })
 
     test('Should render an overseas sites link for an exporter accreditation', async () => {
-      useMockBackend({
-        ...mockOverview,
-        registrations: [{ ...mockRegistration, processingType: 'exporter' }]
-      })
+      useMockBackend(organisationHolding(mockExporterRegistration))
 
       const { result } = await server.inject({
         method: 'GET',
@@ -548,11 +535,10 @@ describe('#registrationOverviewController', () => {
       expect(queryByText(body, 'Overseas sites', { selector: 'dt' })).toBeNull()
     })
 
-    test('Should not render accreditation rows in summary list when accreditation is absent', async () => {
-      useMockBackend({
-        ...mockOverview,
-        registrations: [{ ...mockRegistration, accreditation: null }]
-      })
+    test('Should not render accreditation rows in summary list when the registration has no accreditations', async () => {
+      useMockBackend(
+        organisationHolding({ ...mockExporterRegistration, accreditations: {} })
+      )
 
       const { result } = await server.inject({
         method: 'GET',
@@ -589,7 +575,7 @@ describe('#registrationOverviewController', () => {
 
       expect(link).toHaveAttribute(
         'href',
-        `/organisations/${organisationId}/registrations/${registrationId}/waste-records/download`
+        `${registrationUrl}/waste-records/download`
       )
     })
 
@@ -613,10 +599,9 @@ describe('#registrationOverviewController', () => {
     })
 
     test('Should render the waste records link but no PRN activity link when accreditation is absent', async () => {
-      useMockBackend({
-        ...mockOverview,
-        registrations: [{ ...mockRegistration, accreditation: null }]
-      })
+      useMockBackend(
+        organisationHolding({ ...mockRegistration, accreditations: {} })
+      )
 
       const { result } = await server.inject({
         method: 'GET',
@@ -634,85 +619,65 @@ describe('#registrationOverviewController', () => {
       expect(queryByText(body, 'PRN activity', { selector: 'dt' })).toBeNull()
     })
 
-    test('Should keep a registration number holding slashes as one segment of its links', async () => {
-      useMockBackend({
-        ...mockOverview,
-        registrations: [
-          { ...mockRegistration, registrationNumber: 'FAKE/REG500123/ALPHA' }
-        ]
-      })
+    test('Should keep a registration number holding slashes as one segment of its links and backend paths', async () => {
+      /** @type {string[]} */
+      const summaryLogPaths = []
+      useMockBackend(
+        organisationHolding(mockRegistration, 'FAKE/REG500123/ALPHA')
+      )
+      mswServer.use(
+        http.get(summaryLogsUrl, ({ request }) => {
+          summaryLogPaths.push(new URL(request.url).pathname)
+          return HttpResponse.json({ summaryLogs: [] })
+        })
+      )
 
-      const { result } = await server.inject({
+      const { statusCode, result } = await server.inject({
         method: 'GET',
-        url,
+        url: '/organisations/500123/registrations/FAKE%2FREG500123%2FALPHA/overview',
         auth: { strategy: 'session', credentials: mockUserSession }
       })
 
-      const link = within(
-        getSummaryRowValue(renderPage(result), 'Waste balance events')
-      ).getByRole('link', { name: 'View' })
-
-      expect(link).toHaveAttribute(
+      expect(statusCode).toBe(statusCodes.ok)
+      const body = renderPage(result)
+      expect(
+        within(getSummaryRowValue(body, 'Waste balance events')).getByRole(
+          'link',
+          { name: 'View' }
+        )
+      ).toHaveAttribute(
         'href',
         '/organisations/500123/registrations/FAKE%2FREG500123%2FALPHA/accreditations/2026/waste-balance-events'
       )
-    })
-
-    test('Should show the accreditation links as not applicable when the accreditation is not approved', async () => {
-      useMockBackend({
-        ...mockOverview,
-        registrations: [
-          {
-            ...mockRegistration,
-            processingType: 'exporter',
-            accreditation: {
-              id: accreditationId,
-              accreditationNumber: null,
-              status: 'created'
-            }
-          }
-        ]
-      })
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
-
-      const body = renderPage(result)
-
-      for (const row of [
-        'Waste balance events',
-        'Overseas sites',
-        'PRN activity'
-      ]) {
-        expect(getSummaryRowValue(body, row)).toHaveTextContent(
-          'N/A as not approved'
-        )
-      }
       expect(
         within(getSummaryRowValue(body, 'Waste records')).getByRole('link', {
           name: 'Download'
         })
-      ).toBeInTheDocument()
+      ).toHaveAttribute(
+        'href',
+        '/organisations/500123/registrations/FAKE%2FREG500123%2FALPHA/waste-records/download'
+      )
+      expect(summaryLogPaths).toStrictEqual([
+        '/organisations/500123/registrations/FAKE%2FREG500123%2FALPHA/summary-logs'
+      ])
     })
 
-    test('Should show the accreditation links as not applicable when the accreditation has no year', async () => {
-      useMockBackend({
-        ...mockOverview,
-        registrations: [
-          {
-            ...mockRegistration,
-            accreditation: {
-              id: accreditationId,
-              accreditationNumber: 'ACC-50030-001',
-              status: 'approved',
-              year: null
+    test('Should show the latest year of accreditation and link its pages by that year', async () => {
+      useMockBackend(
+        organisationHolding({
+          ...mockRegistration,
+          accreditations: {
+            2027: {
+              accreditationNumber: 'ACC-50030-027',
+              status: { current: 'suspended' }
+            },
+            2026: {
+              accreditationNumber: 'ACC-50030-026',
+              status: { current: 'approved' }
             }
           }
-        ]
-      })
+        })
+      )
 
       const { result } = await server.inject({
         method: 'GET',
@@ -722,42 +687,22 @@ describe('#registrationOverviewController', () => {
 
       const body = renderPage(result)
 
-      for (const row of ['Waste balance events', 'PRN activity']) {
-        expect(getSummaryRowValue(body, row)).toHaveTextContent(
-          'N/A as not approved'
+      expect(
+        getSummaryRowValue(body, 'Accreditation number')
+      ).toHaveTextContent('ACC-50030-027')
+      expect(
+        within(getSummaryRowValue(body, 'Accreditation status')).getByText(
+          'suspended'
         )
-      }
-    })
-
-    test('Should show every record link as not applicable when the registration is not approved', async () => {
-      useMockBackend({
-        ...mockOverview,
-        registrations: [
-          {
-            ...mockRegistration,
-            registrationNumber: undefined,
-            status: 'created'
-          }
-        ]
-      })
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
-
-      const body = renderPage(result)
-
-      for (const row of [
-        'Waste balance events',
-        'Waste records',
-        'PRN activity'
-      ]) {
-        expect(getSummaryRowValue(body, row)).toHaveTextContent(
-          'N/A as not approved'
-        )
-      }
+      ).toHaveClass('govuk-tag')
+      expect(
+        within(getSummaryRowValue(body, 'PRN activity')).getByRole('link', {
+          name: 'Download'
+        })
+      ).toHaveAttribute(
+        'href',
+        `${registrationUrl}/accreditations/2027/prn-activity/download`
+      )
     })
 
     test('Should render the reporting periods table', async () => {
@@ -900,30 +845,6 @@ describe('#registrationOverviewController', () => {
       expect(calendarRequestUrl?.searchParams.get('expand')).toBe('submissions')
     })
 
-    test('Should not render the reports table when the registration has no number', async () => {
-      useMockBackend({
-        ...mockOverview,
-        registrations: [
-          {
-            ...mockRegistration,
-            registrationNumber: undefined,
-            status: 'created'
-          }
-        ]
-      })
-
-      const { statusCode, result } = await server.inject({
-        method: 'GET',
-        url,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(
-        queryByRole(renderPage(result), 'table', { name: 'Reports' })
-      ).toBeNull()
-    })
-
     test('Should not render the reports table when the backend serves no calendar for the registration', async () => {
       useMockBackend()
       mswServer.use(
@@ -1025,7 +946,7 @@ describe('#registrationOverviewController', () => {
     })
 
     it('should keep the requires-resubmission status once the draft is in flight', async () => {
-      useMockBackend(mockOverview, mockCalendarWithResubmissionDraft)
+      useMockBackend(mockOrganisation, mockCalendarWithResubmissionDraft)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -1104,7 +1025,7 @@ describe('#registrationOverviewController', () => {
     })
 
     test('Should render the Summary logs table with column headers when summary logs exist', async () => {
-      useMockBackend(mockOverview, mockCalendar, {
+      useMockBackend(mockOrganisation, mockCalendar, {
         summaryLogs: [mockSubmittedSummaryLog]
       })
 
@@ -1124,7 +1045,7 @@ describe('#registrationOverviewController', () => {
     })
 
     test('Should render a green Success tag and Download link for a submitted log', async () => {
-      useMockBackend(mockOverview, mockCalendar, {
+      useMockBackend(mockOrganisation, mockCalendar, {
         summaryLogs: [mockSubmittedSummaryLog]
       })
 
@@ -1153,7 +1074,7 @@ describe('#registrationOverviewController', () => {
     })
 
     test('Should render a View data link to the summary log document page', async () => {
-      useMockBackend(mockOverview, mockCalendar, {
+      useMockBackend(mockOrganisation, mockCalendar, {
         summaryLogs: [mockSubmittedSummaryLog]
       })
 
@@ -1182,7 +1103,7 @@ describe('#registrationOverviewController', () => {
     ])(
       'Should render a red "%s" tag labelled "%s"',
       async (status, expectedLabel) => {
-        useMockBackend(mockOverview, mockCalendar, {
+        useMockBackend(mockOrganisation, mockCalendar, {
           summaryLogs: [{ ...mockValidationFailedSummaryLog, status }]
         })
 
@@ -1201,7 +1122,7 @@ describe('#registrationOverviewController', () => {
     )
 
     test('Should render multiple summary-log rows newest-first', async () => {
-      useMockBackend(mockOverview, mockCalendar, {
+      useMockBackend(mockOrganisation, mockCalendar, {
         summaryLogs: [mockSubmittedSummaryLog, mockValidationFailedSummaryLog]
       })
 
@@ -1238,35 +1159,10 @@ describe('#registrationOverviewController', () => {
       expect(getByText(body, 'No summary logs')).toBeInTheDocument()
     })
 
-    test('Should render "No summary logs" without asking the backend when the registration has no number', async () => {
-      useMockBackend(
-        {
-          ...mockOverview,
-          registrations: [
-            { ...mockRegistration, registrationNumber: undefined }
-          ]
-        },
-        mockCalendar,
-        { summaryLogs: [mockSubmittedSummaryLog] }
-      )
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
-
-      const body = renderPage(result)
-
-      expect(queryByRole(body, 'table', { name: 'Summary logs' })).toBeNull()
-      expect(getByText(body, 'No summary logs')).toBeInTheDocument()
-    })
-
     test('Should show 500 error page when the summary-logs backend returns a non-OK response', async () => {
       mswServer.use(
-        http.get(
-          `${backendUrl}/v1/organisations/${organisationId}/overview`,
-          () => HttpResponse.json(mockOverview)
+        http.get(organisationViewUrl, () =>
+          HttpResponse.json(mockOrganisation)
         ),
         http.get(calendarUrl, () =>
           HttpResponse.json(asYearCalendar(mockCalendar))
@@ -1290,26 +1186,68 @@ describe('#registrationOverviewController', () => {
       ).toBeInTheDocument()
     })
 
-    test('Should return 404 when registration is not found', async () => {
-      useMockBackend({ ...mockOverview, registrations: [] })
+    test('Should show the not found page for a registration number the organisation does not hold', async () => {
+      useMockBackend(organisationHolding(mockRegistration, 'REG-50030-999'))
 
-      const { statusCode } = await server.inject({
+      const { statusCode, result } = await server.inject({
         method: 'GET',
         url,
         auth: { strategy: 'session', credentials: mockUserSession }
       })
 
       expect(statusCode).toBe(statusCodes.notFound)
+      expect(
+        getByText(renderPage(result), 'Page not found')
+      ).toBeInTheDocument()
+    })
+
+    test('Should show the not found page for an organisation number the backend does not find', async () => {
+      useMockBackend()
+      mswServer.use(
+        http.get(organisationViewUrl, () =>
+          HttpResponse.json({}, { status: statusCodes.notFound })
+        )
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+      expect(
+        getByText(renderPage(result), 'Page not found')
+      ).toBeInTheDocument()
+    })
+
+    test('Should send the old id address to the registration number address', async () => {
+      mswServer.use(
+        http.get(`${backendUrl}/v1/organisations/${organisationId}`, () =>
+          HttpResponse.json({
+            id: organisationId,
+            orgId: 500123,
+            registrations: [{ id: registrationId, registrationNumber }],
+            accreditations: []
+          })
+        )
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/organisations/${organisationId}/registrations/${registrationId}/overview`,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe(url)
     })
 
     test('Should show 500 error page when backend returns a non-OK response', async () => {
       mswServer.use(
-        http.get(
-          `${backendUrl}/v1/organisations/${organisationId}/overview`,
-          () => {
-            throw HttpResponse.text('', { status: 500 })
-          }
-        ),
+        http.get(organisationViewUrl, () => {
+          throw HttpResponse.text('', { status: 500 })
+        }),
         http.get(summaryLogsUrl, () => HttpResponse.json({ summaryLogs: [] }))
       )
 
@@ -1347,10 +1285,9 @@ describe('#registrationOverviewController', () => {
       })
 
       test('Should not render waste balance rows when the registration has no accreditation', async () => {
-        useMockBackend({
-          ...mockOverview,
-          registrations: [{ ...mockRegistration, accreditation: null }]
-        })
+        useMockBackend(
+          organisationHolding({ ...mockRegistration, accreditations: {} })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -1370,43 +1307,10 @@ describe('#registrationOverviewController', () => {
         ).toBeNull()
       })
 
-      test('Should render "No data" in waste balance rows when the accreditation has no number', async () => {
-        useMockBackend({
-          ...mockOverview,
-          registrations: [
-            {
-              ...mockRegistration,
-              accreditation: {
-                id: accreditationId,
-                accreditationNumber: null,
-                status: 'created',
-                year: null
-              }
-            }
-          ]
-        })
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url,
-          auth: { strategy: 'session', credentials: mockUserSession }
-        })
-
-        const body = renderPage(result)
-
-        expect(
-          getSummaryRowValue(body, 'Waste balance (tonnes)')
-        ).toHaveTextContent('No data')
-        expect(
-          getSummaryRowValue(body, 'Waste balance available (tonnes)')
-        ).toHaveTextContent('No data')
-      })
-
       test('Should still render the page with "No data" in waste balance rows when the waste balance endpoint errors', async () => {
         mswServer.use(
-          http.get(
-            `${backendUrl}/v1/organisations/${organisationId}/overview`,
-            () => HttpResponse.json(mockOverview)
+          http.get(organisationViewUrl, () =>
+            HttpResponse.json(mockOrganisation)
           ),
           http.get(calendarUrl, () =>
             HttpResponse.json(asYearCalendar(mockCalendar))
@@ -1465,7 +1369,7 @@ describe('#registrationOverviewController', () => {
 
       test('Should render December waste balance rows when the balance carries a December portion', async () => {
         useMockBackend(
-          mockOverview,
+          mockOrganisation,
           mockCalendar,
           { summaryLogs: [] },
           mockWasteBalanceWithDecember
@@ -1489,7 +1393,7 @@ describe('#registrationOverviewController', () => {
 
       test('Should render a materialised zero December balance rather than hiding the rows', async () => {
         useMockBackend(
-          mockOverview,
+          mockOrganisation,
           mockCalendar,
           { summaryLogs: [] },
           mockWasteBalanceEmptyDecember
@@ -1569,7 +1473,7 @@ describe('#registrationOverviewController', () => {
       })
 
       test('Should render the Unsubmit link for a submitted report when the user has admin.write scope', async () => {
-        useMockBackend(mockOverview, mockCalendarWithSubmittedReport)
+        useMockBackend(mockOrganisation, mockCalendarWithSubmittedReport)
 
         const { result } = await server.inject({
           method: 'GET',
@@ -1594,7 +1498,7 @@ describe('#registrationOverviewController', () => {
           scopes: ['admin.read']
         }
         vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
-        useMockBackend(mockOverview, mockCalendarWithSubmittedReport)
+        useMockBackend(mockOrganisation, mockCalendarWithSubmittedReport)
 
         const { result } = await server.inject({
           method: 'GET',
@@ -1612,7 +1516,7 @@ describe('#registrationOverviewController', () => {
       })
 
       test('Should render the Unsubmit link only on the current submission, not a superseded one', async () => {
-        useMockBackend(mockOverview, mockCalendarWithHistory)
+        useMockBackend(mockOrganisation, mockCalendarWithHistory)
 
         const { result } = await server.inject({
           method: 'GET',
@@ -1646,7 +1550,7 @@ describe('#registrationOverviewController', () => {
       ])(
         'should not render the Unsubmit link on a report flagged for resubmission, $state',
         async ({ calendar }) => {
-          useMockBackend(mockOverview, calendar)
+          useMockBackend(mockOrganisation, calendar)
 
           const { result } = await server.inject({
             method: 'GET',

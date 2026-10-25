@@ -9,10 +9,7 @@ import {
  * @import { PeriodSubmissionParams } from './backend-paths.js'
  */
 
-/**
- * Admin pages addressed by natural keys. The organisation and registration
- * overviews are still served by id, so these addresses redirect there.
- */
+/** Admin pages addressed by natural keys. */
 
 /**
  * @param {{ organisationNumber: string }} keys
