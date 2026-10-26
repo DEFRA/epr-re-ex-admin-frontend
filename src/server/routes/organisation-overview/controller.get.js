@@ -1,9 +1,11 @@
-import { organisationPath } from '#server/common/helpers/backend-paths.js'
 import {
   fetchOrganisationView,
   registrationRows
 } from '#server/common/helpers/fetch-organisation-view.js'
-import { registrationOverviewUrl } from '#server/common/helpers/page-urls.js'
+import {
+  registrationOverviewUrl,
+  unlinkDefraIdUrl
+} from '#server/common/helpers/page-urls.js'
 
 /**
  * @import { LinkedDefraOrganisationView } from '#server/common/helpers/fetch-organisation-view.js'
@@ -49,7 +51,7 @@ export const organisationOverviewGETController = {
       linkedDefraOrganisation: toLinkedDefraOrganisation(
         organisation.linkedDefraOrganisation
       ),
-      unlinkUrl: `${organisationPath({ organisationNumber })}/unlink-defra-id/confirm`,
+      unlinkUrl: `${unlinkDefraIdUrl({ organisationNumber })}/confirm`,
       unlinkResult
     })
   }

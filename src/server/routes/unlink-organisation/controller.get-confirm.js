@@ -1,6 +1,8 @@
-import { organisationPath } from '#server/common/helpers/backend-paths.js'
 import { fetchOrganisationView } from '#server/common/helpers/fetch-organisation-view.js'
-import { organisationOverviewUrl } from '#server/common/helpers/page-urls.js'
+import {
+  organisationOverviewUrl,
+  unlinkDefraIdUrl
+} from '#server/common/helpers/page-urls.js'
 
 export const unlinkOrganisationConfirmGetController = {
   async handler(request, h) {
@@ -24,7 +26,7 @@ export const unlinkOrganisationConfirmGetController = {
         { text: 'Organisation overview', href: overviewUrl }
       ],
       overviewUrl,
-      postUrl: `${organisationPath({ organisationNumber })}/unlink-defra-id`,
+      postUrl: unlinkDefraIdUrl({ organisationNumber }),
       companyName: organisation.name,
       defraOrgName: organisation.linkedDefraOrganisation.defraOrganisation.name
     })

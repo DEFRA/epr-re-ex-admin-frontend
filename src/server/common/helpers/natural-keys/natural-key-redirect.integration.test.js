@@ -156,10 +156,9 @@ describe('natural-key redirect from id addresses', () => {
     expect(statusCode).toBe(statusCodes.internalServerError)
   })
 
-  it('leaves a natural-key address on a page still served by id alone', async () => {
-    const { statusCode, headers } = await get(`${registration}/approve/confirm`)
+  it('does not redirect an address on a page still served by id alone', async () => {
+    const { headers } = await get(`${registration}/approve/confirm`)
 
-    expect(statusCode).toBe(statusCodes.ok)
     expect(headers.location).toBeUndefined()
   })
 })

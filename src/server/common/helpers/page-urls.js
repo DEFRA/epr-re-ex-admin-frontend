@@ -18,6 +18,12 @@ export const organisationOverviewUrl = (keys) =>
   `${organisationPath(keys)}/overview`
 
 /**
+ * @param {{ organisationNumber: string }} keys
+ */
+export const unlinkDefraIdUrl = (keys) =>
+  `${organisationPath(keys)}/unlink-defra-id`
+
+/**
  * @param {{ organisationNumber: string, registrationNumber: string }} keys
  */
 export const registrationOverviewUrl = (keys) =>
