@@ -140,61 +140,34 @@ describe('GET /system-logs', () => {
       expect(rendered.systemLogs[1]).toContain('user2@email.com')
     })
 
-    describe('download link rendering', () => {
-      const systemLogWithFile = {
-        createdBy: {},
-        event: {},
-        context: {
-          summaryLogId: 'sl-789',
-          organisationId: 'org-123',
-          registrationId: 'reg-456'
-        }
-      }
-
-      it('renders a download link when context has summaryLogId', async () => {
-        stubBackendResponse(
-          HttpResponse.json({
-            systemLogs: [systemLogWithFile]
-          })
-        )
-
-        const { $, statusCode } = await loadPage(
-          new URLSearchParams({ organisationNumber: '123' })
-        )
-
-        expect(statusCode).toBe(statusCodes.ok)
-
-        const downloadLink = $(
-          'a[href="/organisations/org-123/registrations/reg-456/summary-logs/sl-789/file"]'
-        )
-        expect(downloadLink).toHaveLength(1)
-        expect(downloadLink.text().trim()).toBe('Download file')
-      })
-
-      it('does not render a download link when context has no summaryLogId', async () => {
-        stubBackendResponse(
-          HttpResponse.json({
-            systemLogs: [
-              {
-                createdBy: {},
-                event: {},
-                context: {
-                  someOtherField: 'value'
-                }
+    it('does not render a file row or download link for a summary log entry', async () => {
+      stubBackendResponse(
+        HttpResponse.json({
+          systemLogs: [
+            {
+              createdBy: {},
+              event: {},
+              context: {
+                summaryLogId: 'sl-789',
+                organisationId: 'org-123',
+                registrationId: 'reg-456'
               }
-            ]
-          })
-        )
+            }
+          ]
+        })
+      )
 
-        const { $, statusCode } = await loadPage(
-          new URLSearchParams({ organisationNumber: '123' })
-        )
+      const { $, statusCode } = await loadPage(
+        new URLSearchParams({ organisationNumber: '123' })
+      )
 
-        expect(statusCode).toBe(statusCodes.ok)
+      expect(statusCode).toBe(statusCodes.ok)
 
-        const downloadLink = $('a[href$="/file"]')
-        expect(downloadLink).toHaveLength(0)
-      })
+      const rowKeys = $('.govuk-summary-list__key')
+        .map((_, key) => $(key).text().trim())
+        .get()
+      expect(rowKeys).not.toContain('File')
+      expect($('a:contains("Download file")')).toHaveLength(0)
     })
 
     describe('generic system-log rendering', () => {

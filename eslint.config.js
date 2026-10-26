@@ -2,12 +2,14 @@ import neostandard from 'neostandard'
 import jsdoc from 'eslint-plugin-jsdoc'
 
 export default [
-  ...neostandard({
-    env: ['node', 'vitest'],
+  {
     ignores: [
       ...neostandard.resolveIgnoresFromGitignore(),
       'src/server/common/schemas'
-    ],
+    ]
+  },
+  ...neostandard({
+    env: ['node', 'vitest'],
     noJsx: true,
     noStyle: true
   }),

@@ -126,13 +126,6 @@
             {% set rows = rows.concat([ { key: { text: "Context" }, value: { html: contextHtml } } ]) %}
           {% endif %}
 
-          {% if systemLog.context.summaryLogId %}
-            {# Logs hold ids; the file route redirects them to its natural-key address #}
-            {% set downloadHref = '/organisations/' ~ (systemLog.context.organisationId | urlencode) ~ '/registrations/' ~ (systemLog.context.registrationId | urlencode) ~ '/summary-logs/' ~ (systemLog.context.summaryLogId | urlencode) ~ '/file' %}
-            {% set downloadHtml = '<a href="' ~ downloadHref ~ '" class="govuk-link">Download file</a>' %}
-            {% set rows = rows.concat([ { key: { text: "File" }, value: { html: downloadHtml } } ]) %}
-          {% endif %}
-
           {% if 'renderDelta' in systemLog %}
             {#
               Whitespace added at the start of the contents of <code> elements so the rendered opening brace aligns
