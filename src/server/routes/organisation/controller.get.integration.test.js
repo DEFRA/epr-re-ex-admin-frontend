@@ -197,6 +197,14 @@ describe('organisation GET controller', () => {
           '/organisations/org-1/registrations/reg-1/accreditations/acc-1/suspend/confirm'
         )
       })
+
+      test('warns that changing a status discards unsaved JSON editor changes', async () => {
+        const $ = await loadPage()
+
+        expect($('#status-changes .govuk-warning-text').text()).toContain(
+          'Unsaved changes are lost when a status changes.'
+        )
+      })
     })
   })
 
@@ -265,6 +273,7 @@ describe('organisation GET controller', () => {
       expect($('#status-changes th:contains("Actions")')).toHaveLength(0)
       expect($('#status-changes td:contains("R26ER1")')).toHaveLength(1)
       expect($('#status-changes a')).toHaveLength(0)
+      expect($('#status-changes .govuk-warning-text')).toHaveLength(0)
     })
   })
 })
