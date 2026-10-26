@@ -5,6 +5,7 @@
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/warning-text/macro.njk" import govukWarningText %}
 
 {% block head %}
   {{ super() }}
@@ -138,6 +139,11 @@
   <div class="govuk-grid-row govuk-!-margin-top-6">
     <div class="govuk-grid-column-full" id="status-changes">
       {% set showActions = SCOPES.adminWrite in scopes %}
+      {% if showActions %}
+        {{ govukWarningText({
+          text: "Save or discard your JSON editor changes before changing a status. Unsaved changes are lost when a status changes."
+        }) }}
+      {% endif %}
       {{ statusTable("Registrations", "Registration number", "Accreditation number", registrationRows, showActions) }}
       {{ statusTable("Accreditations", "Accreditation number", "Registration number", accreditationRows, showActions) }}
     </div>
