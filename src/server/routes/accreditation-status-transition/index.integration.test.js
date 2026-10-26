@@ -113,7 +113,7 @@ describe('accreditation-status-transition', () => {
   const organisationId = '6507f1f77bcf86cd79943901'
   const registrationId = '6507f1f77bcf86cd79943902'
   const accreditationId = '6507f1f77bcf86cd79943903'
-  const overviewUrl = `/organisations/${organisationId}/registrations/${registrationId}/overview`
+  const returnUrl = `/organisations/${organisationId}`
   const backendStatusHistoryUrl = `${backendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/status-history`
 
   const readOnlySession = { ...mockUserSession, scopes: ['admin.read'] }
@@ -134,40 +134,29 @@ describe('accreditation-status-transition', () => {
     vi.clearAllMocks()
   })
 
-  const stubOverview = () =>
+  const stubOrganisation = () =>
     mswServer.use(
-      http.get(
-        `${backendUrl}/v1/organisations/${organisationId}/overview`,
-        () =>
-          HttpResponse.json({
-            id: organisationId,
-            companyName: 'ACME Ltd',
-            registrations: [
-              {
-                id: registrationId,
-                status: 'approved',
-                processingType: 'reprocessor',
-                material: 'plastic',
-                site: 'Site 1',
-                accreditation: {
-                  id: accreditationId,
-                  accreditationNumber: 'ACC123',
-                  status: 'approved'
-                }
-              }
-            ]
-          })
+      http.get(`${backendUrl}/v1/organisations/${organisationId}`, () =>
+        HttpResponse.json({
+          id: organisationId,
+          companyDetails: { name: 'ACME Ltd' },
+          registrations: [
+            {
+              id: registrationId,
+              status: 'approved',
+              accreditationId
+            }
+          ],
+          accreditations: [
+            {
+              id: accreditationId,
+              accreditationNumber: 'ACC123',
+              status: 'approved'
+            }
+          ]
+        })
       )
     )
-
-  const stubSummaryLogs = () => {
-    mswServer.use(
-      http.get(
-        `${backendUrl}/organisations/:organisationNumber/registrations/:registrationNumber/summary-logs`,
-        () => HttpResponse.json({ summaryLogs: [] })
-      )
-    )
-  }
 
   const stubTransitionSuccess = (targetStatus, receivedBodies = []) =>
     mswServer.use(
@@ -221,12 +210,11 @@ describe('accreditation-status-transition', () => {
     return { postResponse, redirectCookie }
   }
 
-  const expectOverviewFlash = async (redirectCookie, message) => {
-    stubOverview()
-    stubSummaryLogs()
+  const expectReturnFlash = async (redirectCookie, message) => {
+    stubOrganisation()
     const { result } = await server.inject({
       method: 'GET',
-      url: overviewUrl,
+      url: returnUrl,
       headers: { cookie: redirectCookie },
       auth: writeAuth
     })
@@ -281,7 +269,7 @@ describe('accreditation-status-transition', () => {
         expect(result).toContain(warningText)
         expect($('form').attr('action')).toBe(postUrl)
         expect($(`button:contains("${buttonText}")`).length).toBe(1)
-        expect($('a:contains("Cancel")').attr('href')).toBe(overviewUrl)
+        expect($('a:contains("Cancel")').attr('href')).toBe(returnUrl)
       })
 
       test('POST is rejected with 401 when unauthenticated', async () => {
@@ -309,14 +297,16 @@ describe('accreditation-status-transition', () => {
         expect(statusCode).toBe(statusCodes.forbidden)
       })
 
-      test(`successful ${action} posts the from/to transition to the backend status-history endpoint and redirects to the overview`, async () => {
+      test(`successful ${action} posts the from/to transition to the backend status-history endpoint and redirects to the JSON editor page`, async () => {
         vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
         const receivedBodies = []
         stubTransitionSuccess(expectedBody.toStatus, receivedBodies)
 
         const { postResponse } = await postTransition(action, formPayload)
         expect(postResponse.statusCode).toBe(statusCodes.found)
-        expect(postResponse.headers.location).toBe(overviewUrl)
+        expect(postResponse.headers.location).toBe(
+          `${returnUrl}#status-changes`
+        )
         expect(receivedBodies).toEqual([expectedBody])
       })
 
@@ -331,9 +321,11 @@ describe('accreditation-status-transition', () => {
           formPayload
         )
         expect(postResponse.statusCode).toBe(statusCodes.found)
-        expect(postResponse.headers.location).toBe(overviewUrl)
+        expect(postResponse.headers.location).toBe(
+          `${returnUrl}#status-changes`
+        )
 
-        await expectOverviewFlash(redirectCookie, fallbackError)
+        await expectReturnFlash(redirectCookie, fallbackError)
       })
     }
   )
@@ -341,15 +333,17 @@ describe('accreditation-status-transition', () => {
   describe.each(TRANSITION_CASES.filter((c) => !c.hasGrantFields))(
     '$action backend rejection',
     ({ action, fallbackError }) => {
-      test('redirects to the overview and shows the backend message as a flash error', async () => {
+      test('redirects to the JSON editor page and shows the backend message as a flash error', async () => {
         vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
         stubTransitionFailure()
 
         const { postResponse, redirectCookie } = await postTransition(action)
         expect(postResponse.statusCode).toBe(statusCodes.found)
-        expect(postResponse.headers.location).toBe(overviewUrl)
+        expect(postResponse.headers.location).toBe(
+          `${returnUrl}#status-changes`
+        )
 
-        await expectOverviewFlash(
+        await expectReturnFlash(
           redirectCookie,
           'Cannot transition from suspended to suspended'
         )
@@ -361,9 +355,11 @@ describe('accreditation-status-transition', () => {
 
         const { postResponse, redirectCookie } = await postTransition(action)
         expect(postResponse.statusCode).toBe(statusCodes.found)
-        expect(postResponse.headers.location).toBe(overviewUrl)
+        expect(postResponse.headers.location).toBe(
+          `${returnUrl}#status-changes`
+        )
 
-        await expectOverviewFlash(redirectCookie, fallbackError)
+        await expectReturnFlash(redirectCookie, fallbackError)
       })
 
       test('with a non-object error body falls back to the generic flash error', async () => {
@@ -376,9 +372,11 @@ describe('accreditation-status-transition', () => {
 
         const { postResponse, redirectCookie } = await postTransition(action)
         expect(postResponse.statusCode).toBe(statusCodes.found)
-        expect(postResponse.headers.location).toBe(overviewUrl)
+        expect(postResponse.headers.location).toBe(
+          `${returnUrl}#status-changes`
+        )
 
-        await expectOverviewFlash(redirectCookie, fallbackError)
+        await expectReturnFlash(redirectCookie, fallbackError)
       })
     }
   )
@@ -662,7 +660,7 @@ describe('accreditation-status-transition', () => {
       )
     })
 
-    test('a backend 5xx failure redirects to the overview with the generic flash error', async () => {
+    test('a backend 5xx failure redirects to the JSON editor page with the generic flash error', async () => {
       vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
       stubTransitionFailure(statusCodes.internalServerError)
 
@@ -671,9 +669,9 @@ describe('accreditation-status-transition', () => {
         validFormPayload
       )
       expect(postResponse.statusCode).toBe(statusCodes.found)
-      expect(postResponse.headers.location).toBe(overviewUrl)
+      expect(postResponse.headers.location).toBe(`${returnUrl}#status-changes`)
 
-      await expectOverviewFlash(
+      await expectReturnFlash(
         redirectCookie,
         'There was a problem approving the accreditation. Please try again.'
       )

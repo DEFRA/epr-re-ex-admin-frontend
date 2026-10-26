@@ -114,16 +114,17 @@ export const REGISTRATION_STATUS_TRANSITIONS = {
 /**
  * Summary-list action items for every transition available from the given
  * registration status. Single source of truth for which actions the
- * registration overview offers on the Status row per status.
+ * JSON editor page offers per status.
  * @param {string} status - Current registration status
  * @param {string} baseUrl - Registration URL prefix, `.../registrations/{id}`
+ * @param {string} label - Names the registration to screen reader users
  * @returns {Array<{href: string, text: string, visuallyHiddenText: string}>}
  */
-export const registrationStatusActions = (status, baseUrl) =>
+export const registrationStatusActions = (status, baseUrl, label) =>
   Object.entries(REGISTRATION_STATUS_TRANSITIONS)
     .filter(([, transition]) => transition.fromStatus === status)
     .map(([action, transition]) => ({
       href: `${baseUrl}/${action}/confirm`,
       text: transition.linkText,
-      visuallyHiddenText: 'registration'
+      visuallyHiddenText: `registration ${label}`
     }))

@@ -16,7 +16,7 @@ const mockFetchJsonFromBackend = vi.mocked(fetchJsonFromBackend)
 describe('createTransitionPostController without grant fields', () => {
   const organisationId = 'org-1'
   const registrationId = 'reg-1'
-  const overviewUrl = `/organisations/${organisationId}/registrations/${registrationId}/overview`
+  const returnUrl = `/organisations/${organisationId}`
 
   /** @type {RegistrationStatusTransition} */
   const fakeTransition = {
@@ -49,7 +49,7 @@ describe('createTransitionPostController without grant fields', () => {
     }
   })
 
-  test('posts only fromStatus/toStatus and redirects to the overview', async () => {
+  test('posts only fromStatus/toStatus and redirects to the JSON editor page', async () => {
     mockFetchJsonFromBackend.mockResolvedValue({ status: 'cancelled' })
 
     const controller = createTransitionPostController('cancel', fakeTransition)
@@ -63,11 +63,11 @@ describe('createTransitionPostController without grant fields', () => {
         body: JSON.stringify({ fromStatus: 'approved', toStatus: 'cancelled' })
       }
     )
-    expect(mockH.redirect).toHaveBeenCalledWith(overviewUrl)
+    expect(mockH.redirect).toHaveBeenCalledWith(`${returnUrl}#status-changes`)
     expect(result).toBe('redirect-response')
   })
 
-  test('a backend failure flashes the transition error and redirects to the overview', async () => {
+  test('a backend failure flashes the transition error and redirects to the JSON editor page', async () => {
     mockFetchJsonFromBackend.mockRejectedValue({
       output: { statusCode: 422, payload: { message: undefined } }
     })
@@ -79,6 +79,6 @@ describe('createTransitionPostController without grant fields', () => {
       'error',
       fakeTransition.errorMessage
     )
-    expect(mockH.redirect).toHaveBeenCalledWith(overviewUrl)
+    expect(mockH.redirect).toHaveBeenCalledWith(`${returnUrl}#status-changes`)
   })
 })

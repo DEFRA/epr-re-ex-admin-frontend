@@ -28,7 +28,7 @@
     <h1 class="govuk-heading-xl">{{ heading }}</h1>
 
     {% set summaryRows = [
-      { key: { text: "Status" }, value: { html: govukTag({ text: registration.status }) }, actions: { items: registrationStatusActions if SCOPES.adminWrite in scopes else [] } },
+      { key: { text: "Status" }, value: { html: govukTag({ text: registration.status }) } },
       { key: { text: "Processing type" }, value: { text: registration.processingType } },
       { key: { text: "Material" }, value: { text: registration.material } },
       { key: { text: "Site" }, value: { text: registration.site } }
@@ -36,7 +36,7 @@
     {% if registration.accreditation %}
       {% set summaryRows = summaryRows.concat([
         { key: { text: "Accreditation number" }, value: { text: registration.accreditation.accreditationNumber } },
-        { key: { text: "Accreditation status" }, value: { html: govukTag({ text: registration.accreditation.status }) }, actions: { items: accreditationStatusActions if SCOPES.adminWrite in scopes else [] } },
+        { key: { text: "Accreditation status" }, value: { html: govukTag({ text: registration.accreditation.status }) } },
         { key: { text: "Waste balance (tonnes)" }, value: { text: wasteBalance.amount if wasteBalance else "No data" } },
         { key: { text: "Waste balance available (tonnes)" }, value: { text: wasteBalance.availableAmount if wasteBalance else "No data" } }
       ]) %}
