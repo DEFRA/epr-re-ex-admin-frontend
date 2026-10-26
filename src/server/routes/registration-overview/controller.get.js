@@ -1,9 +1,12 @@
 import Boom from '@hapi/boom'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import {
-  fetchOrganisationOverview,
-  findRegistration
-} from '#server/common/helpers/fetch-organisation-overview.js'
+  fetchOrganisationView,
+  latestAccreditation,
+  processingTypeOf,
+  registrationIn,
+  siteOf
+} from '#server/common/helpers/fetch-organisation-view.js'
 import { toReportingPeriods } from '#server/common/helpers/reporting-periods.js'
 import {
   accreditationPath,
@@ -12,6 +15,7 @@ import {
 import { fetchReportingPeriods } from '#server/common/helpers/fetch-reporting-periods.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import {
+  organisationOverviewUrl,
   overseasSitesUrl,
   prnActivityDownloadUrl,
   reportSubmissionUrl,
@@ -24,18 +28,16 @@ import {
   reportStatus
 } from '#server/common/constants/report-status.js'
 import { SCOPES } from '#server/common/helpers/auth/scopes.js'
-import { toNaturalKeys } from '#server/common/helpers/natural-keys/swap-keys.js'
 
 /**
  * @import { PeriodStatus } from '#server/common/constants/report-status.js'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { RegistrationView } from '#server/common/helpers/fetch-organisation-view.js'
  * @import { AccreditationKeys, RegistrationKeys } from '#server/common/helpers/natural-keys/swap-keys.js'
  */
 
 const GREEN_TAG = 'govuk-tag--green'
 const RED_TAG = 'govuk-tag--red'
-
-const EXPORTER_PROCESSING_TYPE = 'exporter'
 
 /**
  * Labels for every periodStatus value, matching the wording the operator sees
@@ -179,102 +181,76 @@ const fetchPeriods = async (request, registrationKeys) => {
 }
 
 /**
- * The links the page derives from the registration. The
- * accreditation-scoped ones are null when there is no accreditation, and
- * overseas sites additionally only apply to exporters. A link to a record that
- * has no number yet, as it is not approved, is null too: the template shows it
- * as not applicable.
- * @param {string} organisationId
- * @param {string} registrationId
- * @param {Record<string, any>} registration
- * @param {{ registrationKeys: RegistrationKeys | null, accreditationKeys: AccreditationKeys | null }} keys
+ * The links the page derives from the registration; the accreditation-scoped
+ * ones only when it has an accreditation.
+ * @param {RegistrationView} registration
+ * @param {RegistrationKeys} registrationKeys
+ * @param {AccreditationKeys | null} accreditationKeys
  */
 const toRegistrationLinks = (
-  organisationId,
-  registrationId,
   registration,
-  { registrationKeys, accreditationKeys: approvedAccreditation }
-) => {
-  const registrationUrl = `/organisations/${organisationId}/registrations/${registrationId}`
-
-  return {
-    isExporter: registration.processingType === EXPORTER_PROCESSING_TYPE,
-    wasteBalanceEventsUrl:
-      approvedAccreditation && wasteBalanceEventsUrl(approvedAccreditation),
-    overseasSitesUrl:
-      approvedAccreditation && overseasSitesUrl(approvedAccreditation),
-    wasteRecordsDownloadUrl: registrationKeys
-      ? `${registrationUrl}/waste-records/download`
-      : null,
-    prnActivityDownloadUrl:
-      approvedAccreditation && prnActivityDownloadUrl(approvedAccreditation)
-  }
-}
+  registrationKeys,
+  accreditationKeys
+) => ({
+  isExporter: registration.wasteProcessingType === 'exporter',
+  wasteRecordsDownloadUrl: `${registrationPath(registrationKeys)}/waste-records/download`,
+  ...(accreditationKeys && {
+    wasteBalanceEventsUrl: wasteBalanceEventsUrl(accreditationKeys),
+    overseasSitesUrl: overseasSitesUrl(accreditationKeys),
+    prnActivityDownloadUrl: prnActivityDownloadUrl(accreditationKeys)
+  })
+})
 
 export const registrationOverviewGETController = {
   async handler(request, h) {
-    const { organisationId, registrationId } = request.params
+    const { organisationNumber, registrationNumber } = request.params
+    /** @type {RegistrationKeys} */
+    const registrationKeys = { organisationNumber, registrationNumber }
 
     const errorMessage = request.yar.get('error')
     await request.yar.clear('error')
 
-    const overview = await fetchOrganisationOverview(request, organisationId)
-
-    const registration = findRegistration(
-      overview,
-      organisationId,
-      registrationId
+    const organisation = await fetchOrganisationView(
+      request,
+      organisationNumber
     )
-
-    const registrationKeys = toNaturalKeys(overview, {
-      organisationId,
-      registrationId
-    })
-
-    const accreditationKeys = registration.accreditation
-      ? toNaturalKeys(overview, {
-          organisationId,
-          registrationId,
-          accreditationId: registration.accreditation.id
-        })
-      : null
+    const registration = registrationIn(organisation, registrationNumber)
+    const accreditation = latestAccreditation(registration)
+    const accreditationKeys = accreditation && {
+      ...registrationKeys,
+      year: accreditation.year
+    }
 
     const [summaryLogRows, reportingPeriods, wasteBalance] = await Promise.all([
-      // A registration with no number yet has no summary logs or reports.
-      registrationKeys ? fetchSummaryLogRows(request, registrationKeys) : [],
-      registrationKeys ? fetchPeriods(request, registrationKeys) : null,
-      // An accreditation with no number yet has no waste balance.
+      fetchSummaryLogRows(request, registrationKeys),
+      fetchPeriods(request, registrationKeys),
       accreditationKeys ? fetchWasteBalance(request, accreditationKeys) : null
     ])
 
     const pageTitle = request.route.settings.app.pageTitle
-
-    const heading = `${overview.companyName} - ${registration.registrationNumber ?? registration.id}`
 
     return h.view('routes/registration-overview/index', {
       breadcrumbs: [
         { text: 'Organisations', href: '/organisations' },
         {
           text: 'Organisation overview',
-          href: `/organisations/${organisationId}/overview`
+          href: organisationOverviewUrl({ organisationNumber })
         }
       ],
       pageTitle,
-      heading,
-      organisationId,
-      registrationId,
-      registration,
-      ...toRegistrationLinks(organisationId, registrationId, registration, {
-        registrationKeys,
-        accreditationKeys
-      }),
+      heading: `${organisation.name} - ${registrationNumber}`,
+      registration: {
+        status: registration.status.current,
+        processingType: processingTypeOf(registration),
+        material: registration.material,
+        site: siteOf(registration),
+        accreditation
+      },
+      ...toRegistrationLinks(registration, registrationKeys, accreditationKeys),
       reportRows: reportingPeriods
         ? toReportingPeriods(reportingPeriods).map(
             toReportRow(
-              {
-                organisationNumber: overview.organisationNumber,
-                registrationNumber: registration.registrationNumber
-              },
+              registrationKeys,
               request.auth.credentials.scopes.includes(SCOPES.adminWrite)
             )
           )

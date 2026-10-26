@@ -1,9 +1,9 @@
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 import { redirectKeepingMethod } from '#server/common/helpers/redirect-keeping-method.js'
-import { findOverviewById, findOverviewByNumber } from './find-overview.js'
+import { findOrganisationById } from './find-organisation.js'
 import { routeKeyForm, urlKeyForm } from './key-form.js'
-import { toIds, toNaturalKeys } from './swap-keys.js'
+import { toNaturalKeys } from './swap-keys.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
@@ -42,52 +42,37 @@ const readKeys = (pathSegments, segments, form) =>
 
 /**
  * @param {HapiRequest} request
- * @param {KeyForm} form - the form the URL holds
- * @param {Record<string, string>} keys
- * @returns {Promise<RecordIds | NaturalKeys | null>}
+ * @param {RecordIds} ids
+ * @returns {Promise<NaturalKeys | null>}
  */
-const swapKeys = async (request, form, keys) => {
-  if (form === 'ids') {
-    const ids = /** @type {RecordIds} */ (keys)
-    const overviewById = await findOverviewById(request, ids.organisationId)
+const swapKeys = async (request, ids) => {
+  const organisation = await findOrganisationById(request, ids.organisationId)
 
-    return overviewById && toNaturalKeys(overviewById, ids)
-  }
-
-  const naturalKeys = /** @type {NaturalKeys} */ (keys)
-  const overviewByNumber = await findOverviewByNumber(
-    request,
-    naturalKeys.organisationNumber
-  )
-
-  return overviewByNumber && toIds(overviewByNumber, naturalKeys)
+  return organisation && toNaturalKeys(organisation, ids)
 }
 
 /**
- * Sends a page URL holding ids to its route's natural-key address, and the
- * reverse, while pages move to natural keys (ADR 0053).
+ * Sends a URL holding ids to its route's natural-key address (ADR 0053).
  * @param {HapiRequest} request
  * @param {ResponseToolkit} h
  */
 export const naturalKeyRedirect = async (request, h) => {
   const route = routeKeyForm(request.route.path)
 
-  if (!route) {
+  if (route?.form !== 'naturalKeys') {
     return h.continue
   }
 
   const pathSegments = request.path.split('/')
-  const urlForm = urlKeyForm(pathSegments, route.segments)
 
-  if (!urlForm || urlForm === route.form) {
+  if (urlKeyForm(pathSegments, route.segments) !== 'ids') {
     return h.continue
   }
 
   const swapped = /** @type {Record<string, string> | null} */ (
     await swapKeys(
       request,
-      urlForm,
-      readKeys(pathSegments, route.segments, urlForm)
+      /** @type {RecordIds} */ (readKeys(pathSegments, route.segments, 'ids'))
     )
   )
 

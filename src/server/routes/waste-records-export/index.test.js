@@ -54,7 +54,7 @@ describe('#waste-records-export routes plugin', () => {
     const routes = mockServer.route.mock.calls[0][0]
     expect(routes[2]).toMatchObject({
       method: 'GET',
-      path: '/organisations/{organisationId}/registrations/{registrationId}/waste-records/download'
+      path: '/organisations/{organisationNumber}/registrations/{registrationNumber}/waste-records/download'
     })
     expect(routes[2]).toHaveProperty('handler')
   })

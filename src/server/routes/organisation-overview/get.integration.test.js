@@ -16,7 +16,60 @@ describe('#organisationOverviewController', () => {
   const originalBackendUrl = config.get('eprBackendUrl')
   const backendUrl = 'http://mock-backend'
   const organisationId = '69c3b4f0abda9efa68dd6697'
+  const organisationNumber = '500123'
+  const url = `/organisations/${organisationNumber}/overview`
   let server
+
+  const exporter = {
+    material: 'glass',
+    status: { current: 'approved' },
+    validFrom: '2026-01-01',
+    wasteProcessingType: 'exporter',
+    overseasSites: {},
+    accreditations: {
+      2026: {
+        accreditationNumber: 'ACC-50030-001',
+        status: { current: 'approved' }
+      }
+    }
+  }
+
+  const reprocessor = {
+    material: 'plastic',
+    status: { current: 'cancelled' },
+    validFrom: '2026-01-01',
+    wasteProcessingType: 'reprocessor',
+    reprocessingType: 'input',
+    site: {
+      address: { line1: 'Site B', town: 'Leeds', postcode: 'LS1 1AA' }
+    },
+    accreditations: {}
+  }
+
+  const organisationView = {
+    name: 'ACME Ltd',
+    displayName: 'ACME',
+    organisationNumber,
+    status: { current: 'approved' },
+    submittedToRegulator: { code: 'ea' },
+    registrations: { 'REG-50030-001': exporter }
+  }
+
+  /** @param {object} body */
+  const stubView = (body) =>
+    mswServer.use(
+      http.get(`${backendUrl}/organisations/${organisationNumber}`, () =>
+        HttpResponse.json(body)
+      )
+    )
+
+  /** @param {object} [credentials] */
+  const getOverview = (credentials = mockUserSession) =>
+    server.inject({
+      method: 'GET',
+      url,
+      auth: { strategy: 'session', credentials }
+    })
 
   beforeAll(async () => {
     config.set('eprBackendUrl', backendUrl)
@@ -38,7 +91,7 @@ describe('#organisationOverviewController', () => {
     test('Should return unauthorised status code and unauthorised view', async () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/organisations/${organisationId}/overview`
+        url
       })
 
       expect(statusCode).toBe(statusCodes.unauthorised)
@@ -51,74 +104,27 @@ describe('#organisationOverviewController', () => {
       vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
     })
 
-    const mockOverview = {
-      id: organisationId,
-      companyName: 'ACME Ltd',
-      registrations: [
-        {
-          id: '69c3b4f0abda9efa68dd669b',
-          registrationNumber: 'REG-50030-001',
-          status: 'approved',
-          processingType: 'exporter',
-          material: 'glass',
-          site: 'Site A',
-          accreditation: {
-            id: '69c3b4f0abda9efa68dd6698',
-            accreditationNumber: 'ACC-50030-001',
-            status: 'approved'
-          }
-        }
-      ]
-    }
-
     test('Should return OK and render the organisation overview page', async () => {
-      mswServer.use(
-        http.get(
-          `${backendUrl}/v1/organisations/${organisationId}/overview`,
-          () => HttpResponse.json(mockOverview)
-        )
-      )
+      stubView(organisationView)
 
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: `/organisations/${organisationId}/overview`,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
+      const { statusCode } = await getOverview()
 
       expect(statusCode).toBe(statusCodes.ok)
     })
 
     test('Should render the company name as heading', async () => {
-      mswServer.use(
-        http.get(
-          `${backendUrl}/v1/organisations/${organisationId}/overview`,
-          () => HttpResponse.json(mockOverview)
-        )
-      )
+      stubView(organisationView)
 
-      const { result } = await server.inject({
-        method: 'GET',
-        url: `/organisations/${organisationId}/overview`,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
+      const { result } = await getOverview()
 
       const $ = cheerio.load(result)
       expect($('h1').text().trim()).toEqual('ACME Ltd')
     })
 
     test('Should render a breadcrumb linking to organisations list', async () => {
-      mswServer.use(
-        http.get(
-          `${backendUrl}/v1/organisations/${organisationId}/overview`,
-          () => HttpResponse.json(mockOverview)
-        )
-      )
+      stubView(organisationView)
 
-      const { result } = await server.inject({
-        method: 'GET',
-        url: `/organisations/${organisationId}/overview`,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
+      const { result } = await getOverview()
 
       const $ = cheerio.load(result)
       const breadcrumbLinks = $('.govuk-breadcrumbs__link')
@@ -128,18 +134,9 @@ describe('#organisationOverviewController', () => {
     })
 
     test('Should render table headers', async () => {
-      mswServer.use(
-        http.get(
-          `${backendUrl}/v1/organisations/${organisationId}/overview`,
-          () => HttpResponse.json(mockOverview)
-        )
-      )
+      stubView(organisationView)
 
-      const { result } = await server.inject({
-        method: 'GET',
-        url: `/organisations/${organisationId}/overview`,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
+      const { result } = await getOverview()
 
       const $ = cheerio.load(result)
       const headers = $('table thead tr th')
@@ -155,18 +152,9 @@ describe('#organisationOverviewController', () => {
     })
 
     test('Should render registration row data', async () => {
-      mswServer.use(
-        http.get(
-          `${backendUrl}/v1/organisations/${organisationId}/overview`,
-          () => HttpResponse.json(mockOverview)
-        )
-      )
+      stubView(organisationView)
 
-      const { result } = await server.inject({
-        method: 'GET',
-        url: `/organisations/${organisationId}/overview`,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
+      const { result } = await getOverview()
 
       const $ = cheerio.load(result)
       const cells = $('table tbody tr td')
@@ -176,7 +164,7 @@ describe('#organisationOverviewController', () => {
       )
       expect($(cells[2]).text().trim()).toEqual('exporter')
       expect($(cells[3]).text().trim()).toEqual('glass')
-      expect($(cells[4]).text().trim()).toEqual('Site A')
+      expect($(cells[4]).text().trim()).toEqual('')
       expect($(cells[5]).text().trim()).toEqual('ACC-50030-001')
       expect($(cells[6]).find('strong.govuk-tag').text().trim()).toEqual(
         'approved'
@@ -185,38 +173,31 @@ describe('#organisationOverviewController', () => {
       const viewLink = $(cells[7]).find('a')
       expect(viewLink.text()).toEqual('View')
       expect(viewLink.attr('href')).toEqual(
-        `/organisations/${organisationId}/registrations/69c3b4f0abda9efa68dd669b/overview`
+        `/organisations/${organisationNumber}/registrations/REG-50030-001/overview`
       )
     })
 
-    test('Should render a dash in accreditation cells when registration has no accreditation', async () => {
-      const overviewWithoutAccreditation = {
-        ...mockOverview,
-        registrations: [
-          {
-            id: '69c3b4f0abda9efa68dd669c',
-            registrationNumber: 'REG-50030-002',
-            status: 'pending',
-            processingType: 'importer',
-            material: 'plastic',
-            site: 'Site B',
-            accreditation: null
-          }
-        ]
-      }
-
-      mswServer.use(
-        http.get(
-          `${backendUrl}/v1/organisations/${organisationId}/overview`,
-          () => HttpResponse.json(overviewWithoutAccreditation)
-        )
-      )
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: `/organisations/${organisationId}/overview`,
-        auth: { strategy: 'session', credentials: mockUserSession }
+    test('Should render a reprocessor with its reprocessing type and site', async () => {
+      stubView({
+        ...organisationView,
+        registrations: { 'REG-50030-002': reprocessor }
       })
+
+      const { result } = await getOverview()
+
+      const $ = cheerio.load(result)
+      const cells = $('table tbody tr td')
+      expect($(cells[2]).text().trim()).toEqual('reprocessor - input')
+      expect($(cells[4]).text().trim()).toEqual('Site B')
+    })
+
+    test('Should render a dash in accreditation cells when registration has no accreditation', async () => {
+      stubView({
+        ...organisationView,
+        registrations: { 'REG-50030-002': reprocessor }
+      })
+
+      const { result } = await getOverview()
 
       const $ = cheerio.load(result)
       const cells = $('table tbody tr td')
@@ -224,49 +205,92 @@ describe('#organisationOverviewController', () => {
       expect($(cells[6]).text().trim()).toEqual('-')
     })
 
+    test('Should render the latest year of accreditation', async () => {
+      stubView({
+        ...organisationView,
+        registrations: {
+          'REG-50030-001': {
+            ...exporter,
+            accreditations: {
+              2027: {
+                accreditationNumber: 'ACC-50030-027',
+                status: { current: 'suspended' }
+              },
+              2026: {
+                accreditationNumber: 'ACC-50030-026',
+                status: { current: 'approved' }
+              }
+            }
+          }
+        }
+      })
+
+      const { result } = await getOverview()
+
+      const $ = cheerio.load(result)
+      const cells = $('table tbody tr td')
+      expect($(cells[5]).text().trim()).toEqual('ACC-50030-027')
+      expect($(cells[6]).find('strong.govuk-tag').text().trim()).toEqual(
+        'suspended'
+      )
+    })
+
+    test('Should list the registrations by registration number', async () => {
+      stubView({
+        ...organisationView,
+        registrations: {
+          'REG-50030-002': reprocessor,
+          'REG-50030-001': exporter
+        }
+      })
+
+      const { result } = await getOverview()
+
+      const $ = cheerio.load(result)
+      const numbers = $('table tbody tr')
+        .map((_, row) => $(row).find('td').first().text().trim())
+        .get()
+      expect(numbers).toStrictEqual(['REG-50030-001', 'REG-50030-002'])
+    })
+
     describe('Defra ID link section', () => {
       const readOnlySession = { ...mockUserSession, scopes: ['admin.read'] }
-      const linkedOverview = {
-        ...mockOverview,
+      const linkedView = {
+        ...organisationView,
         linkedDefraOrganisation: {
-          orgId: '550e8400-e29b-41d4-a716-446655440001',
-          orgName: 'Lost Ark Adventures Ltd',
+          defraOrganisation: {
+            id: '550e8400-e29b-41d4-a716-446655440001',
+            name: 'Lost Ark Adventures Ltd'
+          },
           linkedAt: '2026-05-01T12:00:00.000Z',
           linkedBy: { email: 'linker@example.com' }
         }
       }
 
-      const stubOverview = (overview) =>
-        mswServer.use(
-          http.get(
-            `${backendUrl}/v1/organisations/${organisationId}/overview`,
-            () => HttpResponse.json(overview)
-          )
-        )
-
-      const getOverview = (credentials) =>
-        server.inject({
-          method: 'GET',
-          url: `/organisations/${organisationId}/overview`,
-          auth: { strategy: 'session', credentials }
-        })
-
       test('shows the linked Defra ID org and unlink button for a write admin', async () => {
         vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
-        stubOverview(linkedOverview)
+        stubView(linkedView)
 
         const { result } = await getOverview(mockUserSession)
 
-        expect(result).toContain('Lost Ark Adventures Ltd')
         const $ = cheerio.load(result)
+        const values = $('.govuk-summary-list__value')
+          .map((_, value) => $(value).text().trim())
+          .get()
+        expect(values).toStrictEqual([
+          'Lost Ark Adventures Ltd',
+          '550e8400-e29b-41d4-a716-446655440001',
+          '2026-05-01T12:00:00.000Z',
+          'linker@example.com'
+        ])
         expect($('a:contains("Unlink organisation")').attr('href')).toEqual(
-          `/organisations/${organisationId}/unlink-defra-id/confirm`
+          `/organisations/${organisationNumber}/unlink-defra-id/confirm`
         )
       })
 
       test('shows the linked Defra ID org but no unlink button for a read-only admin', async () => {
         vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
-        stubOverview(linkedOverview)
+        stubView(linkedView)
 
         const { result } = await getOverview(readOnlySession)
 
@@ -277,7 +301,7 @@ describe('#organisationOverviewController', () => {
 
       test('shows "No linked organisation" when the org is not linked', async () => {
         vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
-        stubOverview(mockOverview)
+        stubView(organisationView)
 
         const { result } = await getOverview(mockUserSession)
 
@@ -287,25 +311,53 @@ describe('#organisationOverviewController', () => {
       })
     })
 
-    test('Should show 500 error page when backend returns a non-OK response', async () => {
+    test('Should show the not found page when the backend has no such organisation', async () => {
       mswServer.use(
-        http.get(
-          `${backendUrl}/v1/organisations/${organisationId}/overview`,
-          () => {
-            throw HttpResponse.text('', { status: 500 })
-          }
+        http.get(`${backendUrl}/organisations/${organisationNumber}`, () =>
+          HttpResponse.json({}, { status: statusCodes.notFound })
         )
       )
 
-      const { result } = await server.inject({
-        method: 'GET',
-        url: `/organisations/${organisationId}/overview`,
-        auth: { strategy: 'session', credentials: mockUserSession }
-      })
+      const { result, statusCode } = await getOverview()
+
+      expect(statusCode).toBe(statusCodes.notFound)
+      expect(result).toEqual(expect.stringContaining('Page not found'))
+    })
+
+    test('Should show 500 error page when backend returns a non-OK response', async () => {
+      mswServer.use(
+        http.get(`${backendUrl}/organisations/${organisationNumber}`, () => {
+          throw HttpResponse.text('', { status: 500 })
+        })
+      )
+
+      const { result } = await getOverview()
 
       expect(result).toEqual(
         expect.stringContaining('Sorry, there is a problem with the service')
       )
+    })
+
+    test('Should send the old id address to the organisation number address, keeping the query', async () => {
+      mswServer.use(
+        http.get(`${backendUrl}/v1/organisations/${organisationId}`, () =>
+          HttpResponse.json({
+            id: organisationId,
+            orgId: 500123,
+            registrations: [],
+            accreditations: []
+          })
+        )
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/organisations/${organisationId}/overview?tab=users`,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe(`${url}?tab=users`)
     })
   })
 })

@@ -560,17 +560,25 @@ describe('GET /organisations', () => {
         expect($('table tbody tr td').eq(1).html()).toEqual('')
       })
 
-      test('renders the action links unchanged', async () => {
-        stubBackendResponse(HttpResponse.json(envelope([buildOrg()])))
+      test('links the overview and system logs by organisation number and the edit and submission actions by id', async () => {
+        stubBackendResponse(
+          HttpResponse.json(envelope([buildOrg({ orgId: 500123 })]))
+        )
 
         const { $ } = await loadPage()
 
         const actionLinks = $('table tbody tr td').last().find('a')
         expect(actionLinks).toHaveLength(5)
         expect($(actionLinks[0]).attr('href')).toEqual(
-          '/organisations/org-1/overview'
+          '/organisations/500123/overview'
         )
         expect($(actionLinks[1]).attr('href')).toEqual('/organisations/org-1')
+        expect($(actionLinks[2]).attr('href')).toEqual(
+          '/defra-forms-submission/org-1'
+        )
+        expect($(actionLinks[3]).attr('href')).toEqual(
+          '/system-logs?organisationNumber=500123'
+        )
       })
 
       test('links to the organisation system logs by organisation number', async () => {

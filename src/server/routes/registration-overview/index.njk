@@ -4,12 +4,8 @@
 {% from "govuk/components/tag/macro.njk" import govukTag %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 
-{% macro linkOrNotApproved(url, text) -%}
-  {%- if url -%}
-    <a class="govuk-link govuk-link--no-visited-state" href="{{ url }}">{{ text }}</a>
-  {%- else -%}
-    N/A as not approved
-  {%- endif -%}
+{% macro link(url, text) -%}
+  <a class="govuk-link govuk-link--no-visited-state" href="{{ url }}">{{ text }}</a>
 {%- endmacro %}
 
 {% block content %}
@@ -54,21 +50,21 @@
         ]) %}
       {% endif %}
       {% set summaryRows = summaryRows.concat([
-        { key: { text: "Waste balance events" }, value: { html: linkOrNotApproved(wasteBalanceEventsUrl, "View") } }
+        { key: { text: "Waste balance events" }, value: { html: link(wasteBalanceEventsUrl, "View") } }
       ]) %}
       {% if isExporter %}
         {% set summaryRows = summaryRows.concat([
-          { key: { text: "Overseas sites" }, value: { html: linkOrNotApproved(overseasSitesUrl, "View") } }
+          { key: { text: "Overseas sites" }, value: { html: link(overseasSitesUrl, "View") } }
         ]) %}
       {% endif %}
     {% endif %}
 
     {% set summaryRows = summaryRows.concat([
-      { key: { text: "Waste records" }, value: { html: linkOrNotApproved(wasteRecordsDownloadUrl, "Download") } }
+      { key: { text: "Waste records" }, value: { html: link(wasteRecordsDownloadUrl, "Download") } }
     ]) %}
     {% if registration.accreditation %}
       {% set summaryRows = summaryRows.concat([
-        { key: { text: "PRN activity" }, value: { html: linkOrNotApproved(prnActivityDownloadUrl, "Download") } }
+        { key: { text: "PRN activity" }, value: { html: link(prnActivityDownloadUrl, "Download") } }
       ]) %}
     {% endif %}
 

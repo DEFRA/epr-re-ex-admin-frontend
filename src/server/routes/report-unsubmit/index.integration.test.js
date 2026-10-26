@@ -30,23 +30,12 @@ describe('report-unsubmit', () => {
   const postUrl = `${BASE_URL}/unsubmit`
   const resultUrl = `${BASE_URL}/unsubmit/result`
   const overviewUrl = `${REGISTRATION_URL}/overview`
-  const overviewByIdsUrl = `/organisations/${organisationId}/registrations/${registrationId}/overview`
 
-  const mockOverview = {
+  const storedOrganisation = {
     id: organisationId,
-    organisationNumber,
-    companyName: 'ACME Ltd',
-    registrations: [
-      {
-        id: registrationId,
-        registrationNumber,
-        status: 'approved',
-        processingType: 'exporter',
-        material: 'paper',
-        site: null,
-        accreditation: null
-      }
-    ]
+    orgId: 500123,
+    registrations: [{ id: registrationId, registrationNumber }],
+    accreditations: []
   }
 
   let server
@@ -65,11 +54,10 @@ describe('report-unsubmit', () => {
     vi.clearAllMocks()
   })
 
-  const stubOverview = () =>
+  const stubStoredOrganisation = () =>
     mswServer.use(
-      http.get(
-        `${backendUrl}/v1/organisations/${organisationId}/overview`,
-        () => HttpResponse.json(mockOverview)
+      http.get(`${backendUrl}/v1/organisations/${organisationId}`, () =>
+        HttpResponse.json(storedOrganisation)
       )
     )
 
@@ -168,20 +156,30 @@ describe('report-unsubmit', () => {
     }
   }
 
-  // The registration overview is still served by id, so the flash is read
-  // there once the natural-key address has redirected to it.
   const expectOverviewFlash = async (redirectCookie, message) => {
-    stubOverview()
     mswServer.use(
-      http.get(
-        `${backendUrl}/organisations/:organisationNumber/registrations/:registrationNumber/summary-logs`,
-        () => HttpResponse.json({ summaryLogs: [] })
+      http.get(`${backendUrl}/organisations/${organisationNumber}`, () =>
+        HttpResponse.json({
+          name: 'ACME Ltd',
+          organisationNumber,
+          registrations: {
+            [registrationNumber]: {
+              material: 'paper',
+              status: { current: 'approved' },
+              wasteProcessingType: 'exporter',
+              accreditations: {}
+            }
+          }
+        })
+      ),
+      http.get(`${backendUrl}${REGISTRATION_URL}/summary-logs`, () =>
+        HttpResponse.json({ summaryLogs: [] })
       )
     )
 
     const { result } = await server.inject({
       method: 'GET',
-      url: overviewByIdsUrl,
+      url: overviewUrl,
       headers: { cookie: redirectCookie },
       auth: authOptions
     })
@@ -239,7 +237,7 @@ describe('report-unsubmit', () => {
 
     test('the confirm page is sent on to its natural-key address', async () => {
       vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
-      stubOverview()
+      stubStoredOrganisation()
 
       const toRegistration = await server.inject({
         method: 'GET',
@@ -259,7 +257,7 @@ describe('report-unsubmit', () => {
 
     test('the unsubmit is resent to its natural-key address with its body', async () => {
       vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
-      stubOverview()
+      stubStoredOrganisation()
       stubReport({ currentStatus: 'submitted', unsubmittedAt: undefined })
       const { cookie, crumb } = await getCsrfToken(
         server,
@@ -291,9 +289,8 @@ describe('report-unsubmit', () => {
     test('is not found when the organisation has no such registration', async () => {
       vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
       mswServer.use(
-        http.get(
-          `${backendUrl}/v1/organisations/${organisationId}/overview`,
-          () => HttpResponse.json({ ...mockOverview, registrations: [] })
+        http.get(`${backendUrl}/v1/organisations/${organisationId}`, () =>
+          HttpResponse.json({ ...storedOrganisation, registrations: [] })
         )
       )
 

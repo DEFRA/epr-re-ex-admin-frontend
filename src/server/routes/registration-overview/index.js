@@ -7,7 +7,7 @@ export const registrationOverview = {
       server.route([
         {
           method: 'GET',
-          path: '/organisations/{organisationId}/registrations/{registrationId}/overview',
+          path: '/organisations/{organisationNumber}/registrations/{registrationNumber}/overview',
           ...registrationOverviewGETController,
           options: {
             app: { pageTitle: 'Registration overview' }

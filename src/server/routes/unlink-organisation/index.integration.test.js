@@ -16,30 +16,29 @@ vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
 describe('unlink-organisation', () => {
   const backendUrl = config.get('eprBackendUrl')
   const organisationId = '6507f1f77bcf86cd79943901'
-  const overviewUrl = `/organisations/${organisationId}/overview`
-  const confirmUrl = `/organisations/${organisationId}/unlink-defra-id/confirm`
-  const postUrl = `/organisations/${organisationId}/unlink-defra-id`
+  const organisationNumber = '500123'
+  const overviewUrl = `/organisations/${organisationNumber}/overview`
+  const confirmUrl = `/organisations/${organisationNumber}/unlink-defra-id/confirm`
+  const postUrl = `/organisations/${organisationNumber}/unlink-defra-id`
 
   const readOnlySession = { ...mockUserSession, scopes: ['admin.read'] }
 
-  const linkedOverview = {
-    id: organisationId,
-    organisationNumber: '500123',
-    companyName: 'ACME Ltd',
-    registrations: [],
+  const unlinkedView = {
+    name: 'ACME Ltd',
+    organisationNumber,
+    registrations: {}
+  }
+
+  const linkedView = {
+    ...unlinkedView,
     linkedDefraOrganisation: {
-      orgId: '550e8400-e29b-41d4-a716-446655440001',
-      orgName: 'Lost Ark Adventures Ltd',
+      defraOrganisation: {
+        id: '550e8400-e29b-41d4-a716-446655440001',
+        name: 'Lost Ark Adventures Ltd'
+      },
       linkedAt: '2026-05-01T12:00:00.000Z',
       linkedBy: { email: 'linker@example.com' }
     }
-  }
-
-  const unlinkedOverview = {
-    id: organisationId,
-    organisationNumber: '500123',
-    companyName: 'ACME Ltd',
-    registrations: []
   }
 
   let server
@@ -58,48 +57,89 @@ describe('unlink-organisation', () => {
     vi.clearAllMocks()
   })
 
-  const stubOverview = (overview) =>
+  /** @param {object} view */
+  const stubView = (view) =>
     mswServer.use(
-      http.get(
-        `${backendUrl}/v1/organisations/${organisationId}/overview`,
-        () => HttpResponse.json(overview)
+      http.get(`${backendUrl}/organisations/${organisationNumber}`, () =>
+        HttpResponse.json(view)
       )
     )
 
   const stubDeleteSuccess = () =>
     mswServer.use(
       http.delete(
-        `${backendUrl}/organisations/500123/link`,
+        `${backendUrl}/organisations/${organisationNumber}/link`,
         () => new HttpResponse(null, { status: 204 })
       )
     )
 
   const stubDeleteFailure = (status = 409) =>
     mswServer.use(
-      http.delete(`${backendUrl}/organisations/500123/link`, () =>
-        HttpResponse.json({ error: 'Conflict' }, { status })
+      http.delete(
+        `${backendUrl}/organisations/${organisationNumber}/link`,
+        () => HttpResponse.json({ error: 'Conflict' }, { status })
+      )
+    )
+
+  const stubStoredOrganisation = () =>
+    mswServer.use(
+      http.get(`${backendUrl}/v1/organisations/${organisationId}`, () =>
+        HttpResponse.json({
+          id: organisationId,
+          orgId: 500123,
+          registrations: [],
+          accreditations: []
+        })
       )
     )
 
   const writeAuth = { strategy: 'session', credentials: mockUserSession }
   const readAuth = { strategy: 'session', credentials: readOnlySession }
 
-  const postUnlink = async () => {
+  /** @param {string} [url] */
+  const postUnlink = async (url = postUrl) => {
     const { cookie, crumb } = await getCsrfToken(server, confirmUrl, writeAuth)
+
+    /** @type {string[]} */
+    const backendCalls = []
+    /** @param {{ request: Request }} event */
+    const record = ({ request }) => {
+      backendCalls.push(`${request.method} ${new URL(request.url).pathname}`)
+    }
+    mswServer.events.on('request:start', record)
+
     const postResponse = await server.inject({
       method: 'POST',
-      url: postUrl,
+      url,
       auth: writeAuth,
       headers: { cookie },
       payload: { crumb }
     })
+
+    mswServer.events.removeListener('request:start', record)
+
     const postCookies = [postResponse.headers['set-cookie']]
       .flat()
       .filter(Boolean)
     const redirectCookie = postCookies.length
       ? postCookies.map((c) => c.split(';')[0]).join('; ')
       : cookie
-    return { postResponse, redirectCookie }
+    return { postResponse, redirectCookie, backendCalls }
+  }
+
+  /** @param {string} redirectCookie */
+  const bannerAfterRedirect = async (redirectCookie) => {
+    stubView(unlinkedView)
+    const { result } = await server.inject({
+      method: 'GET',
+      url: overviewUrl,
+      headers: { cookie: redirectCookie },
+      auth: writeAuth
+    })
+
+    return cheerio
+      .load(result)('[data-module="govuk-notification-banner"]')
+      .text()
   }
 
   test('confirm page is rejected with 401 when unauthenticated', async () => {
@@ -122,7 +162,7 @@ describe('unlink-organisation', () => {
 
   test('confirm page shows the organisation and Defra ID org names', async () => {
     vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
-    stubOverview(linkedOverview)
+    stubView(linkedView)
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
@@ -133,15 +173,15 @@ describe('unlink-organisation', () => {
     expect(statusCode).toBe(statusCodes.ok)
     const $ = cheerio.load(result)
     expect($('h1').text().trim()).toBe('Unlink organisation from Defra ID')
-    expect(result).toContain('ACME Ltd')
-    expect(result).toContain('Lost Ark Adventures Ltd')
+    expect($('p strong').first().text()).toBe('ACME Ltd')
+    expect($('p strong').last().text()).toBe('Lost Ark Adventures Ltd')
     expect($('form').attr('action')).toBe(postUrl)
-    expect($('a:contains("Cancel")').attr('href')).toBe(overviewUrl)
+    expect($('.govuk-breadcrumbs__link').last().attr('href')).toBe(overviewUrl)
   })
 
   test('confirm page redirects to overview when the org is not linked', async () => {
     vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
-    stubOverview(unlinkedOverview)
+    stubView(unlinkedView)
 
     const { statusCode, headers } = await server.inject({
       method: 'GET',
@@ -155,7 +195,7 @@ describe('unlink-organisation', () => {
 
   test('cancelling the confirm page returns to the organisation overview', async () => {
     vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
-    stubOverview(linkedOverview)
+    stubView(linkedView)
 
     const confirmPage = await server.inject({
       method: 'GET',
@@ -177,49 +217,78 @@ describe('unlink-organisation', () => {
     expect(statusCode).toBe(statusCodes.unauthorised)
   })
 
-  test('successful unlink redirects to overview and shows a success banner', async () => {
+  test('POST returns 403 for a read-only admin', async () => {
     vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
-    stubOverview(linkedOverview)
-    stubDeleteSuccess()
+    stubView(linkedView)
+    const { cookie, crumb } = await getCsrfToken(server, confirmUrl, writeAuth)
+    vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
 
-    const { postResponse, redirectCookie } = await postUnlink()
-    expect(postResponse.statusCode).toBe(statusCodes.found)
-    expect(postResponse.headers.location).toBe(overviewUrl)
-
-    stubOverview(unlinkedOverview)
-    const { result } = await server.inject({
-      method: 'GET',
-      url: overviewUrl,
-      headers: { cookie: redirectCookie },
-      auth: writeAuth
+    const { statusCode } = await server.inject({
+      method: 'POST',
+      url: postUrl,
+      auth: readAuth,
+      headers: { cookie },
+      payload: { crumb }
     })
 
-    const $ = cheerio.load(result)
-    expect($('[data-module="govuk-notification-banner"]').text()).toContain(
+    expect(statusCode).toBe(statusCodes.forbidden)
+  })
+
+  test('successful unlink deletes the link, reading nothing else, and shows a success banner', async () => {
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+    stubView(linkedView)
+    stubDeleteSuccess()
+
+    const { postResponse, redirectCookie, backendCalls } = await postUnlink()
+
+    expect(backendCalls).toStrictEqual([
+      `DELETE /organisations/${organisationNumber}/link`
+    ])
+    expect(postResponse.statusCode).toBe(statusCodes.found)
+    expect(postResponse.headers.location).toBe(overviewUrl)
+    expect(await bannerAfterRedirect(redirectCookie)).toContain(
       'Organisation unlinked from Defra ID'
     )
   })
 
   test('failed unlink redirects to overview and shows an error banner', async () => {
     vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
-    stubOverview(linkedOverview)
+    stubView(linkedView)
     stubDeleteFailure()
 
     const { postResponse, redirectCookie } = await postUnlink()
+
     expect(postResponse.statusCode).toBe(statusCodes.found)
     expect(postResponse.headers.location).toBe(overviewUrl)
+    expect(await bannerAfterRedirect(redirectCookie)).toContain(
+      'could not be unlinked'
+    )
+  })
 
-    stubOverview(linkedOverview)
-    const { result } = await server.inject({
+  test('the old id address of the confirm page redirects to its number address', async () => {
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+    stubStoredOrganisation()
+
+    const { statusCode, headers } = await server.inject({
       method: 'GET',
-      url: overviewUrl,
-      headers: { cookie: redirectCookie },
+      url: `/organisations/${organisationId}/unlink-defra-id/confirm`,
       auth: writeAuth
     })
 
-    const $ = cheerio.load(result)
-    expect($('[data-module="govuk-notification-banner"]').text()).toContain(
-      'could not be unlinked'
+    expect(statusCode).toBe(statusCodes.found)
+    expect(headers.location).toBe(confirmUrl)
+  })
+
+  test('a POST to the old id address is resent to its number address', async () => {
+    vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+    stubView(linkedView)
+    stubStoredOrganisation()
+
+    const { postResponse } = await postUnlink(
+      `/organisations/${organisationId}/unlink-defra-id`
     )
+
+    expect(postResponse.statusCode).toBe(statusCodes.temporaryRedirect)
+    expect(postResponse.headers.location).toBe(postUrl)
   })
 })

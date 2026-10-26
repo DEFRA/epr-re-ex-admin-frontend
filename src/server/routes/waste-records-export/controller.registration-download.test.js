@@ -38,14 +38,17 @@ const buildHapiH = () => {
 
 const buildRequest = () =>
   /** @type {any} */ ({
-    params: { organisationId: 'org-1', registrationId: 'reg-1' },
+    params: {
+      organisationNumber: '500123',
+      registrationNumber: 'FAKE/REG500123/ALPHA'
+    },
     yar: { set: vi.fn() }
   })
 
 describe('wasteRecordsRegistrationDownloadController', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('streams the export scoped to the organisation and registration', async () => {
+  it("streams the registration's export, its number encoded once", async () => {
     vi.mocked(streamFromBackend).mockResolvedValue(
       /** @type {any} */ ({
         body: buildWebStream(['header\n']),
@@ -60,7 +63,7 @@ describe('wasteRecordsRegistrationDownloadController', () => {
 
     expect(streamFromBackend).toHaveBeenCalledWith(
       request,
-      '/v1/admin/waste-records/export.csv?organisationId=org-1&registrationId=reg-1'
+      '/organisations/500123/registrations/FAKE%2FREG500123%2FALPHA/waste-records/export.csv'
     )
     expect(h.response.mock.calls[0][0]).toBeInstanceOf(Readable)
   })
@@ -83,7 +86,7 @@ describe('wasteRecordsRegistrationDownloadController', () => {
     })
     expect(request.yar.set).toHaveBeenCalledWith('error', expect.any(String))
     expect(h.redirect).toHaveBeenCalledWith(
-      '/organisations/org-1/registrations/reg-1/overview'
+      '/organisations/500123/registrations/FAKE%2FREG500123%2FALPHA/overview'
     )
     expect(result).toBe('redirect-response')
   })

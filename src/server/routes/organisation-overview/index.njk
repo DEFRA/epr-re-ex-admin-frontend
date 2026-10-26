@@ -34,7 +34,7 @@
       {% if SCOPES.adminWrite in scopes %}
         {{ govukButton({
           text: "Unlink organisation",
-          href: "/organisations/" ~ organisationId ~ "/unlink-defra-id/confirm",
+          href: unlinkUrl,
           classes: "govuk-button--warning"
         }) }}
       {% endif %}
@@ -44,8 +44,7 @@
 
     {% set tableRows = [] %}
     {% for registration in registrations %}
-      {% set reportsUrl = '/organisations/' ~ organisationId ~ '/registrations/' ~ registration.id ~ '/overview' %}
-      {% set actionsHtml = '<a class="govuk-link govuk-link--no-visited-state" href="' ~ reportsUrl ~ '">View</a>' %}
+      {% set actionsHtml = '<a class="govuk-link govuk-link--no-visited-state" href="' ~ registration.viewUrl ~ '">View</a>' %}
       {% set row = [
         { text: registration.registrationNumber },
         { html: govukTag({ text: registration.status }) },
