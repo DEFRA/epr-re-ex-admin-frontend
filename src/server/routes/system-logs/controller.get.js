@@ -43,7 +43,7 @@ export const systemLogGetController = {
       !ORGANISATION_NUMBER_PATTERN.test(searchTerms.organisationNumber)
     ) {
       return renderWithoutLogs({
-        text: 'Organisation number must only include numbers 0 to 9',
+        text: 'Enter a valid organisation number',
         href: '#organisationNumber',
         fields: ['organisationNumber']
       })

@@ -691,32 +691,35 @@ describe('GET /system-logs', () => {
         )
       })
 
-      it('shows an error on the organisation number alone and does not call the backend when it is not a number', async () => {
-        const backendCalls = stubBackendResponse(
-          HttpResponse.json({ systemLogs: [] })
-        )
+      it.each([
+        ['contains letters', '507f1f77bcf86cd799439011'],
+        ['has a leading zero', '0500001']
+      ])(
+        'shows an error on the organisation number alone and does not call the backend when it %s',
+        async (_, organisationNumber) => {
+          const backendCalls = stubBackendResponse(
+            HttpResponse.json({ systemLogs: [] })
+          )
 
-        const { $, statusCode } = await loadPage(
-          new URLSearchParams({
-            organisationNumber: '507f1f77bcf86cd799439011',
-            userId: 'user-1'
-          })
-        )
+          const { $, statusCode } = await loadPage(
+            new URLSearchParams({ organisationNumber, userId: 'user-1' })
+          )
 
-        expect(statusCode).toEqual(statusCodes.ok)
-        expect(backendCalls).toHaveLength(0)
-        expect($('.govuk-error-summary').text()).toContain(
-          'Organisation number must only include numbers 0 to 9'
-        )
-        expect($('#organisationNumber-error').text()).toContain(
-          'Organisation number must only include numbers 0 to 9'
-        )
-        expect($('#userId-error')).toHaveLength(0)
-        expect($('#subCategory-error')).toHaveLength(0)
-        expect($('form input[name=organisationNumber]').val()).toEqual(
-          '507f1f77bcf86cd799439011'
-        )
-      })
+          expect(statusCode).toEqual(statusCodes.ok)
+          expect(backendCalls).toHaveLength(0)
+          expect($('.govuk-error-summary').text()).toContain(
+            'Enter a valid organisation number'
+          )
+          expect($('#organisationNumber-error').text()).toContain(
+            'Enter a valid organisation number'
+          )
+          expect($('#userId-error')).toHaveLength(0)
+          expect($('#subCategory-error')).toHaveLength(0)
+          expect($('form input[name=organisationNumber]').val()).toEqual(
+            organisationNumber
+          )
+        }
+      )
     })
 
     describe('pagination', () => {
