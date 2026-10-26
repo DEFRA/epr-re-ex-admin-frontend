@@ -32,13 +32,13 @@
           <div class="govuk-form-group">
             {{ govukInput({
               label: {
-                text: "Organisation reference number",
+                text: "Organisation number",
                 classes: "govuk-label--s"
               },
-              id: "referenceNumber",
-              name: "referenceNumber",
+              id: "organisationNumber",
+              name: "organisationNumber",
               type: "search",
-              value: searchTerms.referenceNumber,
+              value: searchTerms.organisationNumber,
               errorMessage: error if error,
               autocomplete: "off",
               classes: "govuk-input--width-20"
@@ -55,7 +55,7 @@
               name: "userId",
               type: "search",
               value: searchTerms.userId,
-              errorMessage: error if error,
+              errorMessage: error if error and 'userId' in error.fields,
               autocomplete: "off",
               classes: "govuk-input--width-20"
             }) }}
@@ -69,7 +69,7 @@
                 text: "Event type",
                 classes: "govuk-label--s"
               },
-              errorMessage: error if error,
+              errorMessage: error if error and 'subCategory' in error.fields,
               items: [
                 { value: "", text: "All event types", selected: not searchTerms.subCategory },
                 { value: "defra-id-reconciliation", text: "Defra ID reconciliation", selected: searchTerms.subCategory == "defra-id-reconciliation" },
