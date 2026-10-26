@@ -32,13 +32,13 @@
           <div class="govuk-form-group">
             {{ govukInput({
               label: {
-                text: "Organisation reference number",
+                text: "Organisation number",
                 classes: "govuk-label--s"
               },
-              id: "referenceNumber",
-              name: "referenceNumber",
+              id: "organisationNumber",
+              name: "organisationNumber",
               type: "search",
-              value: searchTerms.referenceNumber,
+              value: searchTerms.organisationNumber,
               errorMessage: error if error,
               autocomplete: "off",
               classes: "govuk-input--width-20"
@@ -55,7 +55,7 @@
               name: "userId",
               type: "search",
               value: searchTerms.userId,
-              errorMessage: error if error,
+              errorMessage: error if error and 'userId' in error.fields,
               autocomplete: "off",
               classes: "govuk-input--width-20"
             }) }}
@@ -69,7 +69,7 @@
                 text: "Event type",
                 classes: "govuk-label--s"
               },
-              errorMessage: error if error,
+              errorMessage: error if error and 'subCategory' in error.fields,
               items: [
                 { value: "", text: "All event types", selected: not searchTerms.subCategory },
                 { value: "defra-id-reconciliation", text: "Defra ID reconciliation", selected: searchTerms.subCategory == "defra-id-reconciliation" },
@@ -124,13 +124,6 @@
             #}
             {% set contextHtml = '<code class="app-json-display">          ' ~ systemLog.context | dump(2) ~ '</code>' %}
             {% set rows = rows.concat([ { key: { text: "Context" }, value: { html: contextHtml } } ]) %}
-          {% endif %}
-
-          {% if systemLog.context.summaryLogId %}
-            {# Logs hold ids; the file route redirects them to its natural-key address #}
-            {% set downloadHref = '/organisations/' ~ (systemLog.context.organisationId | urlencode) ~ '/registrations/' ~ (systemLog.context.registrationId | urlencode) ~ '/summary-logs/' ~ (systemLog.context.summaryLogId | urlencode) ~ '/file' %}
-            {% set downloadHtml = '<a href="' ~ downloadHref ~ '" class="govuk-link">Download file</a>' %}
-            {% set rows = rows.concat([ { key: { text: "File" }, value: { html: downloadHtml } } ]) %}
           {% endif %}
 
           {% if 'renderDelta' in systemLog %}
