@@ -1,7 +1,9 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { transformSystemLog } from './transform-system-log.js'
 
-const FILTER_KEYS = ['referenceNumber', 'userId', 'subCategory']
+const FILTER_KEYS = ['organisationNumber', 'userId', 'subCategory']
+
+const ORGANISATION_NUMBER_PATTERN = /^[1-9]\d*$/
 
 export const systemLogGetController = {
   async handler(request, h) {
@@ -14,18 +16,36 @@ export const systemLogGetController = {
     const hasFilter = FILTER_KEYS.some((key) => searchTerms[key])
     const wasSubmitted = FILTER_KEYS.some((key) => Object.hasOwn(query, key))
 
-    if (!hasFilter) {
-      return h.view('routes/system-logs/index', {
+    /** @param {{ text: string, href: string, fields: string[] } | null} error */
+    const renderWithoutLogs = (error) =>
+      h.view('routes/system-logs/index', {
         pageTitle: request.route.settings.app.pageTitle,
         systemLogs: [],
         searchTerms,
-        error: wasSubmitted
-          ? {
-              text: 'Enter an organisation reference number, user ID or event type',
-              href: '#referenceNumber'
-            }
-          : null,
+        error,
         pagination: {}
+      })
+
+    if (!hasFilter) {
+      return renderWithoutLogs(
+        wasSubmitted
+          ? {
+              text: 'Enter an organisation number, user ID or event type',
+              href: '#organisationNumber',
+              fields: FILTER_KEYS
+            }
+          : null
+      )
+    }
+
+    if (
+      searchTerms.organisationNumber &&
+      !ORGANISATION_NUMBER_PATTERN.test(searchTerms.organisationNumber)
+    ) {
+      return renderWithoutLogs({
+        text: 'Enter a valid organisation number',
+        href: '#organisationNumber',
+        fields: ['organisationNumber']
       })
     }
 
@@ -49,26 +69,26 @@ export const systemLogGetController = {
 
 /**
  * @param {Record<string, string>} query
- * @returns {{ referenceNumber: string, userId: string, subCategory: string }}
+ * @returns {{ organisationNumber: string, userId: string, subCategory: string }}
  */
 function normaliseSearchTerms(query) {
   return {
-    referenceNumber: (query.referenceNumber ?? '').trim(),
+    organisationNumber: (query.organisationNumber ?? '').trim(),
     userId: (query.userId ?? '').trim(),
     subCategory: (query.subCategory ?? '').trim()
   }
 }
 
 /**
- * @param {{ referenceNumber: string, userId: string, subCategory: string }} searchTerms
+ * @param {{ organisationNumber: string, userId: string, subCategory: string }} searchTerms
  * @param {string} cursor
  * @param {'next' | 'prev'} direction
  * @returns {URLSearchParams}
  */
 function buildBackendParams(searchTerms, cursor, direction) {
   const params = new URLSearchParams()
-  if (searchTerms.referenceNumber) {
-    params.set('organisationId', searchTerms.referenceNumber)
+  if (searchTerms.organisationNumber) {
+    params.set('organisationNumber', searchTerms.organisationNumber)
   }
   if (searchTerms.userId) {
     params.set('userId', searchTerms.userId)
@@ -88,14 +108,14 @@ function buildBackendParams(searchTerms, cursor, direction) {
  *   hasNext?: boolean, hasPrev?: boolean,
  *   nextCursor?: string, prevCursor?: string
  * }} data
- * @param {{ referenceNumber: string, userId: string, subCategory: string }} searchTerms
+ * @param {{ organisationNumber: string, userId: string, subCategory: string }} searchTerms
  * @returns {{ next?: { href: string }, previous?: { href: string } }}
  */
 function buildPagination(data, searchTerms) {
   const link = (cursor, direction) => {
     const params = new URLSearchParams()
-    if (searchTerms.referenceNumber) {
-      params.set('referenceNumber', searchTerms.referenceNumber)
+    if (searchTerms.organisationNumber) {
+      params.set('organisationNumber', searchTerms.organisationNumber)
     }
     if (searchTerms.userId) {
       params.set('userId', searchTerms.userId)

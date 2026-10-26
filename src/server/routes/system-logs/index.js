@@ -14,7 +14,7 @@ export const systemLogs = {
             app: { pageTitle: 'System logs' },
             validate: {
               query: Joi.object({
-                referenceNumber: Joi.string().allow('').optional(),
+                organisationNumber: Joi.string().allow('').optional(),
                 userId: Joi.string().allow('').optional(),
                 subCategory: Joi.string().allow('').optional(),
                 cursor: Joi.string().hex().length(24).optional(),
