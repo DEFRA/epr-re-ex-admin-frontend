@@ -6,9 +6,7 @@
  *   search: string,
  *   orgId: string,
  *   registrationNumber: string,
- *   registrationId: string,
- *   accreditationNumber: string,
- *   accreditationId: string
+ *   accreditationNumber: string
  * }} SearchCriteria
  */
 
@@ -22,13 +20,11 @@ export const CRITERIA_KEYS = [
   'search',
   'orgId',
   'registrationNumber',
-  'registrationId',
-  'accreditationNumber',
-  'accreditationId'
+  'accreditationNumber'
 ]
 
 /**
- * Reads the six search criteria from a request's query string or payload,
+ * Reads the four search criteria from a request's query string or payload,
  * trimming each so that whitespace-only input counts as unfilled.
  *
  * @param {Record<string, string | undefined>} source
@@ -38,9 +34,7 @@ export const toCriteria = (source) => ({
   search: (source.search ?? '').trim(),
   orgId: (source.orgId ?? '').trim(),
   registrationNumber: (source.registrationNumber ?? '').trim(),
-  registrationId: (source.registrationId ?? '').trim(),
-  accreditationNumber: (source.accreditationNumber ?? '').trim(),
-  accreditationId: (source.accreditationId ?? '').trim()
+  accreditationNumber: (source.accreditationNumber ?? '').trim()
 })
 
 /**
