@@ -572,6 +572,18 @@ describe('GET /organisations', () => {
         )
         expect($(actionLinks[1]).attr('href')).toEqual('/organisations/org-1')
       })
+
+      test('links to the organisation system logs by organisation number', async () => {
+        stubBackendResponse(
+          HttpResponse.json(envelope([buildOrg({ orgId: 500001 })]))
+        )
+
+        const { $ } = await loadPage()
+
+        expect($('a:contains("View system logs")').attr('href')).toEqual(
+          '/system-logs?organisationNumber=500001'
+        )
+      })
     })
 
     describe('error handling', () => {
