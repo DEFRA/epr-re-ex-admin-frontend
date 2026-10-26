@@ -9,16 +9,19 @@ import {
  * @import { PeriodSubmissionParams } from './backend-paths.js'
  */
 
-/**
- * Admin pages addressed by natural keys. The organisation and registration
- * overviews are still served by id, so these addresses redirect there.
- */
+/** Admin pages addressed by natural keys. */
 
 /**
  * @param {{ organisationNumber: string }} keys
  */
 export const organisationOverviewUrl = (keys) =>
   `${organisationPath(keys)}/overview`
+
+/**
+ * @param {{ organisationNumber: string }} keys
+ */
+export const unlinkDefraIdUrl = (keys) =>
+  `${organisationPath(keys)}/unlink-defra-id`
 
 /**
  * @param {{ organisationNumber: string, registrationNumber: string }} keys

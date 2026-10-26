@@ -3,7 +3,7 @@ import { unlinkOrganisationPostController } from './controller.post.js'
 import { requireScope } from '#server/common/helpers/auth/require-scope.js'
 import { SCOPES } from '#server/common/helpers/auth/scopes.js'
 
-const BASE = '/organisations/{organisationId}/unlink-defra-id'
+const BASE = '/organisations/{organisationNumber}/unlink-defra-id'
 const requireWrite = [requireScope(SCOPES.adminWrite)]
 
 export const unlinkOrganisation = {

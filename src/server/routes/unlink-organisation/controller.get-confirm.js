@@ -1,13 +1,20 @@
-import { fetchOrganisationOverview } from '#server/common/helpers/fetch-organisation-overview.js'
+import { fetchOrganisationView } from '#server/common/helpers/fetch-organisation-view.js'
+import {
+  organisationOverviewUrl,
+  unlinkDefraIdUrl
+} from '#server/common/helpers/page-urls.js'
 
 export const unlinkOrganisationConfirmGetController = {
   async handler(request, h) {
-    const { organisationId } = request.params
-    const overviewUrl = `/organisations/${organisationId}/overview`
+    const { organisationNumber } = request.params
+    const overviewUrl = organisationOverviewUrl({ organisationNumber })
 
-    const overview = await fetchOrganisationOverview(request, organisationId)
+    const organisation = await fetchOrganisationView(
+      request,
+      organisationNumber
+    )
 
-    if (!overview.linkedDefraOrganisation) {
+    if (!organisation.linkedDefraOrganisation) {
       return h.redirect(overviewUrl)
     }
 
@@ -19,9 +26,9 @@ export const unlinkOrganisationConfirmGetController = {
         { text: 'Organisation overview', href: overviewUrl }
       ],
       overviewUrl,
-      postUrl: `/organisations/${organisationId}/unlink-defra-id`,
-      companyName: overview.companyName,
-      defraOrgName: overview.linkedDefraOrganisation.orgName
+      postUrl: unlinkDefraIdUrl({ organisationNumber }),
+      companyName: organisation.name,
+      defraOrgName: organisation.linkedDefraOrganisation.defraOrganisation.name
     })
   }
 }

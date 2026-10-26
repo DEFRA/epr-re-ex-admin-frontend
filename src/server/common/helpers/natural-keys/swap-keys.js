@@ -1,5 +1,5 @@
 /**
- * @import { OrganisationOverview } from '#server/common/helpers/fetch-organisation-overview.js'
+ * @import { StoredAccreditation, StoredOrganisation } from './find-organisation.js'
  *
  * @typedef {{ organisationId: string, registrationId?: string, accreditationId?: string }} RecordIds
  * @typedef {{ organisationNumber: string, registrationNumber?: string, year?: string }} NaturalKeys
@@ -8,105 +8,81 @@
  */
 
 /**
- * @param {OrganisationOverview} overview
+ * @param {StoredOrganisation} organisation
  * @param {string} registrationNumber
  */
-const registrationsNumbered = (overview, registrationNumber) =>
-  overview.registrations.filter(
-    (registration) => registration.registrationNumber === registrationNumber
-  )
+const isUniqueNumber = (organisation, registrationNumber) =>
+  organisation.registrations.filter(
+    (held) => held.registrationNumber === registrationNumber
+  ).length === 1
 
 /**
  * The year a numbered accreditation is for, or `null` before it has one.
- * @param {OrganisationOverview['registrations'][number]['accreditation']} accreditation
+ * @param {StoredAccreditation | undefined} accreditation
  * @returns {string | null}
  */
 const accreditationYear = (accreditation) =>
-  accreditation?.accreditationNumber && accreditation.year
-    ? String(accreditation.year)
+  accreditation?.accreditationNumber && accreditation.validFrom
+    ? String(new Date(accreditation.validFrom).getUTCFullYear())
     : null
 
 /**
  * @overload
- * @param {OrganisationOverview} overview
+ * @param {StoredOrganisation} organisation
  * @param {{ organisationId: string, registrationId: string, accreditationId: string }} ids
  * @returns {AccreditationKeys | null}
  */
 /**
  * @overload
- * @param {OrganisationOverview} overview
+ * @param {StoredOrganisation} organisation
  * @param {{ organisationId: string, registrationId: string }} ids
  * @returns {RegistrationKeys | null}
  */
 /**
  * @overload
- * @param {OrganisationOverview} overview
+ * @param {StoredOrganisation} organisation
  * @param {RecordIds} ids
  * @returns {NaturalKeys | null}
  */
 /**
- * @param {OrganisationOverview} overview
+ * The natural keys of the records the ids name, or `null` when one has none.
+ * @param {StoredOrganisation} organisation
  * @param {RecordIds} ids
  * @returns {NaturalKeys | null}
  */
-export function toNaturalKeys(overview, { registrationId, accreditationId }) {
-  const { organisationNumber } = overview
+export function toNaturalKeys(
+  organisation,
+  { registrationId, accreditationId }
+) {
+  const organisationNumber = String(organisation.orgId)
 
   if (registrationId === undefined) {
     return { organisationNumber }
   }
 
-  const registration = overview.registrations.find(
+  const registration = organisation.registrations.find(
     ({ id }) => id === registrationId
   )
-  const registrationNumber = registration?.registrationNumber
 
   if (
-    !registrationNumber ||
-    registrationsNumbered(overview, registrationNumber).length !== 1
+    !registration?.registrationNumber ||
+    !isUniqueNumber(organisation, registration.registrationNumber)
   ) {
     return null
   }
+
+  const registrationNumber = registration.registrationNumber
 
   if (accreditationId === undefined) {
     return { organisationNumber, registrationNumber }
   }
 
   const year =
-    registration.accreditation?.id === accreditationId
-      ? accreditationYear(registration.accreditation)
+    registration.accreditationId === accreditationId
+      ? accreditationYear(
+          organisation.accreditations.find(({ id }) => id === accreditationId)
+        )
       : null
 
   return year ? { organisationNumber, registrationNumber, year } : null
-}
-
-/**
- * @param {OrganisationOverview} overview
- * @param {NaturalKeys} keys
- * @returns {RecordIds | null}
- */
-export const toIds = (overview, { registrationNumber, year }) => {
-  const organisationId = overview.id
-
-  if (registrationNumber === undefined) {
-    return { organisationId }
-  }
-
-  const matches = registrationsNumbered(overview, registrationNumber)
-
-  if (matches.length !== 1) {
-    return null
-  }
-
-  const [{ id: registrationId, accreditation }] = matches
-
-  if (year === undefined) {
-    return { organisationId, registrationId }
-  }
-
-  if (!accreditation || accreditationYear(accreditation) !== year) {
-    return null
-  }
-
-  return { organisationId, registrationId, accreditationId: accreditation.id }
 }

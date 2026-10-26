@@ -113,13 +113,13 @@ describe('GET summary log document', () => {
     test('Should send an old id URL to the natural-key URL', async () => {
       mswServer.use(
         http.get(
-          `${config.get('eprBackendUrl')}/v1/organisations/${organisationId}/overview`,
+          `${config.get('eprBackendUrl')}/v1/organisations/${organisationId}`,
           () =>
             HttpResponse.json({
               id: organisationId,
-              organisationNumber,
-              companyName: 'ACME ltd',
-              registrations: [{ id: registrationId, registrationNumber }]
+              orgId: 500123,
+              registrations: [{ id: registrationId, registrationNumber }],
+              accreditations: []
             })
         )
       )

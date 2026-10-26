@@ -1,17 +1,12 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
-import { fetchOrganisationOverview } from '#server/common/helpers/fetch-organisation-overview.js'
 import { organisationPath } from '#server/common/helpers/backend-paths.js'
+import { organisationOverviewUrl } from '#server/common/helpers/page-urls.js'
 
 export const unlinkOrganisationPostController = {
   async handler(request, h) {
-    const { organisationId } = request.params
-    const overviewUrl = `/organisations/${organisationId}/overview`
+    const { organisationNumber } = request.params
 
     try {
-      const { organisationNumber } = await fetchOrganisationOverview(
-        request,
-        organisationId
-      )
       await fetchJsonFromBackend(
         request,
         `${organisationPath({ organisationNumber })}/link`,
@@ -26,6 +21,6 @@ export const unlinkOrganisationPostController = {
       request.yar.set('unlinkResult', 'error')
     }
 
-    return h.redirect(overviewUrl)
+    return h.redirect(organisationOverviewUrl({ organisationNumber }))
   }
 }
