@@ -14,7 +14,7 @@ export const registrationOverview = {
             app: { pageTitle: 'Registration overview' },
             validate: {
               query: Joi.object({
-                year: Joi.number().integer().min(2000).max(9999).optional()
+                year: Joi.number().integer().optional()
               })
             }
           }
