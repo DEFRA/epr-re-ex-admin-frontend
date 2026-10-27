@@ -10,14 +10,18 @@ import {
 import { toReportingPeriods } from '#server/common/helpers/reporting-periods.js'
 import {
   accreditationPath,
+  organisationPath,
   registrationPath
 } from '#server/common/helpers/backend-paths.js'
 import { fetchReportingPeriods } from '#server/common/helpers/fetch-reporting-periods.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { errorCodes } from '#server/common/enums/error-codes.js'
+import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 import {
   organisationOverviewUrl,
   overseasSitesUrl,
   prnActivityDownloadUrl,
+  registrationOverviewUrl,
   reportSubmissionUrl,
   reportUnsubmitUrl,
   summaryLogUrl,
@@ -160,18 +164,53 @@ const fetchSummaryLogRows = async (request, registrationKeys) => {
 }
 
 /**
- * The registration's reporting periods, or `null` when the backend does not
- * serve the registration, as with one missing data the read model needs.
+ * The years the organisation held an approved registration, newest first.
+ * @param {HapiRequest} request
+ * @param {string} organisationNumber
+ * @returns {Promise<number[]>}
+ */
+const fetchYears = async (request, organisationNumber) => {
+  const { years } = await fetchJsonFromBackend(
+    request,
+    `${organisationPath({ organisationNumber })}/years`,
+    {}
+  )
+  return years
+}
+
+/**
+ * The year whose reports the page shows: the one asked for, else the latest.
+ * @param {number[]} years
+ * @param {number | undefined} requestedYear
+ * @param {RegistrationKeys} registrationKeys
+ * @returns {number | undefined}
+ */
+const selectYear = (years, requestedYear, registrationKeys) => {
+  if (requestedYear === undefined) {
+    return years[0]
+  }
+  if (!years.includes(requestedYear)) {
+    throw notFound('Report year not found', errorCodes.reportYearNotFound, {
+      event: {
+        action: 'fetch_report_year',
+        reason: `organisationNumber=${registrationKeys.organisationNumber} registrationNumber=${registrationKeys.registrationNumber} year=${requestedYear}`
+      }
+    })
+  }
+  return requestedYear
+}
+
+/**
+ * The registration's reporting periods for the year, or `null` when the
+ * backend does not serve the registration, as with one missing data the read
+ * model needs.
  * @param {HapiRequest} request
  * @param {RegistrationKeys} registrationKeys
+ * @param {number} year
  */
-const fetchPeriods = async (request, registrationKeys) => {
+const fetchPeriods = async (request, registrationKeys, year) => {
   try {
-    return await fetchReportingPeriods(request, {
-      ...registrationKeys,
-      // Current year until PAE-2153 lists every year.
-      year: new Date().getUTCFullYear()
-    })
+    return await fetchReportingPeriods(request, { ...registrationKeys, year })
   } catch (err) {
     if (Boom.isBoom(err, statusCodes.notFound)) {
       return null
@@ -210,11 +249,12 @@ export const registrationOverviewGETController = {
     const errorMessage = request.yar.get('error')
     await request.yar.clear('error')
 
-    const organisation = await fetchOrganisationView(
-      request,
-      organisationNumber
-    )
+    const [organisation, years] = await Promise.all([
+      fetchOrganisationView(request, organisationNumber),
+      fetchYears(request, organisationNumber)
+    ])
     const registration = registrationIn(organisation, registrationNumber)
+    const reportsYear = selectYear(years, request.query.year, registrationKeys)
     const accreditation = latestAccreditation(registration)
     const accreditationKeys = accreditation && {
       ...registrationKeys,
@@ -223,7 +263,9 @@ export const registrationOverviewGETController = {
 
     const [summaryLogRows, reportingPeriods, wasteBalance] = await Promise.all([
       fetchSummaryLogRows(request, registrationKeys),
-      fetchPeriods(request, registrationKeys),
+      reportsYear === undefined
+        ? null
+        : fetchPeriods(request, registrationKeys, reportsYear),
       accreditationKeys ? fetchWasteBalance(request, accreditationKeys) : null
     ])
 
@@ -255,6 +297,13 @@ export const registrationOverviewGETController = {
             )
           )
         : [],
+      reportsYear,
+      reportYearLinks: years
+        .filter((year) => year !== reportsYear)
+        .map((year) => ({
+          text: String(year),
+          href: `${registrationOverviewUrl(registrationKeys)}?year=${year}#reports`
+        })),
       summaryLogRows,
       wasteBalance,
       error: errorMessage

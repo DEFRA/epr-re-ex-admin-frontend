@@ -98,7 +98,7 @@
           {% endfor %}
 
           {{ govukTable({
-            caption: "Reports",
+            caption: "Reports " ~ reportsYear,
             captionClasses: "govuk-table__caption--m",
             head: [
               { text: "Period" },
@@ -109,6 +109,16 @@
             ],
             rows: tableRows
           }) }}
+        {% elif reportsYear %}
+          <p class="govuk-body">No reports for {{ reportsYear }}</p>
+        {% endif %}
+        {% if reportYearLinks and reportYearLinks.length %}
+          <h2 class="govuk-heading-s">Other years</h2>
+          <ul class="govuk-list">
+            {% for yearLink in reportYearLinks %}
+              <li>{{ link(yearLink.href, yearLink.text) }}</li>
+            {% endfor %}
+          </ul>
         {% endif %}
       </div>
     </div>

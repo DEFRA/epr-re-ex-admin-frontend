@@ -7,5 +7,6 @@ export const errorCodes = {
   externalRedirectInvalid: 'external_redirect_invalid',
   registrationNotFound: 'registration_not_found',
   accreditationNotFound: 'accreditation_not_found',
+  reportYearNotFound: 'report_year_not_found',
   recordKeyUnresolved: 'record_key_unresolved'
 }

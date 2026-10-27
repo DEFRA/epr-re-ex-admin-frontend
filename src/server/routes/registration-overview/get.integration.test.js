@@ -108,6 +108,8 @@ describe('#registrationOverviewController', () => {
 
   const mockOrganisation = organisationHolding(mockRegistration)
 
+  const yearsUrl = `${organisationViewUrl}/years`
+  const mockYears = { years: [2026, 2025] }
   const calendarUrl = `${backendUrl}/organisations/:organisationNumber/registrations/:registrationNumber/reports/:year/calendar`
   const summaryLogsUrl = `${backendUrl}/organisations/:organisationNumber/registrations/:registrationNumber/summary-logs`
   const wasteBalanceUrl = `${backendUrl}/organisations/:organisationNumber/registrations/:registrationNumber/accreditations/:year/waste-balance`
@@ -308,7 +310,7 @@ describe('#registrationOverviewController', () => {
   }
 
   const getReportsTable = (container) =>
-    getByRole(container, 'table', { name: 'Reports' })
+    getByRole(container, 'table', { name: /^Reports/ })
 
   const getSummaryLogsTable = (container) =>
     getByRole(container, 'table', { name: 'Summary logs' })
@@ -342,6 +344,7 @@ describe('#registrationOverviewController', () => {
       http.get(organisationViewUrl, () =>
         HttpResponse.json(organisationResponse)
       ),
+      http.get(yearsUrl, () => HttpResponse.json(mockYears)),
       http.get(calendarUrl, () =>
         HttpResponse.json(asYearCalendar(calendarResponse))
       ),
@@ -822,27 +825,127 @@ describe('#registrationOverviewController', () => {
       ).toStrictEqual([expect.anything(), expect.anything()])
     })
 
-    test("Should request the current year's reports calendar by number with the expand=submissions arg", async () => {
-      /** @type {URL | undefined} */
-      let calendarRequestUrl
-      useMockBackend()
-      mswServer.use(
-        http.get(calendarUrl, ({ request }) => {
-          calendarRequestUrl = new URL(request.url)
-          return HttpResponse.json(asYearCalendar(mockCalendar))
-        })
-      )
+    describe('Report years', () => {
+      /** @type {URL[]} */
+      let calendarRequestUrls
 
-      await server.inject({
-        method: 'GET',
-        url,
-        auth: { strategy: 'session', credentials: mockUserSession }
+      /** @param {string} [query] */
+      const requestOverview = (query = '') =>
+        server.inject({
+          method: 'GET',
+          url: `${url}${query}`,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+      /** @param {{ years: number[] }} [yearsResponse] */
+      const useYears = (yearsResponse = mockYears) => {
+        calendarRequestUrls = []
+        useMockBackend()
+        mswServer.use(
+          http.get(yearsUrl, () => HttpResponse.json(yearsResponse)),
+          http.get(calendarUrl, ({ request }) => {
+            calendarRequestUrls.push(new URL(request.url))
+            return HttpResponse.json(asYearCalendar(mockCalendar))
+          })
+        )
+      }
+
+      test("Should request the latest year's reports calendar by number with the expand=submissions arg", async () => {
+        useYears()
+
+        await requestOverview()
+
+        expect(calendarRequestUrls.map(({ pathname }) => pathname)).toEqual([
+          '/organisations/500123/registrations/REG-50030-001/reports/2026/calendar'
+        ])
+        expect(calendarRequestUrls[0].searchParams.get('expand')).toBe(
+          'submissions'
+        )
       })
 
-      expect(calendarRequestUrl?.pathname).toBe(
-        `/organisations/500123/registrations/REG-50030-001/reports/${new Date().getUTCFullYear()}/calendar`
-      )
-      expect(calendarRequestUrl?.searchParams.get('expand')).toBe('submissions')
+      test('Should caption the reports with the latest year and link the other years', async () => {
+        useYears()
+
+        const { result } = await requestOverview()
+        const body = renderPage(result)
+
+        expect(
+          getByRole(body, 'table', { name: 'Reports 2026' })
+        ).toBeInTheDocument()
+        expect(getByRole(body, 'link', { name: '2025' })).toHaveAttribute(
+          'href',
+          `${url}?year=2025#reports`
+        )
+        expect(queryByRole(body, 'link', { name: '2026' })).toBeNull()
+      })
+
+      test('Should show the requested year and link back to the latest', async () => {
+        useYears()
+
+        const { result } = await requestOverview('?year=2025')
+        const body = renderPage(result)
+
+        expect(calendarRequestUrls.map(({ pathname }) => pathname)).toEqual([
+          '/organisations/500123/registrations/REG-50030-001/reports/2025/calendar'
+        ])
+        expect(
+          getByRole(body, 'table', { name: 'Reports 2025' })
+        ).toBeInTheDocument()
+        expect(getByRole(body, 'link', { name: '2026' })).toHaveAttribute(
+          'href',
+          `${url}?year=2026#reports`
+        )
+      })
+
+      test('Should say there are no reports when the year has none, keeping the year links', async () => {
+        useYears()
+        mswServer.use(
+          http.get(calendarUrl, () =>
+            HttpResponse.json({
+              year: 2026,
+              registeredOnly: { reportingPeriods: [] }
+            })
+          )
+        )
+
+        const { result } = await requestOverview()
+        const body = renderPage(result)
+
+        expect(getByText(body, 'No reports for 2026')).toBeInTheDocument()
+        expect(getByRole(body, 'link', { name: '2025' })).toBeInTheDocument()
+      })
+
+      test('Should show the not found page for a year the organisation has no reports in', async () => {
+        useYears()
+
+        const { statusCode, result } = await requestOverview('?year=2019')
+
+        expect(statusCode).toBe(statusCodes.notFound)
+        expect(calendarRequestUrls).toEqual([])
+        expect(
+          getByText(renderPage(result), 'Page not found')
+        ).toBeInTheDocument()
+      })
+
+      test('Should reject a year that is not a number', async () => {
+        useYears()
+
+        const { statusCode } = await requestOverview('?year=last')
+
+        expect(statusCode).toBe(statusCodes.badRequest)
+      })
+
+      test('Should not request a calendar or link any year when the organisation has no years', async () => {
+        useYears({ years: [] })
+
+        const { statusCode, result } = await requestOverview()
+        const body = renderPage(result)
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(calendarRequestUrls).toEqual([])
+        expect(queryByRole(body, 'table', { name: /^Reports/ })).toBeNull()
+        expect(queryByText(body, 'Other years')).toBeNull()
+      })
     })
 
     test('Should not render the reports table when the backend serves no calendar for the registration', async () => {
@@ -861,7 +964,7 @@ describe('#registrationOverviewController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(
-        queryByRole(renderPage(result), 'table', { name: 'Reports' })
+        queryByRole(renderPage(result), 'table', { name: /^Reports/ })
       ).toBeNull()
     })
 
@@ -1164,6 +1267,7 @@ describe('#registrationOverviewController', () => {
         http.get(organisationViewUrl, () =>
           HttpResponse.json(mockOrganisation)
         ),
+        http.get(yearsUrl, () => HttpResponse.json(mockYears)),
         http.get(calendarUrl, () =>
           HttpResponse.json(asYearCalendar(mockCalendar))
         ),
@@ -1248,6 +1352,7 @@ describe('#registrationOverviewController', () => {
         http.get(organisationViewUrl, () => {
           throw HttpResponse.text('', { status: 500 })
         }),
+        http.get(yearsUrl, () => HttpResponse.json(mockYears)),
         http.get(summaryLogsUrl, () => HttpResponse.json({ summaryLogs: [] }))
       )
 
@@ -1312,6 +1417,7 @@ describe('#registrationOverviewController', () => {
           http.get(organisationViewUrl, () =>
             HttpResponse.json(mockOrganisation)
           ),
+          http.get(yearsUrl, () => HttpResponse.json(mockYears)),
           http.get(calendarUrl, () =>
             HttpResponse.json(asYearCalendar(mockCalendar))
           ),

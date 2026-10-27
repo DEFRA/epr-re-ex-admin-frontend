@@ -172,6 +172,9 @@ describe('report-unsubmit', () => {
           }
         })
       ),
+      http.get(`${backendUrl}/organisations/${organisationNumber}/years`, () =>
+        HttpResponse.json({ years: [] })
+      ),
       http.get(`${backendUrl}${REGISTRATION_URL}/summary-logs`, () =>
         HttpResponse.json({ summaryLogs: [] })
       )
