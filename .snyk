@@ -22,4 +22,13 @@ ignore:
           and is the flagged version). Risk accepted pending a jsoneditor/ajv
           path off uri-js.
         expires: 2027-03-21T00:00:00.000Z
+  SNYK-JS-URIJS-20341609:
+    - '*':
+        reason: >-
+          Uncaught exception parsing a malformed mailto URI in uri-js, same path
+          (jsoneditor > ajv@6 > uri-js). jsoneditor is bundled for the admin's
+          browser, so a crash ends only that editor tab, not the server.
+          Deprecated package with no upstream patch (4.4.1 is latest). Risk
+          accepted pending a jsoneditor/ajv path off uri-js.
+        expires: 2027-03-21T00:00:00.000Z
 patch: {}
