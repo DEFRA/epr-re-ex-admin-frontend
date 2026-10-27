@@ -935,6 +935,17 @@ describe('#registrationOverviewController', () => {
         expect(statusCode).toBe(statusCodes.badRequest)
       })
 
+      test.each(['1999', '10000', '2025.5'])(
+        'Should reject the year %s',
+        async (year) => {
+          useYears()
+
+          const { statusCode } = await requestOverview(`?year=${year}`)
+
+          expect(statusCode).toBe(statusCodes.badRequest)
+        }
+      )
+
       test('Should not request a calendar or link any year when the organisation has no years', async () => {
         useYears({ years: [] })
 
