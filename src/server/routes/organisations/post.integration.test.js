@@ -240,9 +240,7 @@ describe('POST /organisations', () => {
         search: 'Acme',
         orgId: '100001',
         registrationNumber: 'REG001',
-        registrationId: 'reg-1',
-        accreditationNumber: 'ACC001',
-        accreditationId: 'acc-1'
+        accreditationNumber: 'ACC001'
       }
 
       test('forwards every submitted criterion to the backend', async () => {
@@ -279,9 +277,7 @@ describe('POST /organisations', () => {
           search: '',
           orgId: '  100001  ',
           registrationNumber: '   ',
-          registrationId: '',
-          accreditationNumber: '',
-          accreditationId: ''
+          accreditationNumber: ''
         })
 
         expect(calls[0].query).toEqual({

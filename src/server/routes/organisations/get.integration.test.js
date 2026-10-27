@@ -118,7 +118,7 @@ describe('GET /organisations', () => {
         expect(calls[0].query.search).toBeUndefined()
       })
 
-      test('renders all six search fields, empty, each with its label', async () => {
+      test('renders all four search fields, empty, each with its label', async () => {
         stubBackendResponse(HttpResponse.json(envelope([])))
 
         const { $, statusCode } = await loadPage()
@@ -155,33 +155,21 @@ describe('GET /organisations', () => {
             autocomplete: 'off'
           },
           {
-            name: 'registrationId',
-            value: '',
-            label: 'Registration Id',
-            autocomplete: 'off'
-          },
-          {
             name: 'accreditationNumber',
             value: '',
             label: 'Accreditation number',
-            autocomplete: 'off'
-          },
-          {
-            name: 'accreditationId',
-            value: '',
-            label: 'Accreditation Id',
             autocomplete: 'off'
           }
         ])
       })
 
-      test('lays the six fields out three rows of two', async () => {
+      test('lays the four fields out two rows of two', async () => {
         stubBackendResponse(HttpResponse.json(envelope([])))
 
         const { $ } = await loadPage()
 
         const rows = $('form.app-filters .govuk-grid-row')
-        expect(rows).toHaveLength(3)
+        expect(rows).toHaveLength(2)
         rows.each((_, row) => {
           expect($(row).find('.govuk-grid-column-one-half')).toHaveLength(2)
         })
@@ -276,9 +264,7 @@ describe('GET /organisations', () => {
       const criteriaFields = [
         ['orgId', '100001'],
         ['registrationNumber', 'REG001'],
-        ['registrationId', 'reg-1'],
-        ['accreditationNumber', 'ACC001'],
-        ['accreditationId', 'acc-1']
+        ['accreditationNumber', 'ACC001']
       ]
 
       test.each(criteriaFields)(
@@ -314,8 +300,8 @@ describe('GET /organisations', () => {
           new URLSearchParams({
             registrationNumber: 'REG001',
             accreditationNumber: 'ACC444',
-            registrationId: '',
-            accreditationId: '   '
+            orgId: '',
+            search: '   '
           })
         )
 
@@ -326,6 +312,20 @@ describe('GET /organisations', () => {
           page: '1',
           pageSize: '50'
         })
+      })
+
+      test('drops registration and accreditation ids from an old link', async () => {
+        const calls = stubBackendResponse(HttpResponse.json(envelope([])))
+
+        const { statusCode } = await loadPage(
+          new URLSearchParams({
+            registrationId: 'reg-1',
+            accreditationId: 'acc-1'
+          })
+        )
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(calls[0].query).toEqual({ page: '1', pageSize: '50' })
       })
 
       test('reports zero results for a criteria-only search that matches nothing', async () => {
@@ -469,13 +469,13 @@ describe('GET /organisations', () => {
           new URLSearchParams({
             search: 'acme',
             orgId: '100001',
-            accreditationId: 'acc-1',
+            accreditationNumber: 'ACC001',
             page: '2'
           })
         )
 
         const expectedCriteria =
-          'search=acme&orgId=100001&accreditationId=acc-1'
+          'search=acme&orgId=100001&accreditationNumber=ACC001'
         expect($('.govuk-pagination__prev a').attr('href')).toBe(
           `/organisations?${expectedCriteria}&page=1`
         )

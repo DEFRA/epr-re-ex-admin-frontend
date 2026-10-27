@@ -4,9 +4,7 @@ const noCriteria = {
   search: '',
   orgId: '',
   registrationNumber: '',
-  registrationId: '',
-  accreditationNumber: '',
-  accreditationId: ''
+  accreditationNumber: ''
 }
 
 describe('buildPaginationLinks', () => {
@@ -110,15 +108,13 @@ describe('buildPaginationLinks', () => {
           search: 'acme',
           orgId: '100001',
           registrationNumber: 'REG001',
-          registrationId: 'reg-1',
-          accreditationNumber: 'ACC001',
-          accreditationId: 'acc-1'
+          accreditationNumber: 'ACC001'
         }
       })
 
       const expectedCriteria =
         'search=acme&orgId=100001&registrationNumber=REG001' +
-        '&registrationId=reg-1&accreditationNumber=ACC001&accreditationId=acc-1'
+        '&accreditationNumber=ACC001'
       expect(result).toEqual({
         previous: { href: `/organisations?${expectedCriteria}&page=1` },
         next: { href: `/organisations?${expectedCriteria}&page=3` }
@@ -129,12 +125,16 @@ describe('buildPaginationLinks', () => {
       const result = buildPaginationLinks({
         page: 1,
         totalPages: 2,
-        criteria: { ...noCriteria, orgId: '100001', registrationId: 'reg-1' }
+        criteria: {
+          ...noCriteria,
+          orgId: '100001',
+          registrationNumber: 'REG001'
+        }
       })
 
       expect(result).toEqual({
         next: {
-          href: '/organisations?orgId=100001&registrationId=reg-1&page=2'
+          href: '/organisations?orgId=100001&registrationNumber=REG001&page=2'
         }
       })
     })
