@@ -127,7 +127,7 @@ describe('organisation GET controller', () => {
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
-          url: '/organisations/500123/edit',
+          url: '/organisations/500123',
           auth: { strategy: 'session', credentials: mockUserSession }
         })
 
@@ -149,7 +149,7 @@ describe('organisation GET controller', () => {
 
         const { statusCode } = await server.inject({
           method: 'GET',
-          url: '/organisations/999999/edit',
+          url: '/organisations/999999',
           auth: { strategy: 'session', credentials: mockUserSession }
         })
 

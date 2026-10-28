@@ -3,12 +3,11 @@ import { toStatusTables } from './status-tables.js'
 
 export const organisationsGETController = {
   async handler(request, h) {
-    // The backend reads an organisation by its id or its number
-    const key = request.params.id ?? request.params.organisationNumber
-
+    // The address names the organisation by its id or its number, as the
+    // backend does
     const data = await fetchJsonFromBackend(
       request,
-      `/v1/organisations/${encodeURIComponent(key)}`,
+      `/v1/organisations/${encodeURIComponent(request.params.id)}`,
       {}
     )
 

@@ -121,8 +121,8 @@
               text: org.status
             }) } %}
             {% set actionsHtml = '<a class="govuk-link govuk-link--no-visited-state" href="/organisations/' ~ organisationNumber ~ '/overview">View</a>' %}
-            {% set actionsHtml = actionsHtml ~ '<br><a class="govuk-link govuk-link--no-visited-state" href="/organisations/' ~ organisationNumber ~ '/edit">Edit</a>' %}
-            {% set actionsHtml = actionsHtml ~ '<br><a class="govuk-link govuk-link--no-visited-state" href="/organisations/' ~ organisationNumber ~ '/submission-data">View submission data</a>' %}
+            {% set actionsHtml = actionsHtml ~ '<br><a class="govuk-link govuk-link--no-visited-state" href="/organisations/' ~ organisationNumber ~ '">Edit</a>' %}
+            {% set actionsHtml = actionsHtml ~ '<br><a class="govuk-link govuk-link--no-visited-state" href="/defra-forms-submission/' ~ organisationNumber ~ '">View submission data</a>' %}
             {% set actionsHtml = actionsHtml ~ '<br><a class="govuk-link govuk-link--no-visited-state" href="/system-logs?organisationNumber=' ~ organisationNumber ~ '">View system logs</a>' %}
             {% set actionsHtml = actionsHtml ~ '<br><a class="govuk-link govuk-link--no-visited-state" href="/linked-organisations?search=' ~ (org.name | urlencode) ~ '">View linked organisations</a>' %}
             {% set actionCell = { html:  actionsHtml } %}

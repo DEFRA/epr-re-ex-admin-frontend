@@ -42,7 +42,7 @@ describe('GET /defra-forms-submission/{documentId}', () => {
   })
 
   describe('When user is authenticated', () => {
-    const documentId = '000000-0000-1234'
+    const documentId = '6507f1f77bcf86cd79941234'
 
     beforeEach(() => {
       vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
@@ -134,7 +134,7 @@ describe('GET /defra-forms-submission/{documentId}', () => {
     })
 
     test('Should render not authorised page when backend request is not authorised', async () => {
-      const documentId = '000000-0000-1234'
+      const documentId = '6507f1f77bcf86cd79941234'
 
       const getFormSubmissionsDataHandler = http.get(
         `${backendUrl}/v1/form-submissions/${documentId}`,
@@ -163,14 +163,17 @@ describe('GET /defra-forms-submission/{documentId}', () => {
 
     test('Should render page with no data when backend fetch throws', async () => {
       mswServer.use(
-        http.get(`${backendUrl}/v1/form-submissions/456`, () => {
-          return HttpResponse.error()
-        })
+        http.get(
+          `${backendUrl}/v1/form-submissions/6507f1f77bcf86cd79940456`,
+          () => {
+            return HttpResponse.error()
+          }
+        )
       )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/defra-forms-submission/456',
+        url: '/defra-forms-submission/6507f1f77bcf86cd79940456',
         auth: {
           strategy: 'session',
           credentials: mockUserSession
@@ -195,7 +198,7 @@ describe('GET /defra-forms-submission/{documentId}', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/500123/submission-data',
+        url: '/defra-forms-submission/500123',
         auth: { strategy: 'session', credentials: mockUserSession }
       })
 

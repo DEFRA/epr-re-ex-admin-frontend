@@ -565,11 +565,9 @@ describe('GET /organisations', () => {
         expect($(actionLinks[0]).attr('href')).toEqual(
           '/organisations/500123/overview'
         )
-        expect($(actionLinks[1]).attr('href')).toEqual(
-          '/organisations/500123/edit'
-        )
+        expect($(actionLinks[1]).attr('href')).toEqual('/organisations/500123')
         expect($(actionLinks[2]).attr('href')).toEqual(
-          '/organisations/500123/submission-data'
+          '/defra-forms-submission/500123'
         )
         expect($(actionLinks[3]).attr('href')).toEqual(
           '/system-logs?organisationNumber=500123'

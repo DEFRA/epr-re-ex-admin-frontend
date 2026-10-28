@@ -1,8 +1,7 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { findOrganisationIdByNumber } from '#server/common/helpers/natural-keys/find-organisation.js'
+import { isDatabaseId } from '#server/common/helpers/natural-keys/key-form.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-
-const options = { app: { pageTitle: 'Defra Forms submission data' } }
 
 export const defraFormsSubmission = {
   plugin: {
@@ -12,23 +11,19 @@ export const defraFormsSubmission = {
         {
           method: 'GET',
           path: '/defra-forms-submission/{documentId}',
-          options,
-          handler: (request, h) =>
-            renderSubmission(request, h, request.params.documentId)
-        },
-        {
-          method: 'GET',
-          path: '/organisations/{organisationNumber}/submission-data',
-          options,
-          handler: async (request, h) =>
-            renderSubmission(
-              request,
-              h,
-              await findOrganisationIdByNumber(
-                request,
-                request.params.organisationNumber
-              )
-            )
+          options: {
+            app: { pageTitle: 'Defra Forms submission data' }
+          },
+          async handler(request, h) {
+            // Submissions are stored by the organisation's id, so a number is
+            // looked up first
+            const { documentId } = request.params
+            const id = isDatabaseId(documentId)
+              ? documentId
+              : await findOrganisationIdByNumber(request, documentId)
+
+            return renderSubmission(request, h, id)
+          }
         }
       ])
     }

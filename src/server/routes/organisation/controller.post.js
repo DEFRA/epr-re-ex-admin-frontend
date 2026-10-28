@@ -1,4 +1,5 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { isDatabaseId } from '#server/common/helpers/natural-keys/key-form.js'
 
 /** @import { HapiRequest } from '#server/common/hapi-types.js' */
 
@@ -10,14 +11,14 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * @returns {string}
  */
 const editorAfterSave = (request, saved) =>
-  request.params.organisationNumber === undefined
+  isDatabaseId(/** @type {string} */ (request.params.id))
     ? request.path
-    : `/organisations/${encodeURIComponent(saved.orgId)}/edit`
+    : `/organisations/${encodeURIComponent(saved.orgId)}`
 
 export const organisationsPOSTController = {
   async handler(request, h) {
-    // An address by number carries the id the page was read with
-    const id = request.params.id ?? request.payload.organisationId
+    // The page carries the id it was read with, whichever key its address names
+    const id = request.payload.organisationId
 
     const postedData = JSON.parse(request.payload.organisation)
 
