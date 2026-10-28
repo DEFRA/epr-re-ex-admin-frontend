@@ -65,6 +65,7 @@ describe('organisation GET controller - Unit Tests - Flash message handling', ()
     expect(mockH.view).toHaveBeenCalledWith('routes/organisation/index', {
       pageTitle: 'Organisation Details',
       heading: 'Test Org',
+      organisationId: 'test-org-id',
       organisationJson: JSON.stringify(mockOrgData),
       statusChangeError: null,
       registrationRows: [],

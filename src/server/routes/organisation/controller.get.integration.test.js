@@ -131,8 +131,10 @@ describe('organisation GET controller', () => {
           auth: { strategy: 'session', credentials: mockUserSession }
         })
 
+        const $ = cheerio.load(result)
         expect(statusCode).toBe(statusCodes.ok)
-        expect(cheerio.load(result)('h1').text()).toContain('ACME Ltd')
+        expect($('h1').text()).toContain('ACME Ltd')
+        expect($('input[name="organisationId"]').val()).toBe('org-1')
       })
 
       test('returns 404 when no organisation has the number', async () => {

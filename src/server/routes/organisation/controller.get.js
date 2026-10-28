@@ -29,6 +29,7 @@ export const organisationsGETController = {
     const viewContext = {
       pageTitle,
       heading: data.companyDetails.name,
+      organisationId: data.id,
       organisationJson: JSON.stringify(data),
       statusChangeError,
       ...toStatusTables(data)

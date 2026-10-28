@@ -404,12 +404,7 @@ describe('organisation POST controller', () => {
       expect(headers.location).toBe(`/organisations/${orgId}`)
     })
 
-    test('saves the organisation found by its number and reopens the editor at the number it was saved with', async () => {
-      mswServer.use(
-        http.get(`${backendUrl}/v1/organisations/500123`, () =>
-          HttpResponse.json({ id: 'org-1', companyDetails: { name: 'ACME' } })
-        )
-      )
+    test('saves by the id the page was read with and reopens the editor at the number it was saved with', async () => {
       let saved = false
       mswServer.use(
         http.put(`${backendUrl}/v1/organisations/org-1`, () => {
@@ -430,6 +425,7 @@ describe('organisation POST controller', () => {
         headers: { cookie },
         payload: {
           organisation: JSON.stringify({ version: 1, orgId: 600123 }),
+          organisationId: 'org-1',
           crumb
         },
         auth: { strategy: 'session', credentials: mockUserSession }
@@ -442,9 +438,6 @@ describe('organisation POST controller', () => {
 
     test('returns to the editor at the same number when a save by number fails', async () => {
       mswServer.use(
-        http.get(`${backendUrl}/v1/organisations/500123`, () =>
-          HttpResponse.json({ id: 'org-1', companyDetails: { name: 'ACME' } })
-        ),
         http.put(`${backendUrl}/v1/organisations/org-1`, () =>
           HttpResponse.json(
             { message: 'orgId must be a number' },
@@ -465,6 +458,7 @@ describe('organisation POST controller', () => {
         headers: { cookie },
         payload: {
           organisation: JSON.stringify({ version: 1, orgId: 'x' }),
+          organisationId: 'org-1',
           crumb
         },
         auth: { strategy: 'session', credentials: mockUserSession }

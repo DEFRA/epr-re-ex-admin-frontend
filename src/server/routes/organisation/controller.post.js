@@ -1,5 +1,4 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
-import { organisationIdOf } from './organisation-id.js'
 
 /** @import { HapiRequest } from '#server/common/hapi-types.js' */
 
@@ -17,7 +16,8 @@ const editorAfterSave = (request, saved) =>
 
 export const organisationsPOSTController = {
   async handler(request, h) {
-    const id = await organisationIdOf(request)
+    // An address by number carries the id the page was read with
+    const id = request.params.id ?? request.payload.organisationId
 
     const postedData = JSON.parse(request.payload.organisation)
 
