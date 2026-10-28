@@ -1,9 +1,10 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { organisationIdOf } from './organisation-id.js'
 import { toStatusTables } from './status-tables.js'
 
 export const organisationsGETController = {
   async handler(request, h) {
-    const id = request.params.id
+    const id = await organisationIdOf(request)
 
     const data = await fetchJsonFromBackend(
       request,

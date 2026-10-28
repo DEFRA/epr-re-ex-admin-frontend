@@ -4,7 +4,7 @@
  *
  * @typedef {{
  *   search: string,
- *   orgId: string,
+ *   organisationNumber: string,
  *   registrationNumber: string,
  *   accreditationNumber: string
  * }} SearchCriteria
@@ -18,7 +18,7 @@
  */
 export const CRITERIA_KEYS = [
   'search',
-  'orgId',
+  'organisationNumber',
   'registrationNumber',
   'accreditationNumber'
 ]
@@ -32,7 +32,7 @@ export const CRITERIA_KEYS = [
  */
 export const toCriteria = (source) => ({
   search: (source.search ?? '').trim(),
-  orgId: (source.orgId ?? '').trim(),
+  organisationNumber: (source.organisationNumber ?? '').trim(),
   registrationNumber: (source.registrationNumber ?? '').trim(),
   accreditationNumber: (source.accreditationNumber ?? '').trim()
 })

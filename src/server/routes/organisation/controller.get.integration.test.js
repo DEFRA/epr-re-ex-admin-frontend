@@ -112,6 +112,61 @@ describe('organisation GET controller', () => {
       expect(result).toContain('Sorry, there is a problem with the service')
     })
 
+    describe('by organisation number', () => {
+      const stubLookup = (items) => {
+        const queries = []
+        mswServer.use(
+          http.get(`${backendUrl}/v1/organisations`, ({ request }) => {
+            queries.push(Object.fromEntries(new URL(request.url).searchParams))
+            return HttpResponse.json({
+              items,
+              page: 1,
+              pageSize: 1,
+              totalItems: items.length,
+              totalPages: items.length
+            })
+          })
+        )
+        return queries
+      }
+
+      test('opens the editor on the organisation found by its number', async () => {
+        const queries = stubLookup([{ id: 'org-1' }])
+        mswServer.use(
+          http.get(`${backendUrl}/v1/organisations/org-1`, () =>
+            HttpResponse.json({
+              id: 'org-1',
+              companyDetails: { name: 'ACME Ltd' },
+              registrations: [],
+              accreditations: []
+            })
+          )
+        )
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: '/organisations/500123/edit',
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(cheerio.load(result)('h1').text()).toContain('ACME Ltd')
+        expect(queries).toEqual([{ orgId: '500123', page: '1', pageSize: '1' }])
+      })
+
+      test('returns 404 when no organisation has the number', async () => {
+        stubLookup([])
+
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: '/organisations/999999/edit',
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        expect(statusCode).toBe(statusCodes.notFound)
+      })
+    })
+
     describe('status changes', () => {
       const organisationWithRecords = {
         id: 'org-1',

@@ -180,5 +180,33 @@ describe('GET /defra-forms-submission/{documentId}', () => {
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('Sorry, there is a problem with the service')
     })
+
+    test('shows the submission data of the organisation found by its number', async () => {
+      mswServer.use(
+        http.get(`${backendUrl}/v1/organisations`, () =>
+          HttpResponse.json({
+            items: [{ id: 'org-1' }],
+            page: 1,
+            pageSize: 1,
+            totalItems: 1,
+            totalPages: 1
+          })
+        ),
+        http.get(`${backendUrl}/v1/form-submissions/org-1`, () =>
+          HttpResponse.json({
+            organisation: { id: 'org-1', rawSubmissionData: { meta: {} } }
+          })
+        )
+      )
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/organisations/500123/submission-data',
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('ID: org-1')
+    })
   })
 })

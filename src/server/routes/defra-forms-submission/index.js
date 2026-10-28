@@ -1,5 +1,8 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { findOrganisationIdByNumber } from '#server/common/helpers/natural-keys/find-organisation.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+
+const options = { app: { pageTitle: 'Defra Forms submission data' } }
 
 export const defraFormsSubmission = {
   plugin: {
@@ -9,32 +12,43 @@ export const defraFormsSubmission = {
         {
           method: 'GET',
           path: '/defra-forms-submission/{documentId}',
-          options: {
-            app: { pageTitle: 'Defra Forms submission data' }
-          },
-          async handler(request, h) {
-            const documentId = request.params.documentId
-
-            const data = await loadData(request, documentId)
-
-            const organisation = data.organisation
-              ? asPayloadAndSchema(data.organisation)
-              : undefined
-
-            return h.view('routes/defra-forms-submission/index', {
-              pageTitle: request.route.settings.app.pageTitle,
-              heading: `ID: ${documentId}`,
-              organisation,
-              registrations: (data.registrations || []).map(asPayloadAndSchema),
-              accreditations: (data.accreditations || []).map(
-                asPayloadAndSchema
+          options,
+          handler: (request, h) =>
+            renderSubmission(request, h, request.params.documentId)
+        },
+        {
+          method: 'GET',
+          path: '/organisations/{organisationNumber}/submission-data',
+          options,
+          handler: async (request, h) =>
+            renderSubmission(
+              request,
+              h,
+              await findOrganisationIdByNumber(
+                request,
+                request.params.organisationNumber
               )
-            })
-          }
+            )
         }
       ])
     }
   }
+}
+
+async function renderSubmission(request, h, documentId) {
+  const data = await loadData(request, documentId)
+
+  const organisation = data.organisation
+    ? asPayloadAndSchema(data.organisation)
+    : undefined
+
+  return h.view('routes/defra-forms-submission/index', {
+    pageTitle: request.route.settings.app.pageTitle,
+    heading: `ID: ${documentId}`,
+    organisation,
+    registrations: (data.registrations || []).map(asPayloadAndSchema),
+    accreditations: (data.accreditations || []).map(asPayloadAndSchema)
+  })
 }
 
 async function loadData(request, documentId) {

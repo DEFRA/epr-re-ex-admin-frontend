@@ -404,6 +404,88 @@ describe('organisation POST controller', () => {
       expect(headers.location).toBe(`/organisations/${orgId}`)
     })
 
+    test('saves the organisation found by its number and reopens the editor at the number it was saved with', async () => {
+      mswServer.use(
+        http.get(`${backendUrl}/v1/organisations`, () =>
+          HttpResponse.json({
+            items: [{ id: 'org-1' }],
+            page: 1,
+            pageSize: 1,
+            totalItems: 1,
+            totalPages: 1
+          })
+        )
+      )
+      let saved = false
+      mswServer.use(
+        http.put(`${backendUrl}/v1/organisations/org-1`, () => {
+          saved = true
+          return HttpResponse.json({ id: 'org-1', version: 2 })
+        })
+      )
+
+      const { cookie, crumb } = await getCsrfToken(
+        server,
+        '/organisations/500123/edit',
+        { strategy: 'session', credentials: mockUserSession }
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: '/organisations/500123/edit',
+        headers: { cookie },
+        payload: {
+          organisation: JSON.stringify({ version: 1, orgId: 600123 }),
+          crumb
+        },
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      expect(statusCode).toBe(302)
+      expect(headers.location).toBe('/organisations/600123/edit')
+      expect(saved).toBe(true)
+    })
+
+    test('returns to the editor at the same number when a save by number fails', async () => {
+      mswServer.use(
+        http.get(`${backendUrl}/v1/organisations`, () =>
+          HttpResponse.json({
+            items: [{ id: 'org-1' }],
+            page: 1,
+            pageSize: 1,
+            totalItems: 1,
+            totalPages: 1
+          })
+        ),
+        http.put(`${backendUrl}/v1/organisations/org-1`, () =>
+          HttpResponse.json(
+            { message: 'orgId must be a number' },
+            { status: 422 }
+          )
+        )
+      )
+
+      const { cookie, crumb } = await getCsrfToken(
+        server,
+        '/organisations/500123/edit',
+        { strategy: 'session', credentials: mockUserSession }
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: '/organisations/500123/edit',
+        headers: { cookie },
+        payload: {
+          organisation: JSON.stringify({ version: 1, orgId: 'x' }),
+          crumb
+        },
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      expect(statusCode).toBe(302)
+      expect(headers.location).toBe('/organisations/500123/edit')
+    })
+
     test('Should reject POST request without CSRF token', async () => {
       const orgId = 'org-1'
 

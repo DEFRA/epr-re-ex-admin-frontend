@@ -13,21 +13,13 @@ vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
 }))
 
 const buildOrg = (overrides = {}) => ({
-  id: 'org-1',
-  orgId: 'org-1',
-  status: 'ACTIVE',
-  statusHistory: [{ status: 'ACTIVE', updatedAt: '2025-10-01T00:00:00Z' }],
-  companyDetails: {
-    name: 'Acme Ltd'
+  name: 'Acme Ltd',
+  organisationNumber: '500100',
+  registrations: {
+    REG001: { accreditations: { 2026: { accreditationNumber: 'ACC001' } } }
   },
-  registrations: [
-    { id: 'reg-1', registrationNumber: 'REG001', accreditationId: 'acc-1' }
-  ],
-  accreditations: [
-    { id: 'acc-1', accreditationNumber: 'ACC001' },
-    { id: 'acc-9', accreditationNumber: 'ACC444' }
-  ],
-  submittedToRegulator: 'regulator-name',
+  status: { current: 'active' },
+  submittedToRegulator: { code: 'ea' },
   ...overrides
 })
 
@@ -61,7 +53,7 @@ describe('GET /organisations', () => {
     const calls = []
     mswServer.use(
       http.get(
-        `${config.get('eprBackendUrl')}/v1/organisations`,
+        `${config.get('eprBackendUrl')}/organisations`,
         ({ request }) => {
           const url = new URL(request.url)
           calls.push({ query: Object.fromEntries(url.searchParams) })
@@ -143,7 +135,7 @@ describe('GET /organisations', () => {
             autocomplete: 'off'
           },
           {
-            name: 'orgId',
+            name: 'organisationNumber',
             value: '',
             label: 'Organisation Id',
             autocomplete: 'off'
@@ -220,7 +212,9 @@ describe('GET /organisations', () => {
 
       test('renders the results count when a search term is present', async () => {
         stubBackendResponse(
-          HttpResponse.json(envelope([buildOrg(), buildOrg({ id: 'org-2' })]))
+          HttpResponse.json(
+            envelope([buildOrg(), buildOrg({ organisationNumber: '500101' })])
+          )
         )
 
         const { $ } = await loadPage(new URLSearchParams({ search: 'a' }))
@@ -262,7 +256,7 @@ describe('GET /organisations', () => {
 
     describe('search by identifier', () => {
       const criteriaFields = [
-        ['orgId', '100001'],
+        ['organisationNumber', '100001'],
         ['registrationNumber', 'REG001'],
         ['accreditationNumber', 'ACC001']
       ]
@@ -300,7 +294,7 @@ describe('GET /organisations', () => {
           new URLSearchParams({
             registrationNumber: 'REG001',
             accreditationNumber: 'ACC444',
-            orgId: '',
+            organisationNumber: '',
             search: '   '
           })
         )
@@ -346,7 +340,9 @@ describe('GET /organisations', () => {
       test('renders the results count for a criteria-only search', async () => {
         stubBackendResponse(HttpResponse.json(envelope([buildOrg()])))
 
-        const { raw } = await loadPage(new URLSearchParams({ orgId: '100001' }))
+        const { raw } = await loadPage(
+          new URLSearchParams({ organisationNumber: '100001' })
+        )
 
         expect(raw).toContain('1 result found')
       })
@@ -468,14 +464,14 @@ describe('GET /organisations', () => {
         const { $ } = await loadPage(
           new URLSearchParams({
             search: 'acme',
-            orgId: '100001',
+            organisationNumber: '100001',
             accreditationNumber: 'ACC001',
             page: '2'
           })
         )
 
         const expectedCriteria =
-          'search=acme&orgId=100001&accreditationNumber=ACC001'
+          'search=acme&organisationNumber=100001&accreditationNumber=ACC001'
         expect($('.govuk-pagination__prev a').attr('href')).toBe(
           `/organisations?${expectedCriteria}&page=1`
         )
@@ -492,10 +488,10 @@ describe('GET /organisations', () => {
         const { $ } = await loadPage()
 
         const rowData = $('table tbody tr td')
-        expect($(rowData[0]).text()).toEqual('org-1')
-        expect($(rowData[2]).text()).toEqual('REGULATOR-NAME')
+        expect($(rowData[0]).text()).toEqual('500100')
+        expect($(rowData[2]).text()).toEqual('EA')
         expect($(rowData[3]).find('strong.govuk-tag').text().trim()).toEqual(
-          'ACTIVE'
+          'active'
         )
       })
 
@@ -517,26 +513,20 @@ describe('GET /organisations', () => {
         ])
       })
 
-      test('lists each registration pair on its own line, orphan accreditations last', async () => {
-        stubBackendResponse(HttpResponse.json(envelope([buildOrg()])))
-
-        const { $ } = await loadPage()
-
-        // Rendered as <br>-separated lines so the cell reads one pair per line
-        const regAccCell = $('table tbody tr td').eq(1)
-        expect(regAccCell.html()).toEqual('REG001 - ACC001<br>None - ACC444')
-      })
-
-      test('renders None in place of a number that has not been issued yet', async () => {
+      test('lists each registration and accreditation year on its own line', async () => {
         stubBackendResponse(
           HttpResponse.json(
             envelope([
               buildOrg({
-                registrations: [
-                  { id: 'reg-1', registrationNumber: null },
-                  { id: 'reg-2', registrationNumber: 'REG002' }
-                ],
-                accreditations: []
+                registrations: {
+                  REG001: {
+                    accreditations: {
+                      2026: { accreditationNumber: 'ACC001' },
+                      2027: { accreditationNumber: 'ACC002' }
+                    }
+                  },
+                  REG002: { accreditations: {} }
+                }
               })
             ])
           )
@@ -544,15 +534,16 @@ describe('GET /organisations', () => {
 
         const { $ } = await loadPage()
 
+        // Rendered as <br>-separated lines so the cell reads one pair per line
         const regAccCell = $('table tbody tr td').eq(1)
-        expect(regAccCell.html()).toEqual('None - None<br>REG002 - None')
+        expect(regAccCell.html()).toEqual(
+          'REG001 - ACC001<br>REG001 - ACC002<br>REG002 - None'
+        )
       })
 
-      test('renders an empty cell when the organisation holds no registrations or accreditations', async () => {
+      test('renders an empty cell when the organisation holds no numbered registrations', async () => {
         stubBackendResponse(
-          HttpResponse.json(
-            envelope([buildOrg({ registrations: [], accreditations: [] })])
-          )
+          HttpResponse.json(envelope([buildOrg({ registrations: {} })]))
         )
 
         const { $ } = await loadPage()
@@ -560,9 +551,11 @@ describe('GET /organisations', () => {
         expect($('table tbody tr td').eq(1).html()).toEqual('')
       })
 
-      test('links the overview and system logs by organisation number and the edit and submission actions by id', async () => {
+      test('links every action by organisation number', async () => {
         stubBackendResponse(
-          HttpResponse.json(envelope([buildOrg({ orgId: 500123 })]))
+          HttpResponse.json(
+            envelope([buildOrg({ organisationNumber: '500123' })])
+          )
         )
 
         const { $ } = await loadPage()
@@ -572,24 +565,14 @@ describe('GET /organisations', () => {
         expect($(actionLinks[0]).attr('href')).toEqual(
           '/organisations/500123/overview'
         )
-        expect($(actionLinks[1]).attr('href')).toEqual('/organisations/org-1')
+        expect($(actionLinks[1]).attr('href')).toEqual(
+          '/organisations/500123/edit'
+        )
         expect($(actionLinks[2]).attr('href')).toEqual(
-          '/defra-forms-submission/org-1'
+          '/organisations/500123/submission-data'
         )
         expect($(actionLinks[3]).attr('href')).toEqual(
           '/system-logs?organisationNumber=500123'
-        )
-      })
-
-      test('links to the organisation system logs by organisation number', async () => {
-        stubBackendResponse(
-          HttpResponse.json(envelope([buildOrg({ orgId: 500001 })]))
-        )
-
-        const { $ } = await loadPage()
-
-        expect($('a:contains("View system logs")').attr('href')).toEqual(
-          '/system-logs?organisationNumber=500001'
         )
       })
     })
@@ -597,7 +580,7 @@ describe('GET /organisations', () => {
     describe('error handling', () => {
       test('shows the 500 error page when the backend returns a non-OK response', async () => {
         mswServer.use(
-          http.get(`${config.get('eprBackendUrl')}/v1/organisations`, () =>
+          http.get(`${config.get('eprBackendUrl')}/organisations`, () =>
             HttpResponse.text('', { status: 500 })
           )
         )

@@ -13,21 +13,13 @@ vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
 }))
 
 const buildOrg = (overrides = {}) => ({
-  id: 'org-1',
-  orgId: 'org-1',
-  status: 'ACTIVE',
-  statusHistory: [{ status: 'ACTIVE', updatedAt: '2025-10-01T00:00:00Z' }],
-  companyDetails: {
-    name: 'Acme Ltd'
+  name: 'Acme Ltd',
+  organisationNumber: '500100',
+  registrations: {
+    REG001: { accreditations: { 2026: { accreditationNumber: 'ACC001' } } }
   },
-  registrations: [
-    { id: 'reg-1', registrationNumber: 'REG001', accreditationId: 'acc-1' }
-  ],
-  accreditations: [
-    { id: 'acc-1', accreditationNumber: 'ACC001' },
-    { id: 'acc-9', accreditationNumber: 'ACC444' }
-  ],
-  submittedToRegulator: 'regulator-name',
+  status: { current: 'active' },
+  submittedToRegulator: { code: 'ea' },
   ...overrides
 })
 
@@ -61,7 +53,7 @@ describe('POST /organisations', () => {
     const calls = []
     mswServer.use(
       http.get(
-        `${config.get('eprBackendUrl')}/v1/organisations`,
+        `${config.get('eprBackendUrl')}/organisations`,
         ({ request }) => {
           const url = new URL(request.url)
           calls.push({ query: Object.fromEntries(url.searchParams) })
@@ -75,7 +67,7 @@ describe('POST /organisations', () => {
   const getCrumb = async () => {
     vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
     mswServer.use(
-      http.get(`${config.get('eprBackendUrl')}/v1/organisations`, () =>
+      http.get(`${config.get('eprBackendUrl')}/organisations`, () =>
         HttpResponse.json(envelope([]))
       )
     )
@@ -238,7 +230,7 @@ describe('POST /organisations', () => {
     describe('searching by identifier', () => {
       const allCriteria = {
         search: 'Acme',
-        orgId: '100001',
+        organisationNumber: '100001',
         registrationNumber: 'REG001',
         accreditationNumber: 'ACC001'
       }
@@ -275,13 +267,13 @@ describe('POST /organisations', () => {
 
         await submitSearch({
           search: '',
-          orgId: '  100001  ',
+          organisationNumber: '  100001  ',
           registrationNumber: '   ',
           accreditationNumber: ''
         })
 
         expect(calls[0].query).toEqual({
-          orgId: '100001',
+          organisationNumber: '100001',
           page: '1',
           pageSize: '50'
         })
