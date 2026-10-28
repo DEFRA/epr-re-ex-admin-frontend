@@ -1,14 +1,14 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
-import { organisationIdOf } from './organisation-id.js'
 import { toStatusTables } from './status-tables.js'
 
 export const organisationsGETController = {
   async handler(request, h) {
-    const id = await organisationIdOf(request)
+    // The backend reads an organisation by its id or its number
+    const key = request.params.id ?? request.params.organisationNumber
 
     const data = await fetchJsonFromBackend(
       request,
-      `/v1/organisations/${id}`,
+      `/v1/organisations/${encodeURIComponent(key)}`,
       {}
     )
 

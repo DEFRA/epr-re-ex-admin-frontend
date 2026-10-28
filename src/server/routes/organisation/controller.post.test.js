@@ -406,14 +406,8 @@ describe('organisation POST controller', () => {
 
     test('saves the organisation found by its number and reopens the editor at the number it was saved with', async () => {
       mswServer.use(
-        http.get(`${backendUrl}/v1/organisations`, () =>
-          HttpResponse.json({
-            items: [{ id: 'org-1' }],
-            page: 1,
-            pageSize: 1,
-            totalItems: 1,
-            totalPages: 1
-          })
+        http.get(`${backendUrl}/v1/organisations/500123`, () =>
+          HttpResponse.json({ id: 'org-1', companyDetails: { name: 'ACME' } })
         )
       )
       let saved = false
@@ -448,14 +442,8 @@ describe('organisation POST controller', () => {
 
     test('returns to the editor at the same number when a save by number fails', async () => {
       mswServer.use(
-        http.get(`${backendUrl}/v1/organisations`, () =>
-          HttpResponse.json({
-            items: [{ id: 'org-1' }],
-            page: 1,
-            pageSize: 1,
-            totalItems: 1,
-            totalPages: 1
-          })
+        http.get(`${backendUrl}/v1/organisations/500123`, () =>
+          HttpResponse.json({ id: 'org-1', companyDetails: { name: 'ACME' } })
         ),
         http.put(`${backendUrl}/v1/organisations/org-1`, () =>
           HttpResponse.json(

@@ -183,14 +183,8 @@ describe('GET /defra-forms-submission/{documentId}', () => {
 
     test('shows the submission data of the organisation found by its number', async () => {
       mswServer.use(
-        http.get(`${backendUrl}/v1/organisations`, () =>
-          HttpResponse.json({
-            items: [{ id: 'org-1' }],
-            page: 1,
-            pageSize: 1,
-            totalItems: 1,
-            totalPages: 1
-          })
+        http.get(`${backendUrl}/v1/organisations/500123`, () =>
+          HttpResponse.json({ id: 'org-1' })
         ),
         http.get(`${backendUrl}/v1/form-submissions/org-1`, () =>
           HttpResponse.json({

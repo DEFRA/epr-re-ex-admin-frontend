@@ -1,7 +1,5 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { errorCodes } from '#server/common/enums/error-codes.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
-import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 
 /**
  * @import { Boom } from '@hapi/boom'
@@ -49,8 +47,8 @@ export const findOrganisationById = (request, organisationId) =>
   )
 
 /**
- * The database id of the organisation with this number. The JSON editor and
- * the form submission data are still read by id.
+ * The database id of the organisation with this number, for the routes still
+ * keyed by id. An unknown number is the backend's 404.
  * @param {HapiRequest} request
  * @param {string} organisationNumber
  * @returns {Promise<string>}
@@ -59,25 +57,11 @@ export const findOrganisationIdByNumber = async (
   request,
   organisationNumber
 ) => {
-  const query = new URLSearchParams({
-    orgId: organisationNumber,
-    page: '1',
-    pageSize: '1'
-  })
-  const { items } = await fetchJsonFromBackend(
+  const { id } = await fetchJsonFromBackend(
     request,
-    `/v1/organisations?${query}`,
+    `/v1/organisations/${encodeURIComponent(organisationNumber)}`,
     {}
   )
 
-  if (items.length === 0) {
-    throw notFound('Organisation not found', errorCodes.organisationNotFound, {
-      event: {
-        action: 'find_organisation_id',
-        reason: `organisationNumber=${organisationNumber}`
-      }
-    })
-  }
-
-  return items[0].id
+  return id
 }
