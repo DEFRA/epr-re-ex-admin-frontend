@@ -112,6 +112,51 @@ describe('organisation GET controller', () => {
       expect(result).toContain('Sorry, there is a problem with the service')
     })
 
+    describe('by organisation number', () => {
+      test('opens the editor on the organisation read by its number', async () => {
+        mswServer.use(
+          http.get(`${backendUrl}/v1/organisations/500123`, () =>
+            HttpResponse.json({
+              id: 'org-1',
+              companyDetails: { name: 'ACME Ltd' },
+              registrations: [],
+              accreditations: []
+            })
+          )
+        )
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: '/organisations/500123',
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const $ = cheerio.load(result)
+        expect(statusCode).toBe(statusCodes.ok)
+        expect($('h1').text()).toContain('ACME Ltd')
+        expect($('input[name="organisationId"]').val()).toBe('org-1')
+      })
+
+      test('returns 404 when no organisation has the number', async () => {
+        mswServer.use(
+          http.get(`${backendUrl}/v1/organisations/999999`, () =>
+            HttpResponse.json(
+              { message: 'Organisation not found' },
+              { status: 404 }
+            )
+          )
+        )
+
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: '/organisations/999999',
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        expect(statusCode).toBe(statusCodes.notFound)
+      })
+    })
+
     describe('status changes', () => {
       const organisationWithRecords = {
         id: 'org-1',

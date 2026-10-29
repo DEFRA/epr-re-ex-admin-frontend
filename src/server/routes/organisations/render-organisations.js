@@ -36,10 +36,7 @@ export const renderOrganisations = async (request, h, criteria) => {
     }
   }
 
-  const data = await fetchJsonFromBackend(
-    request,
-    `/v1/organisations?${params}`
-  )
+  const data = await fetchJsonFromBackend(request, `/organisations?${params}`)
 
   const pageTitle = request.route.settings.app?.pageTitle
 

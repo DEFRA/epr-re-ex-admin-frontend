@@ -1,104 +1,65 @@
 /**
- * An accreditation embedded on an organisation. Its number stays null until the
- * accreditation is approved.
- * @typedef {{ id: string, accreditationNumber?: string | null }} Accreditation
- *
- * A registration embedded on an organisation. Its number stays null until the
- * registration is approved, and `accreditationId` is absent until an
- * accreditation is applied for.
+ * An organisation as the backend lists it. Only numbered registrations and
+ * accreditations are listed.
  * @typedef {{
- *   registrationNumber?: string | null,
- *   accreditationId?: string
- * }} Registration
- *
- * @typedef {{
- *   registrations?: Registration[],
- *   accreditations?: Accreditation[]
- * }} OrganisationRecords
+ *   name: string,
+ *   organisationNumber: string,
+ *   registrations: Record<string, {
+ *     accreditations: Record<string, { accreditationNumber: string }>
+ *   }>,
+ *   status: { current: string },
+ *   submittedToRegulator: { code: string }
+ * }} OrganisationListItem
  *
  * One line of the Reg/Acc Numbers column.
  * @typedef {{
- *   registrationNumber: string | null,
+ *   registrationNumber: string,
  *   accreditationNumber: string | null
  * }} RegAccPair
  */
 
 /**
- * Builds the Reg/Acc Numbers lines for an organisation: one pair per
- * registration, in registration order, each carrying the number of the
- * accreditation it references, followed by one pair per orphan accreditation —
- * an accreditation that no registration references — in accreditation order.
+ * Builds the Reg/Acc Numbers lines for an organisation: one per registration
+ * and accreditation year, oldest year first, or one with no accreditation
+ * number for a registration that has none.
  *
- * Orphans are found by `accreditationId` reference, not by number, so an
- * accreditation that is referenced but not yet approved appears only on its
- * registration's line.
- *
- * @param {OrganisationRecords} organisation
+ * @param {Pick<OrganisationListItem, 'registrations'>} organisation
  * @returns {RegAccPair[]}
  */
-export const toRegAccPairs = ({ registrations = [], accreditations = [] }) => {
-  // Keyed loosely so an unset accreditationId simply misses
-  /** @type {Map<string | undefined, Accreditation>} */
-  const accreditationsById = new Map(
-    accreditations.map((accreditation) => [accreditation.id, accreditation])
-  )
-  const referencedAccreditationIds = new Set(
-    registrations.map(({ accreditationId }) => accreditationId)
-  )
+export const toRegAccPairs = ({ registrations }) =>
+  Object.entries(registrations).flatMap(
+    /** @returns {RegAccPair[]} */
+    ([registrationNumber, { accreditations }]) => {
+      const years = Object.keys(accreditations).sort((a, b) =>
+        a.localeCompare(b)
+      )
 
-  const registrationPairs = registrations.map(
-    ({ registrationNumber, accreditationId }) => ({
-      registrationNumber: registrationNumber ?? null,
-      accreditationNumber:
-        accreditationsById.get(accreditationId)?.accreditationNumber ?? null
-    })
+      return years.length === 0
+        ? [{ registrationNumber, accreditationNumber: null }]
+        : years.map((year) => ({
+            registrationNumber,
+            accreditationNumber: accreditations[year].accreditationNumber
+          }))
+    }
   )
-
-  const orphanPairs = accreditations
-    .filter(({ id }) => !referencedAccreditationIds.has(id))
-    .map(({ accreditationNumber }) => ({
-      registrationNumber: null,
-      accreditationNumber: accreditationNumber ?? null
-    }))
-
-  return [...registrationPairs, ...orphanPairs]
-}
 
 /**
- * Projects a backend organisation document onto the fields the organisations
- * table renders.
+ * Projects a listed organisation onto the fields the organisations table
+ * renders.
  *
- * @param {OrganisationRecords & {
- *   id: string,
- *   orgId: string,
- *   companyDetails: { name: string },
- *   status: string,
- *   submittedToRegulator: string
- * }} organisation
+ * @param {OrganisationListItem} organisation
  * @returns {{
- *   id: string,
- *   orgId: string,
+ *   organisationNumber: string,
  *   name: string,
  *   regAccPairs: RegAccPair[],
  *   status: string,
  *   regulator: string
  * }}
  */
-export const toSlimOrganisation = (organisation) => {
-  const {
-    id,
-    orgId,
-    companyDetails: { name },
-    status,
-    submittedToRegulator
-  } = organisation
-
-  return {
-    id,
-    orgId,
-    name,
-    regAccPairs: toRegAccPairs(organisation),
-    status,
-    regulator: submittedToRegulator
-  }
-}
+export const toSlimOrganisation = (organisation) => ({
+  organisationNumber: organisation.organisationNumber,
+  name: organisation.name,
+  regAccPairs: toRegAccPairs(organisation),
+  status: organisation.status.current,
+  regulator: organisation.submittedToRegulator.code
+})

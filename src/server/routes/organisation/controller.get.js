@@ -3,11 +3,11 @@ import { toStatusTables } from './status-tables.js'
 
 export const organisationsGETController = {
   async handler(request, h) {
-    const id = request.params.id
-
+    // The address names the organisation by its id or its number, as the
+    // backend does
     const data = await fetchJsonFromBackend(
       request,
-      `/v1/organisations/${id}`,
+      `/v1/organisations/${encodeURIComponent(request.params.id)}`,
       {}
     )
 
@@ -28,6 +28,7 @@ export const organisationsGETController = {
     const viewContext = {
       pageTitle,
       heading: data.companyDetails.name,
+      organisationId: data.id,
       organisationJson: JSON.stringify(data),
       statusChangeError,
       ...toStatusTables(data)

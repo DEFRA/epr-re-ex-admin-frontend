@@ -37,10 +37,10 @@
                 text: "Organisation Id",
                 classes: "govuk-label--s"
               },
-              id: "orgId",
-              name: "orgId",
+              id: "organisationNumber",
+              name: "organisationNumber",
               type: "search",
-              value: criteria.orgId,
+              value: criteria.organisationNumber,
               autocomplete: "off",
               classes: "govuk-input--width-20"
             }) }}
@@ -103,12 +103,12 @@
 
           {% set tableRows = [] %}
           {% for org in organisations %}
-            {% set orgId = org.orgId %}
+            {% set organisationNumber = org.organisationNumber | urlencode %}
 
             {# build cells as objects expected by govukTable #}
             {% set nameCell = { text: org.name } %}
-            {% set orgIdCell = { text: orgId } %}
-            {# One line per registration, then one per accreditation no registration references #}
+            {% set orgIdCell = { text: org.organisationNumber } %}
+            {# One line per registration and accreditation year #}
             {% set regAccHtml = '' %}
             {% for pair in org.regAccPairs %}
               {% set separator = '' if loop.first else '<br>' %}
@@ -120,10 +120,10 @@
             {% set statusCell = { html: govukTag({
               text: org.status
             }) } %}
-            {% set actionsHtml = '<a class="govuk-link govuk-link--no-visited-state" href="/organisations/' ~ (org.orgId | string | urlencode) ~ '/overview">View</a>' %}
-            {% set actionsHtml = actionsHtml ~ '<br><a class="govuk-link govuk-link--no-visited-state" href="/organisations/' ~ org.id ~ '">Edit</a>' %}
-            {% set actionsHtml = actionsHtml ~ '<br><a class="govuk-link govuk-link--no-visited-state" href="/defra-forms-submission/' ~ org.id ~ '">View submission data</a>' %}
-            {% set actionsHtml = actionsHtml ~ '<br><a class="govuk-link govuk-link--no-visited-state" href="/system-logs?organisationNumber=' ~ org.orgId ~ '">View system logs</a>' %}
+            {% set actionsHtml = '<a class="govuk-link govuk-link--no-visited-state" href="/organisations/' ~ organisationNumber ~ '/overview">View</a>' %}
+            {% set actionsHtml = actionsHtml ~ '<br><a class="govuk-link govuk-link--no-visited-state" href="/organisations/' ~ organisationNumber ~ '">Edit</a>' %}
+            {% set actionsHtml = actionsHtml ~ '<br><a class="govuk-link govuk-link--no-visited-state" href="/defra-forms-submission/' ~ organisationNumber ~ '">View submission data</a>' %}
+            {% set actionsHtml = actionsHtml ~ '<br><a class="govuk-link govuk-link--no-visited-state" href="/system-logs?organisationNumber=' ~ organisationNumber ~ '">View system logs</a>' %}
             {% set actionsHtml = actionsHtml ~ '<br><a class="govuk-link govuk-link--no-visited-state" href="/linked-organisations?search=' ~ (org.name | urlencode) ~ '">View linked organisations</a>' %}
             {% set actionCell = { html:  actionsHtml } %}
 

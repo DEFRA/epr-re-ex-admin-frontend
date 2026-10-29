@@ -2,7 +2,7 @@ import { buildPaginationLinks } from './pagination.js'
 
 const noCriteria = {
   search: '',
-  orgId: '',
+  organisationNumber: '',
   registrationNumber: '',
   accreditationNumber: ''
 }
@@ -106,14 +106,14 @@ describe('buildPaginationLinks', () => {
         totalPages: 3,
         criteria: {
           search: 'acme',
-          orgId: '100001',
+          organisationNumber: '100001',
           registrationNumber: 'REG001',
           accreditationNumber: 'ACC001'
         }
       })
 
       const expectedCriteria =
-        'search=acme&orgId=100001&registrationNumber=REG001' +
+        'search=acme&organisationNumber=100001&registrationNumber=REG001' +
         '&accreditationNumber=ACC001'
       expect(result).toEqual({
         previous: { href: `/organisations?${expectedCriteria}&page=1` },
@@ -127,14 +127,14 @@ describe('buildPaginationLinks', () => {
         totalPages: 2,
         criteria: {
           ...noCriteria,
-          orgId: '100001',
+          organisationNumber: '100001',
           registrationNumber: 'REG001'
         }
       })
 
       expect(result).toEqual({
         next: {
-          href: '/organisations?orgId=100001&registrationNumber=REG001&page=2'
+          href: '/organisations?organisationNumber=100001&registrationNumber=REG001&page=2'
         }
       })
     })

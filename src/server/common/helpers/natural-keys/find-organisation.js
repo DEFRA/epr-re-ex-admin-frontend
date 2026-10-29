@@ -45,3 +45,23 @@ export const findOrganisationById = (request, organisationId) =>
   nullWhenRefused(
     fetchJsonFromBackend(request, `/v1/organisations/${organisationId}`, {})
   )
+
+/**
+ * The database id of the organisation with this number, for the routes still
+ * keyed by id. An unknown number is the backend's 404.
+ * @param {HapiRequest} request
+ * @param {string} organisationNumber
+ * @returns {Promise<string>}
+ */
+export const findOrganisationIdByNumber = async (
+  request,
+  organisationNumber
+) => {
+  const { id } = await fetchJsonFromBackend(
+    request,
+    `/v1/organisations/${encodeURIComponent(organisationNumber)}`,
+    {}
+  )
+
+  return id
+}

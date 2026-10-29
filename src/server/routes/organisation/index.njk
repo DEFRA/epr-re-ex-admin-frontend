@@ -74,6 +74,7 @@
       {% if SCOPES.adminWrite in scopes %}
         <form id="jsoneditor-form" method="POST">
           <input type="hidden" name="crumb" value="{{ crumb }}" />
+          <input type="hidden" name="organisationId" value="{{ organisationId }}" />
           {% if message === "success" %}
             {% set html %}
               <p id="organisation-success-message" class="govuk-body">Organisation record updated</p>

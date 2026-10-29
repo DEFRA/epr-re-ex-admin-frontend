@@ -44,6 +44,13 @@ const KEYED_PARAMS = {
 const ID = /^[0-9a-f]{24}$/
 
 /**
+ * Whether a path value is a database id rather than a natural key.
+ * @param {string} value
+ * @returns {boolean}
+ */
+export const isDatabaseId = (value) => ID.test(value)
+
+/**
  * The key form a route addresses its records by, or `null` when it names none
  * or mixes the two.
  * @param {string} routePath - `request.route.path`
@@ -78,7 +85,7 @@ export const routeKeyForm = (routePath) => {
  * @param {string} value
  * @returns {KeyForm}
  */
-const keyFormOf = (value) => (ID.test(value) ? 'ids' : 'naturalKeys')
+const keyFormOf = (value) => (isDatabaseId(value) ? 'ids' : 'naturalKeys')
 
 /**
  * The key form of a URL's values, or `null` when they mix the two.
