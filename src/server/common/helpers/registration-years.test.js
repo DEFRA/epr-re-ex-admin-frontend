@@ -1,6 +1,7 @@
 import {
   isAccredited,
   registeredYears,
+  registrationYears,
   utcToday,
   yearKind
 } from './registration-years.js'
@@ -99,4 +100,60 @@ describe('#yearKind', () => {
   ])('gives %s as %s', (year, kind) => {
     expect(yearKind(accreditedIn2026, year, today)).toBe(kind)
   })
+})
+
+describe('#registrationYears', () => {
+  const today = '2026-10-29'
+  /**
+   * @param {string} accreditationNumber
+   * @param {string} current
+   */
+  const accreditation = (accreditationNumber, current) => ({
+    accreditationNumber,
+    status: { current, timeline: [] }
+  })
+
+  test('lists registered and accredited years newest first', () => {
+    expect(
+      registrationYears(
+        registration('approved', [], {
+          2026: accreditation('ACC-26', 'suspended'),
+          2027: accreditation('ACC-27', 'approved')
+        }),
+        today
+      )
+    ).toEqual([
+      {
+        year: '2027',
+        registrationStatus: 'approved',
+        accreditation: { accreditationNumber: 'ACC-27', status: 'approved' }
+      },
+      {
+        year: '2026',
+        registrationStatus: 'approved',
+        accreditation: { accreditationNumber: 'ACC-26', status: 'suspended' }
+      },
+      { year: '2025', registrationStatus: 'approved', accreditation: null },
+      { year: '2024', registrationStatus: 'approved', accreditation: null }
+    ])
+  })
+
+  test.each(['created', 'rejected', 'cancelled'])(
+    'leaves out a %s accreditation',
+    (status) => {
+      expect(
+        registrationYears(
+          registration('approved', [], {
+            2025: accreditation('ACC-25', status),
+            2027: accreditation('ACC-27', status)
+          }),
+          today
+        ).map(({ year, accreditation }) => [year, accreditation])
+      ).toEqual([
+        ['2026', null],
+        ['2025', null],
+        ['2024', null]
+      ])
+    }
+  )
 })

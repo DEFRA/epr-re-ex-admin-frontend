@@ -33,6 +33,7 @@ export const registeredYears = ({ validFrom, status }, today) => {
 }
 
 /**
+/**
  * Whether the registration's accreditation for `year` is approved or
  * suspended.
  * @param {RegistrationView} registration
@@ -62,4 +63,41 @@ export const yearKind = (registration, year, today) => {
   return registeredYears(registration, today).includes(Number(year))
     ? 'registered-only'
     : null
+}
+
+/**
+ * One row per registered or accredited year, newest first. An accredited year
+ * after the registered years, such as next year's accreditation approved
+ * early, gets a row too.
+ * @param {RegistrationView} registration
+ * @param {string} today - YYYY-MM-DD
+ * @returns {{
+ *   year: string,
+ *   registrationStatus: string,
+ *   accreditation: { accreditationNumber: string, status: string } | null
+ * }[]}
+ */
+export const registrationYears = (registration, today) => {
+  const years = new Set([
+    ...registeredYears(registration, today),
+    ...Object.keys(registration.accreditations)
+      .map(Number)
+      .filter((year) => isAccredited(registration, year))
+  ])
+
+  return [...years]
+    .sort((a, b) => b - a)
+    .map((year) => {
+      const accreditation = isAccredited(registration, year)
+        ? registration.accreditations[year]
+        : null
+      return {
+        year: String(year),
+        registrationStatus: registration.status.current,
+        accreditation: accreditation && {
+          accreditationNumber: accreditation.accreditationNumber,
+          status: accreditation.status.current
+        }
+      }
+    })
 }
