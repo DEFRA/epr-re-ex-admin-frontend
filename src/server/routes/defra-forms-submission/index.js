@@ -1,4 +1,6 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { findOrganisationIdByNumber } from '#server/common/helpers/natural-keys/find-organisation.js'
+import { isDatabaseId } from '#server/common/helpers/natural-keys/key-form.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 
 export const defraFormsSubmission = {
@@ -13,28 +15,35 @@ export const defraFormsSubmission = {
             app: { pageTitle: 'Defra Forms submission data' }
           },
           async handler(request, h) {
-            const documentId = request.params.documentId
+            // Submissions are stored by the organisation's id, so a number is
+            // looked up first
+            const { documentId } = request.params
+            const id = isDatabaseId(documentId)
+              ? documentId
+              : await findOrganisationIdByNumber(request, documentId)
 
-            const data = await loadData(request, documentId)
-
-            const organisation = data.organisation
-              ? asPayloadAndSchema(data.organisation)
-              : undefined
-
-            return h.view('routes/defra-forms-submission/index', {
-              pageTitle: request.route.settings.app.pageTitle,
-              heading: `ID: ${documentId}`,
-              organisation,
-              registrations: (data.registrations || []).map(asPayloadAndSchema),
-              accreditations: (data.accreditations || []).map(
-                asPayloadAndSchema
-              )
-            })
+            return renderSubmission(request, h, id)
           }
         }
       ])
     }
   }
+}
+
+async function renderSubmission(request, h, documentId) {
+  const data = await loadData(request, documentId)
+
+  const organisation = data.organisation
+    ? asPayloadAndSchema(data.organisation)
+    : undefined
+
+  return h.view('routes/defra-forms-submission/index', {
+    pageTitle: request.route.settings.app.pageTitle,
+    heading: `ID: ${documentId}`,
+    organisation,
+    registrations: (data.registrations || []).map(asPayloadAndSchema),
+    accreditations: (data.accreditations || []).map(asPayloadAndSchema)
+  })
 }
 
 async function loadData(request, documentId) {

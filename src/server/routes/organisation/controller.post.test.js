@@ -62,7 +62,7 @@ describe('organisation POST controller', () => {
     })
 
     test('Should successfully update organisation and redirect with success message in session', async () => {
-      const orgId = 'org-1'
+      const orgId = '6507f1f77bcf86cd79943901'
       const mockUpdatedOrganisation = {
         id: orgId,
         version: 2,
@@ -101,6 +101,7 @@ describe('organisation POST controller', () => {
         headers: { cookie },
         payload: {
           organisation: JSON.stringify(postData),
+          organisationId: orgId,
           crumb
         },
         auth: {
@@ -150,6 +151,7 @@ describe('organisation POST controller', () => {
         headers: { cookie },
         payload: {
           organisation: JSON.stringify(postData),
+          organisationId: orgId,
           crumb
         },
         auth: {
@@ -199,6 +201,7 @@ describe('organisation POST controller', () => {
         headers: { cookie },
         payload: {
           organisation: JSON.stringify(postData),
+          organisationId: orgId,
           crumb
         },
         auth: {
@@ -246,6 +249,7 @@ describe('organisation POST controller', () => {
         headers: { cookie },
         payload: {
           organisation: JSON.stringify(postData),
+          organisationId: orgId,
           crumb
         },
         auth: {
@@ -294,6 +298,7 @@ describe('organisation POST controller', () => {
         headers: { cookie },
         payload: {
           organisation: JSON.stringify(postData),
+          organisationId: orgId,
           crumb
         },
         auth: {
@@ -339,6 +344,7 @@ describe('organisation POST controller', () => {
         headers: { cookie },
         payload: {
           organisation: JSON.stringify(postData),
+          organisationId: orgId,
           crumb
         },
         auth: {
@@ -351,8 +357,8 @@ describe('organisation POST controller', () => {
       expect(headers.location).toBe(`/organisations/${orgId}`)
     })
 
-    test('Should use correct organisation ID from route params', async () => {
-      const orgId = 'specific-org-id-456'
+    test('saves to the organisation id the page carries and stays at its id address', async () => {
+      const orgId = '6507f1f77bcf86cd79943456'
       const mockUpdatedOrganisation = {
         id: orgId,
         version: 2,
@@ -391,6 +397,7 @@ describe('organisation POST controller', () => {
         headers: { cookie },
         payload: {
           organisation: JSON.stringify(postData),
+          organisationId: orgId,
           crumb
         },
         auth: {
@@ -402,6 +409,70 @@ describe('organisation POST controller', () => {
       // Should redirect to correct URL (302 Found)
       expect(statusCode).toBe(302)
       expect(headers.location).toBe(`/organisations/${orgId}`)
+    })
+
+    test('saves by the id the page was read with and reopens the editor at the number it was saved with', async () => {
+      let saved = false
+      mswServer.use(
+        http.put(`${backendUrl}/v1/organisations/org-1`, () => {
+          saved = true
+          return HttpResponse.json({ id: 'org-1', version: 2 })
+        })
+      )
+
+      const { cookie, crumb } = await getCsrfToken(
+        server,
+        '/organisations/500123',
+        { strategy: 'session', credentials: mockUserSession }
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: '/organisations/500123',
+        headers: { cookie },
+        payload: {
+          organisation: JSON.stringify({ version: 1, orgId: 600123 }),
+          organisationId: 'org-1',
+          crumb
+        },
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      expect(statusCode).toBe(302)
+      expect(headers.location).toBe('/organisations/600123')
+      expect(saved).toBe(true)
+    })
+
+    test('returns to the editor at the same number when a save by number fails', async () => {
+      mswServer.use(
+        http.put(`${backendUrl}/v1/organisations/org-1`, () =>
+          HttpResponse.json(
+            { message: 'orgId must be a number' },
+            { status: 422 }
+          )
+        )
+      )
+
+      const { cookie, crumb } = await getCsrfToken(
+        server,
+        '/organisations/500123',
+        { strategy: 'session', credentials: mockUserSession }
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: '/organisations/500123',
+        headers: { cookie },
+        payload: {
+          organisation: JSON.stringify({ version: 1, orgId: 'x' }),
+          organisationId: 'org-1',
+          crumb
+        },
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      expect(statusCode).toBe(302)
+      expect(headers.location).toBe('/organisations/500123')
     })
 
     test('Should reject POST request without CSRF token', async () => {
