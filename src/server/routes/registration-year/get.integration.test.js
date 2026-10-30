@@ -315,27 +315,6 @@ describe('#registrationYearController', () => {
         expect(requested.wasteBalanceYears).toEqual([])
       })
 
-      test("Should show the registration's current status", async () => {
-        useMockBackend({
-          ...reprocessor,
-          status: {
-            current: 'cancelled',
-            timeline: [
-              { at: '2024-01-01T00:00:00.000Z', status: 'approved' },
-              { at: '2025-03-01T00:00:00.000Z', status: 'cancelled' }
-            ]
-          },
-          accreditations: {}
-        })
-
-        const { result } = await get(registeredOnlyUrl(2024))
-        const body = renderPage(result)
-
-        expect(getSummaryRowValue(body, 'Status')).toHaveTextContent(
-          'cancelled'
-        )
-      })
-
       test('Should return not found for a year after the registration was cancelled', async () => {
         useMockBackend({
           ...reprocessor,
@@ -380,6 +359,28 @@ describe('#registrationYearController', () => {
 
         expect(statusCode).toBe(statusCodes.notFound)
       })
+    })
+
+    test.each([
+      ['2025', `${registrationUrl}/accreditations/2025`],
+      ['2024', `${registrationUrl}/registered-only/2024`]
+    ])('Should send year %s on to its page', async (year, location) => {
+      useMockBackend()
+
+      const { statusCode, headers } = await get(
+        `${registrationUrl}/years/${year}`
+      )
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe(location)
+    })
+
+    test('Should return not found for a year the registration was not approved in', async () => {
+      useMockBackend()
+
+      const { statusCode } = await get(`${registrationUrl}/years/2023`)
+
+      expect(statusCode).toBe(statusCodes.notFound)
     })
 
     test.each([

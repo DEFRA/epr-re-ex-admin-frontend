@@ -8,5 +8,6 @@ export const errorCodes = {
   registrationNotFound: 'registration_not_found',
   accreditationNotFound: 'accreditation_not_found',
   registeredOnlyYearNotFound: 'registered_only_year_not_found',
+  registrationYearNotFound: 'registration_year_not_found',
   recordKeyUnresolved: 'record_key_unresolved'
 }

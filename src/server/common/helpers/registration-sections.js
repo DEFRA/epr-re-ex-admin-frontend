@@ -13,7 +13,8 @@ import {
   reportSubmissionUrl,
   reportUnsubmitUrl,
   summaryLogUrl,
-  wasteBalanceEventsUrl
+  wasteBalanceEventsUrl,
+  wasteRecordsDownloadUrl
 } from '#server/common/helpers/page-urls.js'
 import {
   periodStatus,
@@ -142,16 +143,15 @@ export const fetchWasteBalance = async (request, accreditationKeys) => {
 }
 
 /**
- * The registration's summary logs, or only those for `year` when given.
+ * The registration's summary logs for `year`.
  * @param {HapiRequest} request
  * @param {RegistrationKeys} registrationKeys
- * @param {string} [year]
+ * @param {string} year
  */
 export const fetchSummaryLogRows = async (request, registrationKeys, year) => {
-  const query = year ? `?year=${encodeURIComponent(year)}` : ''
   const { summaryLogs } = await fetchJsonFromBackend(
     request,
-    `${registrationPath(registrationKeys)}/summary-logs${query}`,
+    `${registrationPath(registrationKeys)}/summary-logs?year=${encodeURIComponent(year)}`,
     {}
   )
   return summaryLogs.map(toSummaryLogRow(registrationKeys))
@@ -203,7 +203,7 @@ export const toRegistrationLinks = (
   accreditationKeys
 ) => ({
   isExporter: registration.wasteProcessingType === 'exporter',
-  wasteRecordsDownloadUrl: `${registrationPath(registrationKeys)}/waste-records/download`,
+  wasteRecordsDownloadUrl: wasteRecordsDownloadUrl(registrationKeys),
   ...(accreditationKeys && {
     wasteBalanceEventsUrl: wasteBalanceEventsUrl(accreditationKeys),
     overseasSitesUrl: overseasSitesUrl(accreditationKeys),
