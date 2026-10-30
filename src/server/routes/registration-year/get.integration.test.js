@@ -60,17 +60,11 @@ describe('#registrationYearController', () => {
     accreditations: {
       2025: {
         accreditationNumber: 'ACC-2025',
-        status: {
-          current: 'suspended',
-          timeline: [{ at: '2025-01-01T00:00:00.000Z', status: 'suspended' }]
-        }
+        status: { current: 'suspended' }
       },
       2026: {
         accreditationNumber: 'ACC-2026',
-        status: {
-          current: 'approved',
-          timeline: [{ at: '2026-01-01T00:00:00.000Z', status: 'approved' }]
-        }
+        status: { current: 'approved' }
       }
     }
   }
@@ -293,34 +287,6 @@ describe('#registrationYearController', () => {
         )
       })
 
-      test("Should leave out other years' summary logs when the backend returns them", async () => {
-        useMockBackend()
-        mswServer.use(
-          http.get(
-            `${backendUrl}/organisations/:o/registrations/:r/summary-logs`,
-            () =>
-              HttpResponse.json({
-                summaryLogs: [
-                  summaryLog,
-                  {
-                    ...summaryLog,
-                    summaryLogId: 'sl-2024',
-                    uploadedAt: '2024-06-01T09:00:00.000Z',
-                    year: 2024,
-                    accreditationNumber: null
-                  }
-                ]
-              })
-          )
-        )
-
-        const { result } = await get(accreditedUrl(2025))
-        const rows = getDataRows(renderPage(result), 'Summary logs')
-
-        expect(rows).toHaveLength(1)
-        expect(rows[0]).toHaveTextContent('2025-12-01T11:00:00.000Z')
-      })
-
       test('Should return not found for a year without an accreditation', async () => {
         useMockBackend()
 
@@ -415,44 +381,6 @@ describe('#registrationYearController', () => {
         expect(statusCode).toBe(statusCodes.notFound)
       })
     })
-
-    describe.each(['created', 'rejected'])(
-      'A year whose accreditation is %s',
-      (status) => {
-        const neverHeld = {
-          ...reprocessor,
-          accreditations: {
-            2024: {
-              accreditationNumber: 'ACC-2024',
-              status: {
-                current: status,
-                timeline: [{ at: '2024-01-01T00:00:00.000Z', status }]
-              }
-            }
-          }
-        }
-
-        test('Should render as registered only', async () => {
-          useMockBackend(neverHeld)
-
-          const { statusCode, result } = await get(registeredOnlyUrl(2024))
-          const body = renderPage(result)
-
-          expect(statusCode).toBe(statusCodes.ok)
-          expect(getByRole(body, 'heading', { level: 1 })).toHaveTextContent(
-            'ACME ltd - REG-50030-001 - 2024 registered only'
-          )
-        })
-
-        test('Should return not found as an accredited year', async () => {
-          useMockBackend(neverHeld)
-
-          const { statusCode } = await get(accreditedUrl(2024))
-
-          expect(statusCode).toBe(statusCodes.notFound)
-        })
-      }
-    )
 
     test.each([
       ['accredited', accreditedUrl('20x5')],

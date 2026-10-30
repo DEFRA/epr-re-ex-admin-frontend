@@ -17,23 +17,17 @@ const HELD_ACCREDITATION_STATUSES = new Set(['approved', 'suspended'])
 export const utcToday = () => new Date().toISOString().slice(0, 10)
 
 /**
- * The years from the registration's `validFrom` to this year while it is
- * approved, or to the year it was cancelled, oldest first. A registration
- * never approved has none.
+ * The years from the registration's `validFrom` to this year, or to the year
+ * it was cancelled, oldest first.
  * @param {RegistrationView} registration
  * @param {string} today - YYYY-MM-DD
  * @returns {number[]}
  */
 export const registeredYears = ({ validFrom, status }, today) => {
-  const end = {
-    approved: today,
-    cancelled: status.timeline.at(-1)?.at ?? today
-  }[status.current]
-
-  if (end === undefined) {
-    return []
-  }
-
+  const end =
+    status.current === 'cancelled'
+      ? (status.timeline.at(-1)?.at ?? today)
+      : today
   const from = yearOf(validFrom)
   return Array.from({ length: yearOf(end) - from + 1 }, (_, i) => from + i)
 }

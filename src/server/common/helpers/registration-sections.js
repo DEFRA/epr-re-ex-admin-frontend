@@ -154,10 +154,7 @@ export const fetchSummaryLogRows = async (request, registrationKeys, year) => {
     `${registrationPath(registrationKeys)}/summary-logs${query}`,
     {}
   )
-  // A backend without the year filter ignores ?year and returns every year.
-  return summaryLogs
-    .filter((summaryLog) => !year || String(summaryLog.year) === String(year))
-    .map(toSummaryLogRow(registrationKeys))
+  return summaryLogs.map(toSummaryLogRow(registrationKeys))
 }
 
 /**

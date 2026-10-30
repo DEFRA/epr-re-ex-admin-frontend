@@ -12,7 +12,7 @@ import { isAccredited } from '#server/common/helpers/registration-years.js'
  *
  * @typedef {{
  *   accreditationNumber: string,
- *   status: { current: string, timeline: StatusTimeline }
+ *   status: { current: string }
  * }} AccreditationView
  *
  * @typedef {{

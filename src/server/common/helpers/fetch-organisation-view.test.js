@@ -41,10 +41,7 @@ const reprocessor = {
   accreditations: {
     2026: {
       accreditationNumber: 'A26ER5001180114PL',
-      status: {
-        current: 'approved',
-        timeline: [{ at: '2026-01-01T00:00:00.000Z', status: 'approved' }]
-      }
+      status: { current: 'approved' }
     }
   }
 }
@@ -112,11 +109,11 @@ describe(latestAccreditation, () => {
         accreditations: {
           2027: {
             accreditationNumber: 'A27ER5001180114PL',
-            status: { current: 'suspended', timeline: [] }
+            status: { current: 'suspended' }
           },
           2026: {
             accreditationNumber: 'A26ER5001180114PL',
-            status: { current: 'approved', timeline: [] }
+            status: { current: 'approved' }
           }
         }
       })
@@ -153,7 +150,7 @@ describe(accreditationFor, () => {
           accreditations: {
             2025: {
               accreditationNumber: 'A25ER5001180114PL',
-              status: { current: 'rejected', timeline: [] }
+              status: { current: 'cancelled' }
             }
           }
         },
