@@ -1,5 +1,6 @@
 import { vi } from 'vitest'
 import {
+  accreditationFor,
   fetchOrganisationView,
   latestAccreditation,
   processingTypeOf,
@@ -21,7 +22,8 @@ const mockRequest = /** @type {Request} */ ({})
 /** @type {RegistrationView} */
 const exporter = {
   material: 'paper',
-  status: { current: 'approved' },
+  validFrom: '2026-01-01',
+  status: { current: 'approved', timeline: [] },
   wasteProcessingType: 'exporter',
   accreditations: {}
 }
@@ -29,7 +31,8 @@ const exporter = {
 /** @type {RegistrationView} */
 const reprocessor = {
   material: 'plastic',
-  status: { current: 'cancelled' },
+  validFrom: '2026-01-01',
+  status: { current: 'cancelled', timeline: [] },
   wasteProcessingType: 'reprocessor',
   reprocessingType: 'input',
   site: {
@@ -123,6 +126,37 @@ describe(latestAccreditation, () => {
 
   it('is null when the registration has no accreditations', () => {
     expect(latestAccreditation(exporter)).toBeNull()
+  })
+})
+
+describe(accreditationFor, () => {
+  test("returns the year's accreditation with its current status", () => {
+    expect(accreditationFor(reprocessor, '2026')).toEqual({
+      year: '2026',
+      accreditationNumber: 'A26ER5001180114PL',
+      status: 'approved'
+    })
+  })
+
+  test('returns null for a year without one', () => {
+    expect(accreditationFor(reprocessor, '2025')).toBeNull()
+  })
+
+  test('returns null for an accreditation not approved or suspended', () => {
+    expect(
+      accreditationFor(
+        {
+          ...reprocessor,
+          accreditations: {
+            2025: {
+              accreditationNumber: 'A25ER5001180114PL',
+              status: { current: 'cancelled' }
+            }
+          }
+        },
+        '2025'
+      )
+    ).toBeNull()
   })
 })
 
