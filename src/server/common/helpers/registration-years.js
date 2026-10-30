@@ -73,7 +73,6 @@ export const yearKind = (registration, year, today) => {
  * @param {string} today - YYYY-MM-DD
  * @returns {{
  *   year: string,
- *   registrationStatus: string,
  *   accreditation: { accreditationNumber: string, status: string } | null
  * }[]}
  */
@@ -93,7 +92,6 @@ export const registrationYears = (registration, today) => {
         : null
       return {
         year: String(year),
-        registrationStatus: registration.status.current,
         accreditation: accreditation && {
           accreditationNumber: accreditation.accreditationNumber,
           status: accreditation.status.current
