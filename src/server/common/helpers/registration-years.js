@@ -42,3 +42,24 @@ export const registeredYears = ({ validFrom, status }, today) => {
 export const isAccredited = ({ accreditations }, year) =>
   Object.hasOwn(accreditations, year) &&
   HELD_ACCREDITATION_STATUSES.has(accreditations[year].status.current)
+
+/**
+ * @typedef {'accredited' | 'registered-only'} YearKind
+ */
+
+/**
+ * Whether `year` is one of the registration's accredited or registered-only
+ * years, or `null` when it is neither.
+ * @param {RegistrationView} registration
+ * @param {string} year
+ * @param {string} today - YYYY-MM-DD
+ * @returns {YearKind | null}
+ */
+export const yearKind = (registration, year, today) => {
+  if (isAccredited(registration, year)) {
+    return 'accredited'
+  }
+  return registeredYears(registration, today).includes(Number(year))
+    ? 'registered-only'
+    : null
+}

@@ -16,75 +16,60 @@ import {
   toReportRows
 } from '#server/common/helpers/registration-sections.js'
 import {
-  registeredYears,
-  utcToday
+  utcToday,
+  yearKind
 } from '#server/common/helpers/registration-years.js'
 
 /**
- * @import { LatestAccreditation, OrganisationView, RegistrationView } from '#server/common/helpers/fetch-organisation-view.js'
+ * @import { OrganisationView, RegistrationView } from '#server/common/helpers/fetch-organisation-view.js'
  * @import { AccreditationKeys } from '#server/common/helpers/natural-keys/swap-keys.js'
+ * @import { YearKind } from '#server/common/helpers/registration-years.js'
  */
 
-/**
- * The year's accreditation, throwing a 404 when the year is not accredited.
- * @param {OrganisationView} organisation
- * @param {RegistrationView} registration
- * @param {AccreditationKeys} keys
- * @returns {LatestAccreditation}
- */
-const accreditedYear = (organisation, registration, keys) => {
-  const accreditation = accreditationFor(registration, keys.year)
-
-  if (!accreditation) {
-    throw notFound(
+/** @type {Record<YearKind, { label: string, notFound: [string, string, string] }>} */
+const YEAR_KINDS = {
+  accredited: {
+    label: 'accredited',
+    notFound: [
       'Accreditation not found',
       errorCodes.accreditationNotFound,
-      {
-        event: {
-          action: 'fetch_accreditation',
-          reason: `organisationNumber=${organisation.organisationNumber} registrationNumber=${keys.registrationNumber} year=${keys.year}`
-        }
-      }
-    )
+      'fetch_accreditation'
+    ]
+  },
+  'registered-only': {
+    label: 'registered only',
+    notFound: [
+      'Registered-only year not found',
+      errorCodes.registeredOnlyYearNotFound,
+      'fetch_registered_only_year'
+    ]
   }
-
-  return accreditation
 }
 
 /**
- * Throws a 404 unless the registration was approved without a held
- * accreditation in the year.
+ * Throws a 404 unless `year` is of `kind`.
  * @param {OrganisationView} organisation
  * @param {RegistrationView} registration
  * @param {AccreditationKeys} keys
- * @returns {null}
+ * @param {YearKind} kind
  */
-const registeredOnlyYear = (organisation, registration, keys) => {
-  const registeredOnly =
-    !accreditationFor(registration, keys.year) &&
-    registeredYears(registration, utcToday()).includes(Number(keys.year))
-
-  if (!registeredOnly) {
-    throw notFound(
-      'Registered-only year not found',
-      errorCodes.registeredOnlyYearNotFound,
-      {
-        event: {
-          action: 'fetch_registered_only_year',
-          reason: `organisationNumber=${organisation.organisationNumber} registrationNumber=${keys.registrationNumber} year=${keys.year}`
-        }
+const assertYearKind = (organisation, registration, keys, kind) => {
+  if (yearKind(registration, keys.year, utcToday()) !== kind) {
+    const [message, code, action] = YEAR_KINDS[kind].notFound
+    throw notFound(message, code, {
+      event: {
+        action,
+        reason: `organisationNumber=${organisation.organisationNumber} registrationNumber=${keys.registrationNumber} year=${keys.year}`
       }
-    )
+    })
   }
-
-  return null
 }
 
 /**
- * A registration's page for one year, accredited or registered-only.
- * @param {{ accredited: boolean }} kind
+ * A registration's page for one year of `kind`.
+ * @param {YearKind} kind
  */
-const registrationYearGETController = ({ accredited }) => ({
+const registrationYearGETController = (kind) => ({
   async handler(request, h) {
     const { organisationNumber, registrationNumber, year } = request.params
     /** @type {AccreditationKeys} */
@@ -99,9 +84,8 @@ const registrationYearGETController = ({ accredited }) => ({
       organisationNumber
     )
     const registration = registrationIn(organisation, registrationNumber)
-    const accreditation = accredited
-      ? accreditedYear(organisation, registration, keys)
-      : registeredOnlyYear(organisation, registration, keys)
+    assertYearKind(organisation, registration, keys, kind)
+    const accreditation = accreditationFor(registration, year)
 
     const [summaryLogRows, reportingPeriods, wasteBalance] = await Promise.all([
       fetchSummaryLogRows(request, registrationKeys, year),
@@ -118,7 +102,7 @@ const registrationYearGETController = ({ accredited }) => ({
     return h.view('routes/registration-year/index', {
       breadcrumbs: registrationBreadcrumbs(keys),
       pageTitle: request.route.settings.app.pageTitle,
-      heading: `${organisation.name} - ${registrationNumber} - ${year} ${accredited ? 'accredited' : 'registered only'}`,
+      heading: `${organisation.name} - ${registrationNumber} - ${year} ${YEAR_KINDS[kind].label}`,
       registration: {
         status: registration.status.current,
         processingType: processingTypeOf(registration),
@@ -139,10 +123,8 @@ const registrationYearGETController = ({ accredited }) => ({
   }
 })
 
-export const accreditedYearGETController = registrationYearGETController({
-  accredited: true
-})
+export const accreditedYearGETController =
+  registrationYearGETController('accredited')
 
-export const registeredOnlyYearGETController = registrationYearGETController({
-  accredited: false
-})
+export const registeredOnlyYearGETController =
+  registrationYearGETController('registered-only')

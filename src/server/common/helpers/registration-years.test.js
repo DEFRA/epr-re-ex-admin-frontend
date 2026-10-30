@@ -1,7 +1,8 @@
 import {
   isAccredited,
   registeredYears,
-  utcToday
+  utcToday,
+  yearKind
 } from './registration-years.js'
 
 /** @import { RegistrationView } from './fetch-organisation-view.js' */
@@ -81,4 +82,21 @@ describe('#isAccredited', () => {
       expect(isAccredited(accreditedIn2025('approved'), year)).toBe(false)
     }
   )
+})
+
+describe('#yearKind', () => {
+  const today = '2026-10-29'
+  const accreditedIn2026 = registration('approved', [], {
+    2026: { accreditationNumber: 'ACC-26', status: { current: 'approved' } },
+    2027: { accreditationNumber: 'ACC-27', status: { current: 'approved' } }
+  })
+
+  test.each([
+    ['2026', 'accredited'],
+    ['2027', 'accredited'],
+    ['2025', 'registered-only'],
+    ['2023', null]
+  ])('gives %s as %s', (year, kind) => {
+    expect(yearKind(accreditedIn2026, year, today)).toBe(kind)
+  })
 })
