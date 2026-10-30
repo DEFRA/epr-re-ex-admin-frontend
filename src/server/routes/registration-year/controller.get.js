@@ -1,6 +1,5 @@
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import {
-  accreditationFor,
   fetchOrganisationView,
   processingTypeOf,
   registrationIn,
@@ -8,9 +7,8 @@ import {
 } from '#server/common/helpers/fetch-organisation-view.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 import {
-  accreditationYearUrl,
-  registeredOnlyYearUrl,
-  registrationBreadcrumbs
+  registrationBreadcrumbs,
+  yearPageUrls
 } from '#server/common/helpers/page-urls.js'
 import {
   fetchPeriods,
@@ -20,6 +18,7 @@ import {
   toReportRows
 } from '#server/common/helpers/registration-sections.js'
 import {
+  accreditationFor,
   utcToday,
   yearKind
 } from '#server/common/helpers/registration-years.js'
@@ -50,16 +49,28 @@ const YEAR_KINDS = {
   }
 }
 
+/** @type {[string, string, string]} */
+const YEAR_NOT_FOUND = [
+  'Year not found',
+  errorCodes.registrationYearNotFound,
+  'fetch_registration_year'
+]
+
 /**
- * Throws a 404 unless `year` is of `kind`.
+ * The year's kind, or a 404 when the year is neither kind, or is not
+ * `expected`.
  * @param {OrganisationView} organisation
  * @param {RegistrationView} registration
  * @param {AccreditationKeys} keys
- * @param {YearKind} kind
+ * @param {YearKind} [expected]
+ * @returns {YearKind}
  */
-const assertYearKind = (organisation, registration, keys, kind) => {
-  if (yearKind(registration, keys.year, utcToday()) !== kind) {
-    const [message, code, action] = YEAR_KINDS[kind].notFound
+const yearKindOrNotFound = (organisation, registration, keys, expected) => {
+  const kind = yearKind(registration, keys.year, utcToday())
+  if (!kind || (expected && kind !== expected)) {
+    const [message, code, action] = expected
+      ? YEAR_KINDS[expected].notFound
+      : YEAR_NOT_FOUND
     throw notFound(message, code, {
       event: {
         action,
@@ -67,6 +78,7 @@ const assertYearKind = (organisation, registration, keys, kind) => {
       }
     })
   }
+  return kind
 }
 
 /**
@@ -88,7 +100,7 @@ const registrationYearGETController = (kind) => ({
       organisationNumber
     )
     const registration = registrationIn(organisation, registrationNumber)
-    assertYearKind(organisation, registration, keys, kind)
+    yearKindOrNotFound(organisation, registration, keys, kind)
     const accreditation = accreditationFor(registration, year)
 
     const [summaryLogRows, reportingPeriods, wasteBalance] = await Promise.all([
@@ -148,9 +160,7 @@ export const registrationYearRedirectController = {
     const registration = registrationIn(organisation, registrationNumber)
 
     return h.redirect(
-      yearKind(registration, year, utcToday()) === 'accredited'
-        ? accreditationYearUrl(keys)
-        : registeredOnlyYearUrl(keys)
+      yearPageUrls[yearKindOrNotFound(organisation, registration, keys)](keys)
     )
   }
 }

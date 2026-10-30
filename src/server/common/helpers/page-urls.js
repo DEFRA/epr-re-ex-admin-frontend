@@ -7,6 +7,7 @@ import {
 
 /**
  * @import { PeriodSubmissionParams } from './backend-paths.js'
+ * @import { YearKind } from './registration-years.js'
  */
 
 /** Admin pages addressed by natural keys. */
@@ -43,6 +44,15 @@ export const registeredOnlyYearUrl = (keys) =>
   `${registrationPath(keys)}/registered-only/${encodeURIComponent(keys.year)}`
 
 /**
+ * A registration's page for a year of each kind.
+ * @type {Record<YearKind, (keys: { organisationNumber: string, registrationNumber: string, year: string }) => string>}
+ */
+export const yearPageUrls = {
+  accredited: accreditationYearUrl,
+  'registered-only': registeredOnlyYearUrl
+}
+
+/**
  * A registration's page for a year, which sends the browser on to the
  * accredited or registered-only page for it.
  * @param {{ organisationNumber: string, registrationNumber: string, year: string }} keys
@@ -74,6 +84,12 @@ export const registrationYearBreadcrumbs = (keys) => [
  * @param {PeriodSubmissionParams} params
  */
 export const reportSubmissionUrl = (params) => periodSubmissionPath(params)
+
+/**
+ * @param {{ organisationNumber: string, registrationNumber: string }} keys
+ */
+export const wasteRecordsDownloadUrl = (keys) =>
+  `${registrationPath(keys)}/waste-records/download`
 
 /**
  * @param {{ organisationNumber: string, registrationNumber: string, year: string }} keys

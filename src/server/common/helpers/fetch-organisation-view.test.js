@@ -1,6 +1,5 @@
 import { vi } from 'vitest'
 import {
-  accreditationFor,
   fetchOrganisationView,
   processingTypeOf,
   registrationIn,
@@ -98,37 +97,6 @@ describe(registrationIn, () => {
       )
     }
   )
-})
-
-describe(accreditationFor, () => {
-  test("returns the year's accreditation with its current status", () => {
-    expect(accreditationFor(reprocessor, '2026')).toEqual({
-      year: '2026',
-      accreditationNumber: 'A26ER5001180114PL',
-      status: 'approved'
-    })
-  })
-
-  test('returns null for a year without one', () => {
-    expect(accreditationFor(reprocessor, '2025')).toBeNull()
-  })
-
-  test('returns null for an accreditation not approved or suspended', () => {
-    expect(
-      accreditationFor(
-        {
-          ...reprocessor,
-          accreditations: {
-            2025: {
-              accreditationNumber: 'A25ER5001180114PL',
-              status: { current: 'cancelled' }
-            }
-          }
-        },
-        '2025'
-      )
-    ).toBeNull()
-  })
 })
 
 describe(processingTypeOf, () => {

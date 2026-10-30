@@ -375,6 +375,14 @@ describe('#registrationYearController', () => {
       expect(headers.location).toBe(location)
     })
 
+    test('Should return not found for a year the registration was not approved in', async () => {
+      useMockBackend()
+
+      const { statusCode } = await get(`${registrationUrl}/years/2023`)
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+
     test.each([
       ['accredited', accreditedUrl('20x5')],
       ['registered-only', registeredOnlyUrl('25')]

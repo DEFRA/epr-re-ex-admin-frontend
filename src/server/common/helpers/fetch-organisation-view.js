@@ -2,7 +2,6 @@ import { errorCodes } from '#server/common/enums/error-codes.js'
 import { organisationPath } from '#server/common/helpers/backend-paths.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
-import { isAccredited } from '#server/common/helpers/registration-years.js'
 
 /** @import { HapiRequest } from '#server/common/hapi-types.js' */
 
@@ -47,8 +46,6 @@ import { isAccredited } from '#server/common/helpers/registration-years.js'
  *   registrations: Record<string, RegistrationView>
  * }} OrganisationView
  *
- * @typedef {{ year: string, accreditationNumber: string, status: string }} YearAccreditation
- *
  * @typedef {{
  *   registrationNumber: string,
  *   status: string,
@@ -84,23 +81,6 @@ export const registrationIn = (organisation, registrationNumber) => {
   }
 
   return organisation.registrations[registrationNumber]
-}
-
-/**
- * The registration's accreditation for `year`, or `null` when it is not
- * approved or suspended.
- * @param {RegistrationView} registration
- * @param {string} year
- * @returns {YearAccreditation | null}
- */
-export const accreditationFor = (registration, year) => {
-  if (!isAccredited(registration, year)) {
-    return null
-  }
-
-  const { accreditationNumber, status } = registration.accreditations[year]
-
-  return { year, accreditationNumber, status: status.current }
 }
 
 /**

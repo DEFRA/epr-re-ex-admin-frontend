@@ -1,4 +1,5 @@
 import {
+  accreditationFor,
   isAccredited,
   registeredYears,
   registrationYears,
@@ -85,6 +86,30 @@ describe('#isAccredited', () => {
   )
 })
 
+describe('#accreditationFor', () => {
+  /** @param {string} current */
+  const accreditedIn2025 = (current) =>
+    registration('approved', [], {
+      2025: { accreditationNumber: 'ACC-25', status: { current } }
+    })
+
+  test("returns the year's accreditation with its current status", () => {
+    expect(accreditationFor(accreditedIn2025('approved'), '2025')).toEqual({
+      year: '2025',
+      accreditationNumber: 'ACC-25',
+      status: 'approved'
+    })
+  })
+
+  test('returns null for a year without one', () => {
+    expect(accreditationFor(accreditedIn2025('approved'), '2026')).toBeNull()
+  })
+
+  test('returns null for an accreditation not approved or suspended', () => {
+    expect(accreditationFor(accreditedIn2025('cancelled'), '2025')).toBeNull()
+  })
+})
+
 describe('#yearKind', () => {
   const today = '2026-10-29'
   const accreditedIn2026 = registration('approved', [], {
@@ -125,14 +150,24 @@ describe('#registrationYears', () => {
     ).toEqual([
       {
         year: '2027',
-        accreditation: { accreditationNumber: 'ACC-27', status: 'approved' }
+        kind: 'accredited',
+        accreditation: {
+          year: '2027',
+          accreditationNumber: 'ACC-27',
+          status: 'approved'
+        }
       },
       {
         year: '2026',
-        accreditation: { accreditationNumber: 'ACC-26', status: 'suspended' }
+        kind: 'accredited',
+        accreditation: {
+          year: '2026',
+          accreditationNumber: 'ACC-26',
+          status: 'suspended'
+        }
       },
-      { year: '2025', accreditation: null },
-      { year: '2024', accreditation: null }
+      { year: '2025', kind: 'registered-only', accreditation: null },
+      { year: '2024', kind: 'registered-only', accreditation: null }
     ])
   })
 

@@ -13,7 +13,8 @@ import {
   reportSubmissionUrl,
   reportUnsubmitUrl,
   summaryLogUrl,
-  wasteBalanceEventsUrl
+  wasteBalanceEventsUrl,
+  wasteRecordsDownloadUrl
 } from '#server/common/helpers/page-urls.js'
 import {
   periodStatus,
@@ -202,7 +203,7 @@ export const toRegistrationLinks = (
   accreditationKeys
 ) => ({
   isExporter: registration.wasteProcessingType === 'exporter',
-  wasteRecordsDownloadUrl: `${registrationPath(registrationKeys)}/waste-records/download`,
+  wasteRecordsDownloadUrl: wasteRecordsDownloadUrl(registrationKeys),
   ...(accreditationKeys && {
     wasteBalanceEventsUrl: wasteBalanceEventsUrl(accreditationKeys),
     overseasSitesUrl: overseasSitesUrl(accreditationKeys),

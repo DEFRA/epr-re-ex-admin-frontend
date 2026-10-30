@@ -4,11 +4,10 @@ import {
   registrationIn,
   siteOf
 } from '#server/common/helpers/fetch-organisation-view.js'
-import { registrationPath } from '#server/common/helpers/backend-paths.js'
 import {
-  accreditationYearUrl,
   organisationOverviewUrl,
-  registeredOnlyYearUrl
+  wasteRecordsDownloadUrl,
+  yearPageUrls
 } from '#server/common/helpers/page-urls.js'
 import {
   registrationYears,
@@ -38,14 +37,12 @@ export const registrationOverviewGETController = {
     const registration = registrationIn(organisation, registrationNumber)
 
     const yearRows = registrationYears(registration, utcToday()).map(
-      ({ year, accreditation }) => ({
+      ({ year, kind, accreditation }) => ({
         year,
-        isAccredited: accreditation !== null,
+        isAccredited: kind === 'accredited',
         accreditationStatus: accreditation?.status ?? NOT_ACCREDITED,
         accreditationNumber: accreditation?.accreditationNumber ?? NO_VALUE,
-        viewUrl: accreditation
-          ? accreditationYearUrl({ ...registrationKeys, year })
-          : registeredOnlyYearUrl({ ...registrationKeys, year })
+        viewUrl: yearPageUrls[kind]({ ...registrationKeys, year })
       })
     )
 
@@ -64,7 +61,7 @@ export const registrationOverviewGETController = {
         material: registration.material,
         site: siteOf(registration)
       },
-      wasteRecordsDownloadUrl: `${registrationPath(registrationKeys)}/waste-records/download`,
+      wasteRecordsDownloadUrl: wasteRecordsDownloadUrl(registrationKeys),
       yearRows,
       error: errorMessage
     })

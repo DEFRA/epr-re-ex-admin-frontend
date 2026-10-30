@@ -682,7 +682,7 @@ describe('#accreditedYearGETController', () => {
       ).toStrictEqual([expect.anything(), expect.anything()])
     })
 
-    test("Should request the current year's reports calendar by number with the expand=submissions arg", async () => {
+    test("Should request the page year's reports calendar by number with the expand=submissions arg", async () => {
       /** @type {URL | undefined} */
       let calendarRequestUrl
       useMockBackend()
@@ -700,7 +700,7 @@ describe('#accreditedYearGETController', () => {
       })
 
       expect(calendarRequestUrl?.pathname).toBe(
-        `/organisations/500123/registrations/REG-50030-001/reports/${new Date().getUTCFullYear()}/calendar`
+        '/organisations/500123/registrations/REG-50030-001/reports/2026/calendar'
       )
       expect(calendarRequestUrl?.searchParams.get('expand')).toBe('submissions')
     })

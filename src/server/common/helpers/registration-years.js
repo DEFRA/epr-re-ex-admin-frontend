@@ -3,6 +3,10 @@
  */
 
 /**
+ * @typedef {{ year: string, accreditationNumber: string, status: string }} YearAccreditation
+ */
+
+/**
  * @param {string} date - YYYY-MM-DD or an ISO timestamp
  * @returns {number}
  */
@@ -33,7 +37,6 @@ export const registeredYears = ({ validFrom, status }, today) => {
 }
 
 /**
-/**
  * Whether the registration's accreditation for `year` is approved or
  * suspended.
  * @param {RegistrationView} registration
@@ -45,8 +48,34 @@ export const isAccredited = ({ accreditations }, year) =>
   HELD_ACCREDITATION_STATUSES.has(accreditations[year].status.current)
 
 /**
+ * The registration's accreditation for `year`, or `null` when it is not
+ * approved or suspended.
+ * @param {RegistrationView} registration
+ * @param {string} year
+ * @returns {YearAccreditation | null}
+ */
+export const accreditationFor = (registration, year) => {
+  if (!isAccredited(registration, year)) {
+    return null
+  }
+
+  const { accreditationNumber, status } = registration.accreditations[year]
+
+  return { year, accreditationNumber, status: status.current }
+}
+
+/**
  * @typedef {'accredited' | 'registered-only'} YearKind
  */
+
+/**
+ * @param {RegistrationView} registration
+ * @param {number | string} year - one of the registration's registered or
+ *   accredited years
+ * @returns {YearKind}
+ */
+const kindOf = (registration, year) =>
+  isAccredited(registration, year) ? 'accredited' : 'registered-only'
 
 /**
  * Whether `year` is one of the registration's accredited or registered-only
@@ -56,14 +85,11 @@ export const isAccredited = ({ accreditations }, year) =>
  * @param {string} today - YYYY-MM-DD
  * @returns {YearKind | null}
  */
-export const yearKind = (registration, year, today) => {
-  if (isAccredited(registration, year)) {
-    return 'accredited'
-  }
-  return registeredYears(registration, today).includes(Number(year))
-    ? 'registered-only'
+export const yearKind = (registration, year, today) =>
+  isAccredited(registration, year) ||
+  registeredYears(registration, today).includes(Number(year))
+    ? kindOf(registration, year)
     : null
-}
 
 /**
  * One row per registered or accredited year, newest first. An accredited year
@@ -73,7 +99,8 @@ export const yearKind = (registration, year, today) => {
  * @param {string} today - YYYY-MM-DD
  * @returns {{
  *   year: string,
- *   accreditation: { accreditationNumber: string, status: string } | null
+ *   kind: YearKind,
+ *   accreditation: YearAccreditation | null
  * }[]}
  */
 export const registrationYears = (registration, today) => {
@@ -86,16 +113,9 @@ export const registrationYears = (registration, today) => {
 
   return [...years]
     .sort((a, b) => b - a)
-    .map((year) => {
-      const accreditation = isAccredited(registration, year)
-        ? registration.accreditations[year]
-        : null
-      return {
-        year: String(year),
-        accreditation: accreditation && {
-          accreditationNumber: accreditation.accreditationNumber,
-          status: accreditation.status.current
-        }
-      }
-    })
+    .map((year) => ({
+      year: String(year),
+      kind: kindOf(registration, year),
+      accreditation: accreditationFor(registration, String(year))
+    }))
 }
