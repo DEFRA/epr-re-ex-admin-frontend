@@ -2,7 +2,6 @@ import { errorCodes } from '#server/common/enums/error-codes.js'
 import { organisationPath } from '#server/common/helpers/backend-paths.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
-import { isAccredited } from '#server/common/helpers/registration-years.js'
 
 /** @import { HapiRequest } from '#server/common/hapi-types.js' */
 
@@ -47,15 +46,12 @@ import { isAccredited } from '#server/common/helpers/registration-years.js'
  *   registrations: Record<string, RegistrationView>
  * }} OrganisationView
  *
- * @typedef {{ year: string, accreditationNumber: string, status: string }} LatestAccreditation
- *
  * @typedef {{
  *   registrationNumber: string,
  *   status: string,
  *   processingType: string,
  *   material: string,
- *   site: string | null,
- *   accreditation: LatestAccreditation | null
+ *   site: string | null
  * }} RegistrationRow
  */
 
@@ -85,42 +81,6 @@ export const registrationIn = (organisation, registrationNumber) => {
   }
 
   return organisation.registrations[registrationNumber]
-}
-
-/**
- * The registration's accreditation for its latest year, or `null` when it has none.
- * @param {RegistrationView} registration
- * @returns {LatestAccreditation | null}
- */
-export const latestAccreditation = ({ accreditations }) => {
-  const year = Object.keys(accreditations)
-    .sort((a, b) => a.localeCompare(b))
-    .at(-1)
-
-  if (year === undefined) {
-    return null
-  }
-
-  const { accreditationNumber, status } = accreditations[year]
-
-  return { year, accreditationNumber, status: status.current }
-}
-
-/**
- * The registration's accreditation for `year`, or `null` when it is not
- * approved or suspended.
- * @param {RegistrationView} registration
- * @param {string} year
- * @returns {LatestAccreditation | null}
- */
-export const accreditationFor = (registration, year) => {
-  if (!isAccredited(registration, year)) {
-    return null
-  }
-
-  const { accreditationNumber, status } = registration.accreditations[year]
-
-  return { year, accreditationNumber, status: status.current }
 }
 
 /**
@@ -160,6 +120,5 @@ export const registrationRows = (organisation) =>
       status: registration.status.current,
       processingType: processingTypeOf(registration),
       material: registration.material,
-      site: siteOf(registration),
-      accreditation: latestAccreditation(registration)
+      site: siteOf(registration)
     }))
