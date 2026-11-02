@@ -705,7 +705,7 @@ describe('#accreditedYearGETController', () => {
       expect(calendarRequestUrl?.searchParams.get('expand')).toBe('submissions')
     })
 
-    test('Should not render the reports table when the backend serves no calendar for the registration', async () => {
+    test('Should render "No reports" when the backend serves no calendar for the registration', async () => {
       useMockBackend()
       mswServer.use(
         http.get(calendarUrl, () =>
@@ -719,10 +719,34 @@ describe('#accreditedYearGETController', () => {
         auth: { strategy: 'session', credentials: mockUserSession }
       })
 
+      const body = renderPage(result)
+
       expect(statusCode).toBe(statusCodes.ok)
-      expect(
-        queryByRole(renderPage(result), 'table', { name: 'Reports' })
-      ).toBeNull()
+      expect(queryByRole(body, 'table', { name: 'Reports' })).toBeNull()
+      expect(getByText(body, 'No reports')).toBeInTheDocument()
+    })
+
+    test('Should render "No reports" when the calendar has no reporting periods', async () => {
+      useMockBackend()
+      mswServer.use(
+        http.get(calendarUrl, () =>
+          HttpResponse.json(
+            asYearCalendar({ cadence: 'monthly', reportingPeriods: [] })
+          )
+        )
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials: mockUserSession }
+      })
+
+      const body = renderPage(result)
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(queryByRole(body, 'table', { name: 'Reports' })).toBeNull()
+      expect(getByText(body, 'No reports')).toBeInTheDocument()
     })
 
     test('Should show 500 error page when the reports calendar backend returns a non-OK response', async () => {
