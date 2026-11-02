@@ -723,6 +723,9 @@ describe('#accreditedYearGETController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(queryByRole(body, 'table', { name: 'Reports' })).toBeNull()
+      expect(
+        getByRole(body, 'heading', { name: 'Reports' })
+      ).toBeInTheDocument()
       expect(getByText(body, 'No reports')).toBeInTheDocument()
     })
 
@@ -746,6 +749,9 @@ describe('#accreditedYearGETController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(queryByRole(body, 'table', { name: 'Reports' })).toBeNull()
+      expect(
+        getByRole(body, 'heading', { name: 'Reports' })
+      ).toBeInTheDocument()
       expect(getByText(body, 'No reports')).toBeInTheDocument()
     })
 
@@ -1040,6 +1046,9 @@ describe('#accreditedYearGETController', () => {
       const body = renderPage(result)
 
       expect(queryByRole(body, 'table', { name: 'Summary logs' })).toBeNull()
+      expect(
+        getByRole(body, 'heading', { name: 'Summary logs' })
+      ).toBeInTheDocument()
       expect(getByText(body, 'No summary logs')).toBeInTheDocument()
     })
 
