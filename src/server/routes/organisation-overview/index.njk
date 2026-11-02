@@ -51,8 +51,6 @@
         { text: registration.processingType },
         { text: registration.material },
         { text: registration.site },
-        { text: registration.accreditation.accreditationNumber if registration.accreditation else '-' },
-        { html: govukTag({ text: registration.accreditation.status }) if registration.accreditation else '-' },
         { html: actionsHtml }
       ] %}
       {% set tableRows = tableRows.concat([row]) %}
@@ -65,8 +63,6 @@
         { text: "Processing type" },
         { text: "Material" },
         { text: "Site" },
-        { text: "Accreditation number" },
-        { text: "Accreditation status" },
         { text: "Actions" }
       ],
       rows: tableRows

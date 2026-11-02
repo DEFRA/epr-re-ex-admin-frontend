@@ -1,22 +1,25 @@
 import {
   fetchOrganisationView,
-  latestAccreditation,
   processingTypeOf,
   registrationIn,
   siteOf
 } from '#server/common/helpers/fetch-organisation-view.js'
 import {
-  fetchPeriods,
-  fetchSummaryLogRows,
-  fetchWasteBalance,
-  toRegistrationLinks,
-  toReportRows
-} from '#server/common/helpers/registration-sections.js'
-import { organisationOverviewUrl } from '#server/common/helpers/page-urls.js'
+  organisationOverviewUrl,
+  wasteRecordsDownloadUrl,
+  yearPageUrls
+} from '#server/common/helpers/page-urls.js'
+import {
+  registrationYears,
+  utcToday
+} from '#server/common/helpers/registration-years.js'
 
 /**
  * @import { RegistrationKeys } from '#server/common/helpers/natural-keys/swap-keys.js'
  */
+
+const NOT_ACCREDITED = 'Not accredited'
+const NO_VALUE = '-'
 
 export const registrationOverviewGETController = {
   async handler(request, h) {
@@ -32,20 +35,16 @@ export const registrationOverviewGETController = {
       organisationNumber
     )
     const registration = registrationIn(organisation, registrationNumber)
-    const accreditation = latestAccreditation(registration)
-    const accreditationKeys = accreditation && {
-      ...registrationKeys,
-      year: accreditation.year
-    }
 
-    const [summaryLogRows, reportingPeriods, wasteBalance] = await Promise.all([
-      fetchSummaryLogRows(request, registrationKeys),
-      // Current year until PAE-2153 lists every year.
-      fetchPeriods(request, registrationKeys, new Date().getUTCFullYear()),
-      accreditationKeys ? fetchWasteBalance(request, accreditationKeys) : null
-    ])
-
-    const pageTitle = request.route.settings.app.pageTitle
+    const yearRows = registrationYears(registration, utcToday()).map(
+      ({ year, kind, accreditation }) => ({
+        year,
+        isAccredited: kind === 'accredited',
+        accreditationStatus: accreditation?.status ?? NOT_ACCREDITED,
+        accreditationNumber: accreditation?.accreditationNumber ?? NO_VALUE,
+        viewUrl: yearPageUrls[kind]({ ...registrationKeys, year })
+      })
+    )
 
     return h.view('routes/registration-overview/index', {
       breadcrumbs: [
@@ -55,23 +54,15 @@ export const registrationOverviewGETController = {
           href: organisationOverviewUrl({ organisationNumber })
         }
       ],
-      pageTitle,
+      pageTitle: request.route.settings.app.pageTitle,
       heading: `${organisation.name} - ${registrationNumber}`,
       registration: {
-        status: registration.status.current,
         processingType: processingTypeOf(registration),
         material: registration.material,
-        site: siteOf(registration),
-        accreditation
+        site: siteOf(registration)
       },
-      ...toRegistrationLinks(registration, registrationKeys, accreditationKeys),
-      reportRows: toReportRows(
-        registrationKeys,
-        reportingPeriods,
-        request.auth.credentials.scopes
-      ),
-      summaryLogRows,
-      wasteBalance,
+      wasteRecordsDownloadUrl: wasteRecordsDownloadUrl(registrationKeys),
+      yearRows,
       error: errorMessage
     })
   }

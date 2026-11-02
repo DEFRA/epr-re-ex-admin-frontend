@@ -1,8 +1,6 @@
 import { vi } from 'vitest'
 import {
-  accreditationFor,
   fetchOrganisationView,
-  latestAccreditation,
   processingTypeOf,
   registrationIn,
   registrationRows,
@@ -101,65 +99,6 @@ describe(registrationIn, () => {
   )
 })
 
-describe(latestAccreditation, () => {
-  it('picks the latest year', () => {
-    expect(
-      latestAccreditation({
-        ...reprocessor,
-        accreditations: {
-          2027: {
-            accreditationNumber: 'A27ER5001180114PL',
-            status: { current: 'suspended' }
-          },
-          2026: {
-            accreditationNumber: 'A26ER5001180114PL',
-            status: { current: 'approved' }
-          }
-        }
-      })
-    ).toStrictEqual({
-      year: '2027',
-      accreditationNumber: 'A27ER5001180114PL',
-      status: 'suspended'
-    })
-  })
-
-  it('is null when the registration has no accreditations', () => {
-    expect(latestAccreditation(exporter)).toBeNull()
-  })
-})
-
-describe(accreditationFor, () => {
-  test("returns the year's accreditation with its current status", () => {
-    expect(accreditationFor(reprocessor, '2026')).toEqual({
-      year: '2026',
-      accreditationNumber: 'A26ER5001180114PL',
-      status: 'approved'
-    })
-  })
-
-  test('returns null for a year without one', () => {
-    expect(accreditationFor(reprocessor, '2025')).toBeNull()
-  })
-
-  test('returns null for an accreditation not approved or suspended', () => {
-    expect(
-      accreditationFor(
-        {
-          ...reprocessor,
-          accreditations: {
-            2025: {
-              accreditationNumber: 'A25ER5001180114PL',
-              status: { current: 'cancelled' }
-            }
-          }
-        },
-        '2025'
-      )
-    ).toBeNull()
-  })
-})
-
 describe(processingTypeOf, () => {
   it('names an exporter', () => {
     expect(processingTypeOf(exporter)).toBe('exporter')
@@ -204,20 +143,14 @@ describe(registrationRows, () => {
         status: 'approved',
         processingType: 'exporter',
         material: 'paper',
-        site: null,
-        accreditation: null
+        site: null
       },
       {
         registrationNumber: 'R26ER5001180042PL',
         status: 'cancelled',
         processingType: 'reprocessor - input',
         material: 'plastic',
-        site: '1 Mill Lane',
-        accreditation: {
-          year: '2026',
-          accreditationNumber: 'A26ER5001180114PL',
-          status: 'approved'
-        }
+        site: '1 Mill Lane'
       }
     ])
   })
