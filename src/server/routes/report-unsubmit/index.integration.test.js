@@ -165,6 +165,9 @@ describe('report-unsubmit', () => {
           registrations: {
             [registrationNumber]: {
               material: 'paper',
+              regAccStatusByDate: {
+                2026: { '2026-01-01': { status: 'registeredOnly' } }
+              },
               validFrom: '2026-01-01',
               status: {
                 current: 'approved',

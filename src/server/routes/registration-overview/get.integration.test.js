@@ -59,6 +59,11 @@ describe('#registrationOverviewController', () => {
       current: 'approved',
       timeline: [{ at: '2024-02-01T00:00:00.000Z', status: 'approved' }]
     },
+    regAccStatusByDate: {
+      2024: { '2024-02-01': { status: 'registeredOnly' } },
+      2025: { '2025-01-01': { status: 'registeredOnly' } },
+      2026: { '2026-01-01': { status: 'registeredOnly' } }
+    },
     validFrom: '2024-02-01',
     wasteProcessingType: 'reprocessor',
     reprocessingType: 'input',
@@ -276,6 +281,7 @@ describe('#registrationOverviewController', () => {
       useMockBackend(
         organisationHolding({
           ...mockRegistration,
+          regAccStatusByDate: {},
           validFrom: `${new Date().getUTCFullYear() + 1}-01-01`,
           accreditations: {}
         })

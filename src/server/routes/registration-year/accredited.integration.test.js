@@ -52,6 +52,9 @@ describe('#accreditedYearGETController', () => {
       current: 'approved',
       timeline: [{ at: '2026-01-01T00:00:00.000Z', status: 'approved' }]
     },
+    regAccStatusByDate: {
+      2026: { '2026-01-01': { status: 'registeredOnly' } }
+    },
     validFrom: '2026-01-01',
     wasteProcessingType: 'reprocessor',
     reprocessingType: 'input',

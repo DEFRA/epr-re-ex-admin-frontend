@@ -51,6 +51,11 @@ describe('#registrationYearController', () => {
       current: 'approved',
       timeline: [{ at: '2024-01-01T00:00:00.000Z', status: 'approved' }]
     },
+    regAccStatusByDate: {
+      2024: { '2024-01-01': { status: 'registeredOnly' } },
+      2025: { '2025-01-01': { status: 'registeredOnly' } },
+      2026: { '2026-01-01': { status: 'registeredOnly' } }
+    },
     validFrom: '2024-01-01',
     wasteProcessingType: 'reprocessor',
     reprocessingType: 'input',
@@ -318,6 +323,13 @@ describe('#registrationYearController', () => {
       test('Should return not found for a year after the registration was cancelled', async () => {
         useMockBackend({
           ...reprocessor,
+          regAccStatusByDate: {
+            2024: { '2024-01-01': { status: 'registeredOnly' } },
+            2025: {
+              '2025-01-01': { status: 'registeredOnly' },
+              '2025-03-01': { status: 'cancelled' }
+            }
+          },
           status: {
             current: 'cancelled',
             timeline: [
