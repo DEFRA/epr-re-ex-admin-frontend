@@ -9,17 +9,28 @@ import {
 
 /** @import { RegistrationView } from './fetch-organisation-view.js' */
 
+/** @type {RegistrationView['regAccStatusByDate']} */
+const SINCE_2024 = {
+  2024: { '2024-03-01': { status: 'registeredOnly' } },
+  2025: { '2025-01-01': { status: 'registeredOnly' } },
+  2026: { '2026-01-01': { status: 'registeredOnly' } }
+}
+
 /**
  * @param {string} current
- * @param {{ at: string, status: string }[]} [timeline]
+ * @param {RegistrationView['regAccStatusByDate']} [regAccStatusByDate]
  * @param {RegistrationView['accreditations']} [accreditations]
  * @returns {RegistrationView}
  */
-const registration = (current, timeline = [], accreditations = {}) => ({
+const registration = (
+  current,
+  regAccStatusByDate = SINCE_2024,
+  accreditations = {}
+) => ({
   material: 'glass',
   wasteProcessingType: 'exporter',
-  validFrom: '2024-03-01',
-  status: { current, timeline },
+  status: { current },
+  regAccStatusByDate,
   accreditations
 })
 
@@ -32,35 +43,61 @@ describe('#utcToday', () => {
 describe('#registeredYears', () => {
   const today = '2026-10-29'
 
-  test('runs from validFrom to this year while approved', () => {
+  test('names each year holding an approved day, oldest first', () => {
     expect(registeredYears(registration('approved'), today)).toEqual([
       2024, 2025, 2026
     ])
   })
 
-  test('runs from validFrom to the year it was cancelled', () => {
+  test('stops at the year it was cancelled in', () => {
     expect(
       registeredYears(
-        registration('cancelled', [
-          { at: '2024-03-01T00:00:00.000Z', status: 'approved' },
-          { at: '2025-06-01T00:00:00.000Z', status: 'cancelled' }
-        ]),
+        registration('cancelled', {
+          2024: { '2024-03-01': { status: 'registeredOnly' } },
+          2025: {
+            '2025-01-01': { status: 'accredited' },
+            '2025-06-01': { status: 'cancelled' }
+          }
+        }),
         today
       )
     ).toEqual([2024, 2025])
   })
 
-  test('runs to this year for a cancellation without a timeline', () => {
-    expect(registeredYears(registration('cancelled'), today)).toEqual([
-      2024, 2025, 2026
-    ])
+  test('leaves out a year spent wholly cancelled', () => {
+    expect(
+      registeredYears(
+        registration('approved', {
+          2024: { '2024-03-01': { status: 'registeredOnly' } },
+          2025: { '2025-01-01': { status: 'cancelled' } },
+          2026: { '2026-02-01': { status: 'registeredOnly' } }
+        }),
+        today
+      )
+    ).toEqual([2024, 2026])
+  })
+
+  test('leaves out a year that has not started yet', () => {
+    expect(
+      registeredYears(
+        registration('approved', {
+          2026: { '2026-01-01': { status: 'registeredOnly' } },
+          2027: { '2027-01-01': { status: 'accredited' } }
+        }),
+        today
+      )
+    ).toEqual([2026])
+  })
+
+  test('names no year for a registration never approved', () => {
+    expect(registeredYears(registration('approved', {}), today)).toEqual([])
   })
 })
 
 describe('#isAccredited', () => {
   /** @param {string} current */
   const accreditedIn2025 = (current) =>
-    registration('approved', [], {
+    registration('approved', undefined, {
       2025: {
         accreditationNumber: 'ACC-25',
         status: { current }
@@ -89,7 +126,7 @@ describe('#isAccredited', () => {
 describe('#accreditationFor', () => {
   /** @param {string} current */
   const accreditedIn2025 = (current) =>
-    registration('approved', [], {
+    registration('approved', undefined, {
       2025: { accreditationNumber: 'ACC-25', status: { current } }
     })
 
@@ -112,7 +149,7 @@ describe('#accreditationFor', () => {
 
 describe('#yearKind', () => {
   const today = '2026-10-29'
-  const accreditedIn2026 = registration('approved', [], {
+  const accreditedIn2026 = registration('approved', undefined, {
     2026: { accreditationNumber: 'ACC-26', status: { current: 'approved' } },
     2027: { accreditationNumber: 'ACC-27', status: { current: 'approved' } }
   })
@@ -141,7 +178,7 @@ describe('#registrationYears', () => {
   test('lists registered and accredited years newest first', () => {
     expect(
       registrationYears(
-        registration('approved', [], {
+        registration('approved', undefined, {
           2026: accreditation('ACC-26', 'suspended'),
           2027: accreditation('ACC-27', 'approved')
         }),
@@ -176,7 +213,7 @@ describe('#registrationYears', () => {
     (status) => {
       expect(
         registrationYears(
-          registration('approved', [], {
+          registration('approved', undefined, {
             2025: accreditation('ACC-25', status),
             2027: accreditation('ACC-27', status)
           }),

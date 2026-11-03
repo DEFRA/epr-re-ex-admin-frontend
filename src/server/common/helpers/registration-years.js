@@ -6,12 +6,6 @@
  * @typedef {{ year: string, accreditationNumber: string, status: string }} YearAccreditation
  */
 
-/**
- * @param {string} date - YYYY-MM-DD or an ISO timestamp
- * @returns {number}
- */
-const yearOf = (date) => Number(date.slice(0, 4))
-
 const HELD_ACCREDITATION_STATUSES = new Set(['approved', 'suspended'])
 
 /**
@@ -21,20 +15,21 @@ const HELD_ACCREDITATION_STATUSES = new Set(['approved', 'suspended'])
 export const utcToday = () => new Date().toISOString().slice(0, 10)
 
 /**
- * The years from the registration's `validFrom` to this year, or to the year
- * it was cancelled, oldest first.
+ * The years holding at least one approved day up to today, oldest first.
  * @param {RegistrationView} registration
  * @param {string} today - YYYY-MM-DD
  * @returns {number[]}
  */
-export const registeredYears = ({ validFrom, status }, today) => {
-  const end =
-    status.current === 'cancelled'
-      ? (status.timeline.at(-1)?.at ?? today)
-      : today
-  const from = yearOf(validFrom)
-  return Array.from({ length: yearOf(end) - from + 1 }, (_, i) => from + i)
-}
+export const registeredYears = ({ regAccStatusByDate }, today) =>
+  Object.entries(regAccStatusByDate)
+    .filter(([, byDate]) =>
+      Object.entries(byDate).some(
+        ([date, { status }]) =>
+          status !== 'cancelled' && date.localeCompare(today) <= 0
+      )
+    )
+    .map(([year]) => Number(year))
+    .sort((a, b) => a - b)
 
 /**
  * Whether the registration's accreditation for `year` is approved or
