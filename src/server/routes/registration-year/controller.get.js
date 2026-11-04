@@ -1,3 +1,4 @@
+import { yearKind } from '#server/common/constants/registration.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import {
   fetchOrganisationView,
@@ -17,21 +18,19 @@ import {
   toRegistrationLinks,
   toReportRows
 } from '#server/common/helpers/registration-sections.js'
-import {
-  accreditationFor,
-  utcToday,
-  yearKind
-} from '#server/common/helpers/registration-years.js'
+import { yearDetails } from '#server/common/helpers/registration-years.js'
+import { utcToday } from '#server/common/helpers/utc-today.js'
 
 /**
  * @import { OrganisationView, RegistrationView } from '#server/common/helpers/fetch-organisation-view.js'
  * @import { AccreditationKeys } from '#server/common/helpers/natural-keys/swap-keys.js'
- * @import { YearKind } from '#server/common/helpers/registration-years.js'
+ * @import { YearKind } from '#server/common/constants/registration.js'
+ * @import { YearDetails } from '#server/common/helpers/registration-years.js'
  */
 
 /** @type {Record<YearKind, { label: string, notFound: [string, string, string] }>} */
 const YEAR_KINDS = {
-  accredited: {
+  [yearKind.accredited]: {
     label: 'accredited',
     notFound: [
       'Accreditation not found',
@@ -39,7 +38,7 @@ const YEAR_KINDS = {
       'fetch_accreditation'
     ]
   },
-  'registered-only': {
+  [yearKind.registeredOnly]: {
     label: 'registered only',
     notFound: [
       'Registered-only year not found',
@@ -57,17 +56,17 @@ const YEAR_NOT_FOUND = [
 ]
 
 /**
- * The year's kind, or a 404 when the year is neither kind, or is not
+ * The year's details, or a 404 when the year is neither kind, or is not
  * `expected`.
  * @param {OrganisationView} organisation
  * @param {RegistrationView} registration
  * @param {AccreditationKeys} keys
  * @param {YearKind} [expected]
- * @returns {YearKind}
+ * @returns {YearDetails}
  */
-const yearKindOrNotFound = (organisation, registration, keys, expected) => {
-  const kind = yearKind(registration, keys.year, utcToday())
-  if (!kind || (expected && kind !== expected)) {
+const yearDetailsOrNotFound = (organisation, registration, keys, expected) => {
+  const details = yearDetails(registration, keys.year, utcToday())
+  if (!details || (expected && details.kind !== expected)) {
     const [message, code, action] = expected
       ? YEAR_KINDS[expected].notFound
       : YEAR_NOT_FOUND
@@ -78,7 +77,7 @@ const yearKindOrNotFound = (organisation, registration, keys, expected) => {
       }
     })
   }
-  return kind
+  return details
 }
 
 /**
@@ -100,8 +99,12 @@ const registrationYearGETController = (kind) => ({
       organisationNumber
     )
     const registration = registrationIn(organisation, registrationNumber)
-    yearKindOrNotFound(organisation, registration, keys, kind)
-    const accreditation = accreditationFor(registration, year)
+    const { accreditation } = yearDetailsOrNotFound(
+      organisation,
+      registration,
+      keys,
+      kind
+    )
 
     const [summaryLogRows, reportingPeriods, wasteBalance] = await Promise.all([
       fetchSummaryLogRows(request, registrationKeys, year),
@@ -138,11 +141,13 @@ const registrationYearGETController = (kind) => ({
   }
 })
 
-export const accreditedYearGETController =
-  registrationYearGETController('accredited')
+export const accreditedYearGETController = registrationYearGETController(
+  yearKind.accredited
+)
 
-export const registeredOnlyYearGETController =
-  registrationYearGETController('registered-only')
+export const registeredOnlyYearGETController = registrationYearGETController(
+  yearKind.registeredOnly
+)
 
 /**
  * Sends a year to its accredited page when the registration held an
@@ -159,8 +164,8 @@ export const registrationYearRedirectController = {
     )
     const registration = registrationIn(organisation, registrationNumber)
 
-    return h.redirect(
-      yearPageUrls[yearKindOrNotFound(organisation, registration, keys)](keys)
-    )
+    const { kind } = yearDetailsOrNotFound(organisation, registration, keys)
+
+    return h.redirect(yearPageUrls[kind](keys))
   }
 }

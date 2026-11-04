@@ -3,12 +3,15 @@ import { organisationPath } from '#server/common/helpers/backend-paths.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 
-/** @import { HapiRequest } from '#server/common/hapi-types.js' */
+/**
+ * @import { RegAccStatus } from '#server/common/constants/registration.js'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ */
 
 /**
  * By year, the date each status starts. A status holds until the next date, or
  * the end of the year.
- * @typedef {Record<string, Record<string, { status: 'registeredOnly' | 'accredited' | 'cancelled' }>>} RegAccStatusByDate
+ * @typedef {Record<string, Record<string, { status: RegAccStatus }>>} RegAccStatusByDate
  *
  * @typedef {{
  *   accreditationNumber: string,

@@ -1,116 +1,78 @@
+import {
+  accreditationStatus,
+  regAccStatus,
+  yearKind
+} from '#server/common/constants/registration.js'
+
 /**
- * @import { RegistrationView } from '#server/common/helpers/fetch-organisation-view.js'
+ * @import { YearKind } from '#server/common/constants/registration.js'
+ * @import { RegAccStatusByDate, RegistrationView } from './fetch-organisation-view.js'
  */
 
 /**
- * @typedef {{ year: string, accreditationNumber: string, status: string }} YearAccreditation
+ * @typedef {{
+ *   year: string,
+ *   kind: YearKind,
+ *   accreditation: { accreditationNumber: string, status: string } | null
+ * }} YearDetails
  */
 
-const HELD_ACCREDITATION_STATUSES = new Set(['approved', 'suspended'])
+/** @type {Set<string | undefined>} */
+const HELD_ACCREDITATION_STATUSES = new Set([
+  accreditationStatus.approved,
+  accreditationStatus.suspended
+])
 
 /**
- * Today's UTC date as YYYY-MM-DD.
- * @returns {string}
- */
-export const utcToday = () => new Date().toISOString().slice(0, 10)
-
-/**
- * The years holding at least one approved day up to today, oldest first.
- * @param {RegistrationView} registration
+ * @param {RegAccStatusByDate[string]} statusByDate
  * @param {string} today - YYYY-MM-DD
- * @returns {number[]}
- */
-export const registeredYears = ({ regAccStatusByDate }, today) =>
-  Object.entries(regAccStatusByDate)
-    .filter(([, byDate]) =>
-      Object.entries(byDate).some(
-        ([date, { status }]) =>
-          status !== 'cancelled' && date.localeCompare(today) <= 0
-      )
-    )
-    .map(([year]) => Number(year))
-    .sort((a, b) => a - b)
-
-/**
- * Whether the registration's accreditation for `year` is approved or
- * suspended.
- * @param {RegistrationView} registration
- * @param {number | string} year
  * @returns {boolean}
  */
-export const isAccredited = ({ accreditations }, year) =>
-  Object.hasOwn(accreditations, year) &&
-  HELD_ACCREDITATION_STATUSES.has(accreditations[year].status.current)
+const hasRegisteredDay = (statusByDate, today) =>
+  Object.entries(statusByDate).some(
+    ([date, { status }]) =>
+      status !== regAccStatus.cancelled && date.localeCompare(today) <= 0
+  )
 
 /**
- * The registration's accreditation for `year`, or `null` when it is not
- * approved or suspended.
+ * The registration's details for `year`, or `null` when it was neither
+ * registered nor accredited that year.
  * @param {RegistrationView} registration
  * @param {string} year
- * @returns {YearAccreditation | null}
+ * @param {string} today - YYYY-MM-DD
+ * @returns {YearDetails | null}
  */
-export const accreditationFor = (registration, year) => {
-  if (!isAccredited(registration, year)) {
+export const yearDetails = (registration, year, today) => {
+  if (!Object.hasOwn(registration.regAccStatusByDate, year)) {
     return null
   }
 
-  const { accreditationNumber, status } = registration.accreditations[year]
+  const accreditation = registration.accreditations[year]
 
-  return { year, accreditationNumber, status: status.current }
-}
+  if (HELD_ACCREDITATION_STATUSES.has(accreditation?.status.current)) {
+    return {
+      year,
+      kind: yearKind.accredited,
+      accreditation: {
+        accreditationNumber: accreditation.accreditationNumber,
+        status: accreditation.status.current
+      }
+    }
+  }
 
-/**
- * @typedef {'accredited' | 'registered-only'} YearKind
- */
-
-/**
- * @param {RegistrationView} registration
- * @param {number | string} year - one of the registration's registered or
- *   accredited years
- * @returns {YearKind}
- */
-const kindOf = (registration, year) =>
-  isAccredited(registration, year) ? 'accredited' : 'registered-only'
-
-/**
- * Whether `year` is one of the registration's accredited or registered-only
- * years, or `null` when it is neither.
- * @param {RegistrationView} registration
- * @param {string} year
- * @param {string} today - YYYY-MM-DD
- * @returns {YearKind | null}
- */
-export const yearKind = (registration, year, today) =>
-  isAccredited(registration, year) ||
-  registeredYears(registration, today).includes(Number(year))
-    ? kindOf(registration, year)
+  return hasRegisteredDay(registration.regAccStatusByDate[year], today)
+    ? { year, kind: yearKind.registeredOnly, accreditation: null }
     : null
+}
 
 /**
- * One row per registered or accredited year, newest first. An accredited year
- * after the registered years, such as next year's accreditation approved
- * early, gets a row too.
+ * One entry per registered or accredited year, newest first.
  * @param {RegistrationView} registration
  * @param {string} today - YYYY-MM-DD
- * @returns {{
- *   year: string,
- *   kind: YearKind,
- *   accreditation: YearAccreditation | null
- * }[]}
+ * @returns {YearDetails[]}
  */
-export const registrationYears = (registration, today) => {
-  const years = new Set([
-    ...registeredYears(registration, today),
-    ...Object.keys(registration.accreditations)
-      .map(Number)
-      .filter((year) => isAccredited(registration, year))
-  ])
-
-  return [...years]
-    .sort((a, b) => b - a)
-    .map((year) => ({
-      year: String(year),
-      kind: kindOf(registration, year),
-      accreditation: accreditationFor(registration, String(year))
-    }))
-}
+export const registrationYears = (registration, today) =>
+  Object.keys(registration.regAccStatusByDate)
+    .map((year) => yearDetails(registration, year, today))
+    .filter((details) => details !== null)
+    .sort((one, other) => other.year.localeCompare(one.year))

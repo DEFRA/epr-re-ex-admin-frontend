@@ -77,6 +77,7 @@ describe('#registrationYearController', () => {
   const exporter = {
     material: 'glass',
     status: reprocessor.status,
+    regAccStatusByDate: reprocessor.regAccStatusByDate,
     validFrom: '2024-01-01',
     wasteProcessingType: 'exporter',
     accreditations: reprocessor.accreditations

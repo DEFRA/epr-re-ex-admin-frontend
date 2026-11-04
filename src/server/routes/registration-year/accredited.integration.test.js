@@ -75,6 +75,7 @@ describe('#accreditedYearGETController', () => {
   const mockExporterRegistration = {
     material: 'glass',
     status: { current: 'approved' },
+    regAccStatusByDate: mockRegistration.regAccStatusByDate,
     validFrom: '2026-01-01',
     wasteProcessingType: 'exporter',
     overseasSites: {},
