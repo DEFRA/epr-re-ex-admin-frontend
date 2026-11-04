@@ -1,3 +1,4 @@
+import { yearKind } from '#server/common/constants/registration.js'
 import {
   fetchOrganisationView,
   processingTypeOf,
@@ -9,10 +10,8 @@ import {
   wasteRecordsDownloadUrl,
   yearPageUrls
 } from '#server/common/helpers/page-urls.js'
-import {
-  registrationYears,
-  utcToday
-} from '#server/common/helpers/registration-years.js'
+import { registrationYears } from '#server/common/helpers/registration-years.js'
+import { utcToday } from '#server/common/helpers/utc-today.js'
 
 /**
  * @import { RegistrationKeys } from '#server/common/helpers/natural-keys/swap-keys.js'
@@ -39,7 +38,7 @@ export const registrationOverviewGETController = {
     const yearRows = registrationYears(registration, utcToday()).map(
       ({ year, kind, accreditation }) => ({
         year,
-        isAccredited: kind === 'accredited',
+        isAccredited: kind === yearKind.accredited,
         accreditationStatus: accreditation?.status ?? NOT_ACCREDITED,
         accreditationNumber: accreditation?.accreditationNumber ?? NO_VALUE,
         viewUrl: yearPageUrls[kind]({ ...registrationKeys, year })

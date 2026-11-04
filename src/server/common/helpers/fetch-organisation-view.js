@@ -3,11 +3,15 @@ import { organisationPath } from '#server/common/helpers/backend-paths.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 
-/** @import { HapiRequest } from '#server/common/hapi-types.js' */
+/**
+ * @import { RegAccStatus } from '#server/common/constants/registration.js'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ */
 
 /**
- * Every status change, oldest first.
- * @typedef {{ at: string, status: string }[]} StatusTimeline
+ * By year, the date each status starts. A status holds until the next date, or
+ * the end of the year.
+ * @typedef {Record<string, Record<string, { status: RegAccStatus }>>} RegAccStatusByDate
  *
  * @typedef {{
  *   accreditationNumber: string,
@@ -16,8 +20,8 @@ import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
  *
  * @typedef {{
  *   material: string,
- *   validFrom: string,
- *   status: { current: string, timeline: StatusTimeline },
+ *   status: { current: string },
+ *   regAccStatusByDate: RegAccStatusByDate,
  *   accreditations: Record<string, AccreditationView>
  * }} RegistrationViewCommon
  *
