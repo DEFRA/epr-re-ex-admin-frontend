@@ -1,3 +1,4 @@
+import { yearKind } from '#server/common/constants/registration.js'
 import {
   accreditationPath,
   organisationPath,
@@ -7,7 +8,7 @@ import {
 
 /**
  * @import { PeriodSubmissionParams } from './backend-paths.js'
- * @import { YearKind } from './registration-years.js'
+ * @import { YearKind } from '#server/common/constants/registration.js'
  */
 
 /** Admin pages addressed by natural keys. */
@@ -48,8 +49,8 @@ export const registeredOnlyYearUrl = (keys) =>
  * @type {Record<YearKind, (keys: { organisationNumber: string, registrationNumber: string, year: string }) => string>}
  */
 export const yearPageUrls = {
-  accredited: accreditationYearUrl,
-  'registered-only': registeredOnlyYearUrl
+  [yearKind.accredited]: accreditationYearUrl,
+  [yearKind.registeredOnly]: registeredOnlyYearUrl
 }
 
 /**
