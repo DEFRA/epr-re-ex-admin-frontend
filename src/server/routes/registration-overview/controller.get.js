@@ -1,4 +1,3 @@
-import { yearKind } from '#server/common/constants/registration.js'
 import {
   fetchOrganisationView,
   processingTypeOf,
@@ -11,14 +10,11 @@ import {
   yearPageUrls
 } from '#server/common/helpers/page-urls.js'
 import { registrationYears } from '#server/common/helpers/registration-years.js'
-import { utcToday } from '#server/common/helpers/utc-today.js'
+import { utcCalendarDate } from '#server/common/helpers/calendar-date.js'
 
 /**
  * @import { RegistrationKeys } from '#server/common/helpers/natural-keys/swap-keys.js'
  */
-
-const NOT_ACCREDITED = 'Not accredited'
-const NO_VALUE = '-'
 
 export const registrationOverviewGETController = {
   async handler(request, h) {
@@ -35,15 +31,16 @@ export const registrationOverviewGETController = {
     )
     const registration = registrationIn(organisation, registrationNumber)
 
-    const yearRows = registrationYears(registration, utcToday()).map(
-      ({ year, kind, accreditation }) => ({
-        year,
-        isAccredited: kind === yearKind.accredited,
-        accreditationStatus: accreditation?.status ?? NOT_ACCREDITED,
-        accreditationNumber: accreditation?.accreditationNumber ?? NO_VALUE,
-        viewUrl: yearPageUrls[kind]({ ...registrationKeys, year })
+    const yearRows = registrationYears(
+      registration,
+      utcCalendarDate(new Date())
+    ).map((details) => ({
+      ...details,
+      viewUrl: yearPageUrls[details.kind]({
+        ...registrationKeys,
+        year: details.year
       })
-    )
+    }))
 
     return h.view('routes/registration-overview/index', {
       breadcrumbs: [

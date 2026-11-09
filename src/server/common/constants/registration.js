@@ -14,12 +14,17 @@ export const regAccStatus = Object.freeze({
  */
 
 /**
- * The backend's accreditation statuses that count as holding an accreditation.
+ * The accreditation statuses that count as holding an accreditation. Mirrors
+ * ACTIVE_ACCREDITATION_STATUSES in epr-backend (domain/organisations/model.js).
  */
-export const accreditationStatus = Object.freeze({
+export const activeAccreditationStatus = Object.freeze({
   approved: 'approved',
   suspended: 'suspended'
 })
+
+/**
+ * @typedef {typeof activeAccreditationStatus[keyof typeof activeAccreditationStatus]} ActiveAccreditationStatus
+ */
 
 /**
  * Which of a registration's year pages a year uses.

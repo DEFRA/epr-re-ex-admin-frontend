@@ -1,8 +1,9 @@
+import { utcCalendarDate } from './calendar-date.js'
 import { yearDetails, registrationYears } from './registration-years.js'
 
 /** @import { RegistrationView } from './fetch-organisation-view.js' */
 
-const today = '2026-10-29'
+const today = utcCalendarDate(new Date('2026-10-29'))
 
 /** @type {RegistrationView['regAccStatusByDate']} */
 const SINCE_2024 = {
@@ -12,14 +13,16 @@ const SINCE_2024 = {
 }
 
 /**
- * @param {RegistrationView['regAccStatusByDate']} [regAccStatusByDate]
- * @param {RegistrationView['accreditations']} [accreditations]
+ * @param {{
+ *   regAccStatusByDate?: RegistrationView['regAccStatusByDate'],
+ *   accreditations?: RegistrationView['accreditations']
+ * }} [overrides]
  * @returns {RegistrationView}
  */
-const registration = (
+const registration = ({
   regAccStatusByDate = SINCE_2024,
   accreditations = {}
-) => ({
+} = {}) => ({
   material: 'glass',
   wasteProcessingType: 'exporter',
   status: { current: 'approved' },
@@ -42,7 +45,9 @@ describe('#yearDetails', () => {
     (status) => {
       expect(
         yearDetails(
-          registration(undefined, { 2025: accreditation('ACC-25', status) }),
+          registration({
+            accreditations: { 2025: accreditation('ACC-25', status) }
+          }),
           '2025',
           today
         )
@@ -59,7 +64,9 @@ describe('#yearDetails', () => {
     (status) => {
       expect(
         yearDetails(
-          registration(undefined, { 2025: accreditation('ACC-25', status) }),
+          registration({
+            accreditations: { 2025: accreditation('ACC-25', status) }
+          }),
           '2025',
           today
         )
@@ -83,9 +90,11 @@ describe('#yearDetails', () => {
     expect(
       yearDetails(
         registration({
-          2025: {
-            '2025-01-01': { status: 'accredited' },
-            '2025-06-01': { status: 'cancelled' }
+          regAccStatusByDate: {
+            2025: {
+              '2025-01-01': { status: 'accredited' },
+              '2025-06-01': { status: 'cancelled' }
+            }
           }
         }),
         '2025',
@@ -97,10 +106,12 @@ describe('#yearDetails', () => {
   test('gives an accredited year that has not started as accredited', () => {
     expect(
       yearDetails(
-        registration(
-          { 2027: { '2027-01-01': { status: 'accredited' } } },
-          { 2027: accreditation('ACC-27', 'approved') }
-        ),
+        registration({
+          regAccStatusByDate: {
+            2027: { '2027-01-01': { status: 'accredited' } }
+          },
+          accreditations: { 2027: accreditation('ACC-27', 'approved') }
+        }),
         '2027',
         today
       )?.kind
@@ -110,7 +121,11 @@ describe('#yearDetails', () => {
   test('has no details for a year spent wholly cancelled', () => {
     expect(
       yearDetails(
-        registration({ 2025: { '2025-01-01': { status: 'cancelled' } } }),
+        registration({
+          regAccStatusByDate: {
+            2025: { '2025-01-01': { status: 'cancelled' } }
+          }
+        }),
         '2025',
         today
       )
@@ -120,7 +135,11 @@ describe('#yearDetails', () => {
   test('has no details for a year that has not started', () => {
     expect(
       yearDetails(
-        registration({ 2027: { '2027-01-01': { status: 'accredited' } } }),
+        registration({
+          regAccStatusByDate: {
+            2027: { '2027-01-01': { status: 'accredited' } }
+          }
+        }),
         '2027',
         today
       )
@@ -139,16 +158,16 @@ describe('#registrationYears', () => {
   test('lists registered and accredited years newest first', () => {
     expect(
       registrationYears(
-        registration(
-          {
+        registration({
+          regAccStatusByDate: {
             ...SINCE_2024,
             2027: { '2027-01-01': { status: 'accredited' } }
           },
-          {
+          accreditations: {
             2026: accreditation('ACC-26', 'suspended'),
             2027: accreditation('ACC-27', 'approved')
           }
-        ),
+        }),
         today
       )
     ).toEqual([
@@ -171,9 +190,11 @@ describe('#registrationYears', () => {
     expect(
       registrationYears(
         registration({
-          2024: { '2024-03-01': { status: 'registeredOnly' } },
-          2025: { '2025-01-01': { status: 'cancelled' } },
-          2026: { '2026-02-01': { status: 'registeredOnly' } }
+          regAccStatusByDate: {
+            2024: { '2024-03-01': { status: 'registeredOnly' } },
+            2025: { '2025-01-01': { status: 'cancelled' } },
+            2026: { '2026-02-01': { status: 'registeredOnly' } }
+          }
         }),
         today
       ).map(({ year }) => year)
@@ -181,6 +202,8 @@ describe('#registrationYears', () => {
   })
 
   test('lists no year for a registration with no status dates', () => {
-    expect(registrationYears(registration({}), today)).toEqual([])
+    expect(
+      registrationYears(registration({ regAccStatusByDate: {} }), today)
+    ).toEqual([])
   })
 })

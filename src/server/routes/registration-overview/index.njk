@@ -34,8 +34,8 @@
             {% endset %}
             {% set tableRows = tableRows.concat([[
               { text: row.year },
-              { html: govukTag({ text: row.accreditationStatus, classes: "govuk-tag--grey" if not row.isAccredited }) },
-              { text: row.accreditationNumber },
+              { html: govukTag({ text: row.accreditation.status if row.accreditation else "Not accredited", classes: "govuk-tag--grey" if not row.accreditation }) },
+              { text: row.accreditation.accreditationNumber if row.accreditation else "-" },
               { html: viewHtml }
             ]]) %}
           {% endfor %}

@@ -19,65 +19,31 @@ import {
   toReportRows
 } from '#server/common/helpers/registration-sections.js'
 import { yearDetails } from '#server/common/helpers/registration-years.js'
-import { utcToday } from '#server/common/helpers/utc-today.js'
+import { utcCalendarDate } from '#server/common/helpers/calendar-date.js'
 
 /**
- * @import { OrganisationView, RegistrationView } from '#server/common/helpers/fetch-organisation-view.js'
  * @import { AccreditationKeys } from '#server/common/helpers/natural-keys/swap-keys.js'
  * @import { YearKind } from '#server/common/constants/registration.js'
- * @import { YearDetails } from '#server/common/helpers/registration-years.js'
  */
 
-/** @type {Record<YearKind, { label: string, notFound: [string, string, string] }>} */
+/** @type {Record<YearKind, { label: string, notFound: { message: string, code: string, action: string } }>} */
 const YEAR_KINDS = {
   [yearKind.accredited]: {
     label: 'accredited',
-    notFound: [
-      'Accreditation not found',
-      errorCodes.accreditationNotFound,
-      'fetch_accreditation'
-    ]
+    notFound: {
+      message: 'Accreditation not found',
+      code: errorCodes.accreditationNotFound,
+      action: 'fetch_accreditation'
+    }
   },
   [yearKind.registeredOnly]: {
     label: 'registered only',
-    notFound: [
-      'Registered-only year not found',
-      errorCodes.registeredOnlyYearNotFound,
-      'fetch_registered_only_year'
-    ]
+    notFound: {
+      message: 'Registered-only year not found',
+      code: errorCodes.registeredOnlyYearNotFound,
+      action: 'fetch_registered_only_year'
+    }
   }
-}
-
-/** @type {[string, string, string]} */
-const YEAR_NOT_FOUND = [
-  'Year not found',
-  errorCodes.registrationYearNotFound,
-  'fetch_registration_year'
-]
-
-/**
- * The year's details, or a 404 when the year is neither kind, or is not
- * `expected`.
- * @param {OrganisationView} organisation
- * @param {RegistrationView} registration
- * @param {AccreditationKeys} keys
- * @param {YearKind} [expected]
- * @returns {YearDetails}
- */
-const yearDetailsOrNotFound = (organisation, registration, keys, expected) => {
-  const details = yearDetails(registration, keys.year, utcToday())
-  if (!details || (expected && details.kind !== expected)) {
-    const [message, code, action] = expected
-      ? YEAR_KINDS[expected].notFound
-      : YEAR_NOT_FOUND
-    throw notFound(message, code, {
-      event: {
-        action,
-        reason: `organisationNumber=${organisation.organisationNumber} registrationNumber=${keys.registrationNumber} year=${keys.year}`
-      }
-    })
-  }
-  return details
 }
 
 /**
@@ -99,12 +65,19 @@ const registrationYearGETController = (kind) => ({
       organisationNumber
     )
     const registration = registrationIn(organisation, registrationNumber)
-    const { accreditation } = yearDetailsOrNotFound(
-      organisation,
-      registration,
-      keys,
-      kind
-    )
+    const details = yearDetails(registration, year, utcCalendarDate(new Date()))
+
+    if (details?.kind !== kind) {
+      const { message, code, action } = YEAR_KINDS[kind].notFound
+      throw notFound(message, code, {
+        event: {
+          action,
+          reason: `organisationNumber=${organisationNumber} registrationNumber=${registrationNumber} year=${year}`
+        }
+      })
+    }
+
+    const { accreditation } = details
 
     const [summaryLogRows, reportingPeriods, wasteBalance] = await Promise.all([
       fetchSummaryLogRows(request, registrationKeys, year),
@@ -163,9 +136,17 @@ export const registrationYearRedirectController = {
       organisationNumber
     )
     const registration = registrationIn(organisation, registrationNumber)
+    const details = yearDetails(registration, year, utcCalendarDate(new Date()))
 
-    const { kind } = yearDetailsOrNotFound(organisation, registration, keys)
+    if (!details) {
+      throw notFound('Year not found', errorCodes.registrationYearNotFound, {
+        event: {
+          action: 'fetch_registration_year',
+          reason: `organisationNumber=${organisationNumber} registrationNumber=${registrationNumber} year=${year}`
+        }
+      })
+    }
 
-    return h.redirect(yearPageUrls[kind](keys))
+    return h.redirect(yearPageUrls[details.kind](keys))
   }
 }

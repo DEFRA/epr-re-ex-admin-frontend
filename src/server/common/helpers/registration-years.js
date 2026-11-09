@@ -1,11 +1,12 @@
 import {
-  accreditationStatus,
+  activeAccreditationStatus,
   regAccStatus,
   yearKind
 } from '#server/common/constants/registration.js'
 
 /**
- * @import { YearKind } from '#server/common/constants/registration.js'
+ * @import { ActiveAccreditationStatus, YearKind } from '#server/common/constants/registration.js'
+ * @import { CalendarDate } from './calendar-date.js'
  * @import { RegAccStatusByDate, RegistrationView } from './fetch-organisation-view.js'
  */
 
@@ -13,19 +14,22 @@ import {
  * @typedef {{
  *   year: string,
  *   kind: YearKind,
- *   accreditation: { accreditationNumber: string, status: string } | null
+ *   accreditation: { accreditationNumber: string, status: ActiveAccreditationStatus } | null
  * }} YearDetails
  */
 
-/** @type {Set<string | undefined>} */
-const HELD_ACCREDITATION_STATUSES = new Set([
-  accreditationStatus.approved,
-  accreditationStatus.suspended
-])
+/** @type {readonly string[]} */
+const ACTIVE_ACCREDITATION_STATUSES = Object.values(activeAccreditationStatus)
+
+/**
+ * @param {string} status
+ * @returns {status is ActiveAccreditationStatus}
+ */
+const isActive = (status) => ACTIVE_ACCREDITATION_STATUSES.includes(status)
 
 /**
  * @param {RegAccStatusByDate[string]} statusByDate
- * @param {string} today - YYYY-MM-DD
+ * @param {CalendarDate} today
  * @returns {boolean}
  */
 const hasRegisteredDay = (statusByDate, today) =>
@@ -39,7 +43,7 @@ const hasRegisteredDay = (statusByDate, today) =>
  * registered nor accredited that year.
  * @param {RegistrationView} registration
  * @param {string} year
- * @param {string} today - YYYY-MM-DD
+ * @param {CalendarDate} today
  * @returns {YearDetails | null}
  */
 export const yearDetails = (registration, year, today) => {
@@ -49,7 +53,7 @@ export const yearDetails = (registration, year, today) => {
 
   const accreditation = registration.accreditations[year]
 
-  if (HELD_ACCREDITATION_STATUSES.has(accreditation?.status.current)) {
+  if (accreditation && isActive(accreditation.status.current)) {
     return {
       year,
       kind: yearKind.accredited,
@@ -68,7 +72,7 @@ export const yearDetails = (registration, year, today) => {
 /**
  * One entry per registered or accredited year, newest first.
  * @param {RegistrationView} registration
- * @param {string} today - YYYY-MM-DD
+ * @param {CalendarDate} today
  * @returns {YearDetails[]}
  */
 export const registrationYears = (registration, today) =>
