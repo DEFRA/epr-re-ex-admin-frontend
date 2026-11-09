@@ -1,7 +1,7 @@
 import { utcCalendarDate } from './calendar-date.js'
 import { yearDetails, registrationYears } from './registration-years.js'
 
-/** @import { RegistrationView } from './fetch-organisation-view.js' */
+/** @import { AccreditationStatus, RegistrationView } from './fetch-organisation-view.js' */
 
 const today = utcCalendarDate(new Date('2026-10-29'))
 
@@ -32,15 +32,21 @@ const registration = ({
 
 /**
  * @param {string} accreditationNumber
- * @param {string} current
+ * @param {AccreditationStatus} current
  */
 const accreditation = (accreditationNumber, current) => ({
   accreditationNumber,
   status: { current }
 })
 
+/** @type {AccreditationStatus[]} */
+const ACTIVE = ['approved', 'suspended']
+
+/** @type {AccreditationStatus[]} */
+const INACTIVE = ['created', 'rejected', 'cancelled']
+
 describe('#yearDetails', () => {
-  test.each(['approved', 'suspended'])(
+  test.each(ACTIVE)(
     'gives a year with a %s accreditation as accredited',
     (status) => {
       expect(
@@ -59,7 +65,7 @@ describe('#yearDetails', () => {
     }
   )
 
-  test.each(['created', 'rejected', 'cancelled'])(
+  test.each(INACTIVE)(
     'gives a registered year with a %s accreditation as registered-only',
     (status) => {
       expect(

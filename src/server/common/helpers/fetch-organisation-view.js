@@ -12,15 +12,27 @@ import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
  * By year, the date each status starts. A status holds until the next date, or
  * the end of the year.
  * @typedef {Record<string, Record<string, { status: RegAccStatus }>>} RegAccStatusByDate
- *
+ */
+
+/**
+ * Mirrors REGISTRATION_STATUS in epr-backend (domain/organisations/model.js).
+ * @typedef {'created' | 'approved' | 'cancelled' | 'rejected'} RegistrationStatus
+ */
+
+/**
+ * Mirrors ACCREDITATION_STATUS in epr-backend (domain/organisations/model.js).
+ * @typedef {'created' | 'approved' | 'cancelled' | 'rejected' | 'suspended'} AccreditationStatus
+ */
+
+/**
  * @typedef {{
  *   accreditationNumber: string,
- *   status: { current: string }
+ *   status: { current: AccreditationStatus }
  * }} AccreditationView
  *
  * @typedef {{
  *   material: string,
- *   status: { current: string },
+ *   status: { current: RegistrationStatus },
  *   regAccStatusByDate: RegAccStatusByDate,
  *   accreditations: Record<string, AccreditationView>
  * }} RegistrationViewCommon
