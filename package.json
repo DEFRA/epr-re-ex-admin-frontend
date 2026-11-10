@@ -73,14 +73,14 @@
     "hapi-pulse": "4.0.0",
     "ioredis": "6.0.0",
     "joi": "18.3.1",
-    "jose": "6.2.14",
+    "jose": "6.2.15",
     "jsoneditor": "10.4.3",
     "lodash": "4.18.1",
     "nunjucks": "3.2.4",
-    "openid-client": "6.8.8",
+    "openid-client": "6.8.9",
     "pino": "10.4.0",
     "pino-pretty": "13.2.0",
-    "semver": "7.8.5"
+    "semver": "7.8.6"
   },
   "devDependencies": {
     "@babel/preset-env": "8.0.7",
