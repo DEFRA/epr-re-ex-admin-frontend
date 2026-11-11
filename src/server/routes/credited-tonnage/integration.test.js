@@ -43,9 +43,8 @@ describe('credited-tonnage', () => {
     data: [
       {
         month: '2026-01',
-        organisation: { id: '0000-0000-uuid', reference: '500001' },
+        organisation: { reference: '500001' },
         accreditation: {
-          id: '1111-1111-uuid',
           accreditationNumber: 'ACC-456',
           processingType: 'reprocessor',
           material: 'plastic'
@@ -97,7 +96,7 @@ describe('credited-tonnage', () => {
         expect($('.govuk-body').text()).toContain('Data generated at:')
       })
 
-      test('Should render the organisation reference, not the internal id', async () => {
+      test('Should render the organisation reference', async () => {
         stubBackendResponse(mockCreditedTonnage)
 
         const { result, statusCode } = await server.inject({
@@ -111,7 +110,6 @@ describe('credited-tonnage', () => {
         const $ = cheerio.load(result)
         const tableText = $('.govuk-table').text()
         expect(tableText).toContain('500001')
-        expect(tableText).not.toContain('0000-0000-uuid')
         expect(tableText).toContain('January 2026')
         expect(tableText).toContain('Plastic')
         expect(tableText).toContain('1,000.00')

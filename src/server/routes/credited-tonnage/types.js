@@ -3,9 +3,8 @@
  * epr-backend: credited tonnage for one accreditation in one month.
  * @typedef {{
  *   month: string
- *   organisation: { id: string, reference: string }
+ *   organisation: { reference: string }
  *   accreditation: {
- *     id: string
  *     accreditationNumber: string
  *     processingType: string
  *     material: string
