@@ -249,7 +249,7 @@ The Docker Compose stack includes an [Entra ID stub](https://github.com/DEFRA/ep
 export ENTRA_CLIENT_ID=clientId
 export ENTRA_CLIENT_SECRET=test
 export ENTRA_TENANT_ID=tenantId
-export ENTRA_OIDC_WELL_KNOWN_CONFIGURATION_URL=http://localhost:3010/.well-known/openid-configuration
+export ENTRA_OIDC_WELL_KNOWN_URL=http://localhost:3010/.well-known/openid-configuration
 ```
 
 > **Note:** The stub expects `clientId`, `test`, and `tenantId` as its credentials — these are different from the real Azure values used by the default compose config.

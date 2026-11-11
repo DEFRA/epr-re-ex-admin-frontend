@@ -272,7 +272,7 @@ export const config = convict({
       return {
         doc: 'OIDC .well-known configuration URL',
         format: String,
-        env: 'OIDC_WELL_KNOWN_CONFIGURATION_URL',
+        env: 'ENTRA_OIDC_WELL_KNOWN_URL',
         default: `https://login.microsoftonline.com/${this.tenantId.default}/v2.0/.well-known/openid-configuration`
       }
     }
