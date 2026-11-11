@@ -21,7 +21,7 @@ const mockRequest = /** @type {Request} */ ({})
 const exporter = {
   material: 'paper',
   status: { current: 'approved' },
-  regAccStatusByDate: { 2026: { '2026-01-01': { status: 'registeredOnly' } } },
+  standingByDate: { 2026: { '2026-01-01': { standing: 'registeredOnly' } } },
   wasteProcessingType: 'exporter',
   accreditations: {}
 }
@@ -30,7 +30,7 @@ const exporter = {
 const reprocessor = {
   material: 'plastic',
   status: { current: 'cancelled' },
-  regAccStatusByDate: { 2026: { '2026-01-01': { status: 'registeredOnly' } } },
+  standingByDate: { 2026: { '2026-01-01': { standing: 'registeredOnly' } } },
   wasteProcessingType: 'reprocessor',
   reprocessingType: 'input',
   site: {

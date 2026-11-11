@@ -166,8 +166,8 @@ describe('report-unsubmit', () => {
           registrations: {
             [registrationNumber]: exporterView({
               material: 'paper',
-              regAccStatusByDate: {
-                2026: { '2026-01-01': { status: 'registeredOnly' } }
+              standingByDate: {
+                2026: { '2026-01-01': { standing: 'registeredOnly' } }
               }
             })
           }

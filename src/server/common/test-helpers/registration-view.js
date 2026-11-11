@@ -25,7 +25,7 @@ export const accreditationView = (
 export const reprocessorView = (overrides = {}) => ({
   material: 'glass',
   status: { current: 'approved' },
-  regAccStatusByDate: {},
+  standingByDate: {},
   wasteProcessingType: 'reprocessor',
   reprocessingType: 'input',
   site: { address: { line1: 'Site A', town: 'Leeds', postcode: 'LS1 1AA' } },
@@ -41,7 +41,7 @@ export const reprocessorView = (overrides = {}) => ({
 export const exporterView = (overrides = {}) => ({
   material: 'glass',
   status: { current: 'approved' },
-  regAccStatusByDate: {},
+  standingByDate: {},
   wasteProcessingType: 'exporter',
   accreditations: {},
   ...overrides

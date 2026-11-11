@@ -1,18 +1,18 @@
 /** @import { AccreditationStatus } from '#server/common/helpers/fetch-organisation-view.js' */
 
 /**
- * Mirrors REG_ACC_STATUS in epr-backend
+ * Mirrors STANDING in epr-backend
  * (organisation-read-model/domain/model.js) - the strings must match exactly,
  * because they are compared against the values the backend serves.
  */
-export const regAccStatus = Object.freeze({
+export const standing = Object.freeze({
   registeredOnly: 'registeredOnly',
   accredited: 'accredited',
   cancelled: 'cancelled'
 })
 
 /**
- * @typedef {typeof regAccStatus[keyof typeof regAccStatus]} RegAccStatus
+ * @typedef {typeof standing[keyof typeof standing]} Standing
  */
 
 /**

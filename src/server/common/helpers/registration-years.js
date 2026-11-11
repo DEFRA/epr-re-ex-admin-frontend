@@ -1,12 +1,12 @@
 import {
   activeAccreditationStatus,
-  regAccStatus,
+  standing,
   yearKind
 } from '#server/common/constants/registration.js'
 
 /**
  * @import { ActiveAccreditationStatus } from '#server/common/constants/registration.js'
- * @import { AccreditationStatus, RegAccStatusByDate, RegistrationView } from './fetch-organisation-view.js'
+ * @import { AccreditationStatus, StandingByDate, RegistrationView } from './fetch-organisation-view.js'
  */
 
 /**
@@ -35,13 +35,11 @@ const ACTIVE_ACCREDITATION_STATUSES = Object.values(activeAccreditationStatus)
 const isActive = (status) => ACTIVE_ACCREDITATION_STATUSES.includes(status)
 
 /**
- * @param {RegAccStatusByDate[string]} statusByDate
+ * @param {StandingByDate[string]} statusByDate
  * @returns {boolean}
  */
 const hasRegisteredDay = (statusByDate) =>
-  Object.values(statusByDate).some(
-    ({ status }) => status !== regAccStatus.cancelled
-  )
+  Object.values(statusByDate).some((day) => day.standing !== standing.cancelled)
 
 /**
  * The registration's details for `year`, or `null` when it was neither
@@ -51,7 +49,7 @@ const hasRegisteredDay = (statusByDate) =>
  * @returns {YearDetails | null}
  */
 export const yearDetails = (registration, year) => {
-  if (!Object.hasOwn(registration.regAccStatusByDate, year)) {
+  if (!Object.hasOwn(registration.standingByDate, year)) {
     return null
   }
 
@@ -68,7 +66,7 @@ export const yearDetails = (registration, year) => {
     }
   }
 
-  return hasRegisteredDay(registration.regAccStatusByDate[year])
+  return hasRegisteredDay(registration.standingByDate[year])
     ? { year, kind: yearKind.registeredOnly, accreditation: null }
     : null
 }
@@ -80,7 +78,7 @@ export const yearDetails = (registration, year) => {
  * @returns {YearDetails[]}
  */
 export const registrationYears = (registration) =>
-  Object.keys(registration.regAccStatusByDate)
+  Object.keys(registration.standingByDate)
     .map((year) => yearDetails(registration, year))
     .filter((details) => details !== null)
     .sort((one, other) => other.year.localeCompare(one.year))

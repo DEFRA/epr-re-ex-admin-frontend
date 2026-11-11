@@ -52,14 +52,14 @@ describe('#accreditedYearGETController', () => {
   })
 
   const mockRegistration = reprocessorView({
-    regAccStatusByDate: {
-      2026: { '2026-01-01': { status: 'accredited' } }
+    standingByDate: {
+      2026: { '2026-01-01': { standing: 'accredited' } }
     },
     accreditations: { 2026: accreditationView('ACC-50030-001') }
   })
 
   const mockExporterRegistration = exporterView({
-    regAccStatusByDate: mockRegistration.regAccStatusByDate,
+    standingByDate: mockRegistration.standingByDate,
     accreditations: mockRegistration.accreditations
   })
 

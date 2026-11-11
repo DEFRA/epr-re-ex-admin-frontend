@@ -4,14 +4,14 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 
 /**
- * @import { RegAccStatus } from '#server/common/constants/registration.js'
+ * @import { Standing } from '#server/common/constants/registration.js'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  */
 
 /**
- * By year, the date each status starts. A status holds until the next date, or
- * the end of the year.
- * @typedef {Record<string, Record<string, { status: RegAccStatus }>>} RegAccStatusByDate
+ * By year, the date each standing starts. A standing holds until the next date,
+ * or the end of the year.
+ * @typedef {Record<string, Record<string, { standing: Standing }>>} StandingByDate
  */
 
 /**
@@ -33,7 +33,7 @@ import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
  * @typedef {{
  *   material: string,
  *   status: { current: RegistrationStatus },
- *   regAccStatusByDate: RegAccStatusByDate,
+ *   standingByDate: StandingByDate,
  *   accreditations: Record<string, AccreditationView>
  * }} RegistrationViewCommon
  *

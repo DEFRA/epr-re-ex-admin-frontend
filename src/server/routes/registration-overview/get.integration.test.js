@@ -53,10 +53,10 @@ describe('#registrationOverviewController', () => {
   })
 
   const mockRegistration = reprocessorView({
-    regAccStatusByDate: {
-      2024: { '2024-02-01': { status: 'registeredOnly' } },
-      2025: { '2025-01-01': { status: 'registeredOnly' } },
-      2026: { '2026-01-01': { status: 'accredited' } }
+    standingByDate: {
+      2024: { '2024-02-01': { standing: 'registeredOnly' } },
+      2025: { '2025-01-01': { standing: 'registeredOnly' } },
+      2026: { '2026-01-01': { standing: 'accredited' } }
     },
     accreditations: { 2026: accreditationView('ACC-50030-001') }
   })
@@ -259,7 +259,7 @@ describe('#registrationOverviewController', () => {
 
     test('Should say there are no years for a registration the backend serves no year for', async () => {
       useMockBackend(
-        organisationHolding({ ...mockRegistration, regAccStatusByDate: {} })
+        organisationHolding({ ...mockRegistration, standingByDate: {} })
       )
 
       const { result } = await get()

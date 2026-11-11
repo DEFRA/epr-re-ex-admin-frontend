@@ -51,10 +51,10 @@ describe('#registrationYearController', () => {
   })
 
   const reprocessor = reprocessorView({
-    regAccStatusByDate: {
-      2024: { '2024-01-01': { status: 'registeredOnly' } },
-      2025: { '2025-01-01': { status: 'accredited' } },
-      2026: { '2026-01-01': { status: 'accredited' } }
+    standingByDate: {
+      2024: { '2024-01-01': { standing: 'registeredOnly' } },
+      2025: { '2025-01-01': { standing: 'accredited' } },
+      2026: { '2026-01-01': { standing: 'accredited' } }
     },
     accreditations: {
       2025: accreditationView('ACC-2025', 'suspended'),
@@ -63,7 +63,7 @@ describe('#registrationYearController', () => {
   })
 
   const exporter = exporterView({
-    regAccStatusByDate: reprocessor.regAccStatusByDate,
+    standingByDate: reprocessor.standingByDate,
     accreditations: reprocessor.accreditations
   })
 
@@ -308,9 +308,9 @@ describe('#registrationYearController', () => {
       test('Should return not found for a year spent wholly cancelled', async () => {
         useMockBackend({
           ...reprocessor,
-          regAccStatusByDate: {
-            2024: { '2024-01-01': { status: 'registeredOnly' } },
-            2025: { '2025-01-01': { status: 'cancelled' } }
+          standingByDate: {
+            2024: { '2024-01-01': { standing: 'registeredOnly' } },
+            2025: { '2025-01-01': { standing: 'cancelled' } }
           },
           status: { current: 'cancelled' },
           accreditations: {}

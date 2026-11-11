@@ -2,28 +2,28 @@ import { yearDetails, registrationYears } from './registration-years.js'
 
 /** @import { AccreditationStatus, RegistrationView } from './fetch-organisation-view.js' */
 
-/** @type {RegistrationView['regAccStatusByDate']} */
+/** @type {RegistrationView['standingByDate']} */
 const SINCE_2024 = {
-  2024: { '2024-03-01': { status: 'registeredOnly' } },
-  2025: { '2025-01-01': { status: 'registeredOnly' } },
-  2026: { '2026-01-01': { status: 'registeredOnly' } }
+  2024: { '2024-03-01': { standing: 'registeredOnly' } },
+  2025: { '2025-01-01': { standing: 'registeredOnly' } },
+  2026: { '2026-01-01': { standing: 'registeredOnly' } }
 }
 
 /**
  * @param {{
- *   regAccStatusByDate?: RegistrationView['regAccStatusByDate'],
+ *   standingByDate?: RegistrationView['standingByDate'],
  *   accreditations?: RegistrationView['accreditations']
  * }} [overrides]
  * @returns {RegistrationView}
  */
 const registration = ({
-  regAccStatusByDate = SINCE_2024,
+  standingByDate = SINCE_2024,
   accreditations = {}
 } = {}) => ({
   material: 'glass',
   wasteProcessingType: 'exporter',
   status: { current: 'approved' },
-  regAccStatusByDate,
+  standingByDate,
   accreditations
 })
 
@@ -91,10 +91,10 @@ describe('#yearDetails', () => {
     expect(
       yearDetails(
         registration({
-          regAccStatusByDate: {
+          standingByDate: {
             2025: {
-              '2025-01-01': { status: 'accredited' },
-              '2025-06-01': { status: 'cancelled' }
+              '2025-01-01': { standing: 'accredited' },
+              '2025-06-01': { standing: 'cancelled' }
             }
           }
         }),
@@ -107,8 +107,8 @@ describe('#yearDetails', () => {
     expect(
       yearDetails(
         registration({
-          regAccStatusByDate: {
-            2027: { '2027-01-01': { status: 'accredited' } }
+          standingByDate: {
+            2027: { '2027-01-01': { standing: 'accredited' } }
           },
           accreditations: { 2027: accreditation('ACC-27', 'approved') }
         }),
@@ -121,8 +121,8 @@ describe('#yearDetails', () => {
     expect(
       yearDetails(
         registration({
-          regAccStatusByDate: {
-            2025: { '2025-01-01': { status: 'cancelled' } }
+          standingByDate: {
+            2025: { '2025-01-01': { standing: 'cancelled' } }
           }
         }),
         '2025'
@@ -134,8 +134,8 @@ describe('#yearDetails', () => {
     expect(
       yearDetails(
         registration({
-          regAccStatusByDate: {
-            2027: { '2027-01-01': { status: 'registeredOnly' } }
+          standingByDate: {
+            2027: { '2027-01-01': { standing: 'registeredOnly' } }
           }
         }),
         '2027'
@@ -156,9 +156,9 @@ describe('#registrationYears', () => {
     expect(
       registrationYears(
         registration({
-          regAccStatusByDate: {
+          standingByDate: {
             ...SINCE_2024,
-            2027: { '2027-01-01': { status: 'accredited' } }
+            2027: { '2027-01-01': { standing: 'accredited' } }
           },
           accreditations: {
             2026: accreditation('ACC-26', 'suspended'),
@@ -196,10 +196,10 @@ describe('#registrationYears', () => {
     expect(
       registrationYears(
         registration({
-          regAccStatusByDate: {
-            2024: { '2024-03-01': { status: 'registeredOnly' } },
-            2025: { '2025-01-01': { status: 'cancelled' } },
-            2026: { '2026-02-01': { status: 'registeredOnly' } }
+          standingByDate: {
+            2024: { '2024-03-01': { standing: 'registeredOnly' } },
+            2025: { '2025-01-01': { standing: 'cancelled' } },
+            2026: { '2026-02-01': { standing: 'registeredOnly' } }
           }
         })
       ).map(({ year }) => year)
@@ -207,8 +207,6 @@ describe('#registrationYears', () => {
   })
 
   test('lists no year for a registration with no status dates', () => {
-    expect(registrationYears(registration({ regAccStatusByDate: {} }))).toEqual(
-      []
-    )
+    expect(registrationYears(registration({ standingByDate: {} }))).toEqual([])
   })
 })
