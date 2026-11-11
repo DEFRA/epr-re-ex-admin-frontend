@@ -2,6 +2,10 @@ import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
+import {
+  accreditationView,
+  reprocessorView
+} from '#server/common/test-helpers/registration-view.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/server.js'
 import { http, HttpResponse, server as mswServer } from '#vite/setup-msw.js'
@@ -33,10 +37,6 @@ describe('#registrationOverviewController', () => {
   let server
 
   beforeAll(async () => {
-    vi.useFakeTimers({
-      now: new Date('2026-10-29T12:00:00.000Z'),
-      toFake: ['Date']
-    })
     config.set('eprBackendUrl', backendUrl)
     createMockOidcServer()
     server = await createServer()
@@ -44,7 +44,6 @@ describe('#registrationOverviewController', () => {
   })
 
   afterAll(async () => {
-    vi.useRealTimers()
     config.set('eprBackendUrl', originalBackendUrl)
     await server.stop({ timeout: 0 })
   })
@@ -53,33 +52,14 @@ describe('#registrationOverviewController', () => {
     vi.clearAllMocks()
   })
 
-  const mockRegistration = {
-    material: 'glass',
-    status: {
-      current: 'approved',
-      timeline: [{ at: '2024-02-01T00:00:00.000Z', status: 'approved' }]
-    },
+  const mockRegistration = reprocessorView({
     regAccStatusByDate: {
       2024: { '2024-02-01': { status: 'registeredOnly' } },
       2025: { '2025-01-01': { status: 'registeredOnly' } },
-      2026: { '2026-01-01': { status: 'registeredOnly' } }
+      2026: { '2026-01-01': { status: 'accredited' } }
     },
-    validFrom: '2024-02-01',
-    wasteProcessingType: 'reprocessor',
-    reprocessingType: 'input',
-    site: {
-      address: { line1: 'Site A', town: 'Leeds', postcode: 'LS1 1AA' }
-    },
-    accreditations: {
-      2026: {
-        accreditationNumber: 'ACC-50030-001',
-        status: {
-          current: 'approved',
-          timeline: [{ at: '2026-01-01T00:00:00.000Z', status: 'approved' }]
-        }
-      }
-    }
-  }
+    accreditations: { 2026: accreditationView('ACC-50030-001') }
+  })
 
   /**
    * @param {object} registration
@@ -277,14 +257,9 @@ describe('#registrationOverviewController', () => {
       ])
     })
 
-    test('Should say there are no years for a registration valid from next year', async () => {
+    test('Should say there are no years for a registration the backend serves no year for', async () => {
       useMockBackend(
-        organisationHolding({
-          ...mockRegistration,
-          regAccStatusByDate: {},
-          validFrom: `${new Date().getUTCFullYear() + 1}-01-01`,
-          accreditations: {}
-        })
+        organisationHolding({ ...mockRegistration, regAccStatusByDate: {} })
       )
 
       const { result } = await get()

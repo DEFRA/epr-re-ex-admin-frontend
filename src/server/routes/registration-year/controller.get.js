@@ -19,7 +19,6 @@ import {
   toReportRows
 } from '#server/common/helpers/registration-sections.js'
 import { yearDetails } from '#server/common/helpers/registration-years.js'
-import { utcCalendarDate } from '#server/common/helpers/calendar-date.js'
 
 /**
  * @import { AccreditationKeys } from '#server/common/helpers/natural-keys/swap-keys.js'
@@ -65,7 +64,7 @@ const registrationYearGETController = (kind) => ({
       organisationNumber
     )
     const registration = registrationIn(organisation, registrationNumber)
-    const details = yearDetails(registration, year, utcCalendarDate(new Date()))
+    const details = yearDetails(registration, year)
 
     if (details?.kind !== kind) {
       const { message, code, action } = YEAR_KINDS[kind].notFound
@@ -77,18 +76,18 @@ const registrationYearGETController = (kind) => ({
       })
     }
 
-    const { accreditation } = details
+    const accreditationKeys = details.kind === yearKind.accredited ? keys : null
 
     const [summaryLogRows, reportingPeriods, wasteBalance] = await Promise.all([
       fetchSummaryLogRows(request, registrationKeys, year),
       fetchPeriods(request, registrationKeys, Number(year)),
-      accreditation ? fetchWasteBalance(request, keys) : null
+      accreditationKeys && fetchWasteBalance(request, accreditationKeys)
     ])
 
     const { wasteRecordsDownloadUrl, ...links } = toRegistrationLinks(
       registration,
       registrationKeys,
-      accreditation && keys
+      accreditationKeys
     )
 
     return h.view('routes/registration-year/index', {
@@ -99,7 +98,7 @@ const registrationYearGETController = (kind) => ({
         processingType: processingTypeOf(registration),
         material: registration.material,
         site: siteOf(registration),
-        accreditation
+        accreditation: details.accreditation
       },
       ...links,
       reportRows: toReportRows(
@@ -136,7 +135,7 @@ export const registrationYearRedirectController = {
       organisationNumber
     )
     const registration = registrationIn(organisation, registrationNumber)
-    const details = yearDetails(registration, year, utcCalendarDate(new Date()))
+    const details = yearDetails(registration, year)
 
     if (!details) {
       throw notFound('Year not found', errorCodes.registrationYearNotFound, {

@@ -1,3 +1,5 @@
+/** @import { AccreditationStatus } from '#server/common/helpers/fetch-organisation-view.js' */
+
 /**
  * Mirrors REG_ACC_STATUS in epr-backend
  * (organisation-read-model/domain/model.js) - the strings must match exactly,
@@ -17,10 +19,12 @@ export const regAccStatus = Object.freeze({
  * The accreditation statuses that count as holding an accreditation. Mirrors
  * ACTIVE_ACCREDITATION_STATUSES in epr-backend (domain/organisations/model.js).
  */
-export const activeAccreditationStatus = Object.freeze({
-  approved: 'approved',
-  suspended: 'suspended'
-})
+export const activeAccreditationStatus = Object.freeze(
+  /** @satisfies {Record<string, AccreditationStatus>} */ ({
+    approved: 'approved',
+    suspended: 'suspended'
+  })
+)
 
 /**
  * @typedef {typeof activeAccreditationStatus[keyof typeof activeAccreditationStatus]} ActiveAccreditationStatus

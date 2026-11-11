@@ -5,37 +5,42 @@ import {
 } from '#server/common/constants/registration.js'
 
 /**
- * @import { ActiveAccreditationStatus, YearKind } from '#server/common/constants/registration.js'
- * @import { CalendarDate } from './calendar-date.js'
- * @import { RegAccStatusByDate, RegistrationView } from './fetch-organisation-view.js'
+ * @import { ActiveAccreditationStatus } from '#server/common/constants/registration.js'
+ * @import { AccreditationStatus, RegAccStatusByDate, RegistrationView } from './fetch-organisation-view.js'
  */
 
 /**
  * @typedef {{
  *   year: string,
- *   kind: YearKind,
- *   accreditation: { accreditationNumber: string, status: ActiveAccreditationStatus } | null
- * }} YearDetails
+ *   kind: typeof yearKind.accredited,
+ *   accreditation: { accreditationNumber: string, status: ActiveAccreditationStatus }
+ * }} AccreditedYear
+ *
+ * @typedef {{
+ *   year: string,
+ *   kind: typeof yearKind.registeredOnly,
+ *   accreditation: null
+ * }} RegisteredOnlyYear
+ *
+ * @typedef {AccreditedYear | RegisteredOnlyYear} YearDetails
  */
 
-/** @type {readonly string[]} */
+/** @type {readonly AccreditationStatus[]} */
 const ACTIVE_ACCREDITATION_STATUSES = Object.values(activeAccreditationStatus)
 
 /**
- * @param {string} status
+ * @param {AccreditationStatus} status
  * @returns {status is ActiveAccreditationStatus}
  */
 const isActive = (status) => ACTIVE_ACCREDITATION_STATUSES.includes(status)
 
 /**
  * @param {RegAccStatusByDate[string]} statusByDate
- * @param {CalendarDate} today
  * @returns {boolean}
  */
-const hasRegisteredDay = (statusByDate, today) =>
-  Object.entries(statusByDate).some(
-    ([date, { status }]) =>
-      status !== regAccStatus.cancelled && date.localeCompare(today) <= 0
+const hasRegisteredDay = (statusByDate) =>
+  Object.values(statusByDate).some(
+    ({ status }) => status !== regAccStatus.cancelled
   )
 
 /**
@@ -43,10 +48,9 @@ const hasRegisteredDay = (statusByDate, today) =>
  * registered nor accredited that year.
  * @param {RegistrationView} registration
  * @param {string} year
- * @param {CalendarDate} today
  * @returns {YearDetails | null}
  */
-export const yearDetails = (registration, year, today) => {
+export const yearDetails = (registration, year) => {
   if (!Object.hasOwn(registration.regAccStatusByDate, year)) {
     return null
   }
@@ -64,19 +68,19 @@ export const yearDetails = (registration, year, today) => {
     }
   }
 
-  return hasRegisteredDay(registration.regAccStatusByDate[year], today)
+  return hasRegisteredDay(registration.regAccStatusByDate[year])
     ? { year, kind: yearKind.registeredOnly, accreditation: null }
     : null
 }
 
 /**
- * One entry per registered or accredited year, newest first.
+ * One entry per registered or accredited year the backend serves, newest
+ * first.
  * @param {RegistrationView} registration
- * @param {CalendarDate} today
  * @returns {YearDetails[]}
  */
-export const registrationYears = (registration, today) =>
+export const registrationYears = (registration) =>
   Object.keys(registration.regAccStatusByDate)
-    .map((year) => yearDetails(registration, year, today))
+    .map((year) => yearDetails(registration, year))
     .filter((details) => details !== null)
     .sort((one, other) => other.year.localeCompare(one.year))

@@ -10,7 +10,6 @@ import {
   yearPageUrls
 } from '#server/common/helpers/page-urls.js'
 import { registrationYears } from '#server/common/helpers/registration-years.js'
-import { utcCalendarDate } from '#server/common/helpers/calendar-date.js'
 
 /**
  * @import { RegistrationKeys } from '#server/common/helpers/natural-keys/swap-keys.js'
@@ -31,10 +30,7 @@ export const registrationOverviewGETController = {
     )
     const registration = registrationIn(organisation, registrationNumber)
 
-    const yearRows = registrationYears(
-      registration,
-      utcCalendarDate(new Date())
-    ).map((details) => ({
+    const yearRows = registrationYears(registration).map((details) => ({
       ...details,
       viewUrl: yearPageUrls[details.kind]({
         ...registrationKeys,

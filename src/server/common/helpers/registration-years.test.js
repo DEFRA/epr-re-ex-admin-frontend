@@ -1,9 +1,6 @@
-import { utcCalendarDate } from './calendar-date.js'
 import { yearDetails, registrationYears } from './registration-years.js'
 
 /** @import { AccreditationStatus, RegistrationView } from './fetch-organisation-view.js' */
-
-const today = utcCalendarDate(new Date('2026-10-29'))
 
 /** @type {RegistrationView['regAccStatusByDate']} */
 const SINCE_2024 = {
@@ -54,8 +51,7 @@ describe('#yearDetails', () => {
           registration({
             accreditations: { 2025: accreditation('ACC-25', status) }
           }),
-          '2025',
-          today
+          '2025'
         )
       ).toEqual({
         year: '2025',
@@ -73,8 +69,7 @@ describe('#yearDetails', () => {
           registration({
             accreditations: { 2025: accreditation('ACC-25', status) }
           }),
-          '2025',
-          today
+          '2025'
         )
       ).toEqual({
         year: '2025',
@@ -85,7 +80,7 @@ describe('#yearDetails', () => {
   )
 
   test('gives a registered year without an accreditation as registered-only', () => {
-    expect(yearDetails(registration(), '2025', today)).toEqual({
+    expect(yearDetails(registration(), '2025')).toEqual({
       year: '2025',
       kind: 'registered-only',
       accreditation: null
@@ -103,8 +98,7 @@ describe('#yearDetails', () => {
             }
           }
         }),
-        '2025',
-        today
+        '2025'
       )?.kind
     ).toBe('registered-only')
   })
@@ -118,8 +112,7 @@ describe('#yearDetails', () => {
           },
           accreditations: { 2027: accreditation('ACC-27', 'approved') }
         }),
-        '2027',
-        today
+        '2027'
       )?.kind
     ).toBe('accredited')
   })
@@ -132,30 +125,28 @@ describe('#yearDetails', () => {
             2025: { '2025-01-01': { status: 'cancelled' } }
           }
         }),
-        '2025',
-        today
+        '2025'
       )
     ).toBeNull()
   })
 
-  test('has no details for a year that has not started', () => {
+  test('gives a registered-only year that has not started as the backend serves it', () => {
     expect(
       yearDetails(
         registration({
           regAccStatusByDate: {
-            2027: { '2027-01-01': { status: 'accredited' } }
+            2027: { '2027-01-01': { status: 'registeredOnly' } }
           }
         }),
-        '2027',
-        today
-      )
-    ).toBeNull()
+        '2027'
+      )?.kind
+    ).toBe('registered-only')
   })
 
   test.each(['2023', 'constructor'])(
-    'has no details for %s, which the registration does not hold',
+    'has no details for %s, which the backend does not serve',
     (year) => {
-      expect(yearDetails(registration(), year, today)).toBeNull()
+      expect(yearDetails(registration(), year)).toBeNull()
     }
   )
 })
@@ -173,8 +164,7 @@ describe('#registrationYears', () => {
             2026: accreditation('ACC-26', 'suspended'),
             2027: accreditation('ACC-27', 'approved')
           }
-        }),
-        today
+        })
       )
     ).toEqual([
       {
@@ -192,6 +182,16 @@ describe('#registrationYears', () => {
     ])
   })
 
+  test('leaves out an accreditation for a year the backend does not serve', () => {
+    expect(
+      registrationYears(
+        registration({
+          accreditations: { 2027: accreditation('ACC-27', 'approved') }
+        })
+      ).map(({ year }) => year)
+    ).toEqual(['2026', '2025', '2024'])
+  })
+
   test('leaves out a year spent wholly cancelled', () => {
     expect(
       registrationYears(
@@ -201,15 +201,14 @@ describe('#registrationYears', () => {
             2025: { '2025-01-01': { status: 'cancelled' } },
             2026: { '2026-02-01': { status: 'registeredOnly' } }
           }
-        }),
-        today
+        })
       ).map(({ year }) => year)
     ).toEqual(['2026', '2024'])
   })
 
   test('lists no year for a registration with no status dates', () => {
-    expect(
-      registrationYears(registration({ regAccStatusByDate: {} }), today)
-    ).toEqual([])
+    expect(registrationYears(registration({ regAccStatusByDate: {} }))).toEqual(
+      []
+    )
   })
 })
