@@ -84,8 +84,8 @@ describe('#config', () => {
 
     test('Should generate oidcWellKnownConfigurationUrl default from tenantId', async () => {
       vi.stubEnv('NODE_ENV', 'test')
-      const originalWellKnown = process.env.OIDC_WELL_KNOWN_CONFIGURATION_URL
-      delete process.env.OIDC_WELL_KNOWN_CONFIGURATION_URL
+      const originalWellKnown = process.env.ENTRA_OIDC_WELL_KNOWN_URL
+      delete process.env.ENTRA_OIDC_WELL_KNOWN_URL
       const configModule = await import('./config.js')
       const config = configModule.config
 
@@ -95,9 +95,9 @@ describe('#config', () => {
       )
 
       if (originalWellKnown === undefined) {
-        delete process.env.OIDC_WELL_KNOWN_CONFIGURATION_URL
+        delete process.env.ENTRA_OIDC_WELL_KNOWN_URL
       } else {
-        process.env.OIDC_WELL_KNOWN_CONFIGURATION_URL = originalWellKnown
+        process.env.ENTRA_OIDC_WELL_KNOWN_URL = originalWellKnown
       }
     })
   })
