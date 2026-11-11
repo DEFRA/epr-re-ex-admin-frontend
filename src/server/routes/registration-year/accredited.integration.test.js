@@ -2,6 +2,11 @@ import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
+import {
+  accreditationView,
+  exporterView,
+  reprocessorView
+} from '#server/common/test-helpers/registration-view.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/server.js'
 import { http, HttpResponse, server as mswServer } from '#vite/setup-msw.js'
@@ -46,37 +51,17 @@ describe('#accreditedYearGETController', () => {
     vi.clearAllMocks()
   })
 
-  const mockRegistration = {
-    material: 'glass',
-    status: {
-      current: 'approved',
-      timeline: [{ at: '2026-01-01T00:00:00.000Z', status: 'approved' }]
+  const mockRegistration = reprocessorView({
+    standingByDate: {
+      2026: { '2026-01-01': { standing: 'accredited' } }
     },
-    validFrom: '2026-01-01',
-    wasteProcessingType: 'reprocessor',
-    reprocessingType: 'input',
-    site: {
-      address: { line1: 'Site A', town: 'Leeds', postcode: 'LS1 1AA' }
-    },
-    accreditations: {
-      2026: {
-        accreditationNumber: 'ACC-50030-001',
-        status: {
-          current: 'approved',
-          timeline: [{ at: '2026-01-01T00:00:00.000Z', status: 'approved' }]
-        }
-      }
-    }
-  }
+    accreditations: { 2026: accreditationView('ACC-50030-001') }
+  })
 
-  const mockExporterRegistration = {
-    material: 'glass',
-    status: { current: 'approved' },
-    validFrom: '2026-01-01',
-    wasteProcessingType: 'exporter',
-    overseasSites: {},
+  const mockExporterRegistration = exporterView({
+    standingByDate: mockRegistration.standingByDate,
     accreditations: mockRegistration.accreditations
-  }
+  })
 
   const mockWasteBalance = {
     amount: 1500,

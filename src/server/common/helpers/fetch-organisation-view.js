@@ -3,21 +3,37 @@ import { organisationPath } from '#server/common/helpers/backend-paths.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 
-/** @import { HapiRequest } from '#server/common/hapi-types.js' */
+/**
+ * @import { Standing } from '#server/common/constants/registration.js'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ */
 
 /**
- * Every status change, oldest first.
- * @typedef {{ at: string, status: string }[]} StatusTimeline
- *
+ * By year, the date each standing starts. A standing holds until the next date,
+ * or the end of the year.
+ * @typedef {Record<string, Record<string, { standing: Standing }>>} StandingByDate
+ */
+
+/**
+ * Mirrors REGISTRATION_STATUS in epr-backend (domain/organisations/model.js).
+ * @typedef {'created' | 'approved' | 'cancelled' | 'rejected'} RegistrationStatus
+ */
+
+/**
+ * Mirrors ACCREDITATION_STATUS in epr-backend (domain/organisations/model.js).
+ * @typedef {'created' | 'approved' | 'cancelled' | 'rejected' | 'suspended'} AccreditationStatus
+ */
+
+/**
  * @typedef {{
  *   accreditationNumber: string,
- *   status: { current: string }
+ *   status: { current: AccreditationStatus }
  * }} AccreditationView
  *
  * @typedef {{
  *   material: string,
- *   validFrom: string,
- *   status: { current: string, timeline: StatusTimeline },
+ *   status: { current: RegistrationStatus },
+ *   standingByDate: StandingByDate,
  *   accreditations: Record<string, AccreditationView>
  * }} RegistrationViewCommon
  *

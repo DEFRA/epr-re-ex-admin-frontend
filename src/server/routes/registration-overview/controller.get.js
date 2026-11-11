@@ -9,17 +9,11 @@ import {
   wasteRecordsDownloadUrl,
   yearPageUrls
 } from '#server/common/helpers/page-urls.js'
-import {
-  registrationYears,
-  utcToday
-} from '#server/common/helpers/registration-years.js'
+import { registrationYears } from '#server/common/helpers/registration-years.js'
 
 /**
  * @import { RegistrationKeys } from '#server/common/helpers/natural-keys/swap-keys.js'
  */
-
-const NOT_ACCREDITED = 'Not accredited'
-const NO_VALUE = '-'
 
 export const registrationOverviewGETController = {
   async handler(request, h) {
@@ -36,15 +30,13 @@ export const registrationOverviewGETController = {
     )
     const registration = registrationIn(organisation, registrationNumber)
 
-    const yearRows = registrationYears(registration, utcToday()).map(
-      ({ year, kind, accreditation }) => ({
-        year,
-        isAccredited: kind === 'accredited',
-        accreditationStatus: accreditation?.status ?? NOT_ACCREDITED,
-        accreditationNumber: accreditation?.accreditationNumber ?? NO_VALUE,
-        viewUrl: yearPageUrls[kind]({ ...registrationKeys, year })
+    const yearRows = registrationYears(registration).map((details) => ({
+      ...details,
+      viewUrl: yearPageUrls[details.kind]({
+        ...registrationKeys,
+        year: details.year
       })
-    )
+    }))
 
     return h.view('routes/registration-overview/index', {
       breadcrumbs: [

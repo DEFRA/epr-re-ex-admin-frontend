@@ -2,6 +2,11 @@ import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
 import { mockUserSession } from '#server/common/test-helpers/fixtures.js'
+import {
+  accreditationView,
+  exporterView,
+  reprocessorView
+} from '#server/common/test-helpers/registration-view.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/server.js'
 import { http, HttpResponse, server as mswServer } from '#vite/setup-msw.js'
@@ -45,37 +50,22 @@ describe('#registrationYearController', () => {
     vi.clearAllMocks()
   })
 
-  const reprocessor = {
-    material: 'glass',
-    status: {
-      current: 'approved',
-      timeline: [{ at: '2024-01-01T00:00:00.000Z', status: 'approved' }]
-    },
-    validFrom: '2024-01-01',
-    wasteProcessingType: 'reprocessor',
-    reprocessingType: 'input',
-    site: {
-      address: { line1: 'Site A', town: 'Leeds', postcode: 'LS1 1AA' }
+  const reprocessor = reprocessorView({
+    standingByDate: {
+      2024: { '2024-01-01': { standing: 'registeredOnly' } },
+      2025: { '2025-01-01': { standing: 'accredited' } },
+      2026: { '2026-01-01': { standing: 'accredited' } }
     },
     accreditations: {
-      2025: {
-        accreditationNumber: 'ACC-2025',
-        status: { current: 'suspended' }
-      },
-      2026: {
-        accreditationNumber: 'ACC-2026',
-        status: { current: 'approved' }
-      }
+      2025: accreditationView('ACC-2025', 'suspended'),
+      2026: accreditationView('ACC-2026')
     }
-  }
+  })
 
-  const exporter = {
-    material: 'glass',
-    status: reprocessor.status,
-    validFrom: '2024-01-01',
-    wasteProcessingType: 'exporter',
+  const exporter = exporterView({
+    standingByDate: reprocessor.standingByDate,
     accreditations: reprocessor.accreditations
-  }
+  })
 
   /** @param {object} registration */
   const organisationHolding = (registration) => ({
@@ -315,20 +305,18 @@ describe('#registrationYearController', () => {
         expect(requested.wasteBalanceYears).toEqual([])
       })
 
-      test('Should return not found for a year after the registration was cancelled', async () => {
+      test('Should return not found for a year spent wholly cancelled', async () => {
         useMockBackend({
           ...reprocessor,
-          status: {
-            current: 'cancelled',
-            timeline: [
-              { at: '2024-01-01T00:00:00.000Z', status: 'approved' },
-              { at: '2025-03-01T00:00:00.000Z', status: 'cancelled' }
-            ]
+          standingByDate: {
+            2024: { '2024-01-01': { standing: 'registeredOnly' } },
+            2025: { '2025-01-01': { standing: 'cancelled' } }
           },
+          status: { current: 'cancelled' },
           accreditations: {}
         })
 
-        const { statusCode } = await get(registeredOnlyUrl(2026))
+        const { statusCode } = await get(registeredOnlyUrl(2025))
 
         expect(statusCode).toBe(statusCodes.notFound)
       })

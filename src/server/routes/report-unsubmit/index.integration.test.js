@@ -8,6 +8,7 @@ import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { http, server as mswServer, HttpResponse } from '#vite/setup-msw.js'
 import { createServer } from '#server/server.js'
+import { exporterView } from '#server/common/test-helpers/registration-view.js'
 
 vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
   getUserSession: vi.fn().mockReturnValue(null)
@@ -163,18 +164,12 @@ describe('report-unsubmit', () => {
           name: 'ACME Ltd',
           organisationNumber,
           registrations: {
-            [registrationNumber]: {
+            [registrationNumber]: exporterView({
               material: 'paper',
-              validFrom: '2026-01-01',
-              status: {
-                current: 'approved',
-                timeline: [
-                  { at: '2026-01-01T00:00:00.000Z', status: 'approved' }
-                ]
-              },
-              wasteProcessingType: 'exporter',
-              accreditations: {}
-            }
+              standingByDate: {
+                2026: { '2026-01-01': { standing: 'registeredOnly' } }
+              }
+            })
           }
         })
       ),
