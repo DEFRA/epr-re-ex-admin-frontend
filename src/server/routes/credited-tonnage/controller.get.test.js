@@ -32,9 +32,8 @@ describe('credited-tonnage GET controller', () => {
       data: [
         {
           month: '2026-01',
-          organisation: { id: '0000-0000-uuid', reference: '500001' },
+          organisation: { reference: '500001' },
           accreditation: {
-            id: '1111-1111-uuid',
             accreditationNumber: 'ACC-456',
             processingType: 'reprocessor',
             material: 'plastic'

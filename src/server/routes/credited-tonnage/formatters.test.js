@@ -32,9 +32,8 @@ describe('credited-tonnage formatters', () => {
     test('maps an API row to a fully formatted table row', () => {
       const apiRow = {
         month: '2026-01',
-        organisation: { id: '0000-0000-uuid', reference: '500001' },
+        organisation: { reference: '500001' },
         accreditation: {
-          id: '1111-1111-uuid',
           accreditationNumber: 'ACC-456',
           processingType: 'reprocessor',
           material: 'plastic'
@@ -58,12 +57,11 @@ describe('credited-tonnage formatters', () => {
       })
     })
 
-    test('uses the organisation reference, not the internal id', () => {
+    test('maps the organisation reference to the organisation column', () => {
       const apiRow = {
         month: '2026-03',
-        organisation: { id: 'internal-uuid', reference: '500042' },
+        organisation: { reference: '500042' },
         accreditation: {
-          id: 'acc-uuid',
           accreditationNumber: 'ACC-789',
           processingType: 'exporter',
           material: 'glass_re_melt'

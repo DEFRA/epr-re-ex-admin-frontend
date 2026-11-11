@@ -1,3 +1,4 @@
+import { yearKind } from '#server/common/constants/registration.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import {
   fetchOrganisationView,
@@ -17,68 +18,31 @@ import {
   toRegistrationLinks,
   toReportRows
 } from '#server/common/helpers/registration-sections.js'
-import {
-  accreditationFor,
-  utcToday,
-  yearKind
-} from '#server/common/helpers/registration-years.js'
+import { yearDetails } from '#server/common/helpers/registration-years.js'
 
 /**
- * @import { OrganisationView, RegistrationView } from '#server/common/helpers/fetch-organisation-view.js'
  * @import { AccreditationKeys } from '#server/common/helpers/natural-keys/swap-keys.js'
- * @import { YearKind } from '#server/common/helpers/registration-years.js'
+ * @import { YearKind } from '#server/common/constants/registration.js'
  */
 
-/** @type {Record<YearKind, { label: string, notFound: [string, string, string] }>} */
+/** @type {Record<YearKind, { label: string, notFound: { message: string, code: string, action: string } }>} */
 const YEAR_KINDS = {
-  accredited: {
+  [yearKind.accredited]: {
     label: 'accredited',
-    notFound: [
-      'Accreditation not found',
-      errorCodes.accreditationNotFound,
-      'fetch_accreditation'
-    ]
+    notFound: {
+      message: 'Accreditation not found',
+      code: errorCodes.accreditationNotFound,
+      action: 'fetch_accreditation'
+    }
   },
-  'registered-only': {
+  [yearKind.registeredOnly]: {
     label: 'registered only',
-    notFound: [
-      'Registered-only year not found',
-      errorCodes.registeredOnlyYearNotFound,
-      'fetch_registered_only_year'
-    ]
+    notFound: {
+      message: 'Registered-only year not found',
+      code: errorCodes.registeredOnlyYearNotFound,
+      action: 'fetch_registered_only_year'
+    }
   }
-}
-
-/** @type {[string, string, string]} */
-const YEAR_NOT_FOUND = [
-  'Year not found',
-  errorCodes.registrationYearNotFound,
-  'fetch_registration_year'
-]
-
-/**
- * The year's kind, or a 404 when the year is neither kind, or is not
- * `expected`.
- * @param {OrganisationView} organisation
- * @param {RegistrationView} registration
- * @param {AccreditationKeys} keys
- * @param {YearKind} [expected]
- * @returns {YearKind}
- */
-const yearKindOrNotFound = (organisation, registration, keys, expected) => {
-  const kind = yearKind(registration, keys.year, utcToday())
-  if (!kind || (expected && kind !== expected)) {
-    const [message, code, action] = expected
-      ? YEAR_KINDS[expected].notFound
-      : YEAR_NOT_FOUND
-    throw notFound(message, code, {
-      event: {
-        action,
-        reason: `organisationNumber=${organisation.organisationNumber} registrationNumber=${keys.registrationNumber} year=${keys.year}`
-      }
-    })
-  }
-  return kind
 }
 
 /**
@@ -100,19 +64,30 @@ const registrationYearGETController = (kind) => ({
       organisationNumber
     )
     const registration = registrationIn(organisation, registrationNumber)
-    yearKindOrNotFound(organisation, registration, keys, kind)
-    const accreditation = accreditationFor(registration, year)
+    const details = yearDetails(registration, year)
+
+    if (details?.kind !== kind) {
+      const { message, code, action } = YEAR_KINDS[kind].notFound
+      throw notFound(message, code, {
+        event: {
+          action,
+          reason: `organisationNumber=${organisationNumber} registrationNumber=${registrationNumber} year=${year}`
+        }
+      })
+    }
+
+    const accreditationKeys = details.kind === yearKind.accredited ? keys : null
 
     const [summaryLogRows, reportingPeriods, wasteBalance] = await Promise.all([
       fetchSummaryLogRows(request, registrationKeys, year),
       fetchPeriods(request, registrationKeys, Number(year)),
-      accreditation ? fetchWasteBalance(request, keys) : null
+      accreditationKeys && fetchWasteBalance(request, accreditationKeys)
     ])
 
     const { wasteRecordsDownloadUrl, ...links } = toRegistrationLinks(
       registration,
       registrationKeys,
-      accreditation && keys
+      accreditationKeys
     )
 
     return h.view('routes/registration-year/index', {
@@ -123,7 +98,7 @@ const registrationYearGETController = (kind) => ({
         processingType: processingTypeOf(registration),
         material: registration.material,
         site: siteOf(registration),
-        accreditation
+        accreditation: details.accreditation
       },
       ...links,
       reportRows: toReportRows(
@@ -138,11 +113,13 @@ const registrationYearGETController = (kind) => ({
   }
 })
 
-export const accreditedYearGETController =
-  registrationYearGETController('accredited')
+export const accreditedYearGETController = registrationYearGETController(
+  yearKind.accredited
+)
 
-export const registeredOnlyYearGETController =
-  registrationYearGETController('registered-only')
+export const registeredOnlyYearGETController = registrationYearGETController(
+  yearKind.registeredOnly
+)
 
 /**
  * Sends a year to its accredited page when the registration held an
@@ -158,9 +135,17 @@ export const registrationYearRedirectController = {
       organisationNumber
     )
     const registration = registrationIn(organisation, registrationNumber)
+    const details = yearDetails(registration, year)
 
-    return h.redirect(
-      yearPageUrls[yearKindOrNotFound(organisation, registration, keys)](keys)
-    )
+    if (!details) {
+      throw notFound('Year not found', errorCodes.registrationYearNotFound, {
+        event: {
+          action: 'fetch_registration_year',
+          reason: `organisationNumber=${organisationNumber} registrationNumber=${registrationNumber} year=${year}`
+        }
+      })
+    }
+
+    return h.redirect(yearPageUrls[details.kind](keys))
   }
 }

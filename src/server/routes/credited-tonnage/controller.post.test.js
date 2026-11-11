@@ -14,9 +14,8 @@ vi.mock('#server/common/helpers/logging/logger.js', () => ({
 
 const buildRow = (overrides = {}) => ({
   month: '2026-01',
-  organisation: { id: '0000-0000-uuid', reference: '500001' },
+  organisation: { reference: '500001' },
   accreditation: {
-    id: '1111-1111-uuid',
     accreditationNumber: 'ACC-456',
     processingType: 'reprocessor',
     material: 'plastic'
@@ -124,7 +123,7 @@ describe('creditedTonnagePostController', () => {
     )
   })
 
-  test('uses the organisation reference, never the internal UUID', async () => {
+  test('writes the organisation reference', async () => {
     mockFetchJsonFromBackend.mockResolvedValue({
       meta: { generatedAt: '2026-07-16T12:00:00.000Z' },
       data: [buildRow()]
@@ -134,7 +133,6 @@ describe('creditedTonnagePostController', () => {
 
     const csv = mockH.response.mock.calls[0][0]
     expect(csv).toContain('500001')
-    expect(csv).not.toContain('0000-0000-uuid')
   })
 
   test('keeps material and processing type as raw lowercase API values', async () => {
@@ -143,7 +141,6 @@ describe('creditedTonnagePostController', () => {
       data: [
         buildRow({
           accreditation: {
-            id: '1111-1111-uuid',
             accreditationNumber: 'ACC-789',
             processingType: 'exporter',
             material: 'glass_re_melt'
@@ -230,7 +227,6 @@ describe('creditedTonnagePostController', () => {
       data: [
         buildRow({
           accreditation: {
-            id: '1111-1111-uuid',
             accreditationNumber: '=SUM(A1)',
             processingType: 'reprocessor',
             material: 'plastic'
@@ -251,7 +247,7 @@ describe('creditedTonnagePostController', () => {
       meta: { generatedAt: '2026-07-16T12:00:00.000Z' },
       data: [
         buildRow({
-          organisation: { id: '0000-0000-uuid', reference: '+CMD()' }
+          organisation: { reference: '+CMD()' }
         })
       ]
     })
