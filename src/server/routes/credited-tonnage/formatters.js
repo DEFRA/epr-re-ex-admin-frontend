@@ -1,4 +1,5 @@
-import { format, parseISO } from 'date-fns'
+import { format } from 'date-fns/format'
+import { parseISO } from 'date-fns/parseISO'
 import { formatMaterialName } from '#server/common/helpers/format-material-name.js'
 
 /** @import { CreditedTonnageApiRow, CreditedTonnageRow } from './types.js' */
