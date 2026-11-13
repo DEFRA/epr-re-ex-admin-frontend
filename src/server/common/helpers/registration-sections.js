@@ -191,19 +191,19 @@ export const toReportRows = (registrationKeys, reportingPeriods, scopes) =>
     : []
 
 /**
- * The links the page derives from the registration; the accreditation-scoped
- * ones only when it has an accreditation.
+ * The links a year page derives from the registration; the
+ * accreditation-scoped ones only when it has an accreditation.
  * @param {RegistrationView} registration
- * @param {RegistrationKeys} registrationKeys
+ * @param {AccreditationKeys} yearKeys - the page's registration and year
  * @param {AccreditationKeys | null} accreditationKeys
  */
 export const toRegistrationLinks = (
   registration,
-  registrationKeys,
+  yearKeys,
   accreditationKeys
 ) => ({
   isExporter: registration.wasteProcessingType === 'exporter',
-  wasteRecordsDownloadUrl: wasteRecordsDownloadUrl(registrationKeys),
+  wasteRecordsDownloadUrl: wasteRecordsDownloadUrl(yearKeys),
   ...(accreditationKeys && {
     wasteBalanceEventsUrl: wasteBalanceEventsUrl(accreditationKeys),
     overseasSitesUrl: overseasSitesUrl(accreditationKeys),
