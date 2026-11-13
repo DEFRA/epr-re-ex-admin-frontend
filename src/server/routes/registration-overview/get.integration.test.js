@@ -14,8 +14,7 @@ import {
   getByRole,
   getByText,
   queryByRole,
-  queryByText,
-  within
+  queryByText
 } from '@testing-library/dom'
 import { Window } from 'happy-dom'
 import { vi } from 'vitest'
@@ -158,7 +157,7 @@ describe('#registrationOverviewController', () => {
       ])
     })
 
-    test('Should render summary list with processing type, material, site and waste records', async () => {
+    test('Should render summary list with processing type, material and site', async () => {
       useMockBackend()
 
       const { result } = await get()
@@ -170,11 +169,7 @@ describe('#registrationOverviewController', () => {
       )
       expect(getSummaryRowValue(body, 'Material')).toHaveTextContent('glass')
       expect(getSummaryRowValue(body, 'Site')).toHaveTextContent('Site A')
-      expect(
-        within(getSummaryRowValue(body, 'Waste records')).getByRole('link', {
-          name: 'Download'
-        })
-      ).toHaveAttribute('href', `${registrationUrl}/waste-records/download`)
+      expect(queryByText(body, 'Waste records', { selector: 'dt' })).toBeNull()
     })
 
     test('Should leave the year-specific sections to the year pages', async () => {

@@ -87,10 +87,11 @@ export const registrationYearBreadcrumbs = (keys) => [
 export const reportSubmissionUrl = (params) => periodSubmissionPath(params)
 
 /**
- * @param {{ organisationNumber: string, registrationNumber: string }} keys
+ * A registration's waste records for a year.
+ * @param {{ organisationNumber: string, registrationNumber: string, year: string }} keys
  */
 export const wasteRecordsDownloadUrl = (keys) =>
-  `${registrationPath(keys)}/waste-records/download`
+  `${registrationPath(keys)}/waste-records/download?year=${encodeURIComponent(keys.year)}`
 
 /**
  * @param {{ organisationNumber: string, registrationNumber: string, year: string }} keys

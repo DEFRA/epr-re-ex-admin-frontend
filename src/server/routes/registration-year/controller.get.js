@@ -84,11 +84,7 @@ const registrationYearGETController = (kind) => ({
       accreditationKeys && fetchWasteBalance(request, accreditationKeys)
     ])
 
-    const { wasteRecordsDownloadUrl, ...links } = toRegistrationLinks(
-      registration,
-      registrationKeys,
-      accreditationKeys
-    )
+    const links = toRegistrationLinks(registration, keys, accreditationKeys)
 
     return h.view('routes/registration-year/index', {
       breadcrumbs: registrationBreadcrumbs(keys),

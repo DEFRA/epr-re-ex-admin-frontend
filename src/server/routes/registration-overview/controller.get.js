@@ -6,7 +6,6 @@ import {
 } from '#server/common/helpers/fetch-organisation-view.js'
 import {
   organisationOverviewUrl,
-  wasteRecordsDownloadUrl,
   yearPageUrls
 } from '#server/common/helpers/page-urls.js'
 import { registrationYears } from '#server/common/helpers/registration-years.js'
@@ -53,7 +52,6 @@ export const registrationOverviewGETController = {
         material: registration.material,
         site: siteOf(registration)
       },
-      wasteRecordsDownloadUrl: wasteRecordsDownloadUrl(registrationKeys),
       yearRows,
       error: errorMessage
     })

@@ -36,12 +36,13 @@ const buildHapiH = () => {
   return { h, responseBuilder }
 }
 
-const buildRequest = () =>
+const buildRequest = (query = {}) =>
   /** @type {any} */ ({
     params: {
       organisationNumber: '500123',
       registrationNumber: 'FAKE/REG500123/ALPHA'
     },
+    query,
     yar: { set: vi.fn() }
   })
 
@@ -66,6 +67,50 @@ describe('wasteRecordsRegistrationDownloadController', () => {
       '/organisations/500123/registrations/FAKE%2FREG500123%2FALPHA/waste-records/export.csv'
     )
     expect(h.response.mock.calls[0][0]).toBeInstanceOf(Readable)
+  })
+
+  it("streams the year's export when a year is given", async () => {
+    vi.mocked(streamFromBackend).mockResolvedValue(
+      /** @type {any} */ ({
+        body: buildWebStream(['header\n']),
+        headers: new Headers({ 'content-type': 'text/csv; charset=utf-8' })
+      })
+    )
+
+    const { h } = buildHapiH()
+    const request = buildRequest({ year: '2027' })
+
+    await wasteRecordsRegistrationDownloadController.handler(request, h)
+
+    expect(streamFromBackend).toHaveBeenCalledWith(
+      request,
+      '/organisations/500123/registrations/FAKE%2FREG500123%2FALPHA/waste-records/export.csv?year=2027'
+    )
+  })
+
+  it('redirects back to the year with a flash error when its download fails', async () => {
+    vi.mocked(streamFromBackend).mockRejectedValue(new Error('boom'))
+
+    const { h } = buildHapiH()
+    const request = buildRequest({ year: '2027' })
+
+    await wasteRecordsRegistrationDownloadController.handler(request, h)
+
+    expect(h.redirect).toHaveBeenCalledWith(
+      '/organisations/500123/registrations/FAKE%2FREG500123%2FALPHA/years/2027'
+    )
+  })
+
+  it.each(['2026', '2027'])('accepts year %s', (year) => {
+    const { query } =
+      wasteRecordsRegistrationDownloadController.options.validate
+    expect(query.validate({ year }).error).toBeUndefined()
+  })
+
+  it.each(['26', 'next', '2026a'])('refuses year %s', (year) => {
+    const { query } =
+      wasteRecordsRegistrationDownloadController.options.validate
+    expect(query.validate({ year }).error).toBeDefined()
   })
 
   it('redirects back to the registration overview with a flash error on failure', async () => {
