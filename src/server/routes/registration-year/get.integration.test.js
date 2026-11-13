@@ -222,7 +222,7 @@ describe('#registrationYearController', () => {
         expect(requested.wasteBalanceYears).toEqual(['2025'])
       })
 
-      test("Should link to the year's waste balance events and PRN activity", async () => {
+      test("Should link to the year's waste balance events, PRN activity and waste records", async () => {
         useMockBackend()
 
         const { result } = await get(accreditedUrl(2025))
@@ -241,10 +241,13 @@ describe('#registrationYearController', () => {
           `${registrationUrl}/accreditations/2025/prn-activity/download`
         )
         expect(
-          queryByText(body, 'Overseas sites', { selector: 'dt' })
-        ).toBeNull()
+          getByRole(getSummaryRowValue(body, 'Waste records'), 'link')
+        ).toHaveAttribute(
+          'href',
+          `${registrationUrl}/waste-records/download?year=2025`
+        )
         expect(
-          queryByText(body, 'Waste records', { selector: 'dt' })
+          queryByText(body, 'Overseas sites', { selector: 'dt' })
         ).toBeNull()
       })
 
@@ -302,6 +305,12 @@ describe('#registrationYearController', () => {
           queryByText(body, 'Accreditation number', { selector: 'dt' })
         ).toBeNull()
         expect(queryByText(body, 'PRN activity', { selector: 'dt' })).toBeNull()
+        expect(
+          getByRole(getSummaryRowValue(body, 'Waste records'), 'link')
+        ).toHaveAttribute(
+          'href',
+          `${registrationUrl}/waste-records/download?year=2024`
+        )
         expect(requested.wasteBalanceYears).toEqual([])
       })
 

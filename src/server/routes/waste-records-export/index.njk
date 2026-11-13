@@ -1,6 +1,7 @@
 {% extends 'layout.njk' %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/select/macro.njk" import govukSelect %}
 
 {% block content %}
   <div class="govuk-grid-row">
@@ -20,11 +21,17 @@
       <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
 
       <p class="govuk-body">
-        Download every waste record currently held, with all summary-log fields. The CSV may be very large.
+        Download every waste record currently held for a year, with all summary-log fields. The CSV may be very large.
       </p>
 
       <form method="POST" action="/waste-records-export">
         <input type="hidden" name="crumb" value="{{ crumb }}" />
+        {{ govukSelect({
+          id: "year",
+          name: "year",
+          label: { text: "Year" },
+          items: yearItems
+        }) }}
         {{ govukButton({
           text: "Download CSV"
         }) }}
