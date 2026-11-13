@@ -23,7 +23,6 @@ describe('#organisationOverviewController', () => {
   const exporter = {
     material: 'glass',
     status: { current: 'approved' },
-    validFrom: '2026-01-01',
     wasteProcessingType: 'exporter',
     overseasSites: {},
     accreditations: {
@@ -37,7 +36,6 @@ describe('#organisationOverviewController', () => {
   const reprocessor = {
     material: 'plastic',
     status: { current: 'cancelled' },
-    validFrom: '2026-01-01',
     wasteProcessingType: 'reprocessor',
     reprocessingType: 'input',
     site: {
