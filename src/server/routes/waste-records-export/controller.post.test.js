@@ -5,6 +5,11 @@ import { vi, describe, it, expect, beforeEach } from 'vitest'
 import { wasteRecordsExportPostController } from './controller.post.js'
 import { streamFromBackend } from '#server/common/helpers/stream-from-backend.js'
 import { boomError } from '#server/common/test-helpers/fixtures.js'
+import { fetchAvailableYears } from './available-years.js'
+
+vi.mock('./available-years.js', () => ({
+  fetchAvailableYears: vi.fn()
+}))
 
 vi.mock('#server/common/helpers/stream-from-backend.js', () => ({
   streamFromBackend: vi.fn()
@@ -34,7 +39,10 @@ vi.mock('#server/common/helpers/logging/logger.js', () => ({
 }))
 
 describe('wasteRecordsExportPostController', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(fetchAvailableYears).mockResolvedValue(['2027', '2026'])
+  })
 
   const buildHapiH = () => {
     const calls = {
@@ -172,8 +180,8 @@ describe('wasteRecordsExportPostController', () => {
 
   it.each([
     ['no year', {}],
-    ['a year before the first export year', { year: '2025' }],
-    ['a year after the current one', { year: '2999' }]
+    ['a year before the available ones', { year: '2025' }],
+    ['a year after the available ones', { year: '2028' }]
   ])(
     'redirects with a flash error without calling the backend for %s',
     async (_, payload) => {

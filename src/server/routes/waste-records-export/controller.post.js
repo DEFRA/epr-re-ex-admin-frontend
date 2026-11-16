@@ -1,6 +1,6 @@
 import { proxyCsvStream } from '#server/common/helpers/proxy-csv-stream.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
-import { exportYears } from './export-years.js'
+import { fetchAvailableYears } from './available-years.js'
 
 const logger = createLogger()
 
@@ -8,7 +8,7 @@ export const wasteRecordsExportPostController = {
   async handler(request, h) {
     const year = request.payload?.year
 
-    if (!exportYears().includes(year)) {
+    if (!(await fetchAvailableYears(request)).includes(year)) {
       request.yar.set('error', 'Select a year to download')
       return h.redirect('/waste-records-export')
     }
