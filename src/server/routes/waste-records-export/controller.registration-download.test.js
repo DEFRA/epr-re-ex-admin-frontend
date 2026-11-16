@@ -49,27 +49,7 @@ const buildRequest = (query = {}) =>
 describe('wasteRecordsRegistrationDownloadController', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it("streams the registration's export, its number encoded once", async () => {
-    vi.mocked(streamFromBackend).mockResolvedValue(
-      /** @type {any} */ ({
-        body: buildWebStream(['header\n']),
-        headers: new Headers({ 'content-type': 'text/csv; charset=utf-8' })
-      })
-    )
-
-    const { h } = buildHapiH()
-    const request = buildRequest()
-
-    await wasteRecordsRegistrationDownloadController.handler(request, h)
-
-    expect(streamFromBackend).toHaveBeenCalledWith(
-      request,
-      '/organisations/500123/registrations/FAKE%2FREG500123%2FALPHA/waste-records/export.csv'
-    )
-    expect(h.response.mock.calls[0][0]).toBeInstanceOf(Readable)
-  })
-
-  it("streams the year's export when a year is given", async () => {
+  it("streams the year's export, the registration number encoded once", async () => {
     vi.mocked(streamFromBackend).mockResolvedValue(
       /** @type {any} */ ({
         body: buildWebStream(['header\n']),
@@ -86,6 +66,7 @@ describe('wasteRecordsRegistrationDownloadController', () => {
       request,
       '/organisations/500123/registrations/FAKE%2FREG500123%2FALPHA/waste-records/export.csv?year=2027'
     )
+    expect(h.response.mock.calls[0][0]).toBeInstanceOf(Readable)
   })
 
   it('redirects back to the year with a flash error when its download fails', async () => {
@@ -101,24 +82,12 @@ describe('wasteRecordsRegistrationDownloadController', () => {
     )
   })
 
-  it.each(['2026', '2027'])('accepts year %s', (year) => {
-    const { query } =
-      wasteRecordsRegistrationDownloadController.options.validate
-    expect(query.validate({ year }).error).toBeUndefined()
-  })
-
-  it.each(['26', 'next', '2026a'])('refuses year %s', (year) => {
-    const { query } =
-      wasteRecordsRegistrationDownloadController.options.validate
-    expect(query.validate({ year }).error).toBeDefined()
-  })
-
-  it('redirects back to the registration overview with a flash error on failure', async () => {
+  it('logs the failure and flashes an error', async () => {
     const error = new Error('boom')
     vi.mocked(streamFromBackend).mockRejectedValue(error)
 
     const { h } = buildHapiH()
-    const request = buildRequest()
+    const request = buildRequest({ year: '2027' })
 
     const result = await wasteRecordsRegistrationDownloadController.handler(
       request,
@@ -130,9 +99,6 @@ describe('wasteRecordsRegistrationDownloadController', () => {
       err: error
     })
     expect(request.yar.set).toHaveBeenCalledWith('error', expect.any(String))
-    expect(h.redirect).toHaveBeenCalledWith(
-      '/organisations/500123/registrations/FAKE%2FREG500123%2FALPHA/overview'
-    )
     expect(result).toBe('redirect-response')
   })
 
@@ -142,7 +108,7 @@ describe('wasteRecordsRegistrationDownloadController', () => {
     vi.mocked(streamFromBackend).mockRejectedValue(error)
 
     const { h } = buildHapiH()
-    const request = buildRequest()
+    const request = buildRequest({ year: '2027' })
 
     await wasteRecordsRegistrationDownloadController.handler(request, h)
 

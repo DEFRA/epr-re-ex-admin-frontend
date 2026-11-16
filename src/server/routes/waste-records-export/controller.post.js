@@ -8,12 +8,12 @@ export const wasteRecordsExportPostController = {
   async handler(request, h) {
     const year = request.payload?.year
 
-    if (!(await fetchAvailableYears(request)).includes(year)) {
-      request.yar.set('error', 'Select a year to download')
-      return h.redirect('/waste-records-export')
-    }
-
     try {
+      if (!(await fetchAvailableYears(request)).includes(year)) {
+        request.yar.set('error', 'Select a year to download')
+        return h.redirect('/waste-records-export')
+      }
+
       return await proxyCsvStream(
         request,
         h,

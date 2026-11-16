@@ -178,6 +178,26 @@ describe('wasteRecordsExportPostController', () => {
     expect(result).toBe('redirect-response')
   })
 
+  it('redirects with a flash error when the available years cannot be read', async () => {
+    const error = new Error('years unavailable')
+    vi.mocked(fetchAvailableYears).mockRejectedValue(error)
+
+    const { h } = buildHapiH()
+    const yarSet = vi.fn()
+    const request = { payload: { year: '2026' }, yar: { set: yarSet } }
+
+    const result = await wasteRecordsExportPostController.handler(request, h)
+
+    expect(streamFromBackend).not.toHaveBeenCalled()
+    expect(mockLoggerError).toHaveBeenCalledWith({
+      message: 'Failed to stream waste records export',
+      err: error
+    })
+    expect(yarSet).toHaveBeenCalledWith('error', expect.any(String))
+    expect(h.redirect).toHaveBeenCalledWith('/waste-records-export')
+    expect(result).toBe('redirect-response')
+  })
+
   it.each([
     ['no year', {}],
     ['a year before the available ones', { year: '2025' }],
