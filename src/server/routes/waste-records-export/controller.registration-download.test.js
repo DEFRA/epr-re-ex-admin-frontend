@@ -36,19 +36,20 @@ const buildHapiH = () => {
   return { h, responseBuilder }
 }
 
-const buildRequest = () =>
+const buildRequest = (query = {}) =>
   /** @type {any} */ ({
     params: {
       organisationNumber: '500123',
       registrationNumber: 'FAKE/REG500123/ALPHA'
     },
+    query,
     yar: { set: vi.fn() }
   })
 
 describe('wasteRecordsRegistrationDownloadController', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it("streams the registration's export, its number encoded once", async () => {
+  it("streams the year's export, the registration number encoded once", async () => {
     vi.mocked(streamFromBackend).mockResolvedValue(
       /** @type {any} */ ({
         body: buildWebStream(['header\n']),
@@ -57,23 +58,36 @@ describe('wasteRecordsRegistrationDownloadController', () => {
     )
 
     const { h } = buildHapiH()
-    const request = buildRequest()
+    const request = buildRequest({ year: '2027' })
 
     await wasteRecordsRegistrationDownloadController.handler(request, h)
 
     expect(streamFromBackend).toHaveBeenCalledWith(
       request,
-      '/organisations/500123/registrations/FAKE%2FREG500123%2FALPHA/waste-records/export.csv'
+      '/organisations/500123/registrations/FAKE%2FREG500123%2FALPHA/waste-records/export.csv?year=2027'
     )
     expect(h.response.mock.calls[0][0]).toBeInstanceOf(Readable)
   })
 
-  it('redirects back to the registration overview with a flash error on failure', async () => {
+  it('redirects back to the year with a flash error when its download fails', async () => {
+    vi.mocked(streamFromBackend).mockRejectedValue(new Error('boom'))
+
+    const { h } = buildHapiH()
+    const request = buildRequest({ year: '2027' })
+
+    await wasteRecordsRegistrationDownloadController.handler(request, h)
+
+    expect(h.redirect).toHaveBeenCalledWith(
+      '/organisations/500123/registrations/FAKE%2FREG500123%2FALPHA/years/2027'
+    )
+  })
+
+  it('logs the failure and flashes an error', async () => {
     const error = new Error('boom')
     vi.mocked(streamFromBackend).mockRejectedValue(error)
 
     const { h } = buildHapiH()
-    const request = buildRequest()
+    const request = buildRequest({ year: '2027' })
 
     const result = await wasteRecordsRegistrationDownloadController.handler(
       request,
@@ -85,9 +99,6 @@ describe('wasteRecordsRegistrationDownloadController', () => {
       err: error
     })
     expect(request.yar.set).toHaveBeenCalledWith('error', expect.any(String))
-    expect(h.redirect).toHaveBeenCalledWith(
-      '/organisations/500123/registrations/FAKE%2FREG500123%2FALPHA/overview'
-    )
     expect(result).toBe('redirect-response')
   })
 
@@ -97,7 +108,7 @@ describe('wasteRecordsRegistrationDownloadController', () => {
     vi.mocked(streamFromBackend).mockRejectedValue(error)
 
     const { h } = buildHapiH()
-    const request = buildRequest()
+    const request = buildRequest({ year: '2027' })
 
     await wasteRecordsRegistrationDownloadController.handler(request, h)
 

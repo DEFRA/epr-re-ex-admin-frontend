@@ -80,8 +80,8 @@ describe('natural-key redirect from id addresses', () => {
     ],
     [
       'waste records download',
-      `${registrationById}/waste-records/download`,
-      `${registration}/waste-records/download`
+      `${registrationById}/waste-records/download?year=2026`,
+      `${registration}/waste-records/download?year=2026`
     ],
     [
       'PRN activity download',
