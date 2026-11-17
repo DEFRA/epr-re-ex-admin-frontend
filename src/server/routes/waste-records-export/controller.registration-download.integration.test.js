@@ -60,6 +60,22 @@ describe('the registration waste records download', () => {
     ])
   })
 
+  it('does not exist for a year the backend refuses to export', async () => {
+    mswServer.use(
+      http.get(
+        `${backendUrl}${registration}/waste-records/export.csv`,
+        () =>
+          new HttpResponse(null, { status: statusCodes.unprocessableEntity })
+      )
+    )
+
+    const { statusCode } = await get(
+      `${registration}/waste-records/download?year=2025`
+    )
+
+    expect(statusCode).toBe(statusCodes.notFound)
+  })
+
   it.each([
     ['no year', ''],
     ['a two-digit year', '?year=26'],
