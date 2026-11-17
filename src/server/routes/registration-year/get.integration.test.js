@@ -112,7 +112,7 @@ describe('#registrationYearController', () => {
    */
   const useMockBackend = (
     registration = reprocessor,
-    wasteRecordYears = [2025, 2024]
+    wasteRecordYears = [2026]
   ) => {
     requested = {
       calendarYears: [],
@@ -236,26 +236,26 @@ describe('#registrationYearController', () => {
       test("Should link to the year's waste balance events, PRN activity and waste records", async () => {
         useMockBackend()
 
-        const { result } = await get(accreditedUrl(2025))
+        const { result } = await get(accreditedUrl(2026))
         const body = renderPage(result)
 
         expect(
           getByRole(getSummaryRowValue(body, 'Waste balance events'), 'link')
         ).toHaveAttribute(
           'href',
-          `${registrationUrl}/accreditations/2025/waste-balance-events`
+          `${registrationUrl}/accreditations/2026/waste-balance-events`
         )
         expect(
           getByRole(getSummaryRowValue(body, 'PRN activity'), 'link')
         ).toHaveAttribute(
           'href',
-          `${registrationUrl}/accreditations/2025/prn-activity/download`
+          `${registrationUrl}/accreditations/2026/prn-activity/download`
         )
         expect(
           getByRole(getSummaryRowValue(body, 'Waste records'), 'link')
         ).toHaveAttribute(
           'href',
-          `${registrationUrl}/waste-records/download?year=2025`
+          `${registrationUrl}/waste-records/download?year=2026`
         )
         expect(
           queryByText(body, 'Overseas sites', { selector: 'dt' })
@@ -348,13 +348,27 @@ describe('#registrationYearController', () => {
           queryByText(body, 'Accreditation number', { selector: 'dt' })
         ).toBeNull()
         expect(queryByText(body, 'PRN activity', { selector: 'dt' })).toBeNull()
+        expect(requested.wasteBalanceYears).toEqual([])
+      })
+
+      test("Should link to the year's waste records", async () => {
+        useMockBackend({
+          ...reprocessor,
+          standingByDate: {
+            2026: { '2026-01-01': { standing: 'registeredOnly' } }
+          },
+          accreditations: {}
+        })
+
+        const { result } = await get(registeredOnlyUrl(2026))
+        const body = renderPage(result)
+
         expect(
           getByRole(getSummaryRowValue(body, 'Waste records'), 'link')
         ).toHaveAttribute(
           'href',
-          `${registrationUrl}/waste-records/download?year=2024`
+          `${registrationUrl}/waste-records/download?year=2026`
         )
-        expect(requested.wasteBalanceYears).toEqual([])
       })
 
       test('Should return not found for a year spent wholly cancelled', async () => {
