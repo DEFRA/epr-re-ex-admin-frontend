@@ -321,6 +321,11 @@ describe('#accreditedYearGETController', () => {
     )
   }
 
+  const wasteRecordYearsHandler = () =>
+    http.get(`${backendUrl}/waste-records/years`, () =>
+      HttpResponse.json({ years: [{ year: 2026 }] })
+    )
+
   const useMockBackend = (
     organisationResponse = mockOrganisation,
     calendarResponse = mockCalendar,
@@ -337,7 +342,8 @@ describe('#accreditedYearGETController', () => {
         HttpResponse.json(asYearCalendar(calendarResponse))
       ),
       http.get(summaryLogsUrl, () => HttpResponse.json(summaryLogsResponse)),
-      http.get(wasteBalanceUrl, () => HttpResponse.json(wasteBalanceResponse))
+      http.get(wasteBalanceUrl, () => HttpResponse.json(wasteBalanceResponse)),
+      wasteRecordYearsHandler()
     )
   }
 
@@ -1048,7 +1054,8 @@ describe('#accreditedYearGETController', () => {
         http.get(wasteBalanceUrl, () => HttpResponse.json(mockWasteBalance)),
         http.get(summaryLogsUrl, () => {
           throw HttpResponse.text('', { status: 500 })
-        })
+        }),
+        wasteRecordYearsHandler()
       )
 
       const { result } = await server.inject({
@@ -1153,7 +1160,8 @@ describe('#accreditedYearGETController', () => {
           ),
           http.get(wasteBalanceUrl, () => {
             throw HttpResponse.text('', { status: 500 })
-          })
+          }),
+          wasteRecordYearsHandler()
         )
 
         const { statusCode, result } = await server.inject({

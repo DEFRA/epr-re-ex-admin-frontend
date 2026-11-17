@@ -21,6 +21,7 @@ import {
   reportStatus
 } from '#server/common/constants/report-status.js'
 import { SCOPES } from '#server/common/helpers/auth/scopes.js'
+import { fetchAvailableYears } from '#server/routes/waste-records-export/available-years.js'
 
 /**
  * The sections the registration overview and a registration's year pages
@@ -143,6 +144,21 @@ export const fetchWasteBalance = async (request, accreditationKeys) => {
 }
 
 /**
+ * The years waste records are available for, or none where they could not be
+ * read, so the page shows no download rather than failing.
+ * @param {HapiRequest} request
+ * @returns {Promise<string[]>}
+ */
+export const fetchWasteRecordYears = async (request) => {
+  try {
+    return await fetchAvailableYears(request)
+  } catch (err) {
+    request.logger.warn({ message: 'Failed to fetch waste record years', err })
+    return []
+  }
+}
+
+/**
  * The registration's summary logs for `year`.
  * @param {HapiRequest} request
  * @param {RegistrationKeys} registrationKeys
@@ -192,18 +208,23 @@ export const toReportRows = (registrationKeys, reportingPeriods, scopes) =>
 
 /**
  * The links a year page derives from the registration; the
- * accreditation-scoped ones only when it has an accreditation.
+ * accreditation-scoped ones only when it has an accreditation, and the waste
+ * records download only for a year waste records are available for.
  * @param {RegistrationView} registration
  * @param {AccreditationKeys} yearKeys - the page's registration and year
  * @param {AccreditationKeys | null} accreditationKeys
+ * @param {string[]} wasteRecordYears
  */
 export const toRegistrationLinks = (
   registration,
   yearKeys,
-  accreditationKeys
+  accreditationKeys,
+  wasteRecordYears
 ) => ({
   isExporter: registration.wasteProcessingType === 'exporter',
-  wasteRecordsDownloadUrl: wasteRecordsDownloadUrl(yearKeys),
+  ...(wasteRecordYears.includes(String(yearKeys.year)) && {
+    wasteRecordsDownloadUrl: wasteRecordsDownloadUrl(yearKeys)
+  }),
   ...(accreditationKeys && {
     wasteBalanceEventsUrl: wasteBalanceEventsUrl(accreditationKeys),
     overseasSitesUrl: overseasSitesUrl(accreditationKeys),

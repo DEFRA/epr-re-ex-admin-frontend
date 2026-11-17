@@ -15,6 +15,7 @@ import {
   fetchPeriods,
   fetchSummaryLogRows,
   fetchWasteBalance,
+  fetchWasteRecordYears,
   toRegistrationLinks,
   toReportRows
 } from '#server/common/helpers/registration-sections.js'
@@ -78,13 +79,20 @@ const registrationYearGETController = (kind) => ({
 
     const accreditationKeys = details.kind === yearKind.accredited ? keys : null
 
-    const [summaryLogRows, reportingPeriods, wasteBalance] = await Promise.all([
-      fetchSummaryLogRows(request, registrationKeys, year),
-      fetchPeriods(request, registrationKeys, Number(year)),
-      accreditationKeys && fetchWasteBalance(request, accreditationKeys)
-    ])
+    const [summaryLogRows, reportingPeriods, wasteBalance, wasteRecordYears] =
+      await Promise.all([
+        fetchSummaryLogRows(request, registrationKeys, year),
+        fetchPeriods(request, registrationKeys, Number(year)),
+        accreditationKeys && fetchWasteBalance(request, accreditationKeys),
+        fetchWasteRecordYears(request)
+      ])
 
-    const links = toRegistrationLinks(registration, keys, accreditationKeys)
+    const links = toRegistrationLinks(
+      registration,
+      keys,
+      accreditationKeys,
+      wasteRecordYears
+    )
 
     return h.view('routes/registration-year/index', {
       breadcrumbs: registrationBreadcrumbs(keys),

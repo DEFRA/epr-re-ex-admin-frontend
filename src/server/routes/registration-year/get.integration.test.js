@@ -106,8 +106,14 @@ describe('#registrationYearController', () => {
   /** @type {{ calendarYears: string[], summaryLogQueries: string[], wasteBalanceYears: string[] }} */
   let requested
 
-  /** @param {object} [registration] */
-  const useMockBackend = (registration = reprocessor) => {
+  /**
+   * @param {object} [registration]
+   * @param {number[]} [wasteRecordYears]
+   */
+  const useMockBackend = (
+    registration = reprocessor,
+    wasteRecordYears = [2025, 2024]
+  ) => {
     requested = {
       calendarYears: [],
       summaryLogQueries: [],
@@ -137,6 +143,11 @@ describe('#registrationYearController', () => {
           requested.wasteBalanceYears.push(String(params.year))
           return HttpResponse.json({ amount: 150, availableAmount: 120 })
         }
+      ),
+      http.get(`${backendUrl}/waste-records/years`, () =>
+        HttpResponse.json({
+          years: wasteRecordYears.map((year) => ({ year }))
+        })
       )
     )
   }
@@ -248,6 +259,38 @@ describe('#registrationYearController', () => {
         )
         expect(
           queryByText(body, 'Overseas sites', { selector: 'dt' })
+        ).toBeNull()
+      })
+
+      test('Should offer no waste records for a year they are not available for', async () => {
+        useMockBackend(reprocessor, [2026])
+
+        const { result } = await get(accreditedUrl(2025))
+        const body = renderPage(result)
+
+        expect(
+          queryByText(body, 'Waste records', { selector: 'dt' })
+        ).toBeNull()
+      })
+
+      test('Should offer no waste records, rather than fail, when their years cannot be read', async () => {
+        useMockBackend()
+        mswServer.use(
+          http.get(
+            `${backendUrl}/waste-records/years`,
+            () =>
+              new HttpResponse(null, {
+                status: statusCodes.internalServerError
+              })
+          )
+        )
+
+        const { statusCode, result } = await get(accreditedUrl(2025))
+        const body = renderPage(result)
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(
+          queryByText(body, 'Waste records', { selector: 'dt' })
         ).toBeNull()
       })
 
