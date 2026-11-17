@@ -5,10 +5,10 @@ import { vi, describe, it, expect, beforeEach } from 'vitest'
 import { wasteRecordsExportPostController } from './controller.post.js'
 import { streamFromBackend } from '#server/common/helpers/stream-from-backend.js'
 import { boomError } from '#server/common/test-helpers/fixtures.js'
-import { fetchAvailableYears } from './available-years.js'
+import { fetchWasteRecordYears } from '#server/common/helpers/fetch-waste-record-years.js'
 
-vi.mock('./available-years.js', () => ({
-  fetchAvailableYears: vi.fn()
+vi.mock('#server/common/helpers/fetch-waste-record-years.js', () => ({
+  fetchWasteRecordYears: vi.fn()
 }))
 
 vi.mock('#server/common/helpers/stream-from-backend.js', () => ({
@@ -41,7 +41,7 @@ vi.mock('#server/common/helpers/logging/logger.js', () => ({
 describe('wasteRecordsExportPostController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchAvailableYears).mockResolvedValue(['2027', '2026'])
+    vi.mocked(fetchWasteRecordYears).mockResolvedValue(['2027', '2026'])
   })
 
   const buildHapiH = () => {
@@ -180,7 +180,7 @@ describe('wasteRecordsExportPostController', () => {
 
   it('redirects with a flash error when the available years cannot be read', async () => {
     const error = new Error('years unavailable')
-    vi.mocked(fetchAvailableYears).mockRejectedValue(error)
+    vi.mocked(fetchWasteRecordYears).mockRejectedValue(error)
 
     const { h } = buildHapiH()
     const yarSet = vi.fn()

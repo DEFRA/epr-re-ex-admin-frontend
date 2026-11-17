@@ -15,7 +15,7 @@ import {
   fetchPeriods,
   fetchSummaryLogRows,
   fetchWasteBalance,
-  fetchWasteRecordYears,
+  fetchWasteRecordYearsOrNone,
   toRegistrationLinks,
   toReportRows
 } from '#server/common/helpers/registration-sections.js'
@@ -84,7 +84,7 @@ const registrationYearGETController = (kind) => ({
         fetchSummaryLogRows(request, registrationKeys, year),
         fetchPeriods(request, registrationKeys, Number(year)),
         accreditationKeys && fetchWasteBalance(request, accreditationKeys),
-        fetchWasteRecordYears(request)
+        fetchWasteRecordYearsOrNone(request)
       ])
 
     const links = toRegistrationLinks(

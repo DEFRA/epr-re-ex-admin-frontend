@@ -21,7 +21,7 @@ import {
   reportStatus
 } from '#server/common/constants/report-status.js'
 import { SCOPES } from '#server/common/helpers/auth/scopes.js'
-import { fetchAvailableYears } from '#server/routes/waste-records-export/available-years.js'
+import { fetchWasteRecordYears } from '#server/common/helpers/fetch-waste-record-years.js'
 
 /**
  * The sections the registration overview and a registration's year pages
@@ -149,9 +149,9 @@ export const fetchWasteBalance = async (request, accreditationKeys) => {
  * @param {HapiRequest} request
  * @returns {Promise<string[]>}
  */
-export const fetchWasteRecordYears = async (request) => {
+export const fetchWasteRecordYearsOrNone = async (request) => {
   try {
-    return await fetchAvailableYears(request)
+    return await fetchWasteRecordYears(request)
   } catch (err) {
     request.logger.warn({ message: 'Failed to fetch waste record years', err })
     return []

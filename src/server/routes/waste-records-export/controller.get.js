@@ -1,11 +1,11 @@
-import { fetchAvailableYears } from './available-years.js'
+import { fetchWasteRecordYears } from '#server/common/helpers/fetch-waste-record-years.js'
 
 export const wasteRecordsExportGetController = {
   async handler(request, h) {
     const error = request.yar.get('error')
     await request.yar.clear('error')
 
-    const years = await fetchAvailableYears(request)
+    const years = await fetchWasteRecordYears(request)
     const currentYear = String(new Date().getUTCFullYear())
 
     return h.view('routes/waste-records-export/index', {

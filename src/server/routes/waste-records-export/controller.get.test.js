@@ -1,17 +1,17 @@
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest'
 
-import { fetchAvailableYears } from './available-years.js'
+import { fetchWasteRecordYears } from '#server/common/helpers/fetch-waste-record-years.js'
 import { wasteRecordsExportGetController } from './controller.get.js'
 
-vi.mock('./available-years.js', () => ({
-  fetchAvailableYears: vi.fn()
+vi.mock('#server/common/helpers/fetch-waste-record-years.js', () => ({
+  fetchWasteRecordYears: vi.fn()
 }))
 
 describe('wasteRecordsExportGetController', () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date('2026-11-16T00:00:00Z'))
-    vi.mocked(fetchAvailableYears).mockResolvedValue(['2027', '2026'])
+    vi.mocked(fetchWasteRecordYears).mockResolvedValue(['2027', '2026'])
   })
 
   afterEach(() => vi.useRealTimers())
@@ -29,7 +29,7 @@ describe('wasteRecordsExportGetController', () => {
 
     await wasteRecordsExportGetController.handler(request, { view })
 
-    expect(fetchAvailableYears).toHaveBeenCalledWith(request)
+    expect(fetchWasteRecordYears).toHaveBeenCalledWith(request)
     expect(view.mock.calls[0][1].yearItems).toEqual(yearItems)
   })
 
