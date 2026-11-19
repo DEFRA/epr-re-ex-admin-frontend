@@ -12,5 +12,3 @@ export const statusCodes = {
   unprocessableEntity: 422,
   internalServerError: 500
 }
-
-export const knipCanary = 'unused'
