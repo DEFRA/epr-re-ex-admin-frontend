@@ -108,7 +108,8 @@ describe('#getBellOptions', () => {
     const providerParams = result.providerParams({})
 
     expect(providerParams).toEqual({
-      response_mode: 'query'
+      response_mode: 'query',
+      prompt: 'select_account'
     })
   })
 
