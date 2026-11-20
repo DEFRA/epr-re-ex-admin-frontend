@@ -3,6 +3,12 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
 import { formatDate } from '#config/nunjucks/filters/format-date.js'
 import { roundForCsv } from '#server/common/helpers/round-for-csv.js'
 import { formatMaterialName } from './formatters.js'
+import {
+  defaultReportYear,
+  reportUrlForYear,
+  reportYears
+} from '#server/common/helpers/report-year.js'
+import { wasteBalanceAvailabilityPath } from './controller.get.js'
 
 const dateFormat = "d MMMM yyyy 'at' h:mmaaa"
 const amountDecimals = 2
@@ -33,13 +39,20 @@ async function generateCsv(data) {
 
 export const wasteBalanceAvailabilityPostController = {
   async handler(request, h) {
+    const { years, year } = await reportYears(request)
+    if (year === undefined) {
+      return h.redirect(
+        reportUrlForYear(wasteBalanceAvailabilityPath, defaultReportYear(years))
+      )
+    }
+
     try {
       const data = await fetchJsonFromBackend(
         request,
-        '/v1/waste-balance-availability'
+        `/v1/waste-balance-availability?year=${year}`
       )
       const csv = await generateCsv(data)
-      const filename = 'waste-balance-availability.csv'
+      const filename = `waste-balance-availability-${year}.csv`
 
       return h
         .response(csv)
@@ -52,7 +65,7 @@ export const wasteBalanceAvailabilityPostController = {
 
       request.yar.set('error', errorMessage)
 
-      return h.redirect('/waste-balance-availability')
+      return h.redirect(reportUrlForYear(wasteBalanceAvailabilityPath, year))
     }
   }
 }
