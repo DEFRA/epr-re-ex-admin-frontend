@@ -55,7 +55,8 @@ export function getBellOptions(oidcConfig) {
 
     providerParams: function (_request) {
       return {
-        response_mode: 'query'
+        response_mode: 'query',
+        prompt: 'select_account'
       }
     }
   }
