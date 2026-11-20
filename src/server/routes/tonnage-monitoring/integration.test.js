@@ -40,15 +40,15 @@ describe('tonnage-monitoring', () => {
     )
   }
 
-  /** @type {URL[]} */
-  let tonnageRequests
+  /** @type {string[]} */
+  let requestedYears
 
   const stubBackendResponse = (data, status = 200) => {
     stubYears()
-    tonnageRequests = []
+    requestedYears = []
     mswServer.use(
-      http.get(`${backendUrl}/v1/tonnage-monitoring`, ({ request }) => {
-        tonnageRequests.push(new URL(request.url))
+      http.get(`${backendUrl}/v1/tonnage-monitoring/:year`, ({ params }) => {
+        requestedYears.push(String(params.year))
         return HttpResponse.json(data, { status })
       })
     )
@@ -236,9 +236,7 @@ describe('tonnage-monitoring', () => {
           auth: { strategy: 'session', credentials: mockUserSession }
         })
 
-        expect(
-          tonnageRequests.map(({ searchParams }) => searchParams.get('year'))
-        ).toEqual(['2025'])
+        expect(requestedYears).toEqual(['2025'])
       })
 
       test('Should offer every year the report can be shown for, with the year in the URL selected, in a form that changes the URL', async () => {

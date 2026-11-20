@@ -58,7 +58,7 @@ describe('tonnage-monitoring GET controller', () => {
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
       mockRequest,
-      '/v1/tonnage-monitoring?year=2026'
+      '/v1/tonnage-monitoring/2026'
     )
 
     const viewCall = mockH.view.mock.calls[0]

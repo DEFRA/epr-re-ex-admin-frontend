@@ -68,7 +68,7 @@ describe('tonnage-monitoring POST controller', () => {
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
       mockRequest,
-      '/v1/tonnage-monitoring?year=2026'
+      '/v1/tonnage-monitoring/2026'
     )
 
     const expectedCsv = [

@@ -68,7 +68,7 @@ export const tonnageMonitoringPostController = {
     try {
       const data = await fetchJsonFromBackend(
         request,
-        `/v1/tonnage-monitoring?year=${year}`
+        `/v1/tonnage-monitoring/${year}`
       )
       const csv = await generateCsv(data)
       const filename = `tonnage-monitoring-${year}.csv`

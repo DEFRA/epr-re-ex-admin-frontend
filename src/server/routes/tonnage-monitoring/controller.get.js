@@ -19,7 +19,7 @@ export const tonnageMonitoringGetController = {
 
     const data = await fetchJsonFromBackend(
       request,
-      `/v1/tonnage-monitoring?year=${year}`
+      `/v1/tonnage-monitoring/${year}`
     )
 
     const { rows, monthNames, hasMultipleYears } = buildMaterialRowData(data)
