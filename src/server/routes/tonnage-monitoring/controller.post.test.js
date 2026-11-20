@@ -7,6 +7,10 @@ vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
 }))
 
+vi.mock('#server/common/helpers/fetch-waste-record-years.js', () => ({
+  fetchWasteRecordYears: vi.fn().mockResolvedValue(['2026', '2025'])
+}))
+
 const mockFetchJsonFromBackend = vi.mocked(fetchJsonFromBackend)
 
 describe('tonnage-monitoring POST controller', () => {
@@ -20,7 +24,8 @@ describe('tonnage-monitoring POST controller', () => {
     mockRequest = {
       yar: {
         set: vi.fn()
-      }
+      },
+      query: { year: '2026' }
     }
 
     mockResponse = {
@@ -63,7 +68,7 @@ describe('tonnage-monitoring POST controller', () => {
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
       mockRequest,
-      '/v1/tonnage-monitoring'
+      '/v1/tonnage-monitoring?year=2026'
     )
 
     const expectedCsv = [
@@ -87,7 +92,7 @@ describe('tonnage-monitoring POST controller', () => {
     expect(mockResponse.header).toHaveBeenCalledWith('Content-Type', 'text/csv')
     expect(mockResponse.header).toHaveBeenCalledWith(
       'Content-Disposition',
-      'attachment; filename="tonnage-monitoring.csv"'
+      'attachment; filename="tonnage-monitoring-2026.csv"'
     )
   })
 
@@ -269,7 +274,7 @@ describe('tonnage-monitoring POST controller', () => {
       'error',
       'There was a problem downloading the tonnage data. Please try again.'
     )
-    expect(mockH.redirect).toHaveBeenCalledWith('/tonnage-monitoring')
+    expect(mockH.redirect).toHaveBeenCalledWith('/tonnage-monitoring?year=2026')
     expect(result).toBe('redirect-response')
   })
 
@@ -283,5 +288,20 @@ describe('tonnage-monitoring POST controller', () => {
       'error',
       'Custom backend error message'
     )
+  })
+
+  test('Should redirect to a year the report can be shown for, without downloading, when the URL names none', async () => {
+    mockRequest.query = { year: '2019' }
+
+    const result = await tonnageMonitoringPostController.handler(
+      mockRequest,
+      mockH
+    )
+
+    expect(mockH.redirect).toHaveBeenCalledWith(
+      expect.stringMatching(/^\/tonnage-monitoring\?year=202[56]$/)
+    )
+    expect(mockFetchJsonFromBackend).not.toHaveBeenCalled()
+    expect(result).toBe('redirect-response')
   })
 })

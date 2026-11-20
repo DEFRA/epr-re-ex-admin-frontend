@@ -6,6 +6,10 @@ vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
 }))
 
+vi.mock('#server/common/helpers/fetch-waste-record-years.js', () => ({
+  fetchWasteRecordYears: vi.fn().mockResolvedValue(['2026', '2025'])
+}))
+
 const mockFetchJsonFromBackend = vi.mocked(fetchJsonFromBackend)
 
 describe('tonnage-monitoring GET controller', () => {
@@ -25,7 +29,7 @@ describe('tonnage-monitoring GET controller', () => {
         get: vi.fn().mockReturnValue(null),
         clear: vi.fn()
       },
-      query: {}
+      query: { year: '2026' }
     }
 
     mockH = {
@@ -54,7 +58,7 @@ describe('tonnage-monitoring GET controller', () => {
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
       mockRequest,
-      '/v1/tonnage-monitoring'
+      '/v1/tonnage-monitoring?year=2026'
     )
 
     const viewCall = mockH.view.mock.calls[0]
@@ -204,6 +208,11 @@ describe('tonnage-monitoring GET controller', () => {
     expect(viewCall[1]).toEqual({
       pageTitle: 'Tonnage monitoring',
       generatedAt: '2026-01-29T12:00:00.000Z',
+      year: '2026',
+      yearItems: [
+        { value: '2026', text: '2026', selected: true },
+        { value: '2025', text: '2025', selected: false }
+      ],
       materials: [],
       monthNames: [],
       hasMultipleYears: false,

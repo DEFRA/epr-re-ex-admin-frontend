@@ -31,9 +31,24 @@ describe('tonnage-monitoring', () => {
     vi.clearAllMocks()
   })
 
-  const stubBackendResponse = (data, status = 200) => {
+  /** The years the backend says the report can be shown for. */
+  const stubYears = (years = [2026, 2025]) => {
     mswServer.use(
-      http.get(`${backendUrl}/v1/tonnage-monitoring`, () => {
+      http.get(`${backendUrl}/waste-records/years`, () =>
+        HttpResponse.json({ years: years.map((year) => ({ year })) })
+      )
+    )
+  }
+
+  /** @type {URL[]} */
+  let tonnageRequests
+
+  const stubBackendResponse = (data, status = 200) => {
+    stubYears()
+    tonnageRequests = []
+    mswServer.use(
+      http.get(`${backendUrl}/v1/tonnage-monitoring`, ({ request }) => {
+        tonnageRequests.push(new URL(request.url))
         return HttpResponse.json(data, { status })
       })
     )
@@ -73,7 +88,7 @@ describe('tonnage-monitoring', () => {
       test('Should return unauthorised status code', async () => {
         const { result, statusCode } = await server.inject({
           method: 'GET',
-          url: '/tonnage-monitoring'
+          url: '/tonnage-monitoring?year=2026'
         })
 
         expect(statusCode).toBe(statusCodes.unauthorised)
@@ -95,7 +110,7 @@ describe('tonnage-monitoring', () => {
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
-          url: '/tonnage-monitoring',
+          url: '/tonnage-monitoring?year=2026',
           auth: {
             strategy: 'session',
             credentials: mockUserSession
@@ -113,7 +128,7 @@ describe('tonnage-monitoring', () => {
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
-          url: '/tonnage-monitoring',
+          url: '/tonnage-monitoring?year=2026',
           auth: {
             strategy: 'session',
             credentials: mockUserSession
@@ -135,7 +150,7 @@ describe('tonnage-monitoring', () => {
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
-          url: '/tonnage-monitoring',
+          url: '/tonnage-monitoring?year=2026',
           auth: {
             strategy: 'session',
             credentials: mockUserSession
@@ -145,7 +160,9 @@ describe('tonnage-monitoring', () => {
         expect(statusCode).toBe(statusCodes.ok)
 
         const $ = cheerio.load(result)
-        expect($('button.govuk-button').text().trim()).toBe('Download CSV')
+        expect($('form[method="POST"] button.govuk-button').text().trim()).toBe(
+          'Download CSV'
+        )
       })
 
       test('Should render inset text when no materials', async () => {
@@ -157,7 +174,7 @@ describe('tonnage-monitoring', () => {
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
-          url: '/tonnage-monitoring',
+          url: '/tonnage-monitoring?year=2026',
           auth: {
             strategy: 'session',
             credentials: mockUserSession
@@ -177,7 +194,7 @@ describe('tonnage-monitoring', () => {
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
-          url: '/tonnage-monitoring',
+          url: '/tonnage-monitoring?year=2026',
           auth: {
             strategy: 'session',
             credentials: mockUserSession
@@ -199,7 +216,7 @@ describe('tonnage-monitoring', () => {
 
         const { statusCode, result } = await server.inject({
           method: 'GET',
-          url: '/tonnage-monitoring',
+          url: '/tonnage-monitoring?year=2026',
           auth: {
             strategy: 'session',
             credentials: mockUserSession
@@ -208,6 +225,74 @@ describe('tonnage-monitoring', () => {
 
         expect(statusCode).toBe(statusCodes.internalServerError)
         expect(result).toContain('Sorry, there is a problem with the service')
+      })
+
+      test('Should ask the backend for the year in the URL', async () => {
+        stubBackendResponse(mockTonnageData)
+
+        await server.inject({
+          method: 'GET',
+          url: '/tonnage-monitoring?year=2025',
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        expect(
+          tonnageRequests.map(({ searchParams }) => searchParams.get('year'))
+        ).toEqual(['2025'])
+      })
+
+      test('Should offer every year the report can be shown for, with the year in the URL selected, in a form that changes the URL', async () => {
+        stubBackendResponse(mockTonnageData)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: '/tonnage-monitoring?year=2025',
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const $ = cheerio.load(result)
+        const picker = $('form[method="get"][action="/tonnage-monitoring"]')
+        expect(
+          picker
+            .find('select[name="year"] option')
+            .map((_, option) => $(option).attr('value'))
+            .get()
+        ).toEqual(['2026', '2025'])
+        expect(picker.find('option[selected]').attr('value')).toBe('2025')
+      })
+
+      test('Should download the CSV for the year shown', async () => {
+        stubBackendResponse(mockTonnageData)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: '/tonnage-monitoring?year=2025',
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const $ = cheerio.load(result)
+        expect($('form[method="POST"]').attr('action')).toBe(
+          '/tonnage-monitoring?year=2025'
+        )
+      })
+
+      test.each([
+        ['no year', '/tonnage-monitoring'],
+        [
+          'a year the report cannot be shown for',
+          '/tonnage-monitoring?year=2019'
+        ]
+      ])('Should redirect to the newest year with %s', async (_, url) => {
+        stubYears([2025, 2024])
+
+        const { statusCode, headers } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        expect(statusCode).toBe(302)
+        expect(headers.location).toBe('/tonnage-monitoring?year=2025')
       })
     })
   })
@@ -221,7 +306,7 @@ describe('tonnage-monitoring', () => {
       test('Should return unauthorised status code', async () => {
         const { result, statusCode } = await server.inject({
           method: 'POST',
-          url: '/tonnage-monitoring',
+          url: '/tonnage-monitoring?year=2026',
           payload: {}
         })
 
@@ -240,13 +325,13 @@ describe('tonnage-monitoring', () => {
 
         const { cookie, crumb } = await getCsrfToken(
           server,
-          '/tonnage-monitoring',
+          '/tonnage-monitoring?year=2026',
           { strategy: 'session', credentials: mockUserSession }
         )
 
         const { statusCode, headers, payload } = await server.inject({
           method: 'POST',
-          url: '/tonnage-monitoring',
+          url: '/tonnage-monitoring?year=2026',
           headers: { cookie },
           payload: { crumb },
           auth: {
@@ -258,7 +343,7 @@ describe('tonnage-monitoring', () => {
         expect(statusCode).toBe(statusCodes.ok)
         expect(headers['content-type']).toContain('text/csv')
         expect(headers['content-disposition']).toBe(
-          'attachment; filename="tonnage-monitoring.csv"'
+          'attachment; filename="tonnage-monitoring-2026.csv"'
         )
         expect(payload).toContain('Tonnage by material')
         expect(payload).toContain('Material,Type,Jan,Feb')
@@ -272,13 +357,13 @@ describe('tonnage-monitoring', () => {
 
         const { cookie, crumb } = await getCsrfToken(
           server,
-          '/tonnage-monitoring',
+          '/tonnage-monitoring?year=2026',
           { strategy: 'session', credentials: mockUserSession }
         )
 
         const { payload } = await server.inject({
           method: 'POST',
-          url: '/tonnage-monitoring',
+          url: '/tonnage-monitoring?year=2026',
           headers: { cookie },
           payload: { crumb },
           auth: {
@@ -297,13 +382,13 @@ describe('tonnage-monitoring', () => {
 
         const { cookie, crumb } = await getCsrfToken(
           server,
-          '/tonnage-monitoring',
+          '/tonnage-monitoring?year=2026',
           { strategy: 'session', credentials: mockUserSession }
         )
 
         const { payload } = await server.inject({
           method: 'POST',
-          url: '/tonnage-monitoring',
+          url: '/tonnage-monitoring?year=2026',
           headers: { cookie },
           payload: { crumb },
           auth: {
@@ -322,13 +407,13 @@ describe('tonnage-monitoring', () => {
 
         const { cookie, crumb } = await getCsrfToken(
           server,
-          '/tonnage-monitoring',
+          '/tonnage-monitoring?year=2026',
           { strategy: 'session', credentials: mockUserSession }
         )
 
         const { statusCode, headers } = await server.inject({
           method: 'POST',
-          url: '/tonnage-monitoring',
+          url: '/tonnage-monitoring?year=2026',
           headers: { cookie },
           payload: { crumb },
           auth: {
@@ -338,7 +423,7 @@ describe('tonnage-monitoring', () => {
         })
 
         expect(statusCode).toBe(302)
-        expect(headers.location).toBe('/tonnage-monitoring')
+        expect(headers.location).toBe('/tonnage-monitoring?year=2026')
       })
 
       test('Should reject request without CSRF token', async () => {
@@ -346,7 +431,7 @@ describe('tonnage-monitoring', () => {
 
         const { statusCode } = await server.inject({
           method: 'POST',
-          url: '/tonnage-monitoring',
+          url: '/tonnage-monitoring?year=2026',
           payload: {},
           auth: {
             strategy: 'session',
