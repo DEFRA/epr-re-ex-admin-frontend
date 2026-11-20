@@ -7,6 +7,10 @@ vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
 }))
 
+vi.mock('#server/common/helpers/fetch-waste-record-years.js', () => ({
+  fetchWasteRecordYears: vi.fn().mockResolvedValue(['2026', '2025'])
+}))
+
 const mockFetchJsonFromBackend = vi.mocked(fetchJsonFromBackend)
 
 describe('waste-balance-availability POST controller', () => {
@@ -20,7 +24,8 @@ describe('waste-balance-availability POST controller', () => {
     mockRequest = {
       yar: {
         set: vi.fn()
-      }
+      },
+      query: { year: '2026' }
     }
 
     mockResponse = {
@@ -47,7 +52,7 @@ describe('waste-balance-availability POST controller', () => {
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
       mockRequest,
-      '/v1/waste-balance-availability'
+      '/v1/waste-balance-availability?year=2026'
     )
 
     const expectedCsv = [
@@ -67,7 +72,7 @@ describe('waste-balance-availability POST controller', () => {
     expect(mockResponse.header).toHaveBeenCalledWith('Content-Type', 'text/csv')
     expect(mockResponse.header).toHaveBeenCalledWith(
       'Content-Disposition',
-      'attachment; filename="waste-balance-availability.csv"'
+      'attachment; filename="waste-balance-availability-2026.csv"'
     )
   })
 
@@ -154,7 +159,9 @@ describe('waste-balance-availability POST controller', () => {
       'error',
       'There was a problem downloading the waste balance data. Please try again.'
     )
-    expect(mockH.redirect).toHaveBeenCalledWith('/waste-balance-availability')
+    expect(mockH.redirect).toHaveBeenCalledWith(
+      '/waste-balance-availability?year=2026'
+    )
     expect(result).toBe('redirect-response')
   })
 
@@ -168,5 +175,20 @@ describe('waste-balance-availability POST controller', () => {
       'error',
       'Custom backend error message'
     )
+  })
+
+  test('Should redirect to a year the report can be shown for, without downloading, when the URL names none', async () => {
+    mockRequest.query = { year: '2019' }
+
+    const result = await wasteBalanceAvailabilityPostController.handler(
+      mockRequest,
+      mockH
+    )
+
+    expect(mockH.redirect).toHaveBeenCalledWith(
+      expect.stringMatching(/^\/waste-balance-availability\?year=202[56]$/)
+    )
+    expect(mockFetchJsonFromBackend).not.toHaveBeenCalled()
+    expect(result).toBe('redirect-response')
   })
 })

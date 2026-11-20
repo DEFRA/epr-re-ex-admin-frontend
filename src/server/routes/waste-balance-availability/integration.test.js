@@ -31,9 +31,24 @@ describe('waste-balance-availability', () => {
     vi.clearAllMocks()
   })
 
-  const stubBackendResponse = (data, status = 200) => {
+  /** The years the backend says the report can be shown for. */
+  const stubYears = (years = [2026, 2025]) => {
     mswServer.use(
-      http.get(`${backendUrl}/v1/waste-balance-availability`, () => {
+      http.get(`${backendUrl}/waste-records/years`, () =>
+        HttpResponse.json({ years: years.map((year) => ({ year })) })
+      )
+    )
+  }
+
+  /** @type {URL[]} */
+  let balanceRequests
+
+  const stubBackendResponse = (data, status = 200) => {
+    stubYears()
+    balanceRequests = []
+    mswServer.use(
+      http.get(`${backendUrl}/v1/waste-balance-availability`, ({ request }) => {
+        balanceRequests.push(new URL(request.url))
         return HttpResponse.json(data, { status })
       })
     )
@@ -57,7 +72,7 @@ describe('waste-balance-availability', () => {
       test('Should return unauthorised status code', async () => {
         const { result, statusCode } = await server.inject({
           method: 'GET',
-          url: '/waste-balance-availability'
+          url: '/waste-balance-availability?year=2026'
         })
 
         expect(statusCode).toBe(statusCodes.unauthorised)
@@ -79,7 +94,7 @@ describe('waste-balance-availability', () => {
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
-          url: '/waste-balance-availability',
+          url: '/waste-balance-availability?year=2026',
           auth: {
             strategy: 'session',
             credentials: mockUserSession
@@ -97,7 +112,7 @@ describe('waste-balance-availability', () => {
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
-          url: '/waste-balance-availability',
+          url: '/waste-balance-availability?year=2026',
           auth: {
             strategy: 'session',
             credentials: mockUserSession
@@ -121,7 +136,7 @@ describe('waste-balance-availability', () => {
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
-          url: '/waste-balance-availability',
+          url: '/waste-balance-availability?year=2026',
           auth: {
             strategy: 'session',
             credentials: mockUserSession
@@ -131,7 +146,9 @@ describe('waste-balance-availability', () => {
         expect(statusCode).toBe(statusCodes.ok)
 
         const $ = cheerio.load(result)
-        expect($('button.govuk-button').text().trim()).toBe('Download CSV')
+        expect($('form[method="POST"] button.govuk-button').text().trim()).toBe(
+          'Download CSV'
+        )
       })
 
       test('Should render inset text when no materials', async () => {
@@ -143,7 +160,7 @@ describe('waste-balance-availability', () => {
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
-          url: '/waste-balance-availability',
+          url: '/waste-balance-availability?year=2026',
           auth: {
             strategy: 'session',
             credentials: mockUserSession
@@ -163,7 +180,7 @@ describe('waste-balance-availability', () => {
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
-          url: '/waste-balance-availability',
+          url: '/waste-balance-availability?year=2026',
           auth: {
             strategy: 'session',
             credentials: mockUserSession
@@ -185,7 +202,7 @@ describe('waste-balance-availability', () => {
 
         const { statusCode, result } = await server.inject({
           method: 'GET',
-          url: '/waste-balance-availability',
+          url: '/waste-balance-availability?year=2026',
           auth: {
             strategy: 'session',
             credentials: mockUserSession
@@ -194,6 +211,76 @@ describe('waste-balance-availability', () => {
 
         expect(statusCode).toBe(statusCodes.internalServerError)
         expect(result).toContain('Sorry, there is a problem with the service')
+      })
+
+      test('Should ask the backend for the year in the URL', async () => {
+        stubBackendResponse(mockBalanceData)
+
+        await server.inject({
+          method: 'GET',
+          url: '/waste-balance-availability?year=2025',
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        expect(
+          balanceRequests.map(({ searchParams }) => searchParams.get('year'))
+        ).toEqual(['2025'])
+      })
+
+      test('Should offer every year the report can be shown for, with the year in the URL selected, in a form that changes the URL', async () => {
+        stubBackendResponse(mockBalanceData)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: '/waste-balance-availability?year=2025',
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const $ = cheerio.load(result)
+        const picker = $(
+          'form[method="get"][action="/waste-balance-availability"]'
+        )
+        expect(
+          picker
+            .find('select[name="year"] option')
+            .map((_, option) => $(option).attr('value'))
+            .get()
+        ).toEqual(['2026', '2025'])
+        expect(picker.find('option[selected]').attr('value')).toBe('2025')
+      })
+
+      test('Should download the CSV for the year shown', async () => {
+        stubBackendResponse(mockBalanceData)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: '/waste-balance-availability?year=2025',
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const $ = cheerio.load(result)
+        expect($('form[method="POST"]').attr('action')).toBe(
+          '/waste-balance-availability?year=2025'
+        )
+      })
+
+      test.each([
+        ['no year', '/waste-balance-availability'],
+        [
+          'a year the report cannot be shown for',
+          '/waste-balance-availability?year=2019'
+        ]
+      ])('Should redirect to the newest year with %s', async (_, url) => {
+        stubYears([2025, 2024])
+
+        const { statusCode, headers } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        expect(statusCode).toBe(302)
+        expect(headers.location).toBe('/waste-balance-availability?year=2025')
       })
     })
   })
@@ -207,7 +294,7 @@ describe('waste-balance-availability', () => {
       test('Should return unauthorised status code', async () => {
         const { result, statusCode } = await server.inject({
           method: 'POST',
-          url: '/waste-balance-availability',
+          url: '/waste-balance-availability?year=2026',
           payload: {}
         })
 
@@ -226,13 +313,13 @@ describe('waste-balance-availability', () => {
 
         const { cookie, crumb } = await getCsrfToken(
           server,
-          '/waste-balance-availability',
+          '/waste-balance-availability?year=2026',
           { strategy: 'session', credentials: mockUserSession }
         )
 
         const { statusCode, headers, payload } = await server.inject({
           method: 'POST',
-          url: '/waste-balance-availability',
+          url: '/waste-balance-availability?year=2026',
           headers: { cookie },
           payload: { crumb },
           auth: {
@@ -244,7 +331,7 @@ describe('waste-balance-availability', () => {
         expect(statusCode).toBe(statusCodes.ok)
         expect(headers['content-type']).toContain('text/csv')
         expect(headers['content-disposition']).toBe(
-          'attachment; filename="waste-balance-availability.csv"'
+          'attachment; filename="waste-balance-availability-2026.csv"'
         )
         expect(payload).toContain('Waste balance availability by material')
         expect(payload).toContain('Aluminium,1234.56')
@@ -257,13 +344,13 @@ describe('waste-balance-availability', () => {
 
         const { cookie, crumb } = await getCsrfToken(
           server,
-          '/waste-balance-availability',
+          '/waste-balance-availability?year=2026',
           { strategy: 'session', credentials: mockUserSession }
         )
 
         const { payload } = await server.inject({
           method: 'POST',
-          url: '/waste-balance-availability',
+          url: '/waste-balance-availability?year=2026',
           headers: { cookie },
           payload: { crumb },
           auth: {
@@ -282,13 +369,13 @@ describe('waste-balance-availability', () => {
 
         const { cookie, crumb } = await getCsrfToken(
           server,
-          '/waste-balance-availability',
+          '/waste-balance-availability?year=2026',
           { strategy: 'session', credentials: mockUserSession }
         )
 
         const { payload } = await server.inject({
           method: 'POST',
-          url: '/waste-balance-availability',
+          url: '/waste-balance-availability?year=2026',
           headers: { cookie },
           payload: { crumb },
           auth: {
@@ -307,13 +394,13 @@ describe('waste-balance-availability', () => {
 
         const { cookie, crumb } = await getCsrfToken(
           server,
-          '/waste-balance-availability',
+          '/waste-balance-availability?year=2026',
           { strategy: 'session', credentials: mockUserSession }
         )
 
         const { statusCode, headers } = await server.inject({
           method: 'POST',
-          url: '/waste-balance-availability',
+          url: '/waste-balance-availability?year=2026',
           headers: { cookie },
           payload: { crumb },
           auth: {
@@ -323,7 +410,7 @@ describe('waste-balance-availability', () => {
         })
 
         expect(statusCode).toBe(302)
-        expect(headers.location).toBe('/waste-balance-availability')
+        expect(headers.location).toBe('/waste-balance-availability?year=2026')
       })
 
       test('Should reject request without CSRF token', async () => {
@@ -331,7 +418,7 @@ describe('waste-balance-availability', () => {
 
         const { statusCode } = await server.inject({
           method: 'POST',
-          url: '/waste-balance-availability',
+          url: '/waste-balance-availability?year=2026',
           payload: {},
           auth: {
             strategy: 'session',

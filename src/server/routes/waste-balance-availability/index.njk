@@ -3,6 +3,7 @@
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/select/macro.njk" import govukSelect %}
 
 {% block content %}
   <div class="govuk-grid-row">
@@ -25,6 +26,19 @@
         <p class="govuk-body">
           Available waste balance by material, after PRN and sent-on deductions.
         </p>
+
+        <form method="get" action="/waste-balance-availability">
+          {{ govukSelect({
+            id: "year",
+            name: "year",
+            label: { text: "Year" },
+            items: yearItems
+          }) }}
+          {{ govukButton({
+            text: "Show year",
+            classes: "govuk-button--secondary"
+          }) }}
+        </form>
 
         <p class="govuk-body">
           Data generated at: <strong>{{ generatedAt | formatDate("d MMMM yyyy 'at' h:mmaaa") }}</strong>
@@ -56,7 +70,7 @@
             rows: tableRows
           }) }}
 
-          <form method="POST">
+          <form method="POST" action="/waste-balance-availability?year={{ year | urlencode }}">
             <input type="hidden" name="crumb" value="{{ crumb }}" />
             {{ govukButton({
               text: "Download CSV"
