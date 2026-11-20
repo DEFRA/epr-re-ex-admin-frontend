@@ -107,8 +107,17 @@ describe('#getBellOptions', () => {
     const result = getBellOptions(mockOidcConfig)
     const providerParams = result.providerParams({})
 
-    expect(providerParams).toEqual({
+    expect(providerParams).toMatchObject({
       response_mode: 'query'
+    })
+  })
+
+  test('Should return provider params with prompt', () => {
+    const result = getBellOptions(mockOidcConfig)
+    const providerParams = result.providerParams({})
+
+    expect(providerParams).toMatchObject({
+      prompt: 'select_account'
     })
   })
 
