@@ -4,6 +4,11 @@ import { formatDate } from '#config/nunjucks/filters/format-date.js'
 import { roundForCsv } from '#server/common/helpers/round-for-csv.js'
 import { formatTonnage, materialRowHeading } from './formatters.js'
 import { buildMaterialRowData } from '#server/routes/tonnage-monitoring/helper.js'
+import {
+  defaultYear,
+  tonnageMonitoringUrl,
+  tonnageMonitoringYears
+} from './year.js'
 
 const dateFormat = "d MMMM yyyy 'at' h:mmaaa"
 const tonnageDecimals = 2
@@ -55,10 +60,18 @@ async function generateCsv(data) {
 
 export const tonnageMonitoringPostController = {
   async handler(request, h) {
+    const { years, year } = await tonnageMonitoringYears(request)
+    if (year === undefined) {
+      return h.redirect(tonnageMonitoringUrl(defaultYear(years)))
+    }
+
     try {
-      const data = await fetchJsonFromBackend(request, '/v1/tonnage-monitoring')
+      const data = await fetchJsonFromBackend(
+        request,
+        `/v1/tonnage-monitoring/${year}`
+      )
       const csv = await generateCsv(data)
-      const filename = 'tonnage-monitoring.csv'
+      const filename = `tonnage-monitoring-${year}.csv`
 
       return h
         .response(csv)
@@ -71,7 +84,7 @@ export const tonnageMonitoringPostController = {
 
       request.yar.set('error', errorMessage)
 
-      return h.redirect('/tonnage-monitoring')
+      return h.redirect(tonnageMonitoringUrl(year))
     }
   }
 }
