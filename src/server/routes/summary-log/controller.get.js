@@ -1,18 +1,35 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { formatDateTime } from '#server/common/helpers/formatters.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
+import {
+  defaultReportYear,
+  reportUrlForYear,
+  reportYears,
+  yearItems
+} from '#server/common/helpers/report-year.js'
 
 const logger = createLogger()
 
+export const summaryLogUploadsReportPath = '/summary-log'
+
 export const summaryLogUploadsReportGetController = {
   async handler(request, h) {
+    const { years, year } = await reportYears(request)
+    if (year === undefined) {
+      return h.redirect(
+        reportUrlForYear(summaryLogUploadsReportPath, defaultReportYear(years))
+      )
+    }
+
     const errorMessage = request.yar.get('error')
     await request.yar.clear('error')
+
+    const yearView = { year, yearItems: yearItems({ years, year }) }
 
     try {
       const data = await fetchJsonFromBackend(
         request,
-        '/v1/organisations/registrations/summary-logs/reports/uploads'
+        `/v1/organisations/registrations/summary-logs/reports/uploads?year=${year}`
       )
 
       const reportRows = data.summaryLogUploads.map((row) => ({
@@ -32,6 +49,7 @@ export const summaryLogUploadsReportGetController = {
 
       return h.view('routes/summary-log/uploads-report', {
         pageTitle: request.route.settings.app.pageTitle,
+        ...yearView,
         reportRows,
         totalRows: reportRows.length,
         generatedAt: formatDateTime(data.generatedAt),
@@ -45,6 +63,7 @@ export const summaryLogUploadsReportGetController = {
 
       return h.view('routes/summary-log/uploads-report', {
         pageTitle: request.route.settings.app.pageTitle,
+        ...yearView,
         reportRows: [],
         totalRows: 0,
         error:
