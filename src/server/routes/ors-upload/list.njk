@@ -4,6 +4,7 @@
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/pagination/macro.njk" import govukPagination %}
 {% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/select/macro.njk" import govukSelect %}
 {% from "overseas-sites-table/macro.njk" import overseasSitesTable %}
 
 {% block content %}
@@ -34,6 +35,15 @@
 
         <form method="get" action="/overseas-sites" class="app-filters">
           <h2 class="govuk-heading-m">Search overseas reprocessing sites by</h2>
+          {{ govukSelect({
+            id: "year",
+            name: "year",
+            label: {
+              text: "Year",
+              classes: "govuk-label--s"
+            },
+            items: yearItems
+          }) }}
           <div class="govuk-form-group">
             {{ govukInput({
               label: {
@@ -54,7 +64,7 @@
               text: "Search"
             }) }}
             {% if registrationNumber %}
-              <a href="/overseas-sites" class="govuk-button govuk-button--inverse">Clear search and view all overseas reprocessing sites</a>
+              <a href="/overseas-sites?year={{ year | urlencode }}" class="govuk-button govuk-button--inverse">Clear search and view all overseas reprocessing sites</a>
             {% endif %}
           </div>
         </form>
@@ -111,7 +121,7 @@
             }) }}
           {% endif %}
 
-          <form method="POST">
+          <form method="POST" action="/overseas-sites?year={{ year | urlencode }}">
             <input type="hidden" name="crumb" value="{{ crumb }}" />
             {{ govukButton({
               text: "Download CSV"

@@ -9,12 +9,13 @@ export function normaliseRegistrationNumber(value) {
 }
 
 export function buildBackendPath({
+  year,
   page = 1,
   pageSize = defaultPageSize,
   registrationNumber = '',
   all = false
-} = {}) {
-  const params = new URLSearchParams()
+}) {
+  const params = new URLSearchParams({ year })
 
   if (all) {
     params.set('all', 'true')
@@ -30,8 +31,14 @@ export function buildBackendPath({
   return `/v1/admin/overseas-sites?${params.toString()}`
 }
 
-export function buildPageHref({ page, pageSize, registrationNumber = '' }) {
+export function buildPageHref({
+  year,
+  page,
+  pageSize,
+  registrationNumber = ''
+}) {
   const params = new URLSearchParams({
+    year,
     page: String(page),
     pageSize: String(pageSize)
   })
