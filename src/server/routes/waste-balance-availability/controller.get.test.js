@@ -6,6 +6,15 @@ vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
 }))
 
+vi.mock('#server/common/helpers/fetch-waste-record-years.js', () => ({
+  fetchWasteRecordYears: vi.fn().mockResolvedValue(['2026', '2025'])
+}))
+
+const yearItems2026 = [
+  { value: '2026', text: '2026', selected: true },
+  { value: '2025', text: '2025', selected: false }
+]
+
 const mockFetchJsonFromBackend = vi.mocked(fetchJsonFromBackend)
 
 describe('waste-balance-availability GET controller', () => {
@@ -24,11 +33,13 @@ describe('waste-balance-availability GET controller', () => {
       yar: {
         get: vi.fn().mockReturnValue(null),
         clear: vi.fn()
-      }
+      },
+      query: { year: '2026' }
     }
 
     mockH = {
-      view: vi.fn().mockReturnValue('rendered-view')
+      view: vi.fn().mockReturnValue('rendered-view'),
+      redirect: vi.fn().mockReturnValue('redirect-response')
     }
   })
 
@@ -46,7 +57,7 @@ describe('waste-balance-availability GET controller', () => {
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
       mockRequest,
-      '/v1/waste-balance-availability'
+      '/v1/waste-balance-availability?year=2026'
     )
 
     expect(mockH.view).toHaveBeenCalledWith(
@@ -54,6 +65,8 @@ describe('waste-balance-availability GET controller', () => {
       {
         pageTitle: 'Waste balance availability',
         generatedAt: '2026-01-29T12:00:00.000Z',
+        year: '2026',
+        yearItems: yearItems2026,
         materials: [
           { material: 'Aluminium', availableAmount: '1234.56' },
           { material: 'Glass re-melt', availableAmount: '5678.90' }
@@ -157,11 +170,28 @@ describe('waste-balance-availability GET controller', () => {
       {
         pageTitle: 'Waste balance availability',
         generatedAt: '2026-01-29T12:00:00.000Z',
+        year: '2026',
+        yearItems: yearItems2026,
         materials: [],
         total: '0.00',
         error: null
       }
     )
+  })
+
+  test('Should redirect to a year the report can be shown for, without fetching, when the URL names none', async () => {
+    mockRequest.query = {}
+
+    const result = await wasteBalanceAvailabilityGetController.handler(
+      mockRequest,
+      mockH
+    )
+
+    expect(mockH.redirect).toHaveBeenCalledWith(
+      expect.stringMatching(/^\/waste-balance-availability\?year=202[56]$/)
+    )
+    expect(mockFetchJsonFromBackend).not.toHaveBeenCalled()
+    expect(result).toBe('redirect-response')
   })
 
   test('Should display error message from session and clear it', async () => {
