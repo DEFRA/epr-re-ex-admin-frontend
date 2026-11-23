@@ -3,6 +3,7 @@
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/select/macro.njk" import govukSelect %}
 
 {% block content %}
   <div class="govuk-grid-row">
@@ -26,6 +27,19 @@
           Report showing summary log upload activity for all registered operators with uploads.
         </p>
 
+        <form method="get" action="/summary-log">
+          {{ govukSelect({
+            id: "year",
+            name: "year",
+            label: { text: "Year" },
+            items: yearItems
+          }) }}
+          {{ govukButton({
+            text: "Show year",
+            classes: "govuk-button--secondary"
+          }) }}
+        </form>
+
         {% if generatedAt %}
           <p class="govuk-body">
             Data generated at: <strong>{{ generatedAt }}</strong>
@@ -37,7 +51,7 @@
         </p>
 
         {% if reportRows and reportRows.length > 0 %}
-          <form method="POST" class="govuk-!-margin-bottom-6">
+          <form method="POST" action="/summary-log?year={{ year | urlencode }}" class="govuk-!-margin-bottom-6">
             <input type="hidden" name="crumb" value="{{ crumb }}" />
             {{ govukButton({
               text: "Download CSV"

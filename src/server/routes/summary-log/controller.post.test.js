@@ -6,6 +6,10 @@ vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
 }))
 
+vi.mock('#server/common/helpers/fetch-waste-record-years.js', () => ({
+  fetchWasteRecordYears: vi.fn().mockResolvedValue(['2026', '2025'])
+}))
+
 vi.mock('#server/common/helpers/formatters.js', () => ({
   formatDateTime: vi.fn((isoString) => {
     if (!isoString) {
@@ -41,13 +45,14 @@ describe('summaryLogUploadsReportPostController', () => {
     mockRequest = {
       yar: {
         set: vi.fn()
-      }
+      },
+      query: { year: '2026' }
     }
 
     mockH = {
       response: vi.fn().mockReturnThis(),
       header: vi.fn().mockReturnThis(),
-      redirect: vi.fn()
+      redirect: vi.fn().mockReturnValue('redirect-response')
     }
   })
 
@@ -106,7 +111,7 @@ describe('summaryLogUploadsReportPostController', () => {
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
       mockRequest,
-      '/v1/organisations/registrations/summary-logs/reports/uploads'
+      '/v1/organisations/registrations/summary-logs/reports/uploads?year=2026'
     )
 
     const csv = mockH.response.mock.calls[0][0]
@@ -129,7 +134,7 @@ describe('summaryLogUploadsReportPostController', () => {
     expect(mockH.header).toHaveBeenCalledWith('Content-Type', 'text/csv')
     expect(mockH.header).toHaveBeenCalledWith(
       'Content-Disposition',
-      'attachment; filename="summary-log.csv"'
+      'attachment; filename="summary-log-2026.csv"'
     )
   })
 
@@ -150,6 +155,21 @@ describe('summaryLogUploadsReportPostController', () => {
       'error',
       'There was a problem downloading the summary log uploads report. Please try again.'
     )
-    expect(mockH.redirect).toHaveBeenCalledWith('/summary-log')
+    expect(mockH.redirect).toHaveBeenCalledWith('/summary-log?year=2026')
+  })
+
+  test('redirects to a year the report can be shown for, without downloading, when the URL names none', async () => {
+    mockRequest.query = { year: '2019' }
+
+    const result = await summaryLogUploadsReportPostController.handler(
+      mockRequest,
+      mockH
+    )
+
+    expect(mockH.redirect).toHaveBeenCalledWith(
+      expect.stringMatching(/^\/summary-log\?year=202[56]$/)
+    )
+    expect(mockFetchJsonFromBackend).not.toHaveBeenCalled()
+    expect(result).toBe('redirect-response')
   })
 })

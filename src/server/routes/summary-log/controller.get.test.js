@@ -7,6 +7,15 @@ vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
 }))
 
+vi.mock('#server/common/helpers/fetch-waste-record-years.js', () => ({
+  fetchWasteRecordYears: vi.fn().mockResolvedValue(['2026', '2025'])
+}))
+
+const yearItems2026 = [
+  { value: '2026', text: '2026', selected: true },
+  { value: '2025', text: '2025', selected: false }
+]
+
 vi.mock('#server/common/helpers/formatters.js', () => ({
   formatDateTime: vi.fn((isoString) => {
     if (!isoString) {
@@ -53,11 +62,13 @@ describe('summaryLogUploadsReportGetController', () => {
       yar: {
         get: vi.fn(),
         clear: vi.fn()
-      }
+      },
+      query: { year: '2026' }
     }
 
     mockH = {
-      view: vi.fn()
+      view: vi.fn(),
+      redirect: vi.fn().mockReturnValue('redirect-response')
     }
   })
 
@@ -89,13 +100,15 @@ describe('summaryLogUploadsReportGetController', () => {
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
       mockRequest,
-      '/v1/organisations/registrations/summary-logs/reports/uploads'
+      '/v1/organisations/registrations/summary-logs/reports/uploads?year=2026'
     )
 
     expect(mockH.view).toHaveBeenCalledWith(
       'routes/summary-log/uploads-report',
       {
         pageTitle: 'Summary Log Uploads Report',
+        year: '2026',
+        yearItems: yearItems2026,
         reportRows: [
           {
             appropriateAgency: 'EA',
@@ -173,11 +186,28 @@ describe('summaryLogUploadsReportGetController', () => {
       'routes/summary-log/uploads-report',
       {
         pageTitle: 'Summary Log Uploads Report',
+        year: '2026',
+        yearItems: yearItems2026,
         reportRows: [],
         totalRows: 0,
         error:
           'There was a problem loading the summary log uploads report. Please try again.'
       }
     )
+  })
+
+  test('redirects to a year the report can be shown for, without fetching, when the URL names none', async () => {
+    mockRequest.query = {}
+
+    const result = await summaryLogUploadsReportGetController.handler(
+      mockRequest,
+      mockH
+    )
+
+    expect(mockH.redirect).toHaveBeenCalledWith(
+      expect.stringMatching(/^\/summary-log\?year=202[56]$/)
+    )
+    expect(mockFetchJsonFromBackend).not.toHaveBeenCalled()
+    expect(result).toBe('redirect-response')
   })
 })

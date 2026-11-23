@@ -3,6 +3,12 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
 import { formatDateTime } from '#server/common/helpers/formatters.js'
 import { sanitizeFormulaInjection } from '#server/common/helpers/sanitize-formula-injection.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
+import {
+  defaultReportYear,
+  reportUrlForYear,
+  reportYears
+} from '#server/common/helpers/report-year.js'
+import { summaryLogUploadsReportPath } from './controller.get.js'
 
 const logger = createLogger()
 
@@ -54,13 +60,20 @@ function generateCsv(data, generatedAt) {
 
 export const summaryLogUploadsReportPostController = {
   async handler(request, h) {
+    const { years, year } = await reportYears(request)
+    if (year === undefined) {
+      return h.redirect(
+        reportUrlForYear(summaryLogUploadsReportPath, defaultReportYear(years))
+      )
+    }
+
     try {
       const data = await fetchJsonFromBackend(
         request,
-        '/v1/organisations/registrations/summary-logs/reports/uploads'
+        `/v1/organisations/registrations/summary-logs/reports/uploads?year=${year}`
       )
       const csv = await generateCsv(data.summaryLogUploads, data.generatedAt)
-      const filename = 'summary-log.csv'
+      const filename = `summary-log-${year}.csv`
 
       return h
         .response(csv)
@@ -77,7 +90,7 @@ export const summaryLogUploadsReportPostController = {
         'There was a problem downloading the summary log uploads report. Please try again.'
       )
 
-      return h.redirect('/summary-log')
+      return h.redirect(reportUrlForYear(summaryLogUploadsReportPath, year))
     }
   }
 }
