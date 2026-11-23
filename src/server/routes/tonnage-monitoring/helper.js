@@ -20,7 +20,7 @@ const masterOrder = [
   'Jun',
   'Jul',
   'Aug',
-  'Sep',
+  'Sept',
   'Oct',
   'Nov',
   'Dec'

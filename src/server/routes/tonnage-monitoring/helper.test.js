@@ -29,6 +29,16 @@ describe('uniqueMonthNames', () => {
     const result = uniqueMonthNames(data)
     expect(result).toEqual(['Jan', 'Feb', 'Mar'])
   })
+
+  it('keeps September, which the backend names Sept', () => {
+    const data = {
+      materials: [
+        { months: [{ month: 'Aug' }, { month: 'Sept' }, { month: 'Oct' }] }
+      ]
+    }
+
+    expect(uniqueMonthNames(data)).toEqual(['Aug', 'Sept', 'Oct'])
+  })
 })
 
 describe('buildMaterialRowData', () => {
