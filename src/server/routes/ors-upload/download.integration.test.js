@@ -14,9 +14,13 @@ vi.mock('#server/common/helpers/auth/get-user-session.js', () => ({
   getUserSession: vi.fn().mockReturnValue(null)
 }))
 
+vi.mock('#server/common/helpers/fetch-waste-record-years.js', () => ({
+  fetchWasteRecordYears: vi.fn().mockResolvedValue(['2026', '2025'])
+}))
+
 describe('ors-upload download integration', () => {
   const backendUrl = config.get('eprBackendUrl')
-  const pagePath = '/overseas-sites'
+  const pagePath = '/overseas-sites?year=2026'
   const readOnlySession = { ...mockUserSession, scopes: ['admin.read'] }
   let server
 
@@ -147,7 +151,7 @@ describe('ors-upload download integration', () => {
           downloadForm.find('button.govuk-button--secondary')
         ).toHaveLength(0)
         expect(result.indexOf('</table>')).toBeLessThan(
-          result.indexOf('<form method="POST">')
+          result.indexOf('<form method="POST"')
         )
       })
 
@@ -156,7 +160,7 @@ describe('ors-upload download integration', () => {
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
-          url: '/overseas-sites?registrationNumber=REG-123',
+          url: '/overseas-sites?year=2026&registrationNumber=REG-123',
           auth: {
             strategy: 'session',
             credentials: mockUserSession
@@ -169,7 +173,31 @@ describe('ors-upload download integration', () => {
         expect($('form.app-filters').attr('method')).toBe('get')
         expect($('input[name="registrationNumber"]').val()).toBe('REG-123')
         expect($('a.govuk-button--inverse').attr('href')).toBe(
-          '/overseas-sites'
+          '/overseas-sites?year=2026'
+        )
+      })
+
+      test('Should show the year the URL names and ask the backend for it', async () => {
+        const backendCalls = stubListResponse(mockRows)
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: '/overseas-sites?year=2025',
+          auth: {
+            strategy: 'session',
+            credentials: mockUserSession
+          }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(backendCalls.map((url) => url.searchParams.get('year'))).toEqual(
+          ['2025']
+        )
+
+        const $ = cheerio.load(result)
+        expect($('form.app-filters select[name="year"]').val()).toBe('2025')
+        expect($('form[method="POST"]').attr('action')).toBe(
+          '/overseas-sites?year=2025'
         )
       })
 
@@ -261,7 +289,7 @@ describe('ors-upload download integration', () => {
         expect(statusCode).toBe(statusCodes.ok)
         expect(headers['content-type']).toContain('text/csv')
         expect(headers['content-disposition']).toBe(
-          'attachment; filename="overseas-reprocessing-sites.csv"'
+          'attachment; filename="overseas-reprocessing-sites-2026.csv"'
         )
         expect(payload).toContain('Org ID,Registration Number')
         expect(payload).toContain('Alpha Reprocessor')
@@ -311,7 +339,7 @@ describe('ors-upload download integration', () => {
         })
 
         expect(statusCode).toBe(302)
-        expect(headers.location).toBe('/overseas-sites')
+        expect(headers.location).toBe('/overseas-sites?year=2026')
       })
 
       test('Should reject request without CSRF token', async () => {

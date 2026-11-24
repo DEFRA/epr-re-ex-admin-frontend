@@ -1,11 +1,21 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { fetchWasteRecordYears } from '#server/common/helpers/fetch-waste-record-years.js'
 import { orsListGetController } from './controller.list.get.js'
 
 vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
 }))
+
+vi.mock('#server/common/helpers/fetch-waste-record-years.js', () => ({
+  fetchWasteRecordYears: vi.fn().mockResolvedValue(['2026', '2025'])
+}))
+
+const yearItems2026 = [
+  { value: '2026', text: '2026', selected: true },
+  { value: '2025', text: '2025', selected: false }
+]
 
 const mockLoggerError = vi.hoisted(() => vi.fn())
 
@@ -25,7 +35,7 @@ describe('orsListGetController', () => {
     vi.clearAllMocks()
 
     mockRequest = {
-      query: {},
+      query: { year: '2026' },
       route: {
         settings: {
           app: {
@@ -36,7 +46,8 @@ describe('orsListGetController', () => {
     }
 
     mockH = {
-      view: vi.fn()
+      view: vi.fn(),
+      redirect: vi.fn().mockReturnValue('redirect-response')
     }
   })
 
@@ -97,11 +108,13 @@ describe('orsListGetController', () => {
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
       mockRequest,
-      '/v1/admin/overseas-sites?page=1&pageSize=50'
+      '/v1/admin/overseas-sites?year=2026&page=1&pageSize=50'
     )
 
     expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/list', {
       pageTitle: 'Overseas reprocessing sites',
+      year: '2026',
+      yearItems: yearItems2026,
       rows: [
         {
           orsId: '001',
@@ -162,6 +175,7 @@ describe('orsListGetController', () => {
 
   test('passes registrationNumber to the backend and preserves it in pagination links', async () => {
     mockRequest.query = {
+      year: '2026',
       page: '2',
       pageSize: '2',
       registrationNumber: ' REG-123 '
@@ -183,7 +197,7 @@ describe('orsListGetController', () => {
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
       mockRequest,
-      '/v1/admin/overseas-sites?page=2&pageSize=2&registrationNumber=REG-123'
+      '/v1/admin/overseas-sites?year=2026&page=2&pageSize=2&registrationNumber=REG-123'
     )
 
     expect(mockH.view).toHaveBeenCalledWith(
@@ -192,17 +206,17 @@ describe('orsListGetController', () => {
         registrationNumber: 'REG-123',
         pagination: {
           previous: {
-            href: '/overseas-sites?page=1&pageSize=2&registrationNumber=REG-123'
+            href: '/overseas-sites?year=2026&page=1&pageSize=2&registrationNumber=REG-123'
           },
           items: [
             {
               number: 1,
-              href: '/overseas-sites?page=1&pageSize=2&registrationNumber=REG-123',
+              href: '/overseas-sites?year=2026&page=1&pageSize=2&registrationNumber=REG-123',
               current: false
             },
             {
               number: 2,
-              href: '/overseas-sites?page=2&pageSize=2&registrationNumber=REG-123',
+              href: '/overseas-sites?year=2026&page=2&pageSize=2&registrationNumber=REG-123',
               current: true
             }
           ]
@@ -218,6 +232,8 @@ describe('orsListGetController', () => {
 
     expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/list', {
       pageTitle: 'Overseas reprocessing sites',
+      year: '2026',
+      yearItems: yearItems2026,
       rows: [],
       pagination: {},
       page: 1,
@@ -234,6 +250,8 @@ describe('orsListGetController', () => {
 
     expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/list', {
       pageTitle: 'Overseas reprocessing sites',
+      year: '2026',
+      yearItems: yearItems2026,
       rows: [],
       pagination: {},
       page: 1,
@@ -245,6 +263,7 @@ describe('orsListGetController', () => {
 
   test('supports legacy array payloads with pagination fallback metadata', async () => {
     mockRequest.query = {
+      year: '2026',
       page: 'invalid',
       pageSize: 'invalid'
     }
@@ -259,11 +278,13 @@ describe('orsListGetController', () => {
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
       mockRequest,
-      '/v1/admin/overseas-sites?page=1&pageSize=50'
+      '/v1/admin/overseas-sites?year=2026&page=1&pageSize=50'
     )
 
     expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/list', {
       pageTitle: 'Overseas reprocessing sites',
+      year: '2026',
+      yearItems: yearItems2026,
       rows: [
         {
           orsId: '010',
@@ -307,6 +328,8 @@ describe('orsListGetController', () => {
 
     expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/list', {
       pageTitle: 'Overseas reprocessing sites',
+      year: '2026',
+      yearItems: yearItems2026,
       rows: [],
       pagination: {},
       page: 1,
@@ -323,6 +346,8 @@ describe('orsListGetController', () => {
 
     expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/list', {
       pageTitle: 'Overseas reprocessing sites',
+      year: '2026',
+      yearItems: yearItems2026,
       rows: [],
       pagination: {},
       page: 1,
@@ -334,6 +359,7 @@ describe('orsListGetController', () => {
 
   test('builds previous and next pagination links from backend metadata', async () => {
     mockRequest.query = {
+      year: '2026',
       page: '2',
       pageSize: '2'
     }
@@ -354,11 +380,13 @@ describe('orsListGetController', () => {
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
       mockRequest,
-      '/v1/admin/overseas-sites?page=2&pageSize=2'
+      '/v1/admin/overseas-sites?year=2026&page=2&pageSize=2'
     )
 
     expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/list', {
       pageTitle: 'Overseas reprocessing sites',
+      year: '2026',
+      yearItems: yearItems2026,
       rows: [
         {
           orsId: '002',
@@ -379,27 +407,27 @@ describe('orsListGetController', () => {
       ],
       pagination: {
         previous: {
-          href: '/overseas-sites?page=1&pageSize=2'
+          href: '/overseas-sites?year=2026&page=1&pageSize=2'
         },
         items: [
           {
             number: 1,
-            href: '/overseas-sites?page=1&pageSize=2',
+            href: '/overseas-sites?year=2026&page=1&pageSize=2',
             current: false
           },
           {
             number: 2,
-            href: '/overseas-sites?page=2&pageSize=2',
+            href: '/overseas-sites?year=2026&page=2&pageSize=2',
             current: true
           },
           {
             number: 3,
-            href: '/overseas-sites?page=3&pageSize=2',
+            href: '/overseas-sites?year=2026&page=3&pageSize=2',
             current: false
           }
         ],
         next: {
-          href: '/overseas-sites?page=3&pageSize=2'
+          href: '/overseas-sites?year=2026&page=3&pageSize=2'
         }
       },
       page: 2,
@@ -426,6 +454,8 @@ describe('orsListGetController', () => {
 
     expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/list', {
       pageTitle: 'Overseas reprocessing sites',
+      year: '2026',
+      yearItems: yearItems2026,
       rows: [
         {
           orsId: '001',
@@ -448,22 +478,22 @@ describe('orsListGetController', () => {
         items: [
           {
             number: 1,
-            href: '/overseas-sites?page=1&pageSize=50',
+            href: '/overseas-sites?year=2026&page=1&pageSize=50',
             current: true
           },
           {
             number: 2,
-            href: '/overseas-sites?page=2&pageSize=50',
+            href: '/overseas-sites?year=2026&page=2&pageSize=50',
             current: false
           },
           {
             number: 3,
-            href: '/overseas-sites?page=3&pageSize=50',
+            href: '/overseas-sites?year=2026&page=3&pageSize=50',
             current: false
           }
         ],
         next: {
-          href: '/overseas-sites?page=2&pageSize=50'
+          href: '/overseas-sites?year=2026&page=2&pageSize=50'
         }
       },
       page: 1,
@@ -475,6 +505,7 @@ describe('orsListGetController', () => {
 
   test('builds compact pagination items with ellipses for larger page ranges', async () => {
     mockRequest.query = {
+      year: '2026',
       page: '6',
       pageSize: '10'
     }
@@ -495,6 +526,8 @@ describe('orsListGetController', () => {
 
     expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/list', {
       pageTitle: 'Overseas reprocessing sites',
+      year: '2026',
+      yearItems: yearItems2026,
       rows: [
         {
           orsId: '006',
@@ -515,12 +548,12 @@ describe('orsListGetController', () => {
       ],
       pagination: {
         previous: {
-          href: '/overseas-sites?page=5&pageSize=10'
+          href: '/overseas-sites?year=2026&page=5&pageSize=10'
         },
         items: [
           {
             number: 1,
-            href: '/overseas-sites?page=1&pageSize=10',
+            href: '/overseas-sites?year=2026&page=1&pageSize=10',
             current: false
           },
           {
@@ -528,17 +561,17 @@ describe('orsListGetController', () => {
           },
           {
             number: 5,
-            href: '/overseas-sites?page=5&pageSize=10',
+            href: '/overseas-sites?year=2026&page=5&pageSize=10',
             current: false
           },
           {
             number: 6,
-            href: '/overseas-sites?page=6&pageSize=10',
+            href: '/overseas-sites?year=2026&page=6&pageSize=10',
             current: true
           },
           {
             number: 7,
-            href: '/overseas-sites?page=7&pageSize=10',
+            href: '/overseas-sites?year=2026&page=7&pageSize=10',
             current: false
           },
           {
@@ -546,12 +579,12 @@ describe('orsListGetController', () => {
           },
           {
             number: 10,
-            href: '/overseas-sites?page=10&pageSize=10',
+            href: '/overseas-sites?year=2026&page=10&pageSize=10',
             current: false
           }
         ],
         next: {
-          href: '/overseas-sites?page=7&pageSize=10'
+          href: '/overseas-sites?year=2026&page=7&pageSize=10'
         }
       },
       page: 6,
@@ -563,6 +596,7 @@ describe('orsListGetController', () => {
 
   test('builds previous link and numbered items on the last page', async () => {
     mockRequest.query = {
+      year: '2026',
       page: '3',
       pageSize: '2'
     }
@@ -583,6 +617,8 @@ describe('orsListGetController', () => {
 
     expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/list', {
       pageTitle: 'Overseas reprocessing sites',
+      year: '2026',
+      yearItems: yearItems2026,
       rows: [
         {
           orsId: '003',
@@ -603,22 +639,22 @@ describe('orsListGetController', () => {
       ],
       pagination: {
         previous: {
-          href: '/overseas-sites?page=2&pageSize=2'
+          href: '/overseas-sites?year=2026&page=2&pageSize=2'
         },
         items: [
           {
             number: 1,
-            href: '/overseas-sites?page=1&pageSize=2',
+            href: '/overseas-sites?year=2026&page=1&pageSize=2',
             current: false
           },
           {
             number: 2,
-            href: '/overseas-sites?page=2&pageSize=2',
+            href: '/overseas-sites?year=2026&page=2&pageSize=2',
             current: false
           },
           {
             number: 3,
-            href: '/overseas-sites?page=3&pageSize=2',
+            href: '/overseas-sites?year=2026&page=3&pageSize=2',
             current: true
           }
         ]
@@ -627,6 +663,84 @@ describe('orsListGetController', () => {
       totalPages: 3,
       registrationNumber: '',
       error: null
+    })
+  })
+
+  test.for([
+    ['names no year', { registrationNumber: 'REG-123' }],
+    ['names a year with no data', { year: '2020' }]
+  ])(
+    'redirects to a year the page can show, without fetching, when the URL %s',
+    async ([, query]) => {
+      mockRequest.query = query
+
+      const result = await orsListGetController.handler(mockRequest, mockH)
+
+      expect(mockH.redirect).toHaveBeenCalledWith(
+        expect.stringMatching(/^\/overseas-sites\?year=202[56]$/)
+      )
+      expect(mockFetchJsonFromBackend).not.toHaveBeenCalled()
+      expect(result).toBe('redirect-response')
+    }
+  )
+
+  test('fetches and links pages for the year the URL names', async () => {
+    mockRequest.query = { year: '2025', page: '1', pageSize: '2' }
+    mockFetchJsonFromBackend.mockResolvedValue({
+      rows: [{ orsId: '001' }],
+      pagination: {
+        page: 1,
+        pageSize: 2,
+        totalItems: 3,
+        totalPages: 2,
+        hasNextPage: true,
+        hasPreviousPage: false
+      }
+    })
+
+    await orsListGetController.handler(mockRequest, mockH)
+
+    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
+      mockRequest,
+      '/v1/admin/overseas-sites?year=2025&page=1&pageSize=2'
+    )
+    expect(mockH.view).toHaveBeenCalledWith(
+      'routes/ors-upload/list',
+      expect.objectContaining({
+        year: '2025',
+        yearItems: [
+          { value: '2026', text: '2026', selected: false },
+          { value: '2025', text: '2025', selected: true }
+        ],
+        pagination: expect.objectContaining({
+          next: { href: '/overseas-sites?year=2025&page=2&pageSize=2' }
+        })
+      })
+    )
+  })
+
+  test('renders the error message when the years cannot be loaded', async () => {
+    const error = new Error('Years unavailable')
+    vi.mocked(fetchWasteRecordYears).mockRejectedValueOnce(error)
+
+    await orsListGetController.handler(mockRequest, mockH)
+
+    expect(mockFetchJsonFromBackend).not.toHaveBeenCalled()
+    expect(mockLoggerError).toHaveBeenCalledWith({
+      err: error,
+      message: 'Failed to fetch overseas reprocessing sites for admin view'
+    })
+    expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/list', {
+      pageTitle: 'Overseas reprocessing sites',
+      year: null,
+      yearItems: [],
+      rows: [],
+      pagination: {},
+      page: 1,
+      totalPages: 0,
+      registrationNumber: '',
+      error:
+        'There was a problem loading overseas reprocessing site data. Please try again.'
     })
   })
 
@@ -643,6 +757,8 @@ describe('orsListGetController', () => {
 
     expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/list', {
       pageTitle: 'Overseas reprocessing sites',
+      year: '2026',
+      yearItems: yearItems2026,
       rows: [],
       pagination: {},
       page: 1,

@@ -2,10 +2,15 @@ import { vi } from 'vitest'
 import Boom from '@hapi/boom'
 
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { fetchWasteRecordYears } from '#server/common/helpers/fetch-waste-record-years.js'
 import { orsDownloadController } from './controller.download.js'
 
 vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
+}))
+
+vi.mock('#server/common/helpers/fetch-waste-record-years.js', () => ({
+  fetchWasteRecordYears: vi.fn().mockResolvedValue(['2026', '2025'])
 }))
 
 const mockFetchJsonFromBackend = vi.mocked(fetchJsonFromBackend)
@@ -19,6 +24,7 @@ describe('orsDownloadController', () => {
     vi.clearAllMocks()
 
     mockRequest = {
+      query: { year: '2026' },
       yar: {
         set: vi.fn()
       }
@@ -41,7 +47,7 @@ describe('orsDownloadController', () => {
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
       mockRequest,
-      '/v1/admin/overseas-sites?all=true'
+      '/v1/admin/overseas-sites?year=2026&all=true'
     )
   })
 
@@ -197,7 +203,7 @@ describe('orsDownloadController', () => {
     )
     expect(mockResponse.header).toHaveBeenCalledWith(
       'Content-Disposition',
-      'attachment; filename="overseas-reprocessing-sites.csv"'
+      'attachment; filename="overseas-reprocessing-sites-2026.csv"'
     )
   })
 
@@ -206,6 +212,34 @@ describe('orsDownloadController', () => {
 
     const result = await orsDownloadController.handler(mockRequest, mockH)
 
+    expect(mockRequest.yar.set).toHaveBeenCalledWith(
+      'error',
+      'There was a problem downloading the overseas reprocessing site data. Please try again.'
+    )
+    expect(mockH.redirect).toHaveBeenCalledWith('/overseas-sites?year=2026')
+    expect(result).toBe('redirect-response')
+  })
+
+  test('Should redirect to a year the page can show, without fetching, when the URL names none', async () => {
+    mockRequest.query = {}
+
+    const result = await orsDownloadController.handler(mockRequest, mockH)
+
+    expect(mockH.redirect).toHaveBeenCalledWith(
+      expect.stringMatching(/^\/overseas-sites\?year=202[56]$/)
+    )
+    expect(mockFetchJsonFromBackend).not.toHaveBeenCalled()
+    expect(result).toBe('redirect-response')
+  })
+
+  test('Should redirect with the default error message when the years cannot be loaded', async () => {
+    vi.mocked(fetchWasteRecordYears).mockRejectedValueOnce(
+      new Error('Years unavailable')
+    )
+
+    const result = await orsDownloadController.handler(mockRequest, mockH)
+
+    expect(mockFetchJsonFromBackend).not.toHaveBeenCalled()
     expect(mockRequest.yar.set).toHaveBeenCalledWith(
       'error',
       'There was a problem downloading the overseas reprocessing site data. Please try again.'

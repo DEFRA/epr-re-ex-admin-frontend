@@ -10,6 +10,13 @@ import {
   defaultPageSize,
   normaliseRegistrationNumber
 } from './helpers.js'
+import { orsUploadRoutes } from './constants.js'
+import {
+  defaultReportYear,
+  reportUrlForYear,
+  reportYears,
+  yearItems
+} from '#server/common/helpers/report-year.js'
 
 const logger = createLogger()
 
@@ -43,7 +50,8 @@ function buildUrlQueryItems({
   page,
   totalPages,
   pageSize,
-  registrationNumber
+  registrationNumber,
+  year
 }) {
   const visiblePages = new Set([1, totalPages, page - 1, page, page + 1])
   const pageNumbers = Array.from(visiblePages)
@@ -62,7 +70,8 @@ function buildUrlQueryItems({
       href: buildPageHref({
         page: pageNumber,
         pageSize,
-        registrationNumber
+        registrationNumber,
+        year
       }),
       current: pageNumber === page
     })
@@ -71,7 +80,7 @@ function buildUrlQueryItems({
   return items
 }
 
-function buildUrlQuery({ pagination, pageSize, registrationNumber }) {
+function buildUrlQuery({ pagination, pageSize, registrationNumber, year }) {
   const controls = {}
   const totalPages = pagination?.totalPages ?? 0
 
@@ -84,7 +93,8 @@ function buildUrlQuery({ pagination, pageSize, registrationNumber }) {
       href: buildPageHref({
         page: pagination.page - 1,
         pageSize,
-        registrationNumber
+        registrationNumber,
+        year
       })
     }
   }
@@ -94,7 +104,8 @@ function buildUrlQuery({ pagination, pageSize, registrationNumber }) {
       href: buildPageHref({
         page: pagination.page + 1,
         pageSize,
-        registrationNumber
+        registrationNumber,
+        year
       })
     }
   }
@@ -103,7 +114,8 @@ function buildUrlQuery({ pagination, pageSize, registrationNumber }) {
     page: pagination.page,
     totalPages,
     pageSize,
-    registrationNumber
+    registrationNumber,
+    year
   })
 
   return controls
@@ -116,11 +128,21 @@ export const orsListGetController = {
     const registrationNumber = normaliseRegistrationNumber(
       request.query?.registrationNumber
     )
+    /** @type {{ year: string | null, yearItems: ReturnType<typeof yearItems> }} */
+    let yearView = { year: null, yearItems: [] }
 
     try {
+      const { years, year } = await reportYears(request)
+      if (year === undefined) {
+        return h.redirect(
+          reportUrlForYear(orsUploadRoutes.list, defaultReportYear(years))
+        )
+      }
+      yearView = { year, yearItems: yearItems({ years, year }) }
+
       const data = await fetchJsonFromBackend(
         request,
-        buildBackendPath({ page, pageSize, registrationNumber })
+        buildBackendPath({ year, page, pageSize, registrationNumber })
       )
 
       const rowsPayload = Array.isArray(data) ? data : data?.rows
@@ -138,11 +160,13 @@ export const orsListGetController = {
 
       return h.view('routes/ors-upload/list', {
         pageTitle: request.route.settings.app.pageTitle,
+        ...yearView,
         rows: mappedRows,
         pagination: buildUrlQuery({
           pagination: paginationData,
           pageSize,
-          registrationNumber
+          registrationNumber,
+          year
         }),
         page: paginationData?.page ?? page,
         totalPages: paginationData?.totalPages ?? 0,
@@ -157,6 +181,7 @@ export const orsListGetController = {
 
       return h.view('routes/ors-upload/list', {
         pageTitle: request.route.settings.app.pageTitle,
+        ...yearView,
         rows: [],
         pagination: {},
         page: 1,

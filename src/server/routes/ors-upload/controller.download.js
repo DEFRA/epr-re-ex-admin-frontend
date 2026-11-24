@@ -4,6 +4,12 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
 import { isNil } from '#server/common/helpers/is-nil.js'
 import { sanitizeFormulaInjection } from '#server/common/helpers/sanitize-formula-injection.js'
 import { buildBackendPath } from './helpers.js'
+import { orsUploadRoutes } from './constants.js'
+import {
+  defaultReportYear,
+  reportUrlForYear,
+  reportYears
+} from '#server/common/helpers/report-year.js'
 
 const dateFormat = 'd MMMM yyyy'
 const utf8Bom = '\uFEFF'
@@ -80,10 +86,20 @@ async function generateCsv(data) {
 
 export const orsDownloadController = {
   async handler(request, h) {
+    let listUrl = orsUploadRoutes.list
+
     try {
+      const { years, year } = await reportYears(request)
+      if (year === undefined) {
+        return h.redirect(
+          reportUrlForYear(orsUploadRoutes.list, defaultReportYear(years))
+        )
+      }
+      listUrl = reportUrlForYear(orsUploadRoutes.list, year)
+
       const data = await fetchJsonFromBackend(
         request,
-        buildBackendPath({ all: true })
+        buildBackendPath({ year, all: true })
       )
       const csv = await generateCsv(data)
 
@@ -92,7 +108,7 @@ export const orsDownloadController = {
         .header('Content-Type', 'text/csv; charset=utf-8')
         .header(
           'Content-Disposition',
-          'attachment; filename="overseas-reprocessing-sites.csv"'
+          `attachment; filename="overseas-reprocessing-sites-${year}.csv"`
         )
     } catch (error) {
       const errorMessage =
@@ -101,7 +117,7 @@ export const orsDownloadController = {
 
       request.yar.set('error', errorMessage)
 
-      return h.redirect('/overseas-sites')
+      return h.redirect(listUrl)
     }
   }
 }
