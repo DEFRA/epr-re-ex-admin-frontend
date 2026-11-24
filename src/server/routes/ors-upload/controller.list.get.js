@@ -123,21 +123,23 @@ function buildUrlQuery({ pagination, pageSize, registrationNumber, year }) {
 
 export const orsListGetController = {
   async handler(request, h) {
-    const { years, year } = await reportYears(request)
-    if (year === undefined) {
-      return h.redirect(
-        reportUrlForYear(orsUploadRoutes.list, defaultReportYear(years))
-      )
-    }
-
     const page = toPositiveInteger(request.query?.page, 1)
     const pageSize = toPositiveInteger(request.query?.pageSize, defaultPageSize)
     const registrationNumber = normaliseRegistrationNumber(
       request.query?.registrationNumber
     )
-    const yearView = { year, yearItems: yearItems({ years, year }) }
+    /** @type {{ year: string | undefined, yearItems: ReturnType<typeof yearItems> }} */
+    let yearView = { year: undefined, yearItems: [] }
 
     try {
+      const { years, year } = await reportYears(request)
+      if (year === undefined) {
+        return h.redirect(
+          reportUrlForYear(orsUploadRoutes.list, defaultReportYear(years))
+        )
+      }
+      yearView = { year, yearItems: yearItems({ years, year }) }
+
       const data = await fetchJsonFromBackend(
         request,
         buildBackendPath({ year, page, pageSize, registrationNumber })

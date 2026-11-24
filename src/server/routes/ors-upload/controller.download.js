@@ -86,14 +86,17 @@ async function generateCsv(data) {
 
 export const orsDownloadController = {
   async handler(request, h) {
-    const { years, year } = await reportYears(request)
-    if (year === undefined) {
-      return h.redirect(
-        reportUrlForYear(orsUploadRoutes.list, defaultReportYear(years))
-      )
-    }
+    let listUrl = orsUploadRoutes.list
 
     try {
+      const { years, year } = await reportYears(request)
+      if (year === undefined) {
+        return h.redirect(
+          reportUrlForYear(orsUploadRoutes.list, defaultReportYear(years))
+        )
+      }
+      listUrl = reportUrlForYear(orsUploadRoutes.list, year)
+
       const data = await fetchJsonFromBackend(
         request,
         buildBackendPath({ year, all: true })
@@ -114,7 +117,7 @@ export const orsDownloadController = {
 
       request.yar.set('error', errorMessage)
 
-      return h.redirect(reportUrlForYear(orsUploadRoutes.list, year))
+      return h.redirect(listUrl)
     }
   }
 }

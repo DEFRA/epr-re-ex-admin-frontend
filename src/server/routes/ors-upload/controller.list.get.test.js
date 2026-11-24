@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { fetchWasteRecordYears } from '#server/common/helpers/fetch-waste-record-years.js'
 import { orsListGetController } from './controller.list.get.js'
 
 vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
@@ -716,6 +717,31 @@ describe('orsListGetController', () => {
         })
       })
     )
+  })
+
+  test('renders the error message when the years cannot be loaded', async () => {
+    const error = new Error('Years unavailable')
+    vi.mocked(fetchWasteRecordYears).mockRejectedValueOnce(error)
+
+    await orsListGetController.handler(mockRequest, mockH)
+
+    expect(mockFetchJsonFromBackend).not.toHaveBeenCalled()
+    expect(mockLoggerError).toHaveBeenCalledWith({
+      err: error,
+      message: 'Failed to fetch overseas reprocessing sites for admin view'
+    })
+    expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/list', {
+      pageTitle: 'Overseas reprocessing sites',
+      year: undefined,
+      yearItems: [],
+      rows: [],
+      pagination: {},
+      page: 1,
+      totalPages: 0,
+      registrationNumber: '',
+      error:
+        'There was a problem loading overseas reprocessing site data. Please try again.'
+    })
   })
 
   test('handles backend failure and renders error message', async () => {

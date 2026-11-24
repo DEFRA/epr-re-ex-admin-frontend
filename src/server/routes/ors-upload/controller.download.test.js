@@ -2,6 +2,7 @@ import { vi } from 'vitest'
 import Boom from '@hapi/boom'
 
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { fetchWasteRecordYears } from '#server/common/helpers/fetch-waste-record-years.js'
 import { orsDownloadController } from './controller.download.js'
 
 vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
@@ -228,6 +229,22 @@ describe('orsDownloadController', () => {
       expect.stringMatching(/^\/overseas-sites\?year=202[56]$/)
     )
     expect(mockFetchJsonFromBackend).not.toHaveBeenCalled()
+    expect(result).toBe('redirect-response')
+  })
+
+  test('Should redirect with the default error message when the years cannot be loaded', async () => {
+    vi.mocked(fetchWasteRecordYears).mockRejectedValueOnce(
+      new Error('Years unavailable')
+    )
+
+    const result = await orsDownloadController.handler(mockRequest, mockH)
+
+    expect(mockFetchJsonFromBackend).not.toHaveBeenCalled()
+    expect(mockRequest.yar.set).toHaveBeenCalledWith(
+      'error',
+      'There was a problem downloading the overseas reprocessing site data. Please try again.'
+    )
+    expect(mockH.redirect).toHaveBeenCalledWith('/overseas-sites')
     expect(result).toBe('redirect-response')
   })
 
