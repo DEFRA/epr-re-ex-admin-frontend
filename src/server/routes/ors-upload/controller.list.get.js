@@ -128,8 +128,8 @@ export const orsListGetController = {
     const registrationNumber = normaliseRegistrationNumber(
       request.query?.registrationNumber
     )
-    /** @type {{ year: string | undefined, yearItems: ReturnType<typeof yearItems> }} */
-    let yearView = { year: undefined, yearItems: [] }
+    /** @type {{ year: string | null, yearItems: ReturnType<typeof yearItems> }} */
+    let yearView = { year: null, yearItems: [] }
 
     try {
       const { years, year } = await reportYears(request)

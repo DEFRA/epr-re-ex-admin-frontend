@@ -732,7 +732,7 @@ describe('orsListGetController', () => {
     })
     expect(mockH.view).toHaveBeenCalledWith('routes/ors-upload/list', {
       pageTitle: 'Overseas reprocessing sites',
-      year: undefined,
+      year: null,
       yearItems: [],
       rows: [],
       pagination: {},
