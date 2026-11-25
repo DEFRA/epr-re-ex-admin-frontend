@@ -1,40 +1,30 @@
-import { writeToString } from '@fast-csv/format'
-import { formatDate } from '#config/nunjucks/filters/format-date.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
-import { isNil } from '#server/common/helpers/is-nil.js'
-import { sanitizeFormulaInjection } from '#server/common/helpers/sanitize-formula-injection.js'
 import { buildBackendPath } from './helpers.js'
 import { orsUploadRoutes } from './constants.js'
+import {
+  csvAttachment,
+  overseasSiteCsvHeaders,
+  overseasSiteCsvValues,
+  toCsv
+} from './overseas-sites-csv.js'
 import {
   defaultReportYear,
   reportUrlForYear,
   reportYears
 } from '#server/common/helpers/report-year.js'
 
-const dateFormat = 'd MMMM yyyy'
-const utf8Bom = '\uFEFF'
+/**
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { OverseasSiteRow } from './overseas-sites-csv.js'
+ */
 
-function toCsvValue(value) {
-  if (isNil(value) || value === '') {
-    return ''
-  }
-
-  return sanitizeFormulaInjection(value)
-}
-
-function toValidFromCsvValue(value) {
-  if (isNil(value) || value === '') {
-    return ''
-  }
-
-  try {
-    return formatDate(value, dateFormat)
-  } catch {
-    return ''
-  }
-}
-
-function getRows(data) {
+/**
+ * @template {OverseasSiteRow} Row
+ * @param {Row[] | { rows?: Row[] } | null} data
+ * @returns {Row[]}
+ */
+function backendRows(data) {
   if (Array.isArray(data)) {
     return data
   }
@@ -42,49 +32,19 @@ function getRows(data) {
   return Array.isArray(data?.rows) ? data.rows : []
 }
 
-async function generateCsv(data) {
-  const rows = [
-    [
-      'Org ID',
-      'Registration Number',
-      'Accreditation Number',
-      'ORS ID',
-      'Packaging waste category',
-      'Destination country',
-      'Overseas reprocessor name',
-      'Address line 1',
-      'Address line 2',
-      'City or town',
-      'State, province or region',
-      'Postcode or similar',
-      'Coordinates',
-      'Valid from'
-    ]
-  ]
-
-  for (const row of getRows(data)) {
-    rows.push([
-      toCsvValue(row.orgId),
-      toCsvValue(row.registrationNumber),
-      toCsvValue(row.accreditationNumber),
-      toCsvValue(row.orsId),
-      toCsvValue(row.packagingWasteCategory),
-      toCsvValue(row.destinationCountry),
-      toCsvValue(row.overseasReprocessorName),
-      toCsvValue(row.addressLine1),
-      toCsvValue(row.addressLine2),
-      toCsvValue(row.cityOrTown),
-      toCsvValue(row.stateProvinceOrRegion),
-      toCsvValue(row.postcode),
-      toCsvValue(row.coordinates),
-      toValidFromCsvValue(row.validFrom)
-    ])
-  }
-
-  return `${utf8Bom}${await writeToString(rows, { headers: false })}`
+/** @param {OverseasSiteRow[] | { rows?: OverseasSiteRow[] } | null} data */
+function generateCsv(data) {
+  return toCsv([
+    overseasSiteCsvHeaders,
+    ...backendRows(data).map(overseasSiteCsvValues)
+  ])
 }
 
 export const orsDownloadController = {
+  /**
+   * @param {HapiRequest} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     let listUrl = orsUploadRoutes.list
 
@@ -103,19 +63,12 @@ export const orsDownloadController = {
       )
       const csv = await generateCsv(data)
 
-      return h
-        .response(csv)
-        .header('Content-Type', 'text/csv; charset=utf-8')
-        .header(
-          'Content-Disposition',
-          `attachment; filename="overseas-reprocessing-sites-${year}.csv"`
-        )
+      return csvAttachment(h, csv, `overseas-reprocessing-sites-${year}.csv`)
     } catch (error) {
-      const errorMessage =
-        error.output?.payload?.message ||
+      request.yar.set(
+        'error',
         'There was a problem downloading the overseas reprocessing site data. Please try again.'
-
-      request.yar.set('error', errorMessage)
+      )
 
       return h.redirect(listUrl)
     }

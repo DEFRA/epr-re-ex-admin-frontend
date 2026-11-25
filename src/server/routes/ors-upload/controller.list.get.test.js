@@ -36,6 +36,10 @@ describe('orsListGetController', () => {
 
     mockRequest = {
       query: { year: '2026' },
+      yar: {
+        get: vi.fn(),
+        clear: vi.fn()
+      },
       route: {
         settings: {
           app: {
@@ -767,5 +771,23 @@ describe('orsListGetController', () => {
       error:
         'There was a problem loading overseas reprocessing site data. Please try again.'
     })
+  })
+
+  test('shows and clears an error a failed download left in the session', async () => {
+    mockRequest.yar.get.mockReturnValue(
+      'The registration service did not respond.'
+    )
+    mockFetchJsonFromBackend.mockResolvedValue({ rows: [] })
+
+    await orsListGetController.handler(mockRequest, mockH)
+
+    expect(mockRequest.yar.get).toHaveBeenCalledWith('error')
+    expect(mockRequest.yar.clear).toHaveBeenCalledWith('error')
+    expect(mockH.view).toHaveBeenCalledWith(
+      'routes/ors-upload/list',
+      expect.objectContaining({
+        error: 'The registration service did not respond.'
+      })
+    )
   })
 })

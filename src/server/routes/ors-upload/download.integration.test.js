@@ -296,7 +296,7 @@ describe('ors-upload download integration', () => {
         expect(payload).toContain('1 April 2025')
       })
 
-      test('Should redirect back to the list page on backend failure', async () => {
+      test('Should show a plain error on the list page on backend failure', async () => {
         mswServer.use(
           http.get(`${backendUrl}/v1/admin/overseas-sites`, ({ request }) => {
             const url = new URL(request.url)
@@ -340,6 +340,19 @@ describe('ors-upload download integration', () => {
 
         expect(statusCode).toBe(302)
         expect(headers.location).toBe('/overseas-sites?year=2026')
+
+        const page = await server.inject({
+          method: 'GET',
+          url: headers.location,
+          headers: { cookie },
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const errorSummary = cheerio.load(page.result)('.govuk-error-summary')
+        expect(errorSummary.text()).toContain(
+          'There was a problem downloading the overseas reprocessing site data. Please try again.'
+        )
+        expect(errorSummary.text()).not.toContain('Backend download failure')
       })
 
       test('Should reject request without CSRF token', async () => {
@@ -358,6 +371,138 @@ describe('ors-upload download integration', () => {
         expect(statusCode).toBe(statusCodes.forbidden)
       })
     })
+  })
+
+  describe('POST /overseas-sites/registration-service', () => {
+    const downloadPath = '/overseas-sites/registration-service'
+    const registrationServiceUrl = `${backendUrl}/v1/admin/registration-service/overseas-sites`
+
+    const postDownload = async (session) => {
+      const { cookie, crumb } = await getCsrfToken(server, pagePath, {
+        strategy: 'session',
+        credentials: session
+      })
+
+      const response = await server.inject({
+        method: 'POST',
+        url: downloadPath,
+        headers: { cookie },
+        payload: { crumb },
+        auth: { strategy: 'session', credentials: session }
+      })
+
+      return { cookie, response }
+    }
+
+    test('Should return unauthorised status code when user is unauthenticated', async () => {
+      vi.mocked(getUserSession).mockResolvedValue(null)
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: downloadPath,
+        payload: {}
+      })
+
+      expect(statusCode).toBe(statusCodes.unauthorised)
+    })
+
+    test('Should offer the download on the overseas sites page to a read-only admin', async () => {
+      stubListResponse([])
+      vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: pagePath,
+        auth: { strategy: 'session', credentials: readOnlySession }
+      })
+
+      const $ = cheerio.load(result)
+      const form = $(`form[action="${downloadPath}"]`)
+      expect(form.attr('method')).toBe('POST')
+      expect(form.text()).toContain('Download registration service CSV')
+    })
+
+    test('Should return the registration service sites as a CSV to a read-only admin', async () => {
+      stubListResponse([])
+      vi.mocked(getUserSession).mockResolvedValue(readOnlySession)
+      mswServer.use(
+        http.get(registrationServiceUrl, () =>
+          HttpResponse.json({
+            rows: [
+              {
+                orgId: 500001,
+                registrationNumber: 'R25SR5000010001PA',
+                packagingWasteCategory: 'paper',
+                year: 2027,
+                applicationReference: 'APP-123',
+                applicationStatus: 'submitted',
+                accreditationNumber: null,
+                siteId: 7,
+                orsId: '001',
+                selected: true,
+                overseasReprocessorName: 'Alpha Reprocessor',
+                formattedAddress: null,
+                destinationCountry: 'France',
+                addressLine1: null,
+                addressLine2: null,
+                cityOrTown: null,
+                coordinates: null
+              }
+            ]
+          })
+        )
+      )
+
+      const {
+        response: { statusCode, headers, payload }
+      } = await postDownload(readOnlySession)
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(headers['content-type']).toContain('text/csv')
+      expect(headers['content-disposition']).toBe(
+        'attachment; filename="overseas-reprocessing-sites-registration-service.csv"'
+      )
+      expect(payload).toContain('Application reference,Application status')
+      expect(payload).toContain('APP-123,submitted,2027,Yes,7')
+    })
+
+    test.each([
+      [
+        statusCodes.badGateway,
+        'The registration service did not respond. Please try again later.'
+      ],
+      [
+        statusCodes.serviceUnavailable,
+        'The registration service is not available. Please try again later.'
+      ]
+    ])(
+      'Should show the admin a plain error on the overseas sites page when the backend answers %i',
+      async (status, message) => {
+        stubListResponse(mockRows)
+        vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
+        mswServer.use(
+          http.get(registrationServiceUrl, () =>
+            HttpResponse.json({ message: 'backend detail' }, { status })
+          )
+        )
+
+        const { cookie, response: download } =
+          await postDownload(mockUserSession)
+
+        expect(download.statusCode).toBe(statusCodes.found)
+        expect(download.headers.location).toBe('/overseas-sites')
+
+        const page = await server.inject({
+          method: 'GET',
+          url: pagePath,
+          headers: { cookie },
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const $ = cheerio.load(page.result)
+        expect($('.govuk-error-summary').text()).toContain(message)
+      }
+    )
   })
 
   describe('GET /overseas-sites/imports', () => {

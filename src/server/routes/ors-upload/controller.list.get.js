@@ -140,6 +140,9 @@ export const orsListGetController = {
       }
       yearView = { year, yearItems: yearItems({ years, year }) }
 
+      const downloadError = request.yar.get('error') ?? null
+      request.yar.clear('error')
+
       const data = await fetchJsonFromBackend(
         request,
         buildBackendPath({ year, page, pageSize, registrationNumber })
@@ -171,7 +174,7 @@ export const orsListGetController = {
         page: paginationData?.page ?? page,
         totalPages: paginationData?.totalPages ?? 0,
         registrationNumber,
-        error: null
+        error: downloadError
       })
     } catch (error) {
       logger.error({
