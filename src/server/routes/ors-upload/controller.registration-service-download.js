@@ -38,7 +38,7 @@ const errorMessages = {
   [statusCodes.badGateway]:
     'The registration service did not respond. Please try again later.',
   [statusCodes.serviceUnavailable]:
-    'The registration service is not connected in this environment.'
+    'The registration service is not available. Please try again later.'
 }
 
 const defaultErrorMessage =

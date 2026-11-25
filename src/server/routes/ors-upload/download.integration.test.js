@@ -473,7 +473,7 @@ describe('ors-upload download integration', () => {
       ],
       [
         statusCodes.serviceUnavailable,
-        'The registration service is not connected in this environment.'
+        'The registration service is not available. Please try again later.'
       ]
     ])(
       'Should show the admin a plain error on the overseas sites page when the backend answers %i',

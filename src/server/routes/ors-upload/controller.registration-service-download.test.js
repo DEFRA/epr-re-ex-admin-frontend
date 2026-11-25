@@ -140,7 +140,7 @@ describe('registrationServiceDownloadController', () => {
     ],
     [
       Boom.serverUnavailable(),
-      'The registration service is not connected in this environment.'
+      'The registration service is not available. Please try again later.'
     ],
     [
       new Error('Network error'),
