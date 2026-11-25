@@ -27,7 +27,7 @@ describe('#ors-upload routes plugin', () => {
 
     const registeredRoutes = mockServer.route.mock.calls[0][0]
 
-    expect(registeredRoutes).toHaveLength(4)
+    expect(registeredRoutes).toHaveLength(5)
     expect(registeredRoutes[0]).toMatchObject({
       method: 'GET',
       path: orsUploadRoutes.list,
@@ -56,6 +56,12 @@ describe('#ors-upload routes plugin', () => {
         app: { pageTitle: 'ORS upload status' }
       }
     })
+
+    expect(registeredRoutes[4]).toMatchObject({
+      method: 'POST',
+      path: orsUploadRoutes.registrationServiceDownload
+    })
+    expect(registeredRoutes[4]).not.toHaveProperty('options.pre')
   })
 
   test('Should validate importId as a uuid on status route', async () => {

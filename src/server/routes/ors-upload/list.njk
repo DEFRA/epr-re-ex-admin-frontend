@@ -139,6 +139,14 @@
             }) }}
           {% endif %}
         {% endif %}
+
+        <form method="POST" action="/overseas-sites/registration-service">
+          <input type="hidden" name="crumb" value="{{ crumb }}" />
+          {{ govukButton({
+            text: "Download registration service CSV",
+            classes: "govuk-button--secondary"
+          }) }}
+        </form>
       </div>
     </div>
   </div>
