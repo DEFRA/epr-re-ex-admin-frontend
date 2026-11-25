@@ -1,3 +1,5 @@
+import Boom from '@hapi/boom'
+
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { buildBackendPath } from './helpers.js'
 import { orsUploadRoutes } from './constants.js'
@@ -14,6 +16,13 @@ import {
   reportYears
 } from '#server/common/helpers/report-year.js'
 
+/**
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { OverseasSiteRow } from './overseas-sites-csv.js'
+ */
+
+/** @param {OverseasSiteRow[] | { rows?: OverseasSiteRow[] } | null} data */
 function generateCsv(data) {
   return toCsv([
     overseasSiteCsvHeaders,
@@ -22,6 +31,10 @@ function generateCsv(data) {
 }
 
 export const orsDownloadController = {
+  /**
+   * @param {HapiRequest} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     let listUrl = orsUploadRoutes.list
 
@@ -43,7 +56,7 @@ export const orsDownloadController = {
       return csvAttachment(h, csv, `overseas-reprocessing-sites-${year}.csv`)
     } catch (error) {
       const errorMessage =
-        error.output?.payload?.message ||
+        (Boom.isBoom(error) && error.output.payload.message) ||
         'There was a problem downloading the overseas reprocessing site data. Please try again.'
 
       request.yar.set('error', errorMessage)

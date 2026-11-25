@@ -1,3 +1,5 @@
+import Boom from '@hapi/boom'
+
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { orsUploadRoutes } from './constants.js'
@@ -10,6 +12,26 @@ import {
   toCsvValue
 } from './overseas-sites-csv.js'
 
+/**
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { CsvValue, OverseasSiteRow } from './overseas-sites-csv.js'
+ */
+
+/**
+ * One site on one registration application, as
+ * `GET /v1/admin/registration-service/overseas-sites` returns it.
+ * @typedef {OverseasSiteRow & {
+ *   year: number,
+ *   applicationReference: string | null,
+ *   applicationStatus: string,
+ *   siteId: string,
+ *   selected: boolean,
+ *   formattedAddress: string | null
+ * }} RegistrationServiceSiteRow
+ */
+
+/** @type {Record<number, string>} */
 const errorMessages = {
   [statusCodes.badGateway]:
     'The registration service did not respond. Please try again later.',
@@ -29,6 +51,10 @@ const applicationCsvHeaders = [
   'Formatted address'
 ]
 
+/**
+ * @param {RegistrationServiceSiteRow} row
+ * @returns {CsvValue[]}
+ */
 function applicationCsvValues(row) {
   return [
     toCsvValue(row.applicationReference),
@@ -40,6 +66,7 @@ function applicationCsvValues(row) {
   ]
 }
 
+/** @param {{ rows?: RegistrationServiceSiteRow[] } | null} data */
 function generateCsv(data) {
   return toCsv([
     [...overseasSiteCsvHeaders, ...applicationCsvHeaders],
@@ -51,6 +78,10 @@ function generateCsv(data) {
 }
 
 export const registrationServiceDownloadController = {
+  /**
+   * @param {HapiRequest} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     try {
       const data = await fetchJsonFromBackend(
@@ -64,9 +95,10 @@ export const registrationServiceDownloadController = {
         'overseas-reprocessing-sites-registration-service.csv'
       )
     } catch (error) {
+      const statusCode = Boom.isBoom(error) ? error.output.statusCode : null
       request.yar.set(
         'error',
-        errorMessages[error.output?.statusCode] ?? defaultErrorMessage
+        (statusCode && errorMessages[statusCode]) ?? defaultErrorMessage
       )
 
       return h.redirect(orsUploadRoutes.list)

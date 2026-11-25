@@ -68,7 +68,7 @@ describe('registrationServiceDownloadController', () => {
     const [header, row] = (await downloadCsv()).split('\n')
 
     expect(header).toBe(
-      '﻿Org ID,Registration Number,Accreditation Number,ORS ID,Packaging waste category,Destination country,Overseas reprocessor name,Address line 1,Address line 2,City or town,"State, province or region",Postcode or similar,Coordinates,Valid from,Application reference,Application status,Year,Selected,Site ID,Formatted address'
+      '\uFEFFOrg ID,Registration Number,Accreditation Number,ORS ID,Packaging waste category,Destination country,Overseas reprocessor name,Address line 1,Address line 2,City or town,"State, province or region",Postcode or similar,Coordinates,Valid from,Application reference,Application status,Year,Selected,Site ID,Formatted address'
     )
     expect(row).toBe(
       '500001,R25SR5000010001PA,ACC5000010001,001,paper,France,Alpha Reprocessor,1 Rue de Test,Zone 2,Paris,,,"48.8566,2.3522",,APP-123,submitted,2026,Yes,site-1,"1 Rue de Test, Paris"'
