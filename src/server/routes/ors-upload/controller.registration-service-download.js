@@ -4,7 +4,6 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { orsUploadRoutes } from './constants.js'
 import {
-  backendRows,
   csvAttachment,
   overseasSiteCsvHeaders,
   overseasSiteCsvValues,
@@ -25,7 +24,7 @@ import {
  *   year: number,
  *   applicationReference: string | null,
  *   applicationStatus: string,
- *   siteId: string,
+ *   siteId: number,
  *   selected: boolean,
  *   formattedAddress: string | null
  * }} RegistrationServiceSiteRow
@@ -66,11 +65,11 @@ function applicationCsvValues(row) {
   ]
 }
 
-/** @param {{ rows?: RegistrationServiceSiteRow[] } | null} data */
-function generateCsv(data) {
+/** @param {RegistrationServiceSiteRow[]} rows */
+function generateCsv(rows) {
   return toCsv([
     [...overseasSiteCsvHeaders, ...applicationCsvHeaders],
-    ...backendRows(data).map((row) => [
+    ...rows.map((row) => [
       ...overseasSiteCsvValues(row),
       ...applicationCsvValues(row)
     ])
@@ -84,14 +83,15 @@ export const registrationServiceDownloadController = {
    */
   async handler(request, h) {
     try {
-      const data = await fetchJsonFromBackend(
+      /** @type {{ rows: RegistrationServiceSiteRow[] }} */
+      const { rows } = await fetchJsonFromBackend(
         request,
         '/v1/admin/registration-service/overseas-sites'
       )
 
       return csvAttachment(
         h,
-        await generateCsv(data),
+        await generateCsv(rows),
         'overseas-reprocessing-sites-registration-service.csv'
       )
     } catch (error) {

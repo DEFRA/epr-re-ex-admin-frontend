@@ -4,7 +4,6 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
 import { buildBackendPath } from './helpers.js'
 import { orsUploadRoutes } from './constants.js'
 import {
-  backendRows,
   csvAttachment,
   overseasSiteCsvHeaders,
   overseasSiteCsvValues,
@@ -21,6 +20,19 @@ import {
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  * @import { OverseasSiteRow } from './overseas-sites-csv.js'
  */
+
+/**
+ * @template {OverseasSiteRow} Row
+ * @param {Row[] | { rows?: Row[] } | null} data
+ * @returns {Row[]}
+ */
+function backendRows(data) {
+  if (Array.isArray(data)) {
+    return data
+  }
+
+  return Array.isArray(data?.rows) ? data.rows : []
+}
 
 /** @param {OverseasSiteRow[] | { rows?: OverseasSiteRow[] } | null} data */
 function generateCsv(data) {

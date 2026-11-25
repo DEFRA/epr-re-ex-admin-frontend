@@ -424,7 +424,7 @@ describe('ors-upload download integration', () => {
                 applicationReference: 'APP-123',
                 applicationStatus: 'submitted',
                 accreditationNumber: null,
-                siteId: 'site-1',
+                siteId: 7,
                 orsId: '001',
                 selected: true,
                 overseasReprocessorName: 'Alpha Reprocessor',
@@ -450,7 +450,7 @@ describe('ors-upload download integration', () => {
         'attachment; filename="overseas-reprocessing-sites-registration-service.csv"'
       )
       expect(payload).toContain('Application reference,Application status')
-      expect(payload).toContain('APP-123,submitted,2026,Yes,site-1')
+      expect(payload).toContain('APP-123,submitted,2026,Yes,7')
     })
 
     test.each([

@@ -97,19 +97,6 @@ export function overseasSiteCsvValues(row) {
 }
 
 /**
- * @template {OverseasSiteRow} Row
- * @param {Row[] | { rows?: Row[] } | null} data
- * @returns {Row[]}
- */
-export function backendRows(data) {
-  if (Array.isArray(data)) {
-    return data
-  }
-
-  return Array.isArray(data?.rows) ? data.rows : []
-}
-
-/**
  * Excel reads a CSV as UTF-8 only when it starts with a byte order mark.
  * @param {CsvValue[][]} rows
  */
