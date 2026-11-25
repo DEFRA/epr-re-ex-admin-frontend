@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { createLogger } from '#server/common/helpers/logging/logger.js'
 import { orsUploadRoutes } from './constants.js'
 import {
   csvAttachment,
@@ -29,6 +30,8 @@ import {
  *   formattedAddress: string | null
  * }} RegistrationServiceSiteRow
  */
+
+const logger = createLogger()
 
 /** @type {Record<number, string>} */
 const errorMessages = {
@@ -95,6 +98,11 @@ export const registrationServiceDownloadController = {
         'overseas-reprocessing-sites-registration-service.csv'
       )
     } catch (error) {
+      logger.error({
+        err: error,
+        message: 'Failed to download the registration service overseas sites'
+      })
+
       const statusCode = Boom.isBoom(error) ? error.output.statusCode : null
       request.yar.set(
         'error',

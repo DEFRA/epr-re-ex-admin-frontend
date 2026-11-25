@@ -8,13 +8,21 @@ vi.mock('#server/common/helpers/fetch-json-from-backend.js', () => ({
   fetchJsonFromBackend: vi.fn()
 }))
 
+const mockLoggerError = vi.hoisted(() => vi.fn())
+
+vi.mock('#server/common/helpers/logging/logger.js', () => ({
+  createLogger: vi.fn(() => ({
+    error: mockLoggerError
+  }))
+}))
+
 const mockFetchJsonFromBackend = vi.mocked(fetchJsonFromBackend)
 
 const site = {
   orgId: 500001,
   registrationNumber: 'R25SR5000010001PA',
   packagingWasteCategory: 'paper',
-  year: 2026,
+  year: 2027,
   applicationReference: 'APP-123',
   applicationStatus: 'submitted',
   accreditationNumber: 'ACC5000010001',
@@ -71,7 +79,7 @@ describe('registrationServiceDownloadController', () => {
       '\uFEFFOrg ID,Registration Number,Accreditation Number,ORS ID,Packaging waste category,Destination country,Overseas reprocessor name,Address line 1,Address line 2,City or town,"State, province or region",Postcode or similar,Coordinates,Valid from,Application reference,Application status,Year,Selected,Site ID,Formatted address'
     )
     expect(row).toBe(
-      '500001,R25SR5000010001PA,ACC5000010001,001,paper,France,Alpha Reprocessor,1 Rue de Test,Zone 2,Paris,,,"48.8566,2.3522",,APP-123,submitted,2026,Yes,7,"1 Rue de Test, Paris"'
+      '500001,R25SR5000010001PA,ACC5000010001,001,paper,France,Alpha Reprocessor,1 Rue de Test,Zone 2,Paris,,,"48.8566,2.3522",,APP-123,submitted,2027,Yes,7,"1 Rue de Test, Paris"'
     )
   })
 
@@ -92,7 +100,7 @@ describe('registrationServiceDownloadController', () => {
     const [, row] = (await downloadCsv()).split('\n')
 
     expect(row).toBe(
-      '500001,R25SR5000010001PA,,,paper,France,Alpha Reprocessor,1 Rue de Test,Zone 2,Paris,,,"48.8566,2.3522",,,submitted,2026,No,7,'
+      '500001,R25SR5000010001PA,,,paper,France,Alpha Reprocessor,1 Rue de Test,Zone 2,Paris,,,"48.8566,2.3522",,,submitted,2027,No,7,'
     )
   })
 
@@ -148,6 +156,10 @@ describe('registrationServiceDownloadController', () => {
         mockH
       )
 
+      expect(mockLoggerError).toHaveBeenCalledWith({
+        err: error,
+        message: 'Failed to download the registration service overseas sites'
+      })
       expect(mockRequest.yar.set).toHaveBeenCalledWith('error', message)
       expect(mockH.redirect).toHaveBeenCalledWith('/overseas-sites')
       expect(result).toBe('redirect-response')

@@ -248,7 +248,7 @@ describe('orsDownloadController', () => {
     expect(result).toBe('redirect-response')
   })
 
-  test('Should use backend error message when available', async () => {
+  test('Should keep the backend error message off the page', async () => {
     const error = Boom.badRequest('Custom backend error message')
     mockFetchJsonFromBackend.mockRejectedValue(error)
 
@@ -256,7 +256,7 @@ describe('orsDownloadController', () => {
 
     expect(mockRequest.yar.set).toHaveBeenCalledWith(
       'error',
-      'Custom backend error message'
+      'There was a problem downloading the overseas reprocessing site data. Please try again.'
     )
   })
 })

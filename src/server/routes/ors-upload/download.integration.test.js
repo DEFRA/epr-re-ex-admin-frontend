@@ -296,7 +296,7 @@ describe('ors-upload download integration', () => {
         expect(payload).toContain('1 April 2025')
       })
 
-      test('Should redirect back to the list page on backend failure', async () => {
+      test('Should show a plain error on the list page on backend failure', async () => {
         mswServer.use(
           http.get(`${backendUrl}/v1/admin/overseas-sites`, ({ request }) => {
             const url = new URL(request.url)
@@ -340,6 +340,19 @@ describe('ors-upload download integration', () => {
 
         expect(statusCode).toBe(302)
         expect(headers.location).toBe('/overseas-sites?year=2026')
+
+        const page = await server.inject({
+          method: 'GET',
+          url: headers.location,
+          headers: { cookie },
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const errorSummary = cheerio.load(page.result)('.govuk-error-summary')
+        expect(errorSummary.text()).toContain(
+          'There was a problem downloading the overseas reprocessing site data. Please try again.'
+        )
+        expect(errorSummary.text()).not.toContain('Backend download failure')
       })
 
       test('Should reject request without CSRF token', async () => {
@@ -420,7 +433,7 @@ describe('ors-upload download integration', () => {
                 orgId: 500001,
                 registrationNumber: 'R25SR5000010001PA',
                 packagingWasteCategory: 'paper',
-                year: 2026,
+                year: 2027,
                 applicationReference: 'APP-123',
                 applicationStatus: 'submitted',
                 accreditationNumber: null,
@@ -450,7 +463,7 @@ describe('ors-upload download integration', () => {
         'attachment; filename="overseas-reprocessing-sites-registration-service.csv"'
       )
       expect(payload).toContain('Application reference,Application status')
-      expect(payload).toContain('APP-123,submitted,2026,Yes,7')
+      expect(payload).toContain('APP-123,submitted,2027,Yes,7')
     })
 
     test.each([

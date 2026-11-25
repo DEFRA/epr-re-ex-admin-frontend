@@ -1,5 +1,3 @@
-import Boom from '@hapi/boom'
-
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { buildBackendPath } from './helpers.js'
 import { orsUploadRoutes } from './constants.js'
@@ -67,11 +65,10 @@ export const orsDownloadController = {
 
       return csvAttachment(h, csv, `overseas-reprocessing-sites-${year}.csv`)
     } catch (error) {
-      const errorMessage =
-        (Boom.isBoom(error) && error.output.payload.message) ||
+      request.yar.set(
+        'error',
         'There was a problem downloading the overseas reprocessing site data. Please try again.'
-
-      request.yar.set('error', errorMessage)
+      )
 
       return h.redirect(listUrl)
     }
