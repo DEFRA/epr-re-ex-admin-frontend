@@ -8,8 +8,8 @@
         {% set summaryLogTableRows = [] %}
         {% for row in params.rows %}
           {% set actionsHtml %}
-            <a class="govuk-link govuk-link--no-visited-state" href="{{ row.viewUrl }}">View data</a>
-            <br><a class="govuk-link govuk-link--no-visited-state" href="{{ row.downloadUrl }}">Download</a>
+            <a class="govuk-link govuk-link--no-visited-state" href="{{ row.viewUrl }}">View data <span class="govuk-visually-hidden">{{ row.uploadedAt }}</span></a>
+            <br><a class="govuk-link govuk-link--no-visited-state" href="{{ row.downloadUrl }}">Download <span class="govuk-visually-hidden">{{ row.uploadedAt }}</span></a>
           {% endset %}
           {% set summaryLogTableRows = summaryLogTableRows.concat([[
             { text: row.uploadedAt },

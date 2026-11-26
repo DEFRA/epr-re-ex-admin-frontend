@@ -7,12 +7,13 @@
       {% if params.rows and params.rows.length %}
         {% set tableRows = [] %}
         {% for row in params.rows %}
+          {% set rowName %}{{ row.formattedPeriod }}, submission {{ row.submissionNumber }}{% endset %}
           {% set actionsHtml %}
             {% if row.viewUrl %}
-              <a class="govuk-link govuk-link--no-visited-state" href="{{ row.viewUrl }}">View</a>
+              <a class="govuk-link govuk-link--no-visited-state" href="{{ row.viewUrl }}">View <span class="govuk-visually-hidden">{{ rowName }}</span></a>
             {% endif %}
             {% if row.unsubmitUrl %}
-              <br><a class="govuk-link govuk-link--no-visited-state" href="{{ row.unsubmitUrl }}">Unsubmit</a>
+              <br><a class="govuk-link govuk-link--no-visited-state" href="{{ row.unsubmitUrl }}">Unsubmit <span class="govuk-visually-hidden">{{ rowName }}</span></a>
             {% endif %}
           {% endset %}
           {% set tableRows = tableRows.concat([[
