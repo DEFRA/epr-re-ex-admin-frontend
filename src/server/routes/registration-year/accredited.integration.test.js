@@ -582,7 +582,7 @@ describe('#accreditedYearGETController', () => {
         'govuk-tag'
       )
       expect(
-        within(firstRow).getByRole('link', { name: 'View' })
+        within(firstRow).getByRole('link', { name: /^View / })
       ).toHaveAttribute(
         'href',
         `/organisations/500123/registrations/REG-50030-001/accreditations/2026/reports/monthly/1/submissions/1`
@@ -611,7 +611,7 @@ describe('#accreditedYearGETController', () => {
       const [firstRow] = getDataRows(getReportsTable(renderPage(result)))
 
       expect(
-        within(firstRow).getByRole('link', { name: 'View' })
+        within(firstRow).getByRole('link', { name: /^View / })
       ).toHaveAttribute(
         'href',
         '/organisations/500123/registrations/REG-50030-001/reports/2026/quarterly/1/submissions/1'
@@ -662,7 +662,9 @@ describe('#accreditedYearGETController', () => {
 
       expect(
         rows.map((row) =>
-          within(row).getByRole('link', { name: 'View' }).getAttribute('href')
+          within(row)
+            .getByRole('link', { name: /^View / })
+            .getAttribute('href')
         )
       ).toStrictEqual([
         '/organisations/500123/registrations/REG-50030-001/reports/2026/quarterly/1/submissions/2',
@@ -789,13 +791,13 @@ describe('#accreditedYearGETController', () => {
       expect(getAllByRole(dataRows[0], 'cell')[1]).toHaveTextContent('1')
       expect(getAllByRole(dataRows[1], 'cell')[1]).toHaveTextContent('2')
       expect(
-        within(dataRows[0]).getByRole('link', { name: 'View' })
+        within(dataRows[0]).getByRole('link', { name: /^View / })
       ).toHaveAttribute(
         'href',
         `/organisations/500123/registrations/REG-50030-001/accreditations/2026/reports/monthly/1/submissions/1`
       )
       expect(
-        within(dataRows[1]).getByRole('link', { name: 'View' })
+        within(dataRows[1]).getByRole('link', { name: /^View / })
       ).toHaveAttribute(
         'href',
         `/organisations/500123/registrations/REG-50030-001/accreditations/2026/reports/monthly/1/submissions/2`
@@ -846,7 +848,7 @@ describe('#accreditedYearGETController', () => {
       )
       expect(getAllByRole(draftRow, 'cell')[1]).toHaveTextContent('2')
       expect(
-        within(draftRow).getByRole('link', { name: 'View' })
+        within(draftRow).getByRole('link', { name: /^View / })
       ).toBeInTheDocument()
     })
 
@@ -940,14 +942,14 @@ describe('#accreditedYearGETController', () => {
       const [firstRow] = getDataRows(getSummaryLogsTable(body))
 
       expect(
-        within(firstRow).getByText('2026-01-01T11:00:00.000Z')
+        within(firstRow).getByRole('cell', { name: '2026-01-01T11:00:00.000Z' })
       ).toBeInTheDocument()
       expect(within(firstRow).getByText('Success')).toHaveClass(
         'govuk-tag',
         'govuk-tag--green'
       )
       expect(
-        within(firstRow).getByRole('link', { name: 'Download' })
+        within(firstRow).getByRole('link', { name: /^Download / })
       ).toHaveAttribute(
         'href',
         `/organisations/500123/registrations/REG-50030-001/summary-logs/${mockSubmittedSummaryLog.summaryLogId}/file`
@@ -969,7 +971,7 @@ describe('#accreditedYearGETController', () => {
       const [firstRow] = getDataRows(getSummaryLogsTable(body))
 
       expect(
-        within(firstRow).getByRole('link', { name: 'View data' })
+        within(firstRow).getByRole('link', { name: /^View data / })
       ).toHaveAttribute(
         'href',
         `/organisations/500123/registrations/REG-50030-001/summary-logs/${mockSubmittedSummaryLog.summaryLogId}`
@@ -1018,10 +1020,14 @@ describe('#accreditedYearGETController', () => {
 
       expect(dataRows).toHaveLength(2)
       expect(
-        within(dataRows[0]).getByText('2026-01-01T11:00:00.000Z')
+        within(dataRows[0]).getByRole('cell', {
+          name: '2026-01-01T11:00:00.000Z'
+        })
       ).toBeInTheDocument()
       expect(
-        within(dataRows[1]).getByText('2026-01-04T11:00:00.000Z')
+        within(dataRows[1]).getByRole('cell', {
+          name: '2026-01-04T11:00:00.000Z'
+        })
       ).toBeInTheDocument()
     })
 
@@ -1308,6 +1314,52 @@ describe('#accreditedYearGETController', () => {
       })
     })
 
+    describe('row link names', () => {
+      const linkNames = (table) =>
+        within(table)
+          .getAllByRole('link')
+          .map((link) => link.textContent?.replace(/\s+/g, ' ').trim())
+
+      it('should name each report link by its period and submission', async () => {
+        useMockBackend(mockOrganisation, mockCalendarWithHistory)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+
+        expect(linkNames(getReportsTable(body))).toStrictEqual([
+          'View January, submission 1',
+          'View January, submission 2',
+          'Unsubmit January, submission 2'
+        ])
+      })
+
+      it('should name each summary log link by when it was uploaded', async () => {
+        useMockBackend(mockOrganisation, mockCalendar, {
+          summaryLogs: [mockSubmittedSummaryLog, mockValidationFailedSummaryLog]
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: { strategy: 'session', credentials: mockUserSession }
+        })
+
+        const body = renderPage(result)
+
+        expect(linkNames(getSummaryLogsTable(body))).toStrictEqual([
+          'View data 2026-01-01T11:00:00.000Z',
+          'Download 2026-01-01T11:00:00.000Z',
+          'View data 2026-01-04T11:00:00.000Z',
+          'Download 2026-01-04T11:00:00.000Z'
+        ])
+      })
+    })
+
     describe('Unsubmit link visibility', () => {
       afterEach(() => {
         vi.mocked(getUserSession).mockResolvedValue(mockUserSession)
@@ -1324,7 +1376,7 @@ describe('#accreditedYearGETController', () => {
 
         const body = renderPage(result)
         const unsubmitLink = within(getReportsTable(body)).getByRole('link', {
-          name: 'Unsubmit'
+          name: /^Unsubmit /
         })
 
         expect(unsubmitLink).toHaveAttribute(
@@ -1351,7 +1403,7 @@ describe('#accreditedYearGETController', () => {
 
         expect(
           within(getReportsTable(body)).queryByRole('link', {
-            name: 'Unsubmit'
+            name: /^Unsubmit /
           })
         ).toBeNull()
       })
@@ -1369,10 +1421,10 @@ describe('#accreditedYearGETController', () => {
         const [supersededRow, currentRow] = getDataRows(getReportsTable(body))
 
         expect(
-          within(supersededRow).queryByRole('link', { name: 'Unsubmit' })
+          within(supersededRow).queryByRole('link', { name: /^Unsubmit / })
         ).toBeNull()
         expect(
-          within(currentRow).getByRole('link', { name: 'Unsubmit' })
+          within(currentRow).getByRole('link', { name: /^Unsubmit / })
         ).toHaveAttribute(
           'href',
           `/organisations/500123/registrations/REG-50030-001/accreditations/2026/reports/monthly/1/submissions/2/unsubmit/confirm`
@@ -1403,7 +1455,7 @@ describe('#accreditedYearGETController', () => {
 
           expect(
             within(getReportsTable(body)).queryByRole('link', {
-              name: 'Unsubmit'
+              name: /^Unsubmit /
             })
           ).toBeNull()
         }
