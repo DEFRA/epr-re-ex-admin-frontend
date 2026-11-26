@@ -33,8 +33,15 @@ import {
 
 const logger = createLogger()
 
-/** @type {Record<number, string>} */
-const errorMessages = {
+export const registrationServiceSitesPath =
+  '/v1/admin/registration-service/overseas-sites'
+
+/**
+ * What to tell an admin when the backend could not reach the registration
+ * service, by the status the backend answered with.
+ * @type {Record<number, string>}
+ */
+export const registrationServiceErrorMessages = {
   [statusCodes.badGateway]:
     'The registration service did not respond. Please try again later.',
   [statusCodes.serviceUnavailable]:
@@ -89,7 +96,7 @@ export const registrationServiceDownloadController = {
       /** @type {{ rows: RegistrationServiceSiteRow[] }} */
       const { rows } = await fetchJsonFromBackend(
         request,
-        '/v1/admin/registration-service/overseas-sites'
+        registrationServiceSitesPath
       )
 
       return csvAttachment(
@@ -106,7 +113,8 @@ export const registrationServiceDownloadController = {
       const statusCode = Boom.isBoom(error) ? error.output.statusCode : null
       request.yar.set(
         'error',
-        (statusCode && errorMessages[statusCode]) ?? defaultErrorMessage
+        (statusCode && registrationServiceErrorMessages[statusCode]) ??
+          defaultErrorMessage
       )
 
       return h.redirect(orsUploadRoutes.list)

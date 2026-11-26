@@ -1,0 +1,53 @@
+{% extends 'layout.njk' %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+
+{% macro groupTable(group) %}
+  {% if group.rows.length %}
+    {{ govukTable({
+      attributes: { "data-testid": group.id },
+      head: group.head,
+      rows: group.rows
+    }) }}
+  {% else %}
+    {{ govukInsetText({ text: group.emptyText }) }}
+  {% endif %}
+{% endmacro %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <div class="govuk-body" data-testid="app-page-body">
+        {% if error %}
+          {{ govukErrorSummary({
+            titleText: "There is a problem",
+            errorList: [{ text: error }]
+          }) }}
+        {% endif %}
+
+        <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
+
+        {% if groups %}
+          <p class="govuk-body">Sites are matched within each registration on destination country, reprocessor name and address line 1. Re-ex's sites are read for {{ year }}, and the registration service's from every application it holds. Nothing is paired on the ORS ID alone. A site marked "Check" may be a near miss, and a person must judge it.</p>
+
+          <h2 class="govuk-heading-l">Same site, same ORS ID ({{ groups.sameNumber.rows.length }})</h2>
+          {{ groupTable(groups.sameNumber) }}
+
+          <h2 class="govuk-heading-l">Same site, different ORS ID ({{ groups.differentNumber.rows.length }})</h2>
+          {{ groupTable(groups.differentNumber) }}
+
+          <h2 class="govuk-heading-l">Sites on one side only</h2>
+
+          <h3 class="govuk-heading-m">In re-ex only ({{ groups.reExOnly.rows.length }})</h3>
+          {{ groupTable(groups.reExOnly) }}
+
+          <h3 class="govuk-heading-m">In the registration service only ({{ groups.registrationServiceOnly.rows.length }})</h3>
+          {{ groupTable(groups.registrationServiceOnly) }}
+        {% endif %}
+
+        <p class="govuk-body"><a href="/overseas-sites" class="govuk-link">Back to overseas reprocessing sites</a></p>
+      </div>
+    </div>
+  </div>
+{% endblock %}
