@@ -102,83 +102,95 @@ const applicationsText = (site) =>
     )
     .join(', ')
 
+/** @param {OverseasSiteMatches['sameNumber']} pairs */
+const sameNumberGroup = (pairs) => ({
+  id: 'same-number',
+  emptyText: 'No sites match with the same ORS ID.',
+  head: [
+    ...registrationHead,
+    { text: 'ORS ID' },
+    ...siteHead,
+    applicationsHead
+  ],
+  rows: pairs.map(({ reEx, registrationService }) => [
+    ...registrationCells(reEx),
+    ...cells([reEx.orsId]),
+    ...siteCells(reEx),
+    { text: applicationsText(registrationService) }
+  ])
+})
+
+/** @param {OverseasSiteMatches['differentNumber']} pairs */
+const differentNumberGroup = (pairs) => ({
+  id: 'different-number',
+  emptyText: 'No sites match with a different ORS ID.',
+  head: [
+    ...registrationHead,
+    { text: 'Re-ex ORS ID' },
+    { text: 'Registration service ORS ID' },
+    ...siteHead,
+    applicationsHead,
+    { text: 'Re-ex ORS ID already held by' }
+  ],
+  rows: pairs.map(({ reEx, registrationService, reExNumberHolder }) => [
+    ...registrationCells(reEx),
+    ...cells([reEx.orsId, registrationService.orsId]),
+    ...siteCells(reEx),
+    { text: applicationsText(registrationService) },
+    {
+      text: reExNumberHolder
+        ? `${toDisplayValue(reExNumberHolder.overseasReprocessorName)}, ${toDisplayValue(reExNumberHolder.addressLine1)}`
+        : '-'
+    }
+  ])
+})
+
+/** @param {OverseasSiteMatches['reExOnly']} sites */
+const reExOnlyGroup = (sites) => ({
+  id: 're-ex-only',
+  emptyText: 'Every re-ex site matches a registration service site.',
+  head: [
+    ...registrationHead,
+    { text: 'ORS ID' },
+    ...siteHead,
+    { text: 'Compare with the registration service' }
+  ],
+  rows: sites.map(({ site, nearMatches }) => [
+    ...registrationCells(site),
+    ...cells([site.orsId]),
+    ...siteCells(site),
+    { text: nearMatchesText(nearMatches) }
+  ])
+})
+
+/** @param {OverseasSiteMatches['registrationServiceOnly']} sites */
+const registrationServiceOnlyGroup = (sites) => ({
+  id: 'registration-service-only',
+  emptyText: 'Every registration service site matches a re-ex site.',
+  head: [
+    ...registrationHead,
+    { text: 'ORS ID' },
+    ...siteHead,
+    applicationsHead,
+    { text: 'Compare with re-ex' }
+  ],
+  rows: sites.map(({ site, nearMatches }) => [
+    ...registrationCells(site),
+    { text: site.orsId ?? 'Check: None' },
+    ...siteCells(site),
+    { text: applicationsText(site) },
+    { text: nearMatchesText(nearMatches) }
+  ])
+})
+
 /** @param {OverseasSiteMatches} matches */
 const toGroups = (matches) => ({
-  sameNumber: {
-    id: 'same-number',
-    emptyText: 'No sites match with the same ORS ID.',
-    head: [
-      ...registrationHead,
-      { text: 'ORS ID' },
-      ...siteHead,
-      applicationsHead
-    ],
-    rows: matches.sameNumber.map(({ reEx, registrationService }) => [
-      ...registrationCells(reEx),
-      ...cells([reEx.orsId]),
-      ...siteCells(reEx),
-      { text: applicationsText(registrationService) }
-    ])
-  },
-  differentNumber: {
-    id: 'different-number',
-    emptyText: 'No sites match with a different ORS ID.',
-    head: [
-      ...registrationHead,
-      { text: 'Re-ex ORS ID' },
-      { text: 'Registration service ORS ID' },
-      ...siteHead,
-      applicationsHead,
-      { text: 'Re-ex ORS ID already held by' }
-    ],
-    rows: matches.differentNumber.map(
-      ({ reEx, registrationService, reExNumberHolder }) => [
-        ...registrationCells(reEx),
-        ...cells([reEx.orsId, registrationService.orsId]),
-        ...siteCells(reEx),
-        { text: applicationsText(registrationService) },
-        {
-          text: reExNumberHolder
-            ? `${toDisplayValue(reExNumberHolder.overseasReprocessorName)}, ${toDisplayValue(reExNumberHolder.addressLine1)}`
-            : '-'
-        }
-      ]
-    )
-  },
-  reExOnly: {
-    id: 're-ex-only',
-    emptyText: 'Every re-ex site matches a registration service site.',
-    head: [
-      ...registrationHead,
-      { text: 'ORS ID' },
-      ...siteHead,
-      { text: 'Compare with the registration service' }
-    ],
-    rows: matches.reExOnly.map(({ site, nearMatches }) => [
-      ...registrationCells(site),
-      ...cells([site.orsId]),
-      ...siteCells(site),
-      { text: nearMatchesText(nearMatches) }
-    ])
-  },
-  registrationServiceOnly: {
-    id: 'registration-service-only',
-    emptyText: 'Every registration service site matches a re-ex site.',
-    head: [
-      ...registrationHead,
-      { text: 'ORS ID' },
-      ...siteHead,
-      applicationsHead,
-      { text: 'Compare with re-ex' }
-    ],
-    rows: matches.registrationServiceOnly.map(({ site, nearMatches }) => [
-      ...registrationCells(site),
-      { text: site.orsId ?? 'Check: None' },
-      ...siteCells(site),
-      { text: applicationsText(site) },
-      { text: nearMatchesText(nearMatches) }
-    ])
-  }
+  sameNumber: sameNumberGroup(matches.sameNumber),
+  differentNumber: differentNumberGroup(matches.differentNumber),
+  reExOnly: reExOnlyGroup(matches.reExOnly),
+  registrationServiceOnly: registrationServiceOnlyGroup(
+    matches.registrationServiceOnly
+  )
 })
 
 export const orsMatchesGetController = {
