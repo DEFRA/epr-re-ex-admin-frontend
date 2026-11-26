@@ -228,19 +228,20 @@ export const matchOverseasSites = (reExRows, registrationServiceRows) => {
 
   const registrations = [
     ...new Set([...reEx.keys(), ...registrationService.keys()])
-  ].sort()
+  ].sort((a, b) => a.localeCompare(b))
   for (const registration of registrations) {
     const reExSites = reEx.get(registration) ?? []
     const registrationServiceSites = registrationService.get(registration) ?? []
 
     /** @type {Map<typeof reExSites[number], typeof registrationServiceSites[number]>} */
     const pairs = new Map()
+    const unpairedReExSites = () => reExSites.filter((site) => !pairs.has(site))
     const unpaired = new Set(
       registrationServiceSites.filter(({ key }) => key.orsId !== null)
     )
     /** @param {boolean} keepsNumber */
     const pairWhere = (keepsNumber) => {
-      for (const r of reExSites.filter((r) => !pairs.has(r))) {
+      for (const r of unpairedReExSites()) {
         const partner = [...unpaired].find(
           ({ key }) =>
             r.key.detailsKey !== null &&
@@ -269,14 +270,14 @@ export const matchOverseasSites = (reExRows, registrationServiceRows) => {
     const registrationServiceKeys = registrationServiceSites.map(
       ({ key }) => key
     )
-    for (const r of reExSites.filter((r) => !pairs.has(r))) {
+    for (const r of unpairedReExSites()) {
       matches.reExOnly.push({
         site: r.site,
         nearMatches: nearMatchesOf(r.key, registrationServiceKeys)
       })
     }
     for (const s of registrationServiceSites.filter(
-      (s) => !pairedRegistrationService.has(s)
+      (site) => !pairedRegistrationService.has(site)
     )) {
       matches.registrationServiceOnly.push({
         site: s.site,
