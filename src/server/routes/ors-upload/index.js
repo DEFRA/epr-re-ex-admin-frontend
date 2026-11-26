@@ -1,6 +1,7 @@
 import { orsUploadGetController } from './controller.get.js'
 import { orsDownloadController } from './controller.download.js'
 import { orsListGetController } from './controller.list.get.js'
+import { orsMatchesGetController } from './controller.matches.get.js'
 import { orsUploadStatusGetController } from './controller.status.get.js'
 import { registrationServiceDownloadController } from './controller.registration-service-download.js'
 import { orsUploadRoutes } from './constants.js'
@@ -54,6 +55,17 @@ export const orsUpload = {
           method: 'POST',
           path: orsUploadRoutes.registrationServiceDownload,
           ...registrationServiceDownloadController
+        },
+        {
+          method: 'GET',
+          path: orsUploadRoutes.matches,
+          ...orsMatchesGetController,
+          options: {
+            app: {
+              pageTitle:
+                'Overseas reprocessing sites matched with the registration service'
+            }
+          }
         }
       ])
     }
