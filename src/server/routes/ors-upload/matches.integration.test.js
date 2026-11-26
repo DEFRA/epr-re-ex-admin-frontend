@@ -163,13 +163,17 @@ describe('overseas sites matches integration', () => {
         reExSite('002', 'Ganges Metals', '3 River Street'),
         reExSite('003', 'Indus Recycling', '4 Port Lane'),
         reExSite('004', 'Andes Paper', '1 Calle Uno'),
-        reExSite('005', 'Kaveri Plastics', '8 Canal Road')
+        reExSite('005', 'Kaveri Plastics', '8 Canal Road'),
+        reExSite('006', 'Mekong Glass', '6 Bay Road')
       ],
       registrationService: [
         registrationServiceSite('001', 'Bengal Steelworks', '12 Mill Road'),
         registrationServiceSite('007', 'Ganges Metals', '3 River Street'),
+        registrationServiceSite('002', 'Volga Fibres', '5 Quay Road'),
+        registrationServiceSite('008', 'Mekong Glass', '6 Bay Road'),
         registrationServiceSite('003', 'Delta Steel', '9 Dock Road', {
-          applicationStatus: 'Started'
+          applicationStatus: 'Started',
+          selected: false
         }),
         registrationServiceSite(null, 'Andes Paper', '1 Calle Uno', {
           applicationStatus: 'Submitted'
@@ -204,7 +208,19 @@ describe('overseas sites matches integration', () => {
         'Ganges Metals',
         'India',
         '3 River Street',
-        '2027 Approved'
+        '2027 Approved',
+        'Volga Fibres, 5 Quay Road'
+      ],
+      [
+        '500049',
+        'R26ER5000490001ST',
+        '006',
+        '008',
+        'Mekong Glass',
+        'India',
+        '6 Bay Road',
+        '2027 Approved',
+        '-'
       ]
     ])
     expect(tableRows($, 're-ex-only')).toEqual([
@@ -240,11 +256,21 @@ describe('overseas sites matches integration', () => {
       [
         '500049',
         'R26ER5000490001ST',
+        '002',
+        'Volga Fibres',
+        'India',
+        '5 Quay Road',
+        '2027 Approved',
+        'Check: ORS ID 002, Ganges Metals, 3 River Street (same ORS ID)'
+      ],
+      [
+        '500049',
+        'R26ER5000490001ST',
         '003',
         'Delta Steel',
         'India',
         '9 Dock Road',
-        '2027 Started',
+        '2027 Started (deselected)',
         'Check: ORS ID 003, Indus Recycling, 4 Port Lane (same ORS ID)'
       ],
       [

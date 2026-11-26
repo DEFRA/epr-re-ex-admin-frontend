@@ -147,11 +147,33 @@ describe('matchOverseasSites', () => {
     expect(matches.differentNumber).toEqual([
       {
         reEx: expect.objectContaining({ orsId: '001' }),
-        registrationService: expect.objectContaining({ orsId: '004' })
+        registrationService: expect.objectContaining({ orsId: '004' }),
+        reExNumberHolder: null
       }
     ])
     expect(matches.reExOnly).toEqual([])
     expect(matches.registrationServiceOnly).toEqual([])
+  })
+
+  test('Should name the registration service site that already holds the number of a renumbered site', () => {
+    const matches = matchOverseasSites(
+      [reExSite({ orsId: '001' })],
+      [
+        registrationServiceSite({ orsId: '004' }),
+        registrationServiceSite({ orsId: '001', ...indusRecycling })
+      ]
+    )
+
+    expect(matches.differentNumber).toEqual([
+      {
+        reEx: expect.objectContaining({ orsId: '001' }),
+        registrationService: expect.objectContaining({ orsId: '004' }),
+        reExNumberHolder: expect.objectContaining({
+          orsId: '001',
+          overseasReprocessorName: 'Indus Recycling'
+        })
+      }
+    ])
   })
 
   test('Should prefer the pairing that keeps the number when two sites share the details', () => {
@@ -451,6 +473,7 @@ describe('matchOverseasSites', () => {
       [
         registrationServiceSite({ orsId: null, ...indusRecycling }),
         registrationServiceSite({ orsId: '002' }),
+        registrationServiceSite({ orsId: null }),
         registrationServiceSite({ orsId: '001', ...indusRecycling })
       ]
     )
@@ -463,6 +486,7 @@ describe('matchOverseasSites', () => {
     ).toEqual([
       ['001', []],
       ['002', []],
+      [null, []],
       [null, []]
     ])
   })

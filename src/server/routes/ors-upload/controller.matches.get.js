@@ -96,7 +96,10 @@ const applicationsHead = { text: 'Applications' }
 /** @param {RegistrationServiceSite} site */
 const applicationsText = (site) =>
   site.applications
-    .map(({ year, applicationStatus }) => `${year} ${applicationStatus}`)
+    .map(
+      ({ year, applicationStatus, selected }) =>
+        `${year} ${applicationStatus}${selected ? '' : ' (deselected)'}`
+    )
     .join(', ')
 
 /** @param {OverseasSiteMatches} matches */
@@ -125,14 +128,22 @@ const toGroups = (matches) => ({
       { text: 'Re-ex ORS ID' },
       { text: 'Registration service ORS ID' },
       ...siteHead,
-      applicationsHead
+      applicationsHead,
+      { text: 'Re-ex ORS ID already held by' }
     ],
-    rows: matches.differentNumber.map(({ reEx, registrationService }) => [
-      ...registrationCells(reEx),
-      ...cells([reEx.orsId, registrationService.orsId]),
-      ...siteCells(reEx),
-      { text: applicationsText(registrationService) }
-    ])
+    rows: matches.differentNumber.map(
+      ({ reEx, registrationService, reExNumberHolder }) => [
+        ...registrationCells(reEx),
+        ...cells([reEx.orsId, registrationService.orsId]),
+        ...siteCells(reEx),
+        { text: applicationsText(registrationService) },
+        {
+          text: reExNumberHolder
+            ? `${toDisplayValue(reExNumberHolder.overseasReprocessorName)}, ${toDisplayValue(reExNumberHolder.addressLine1)}`
+            : '-'
+        }
+      ]
+    )
   },
   reExOnly: {
     id: 're-ex-only',

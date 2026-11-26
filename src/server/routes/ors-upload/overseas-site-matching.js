@@ -41,6 +41,13 @@
  */
 
 /**
+ * A pair whose numbers differ, with the registration service site that already
+ * holds re-ex's number in that registration, if any. The registration service
+ * cannot take re-ex's number back until that site gives it up.
+ * @typedef {SitePair & { reExNumberHolder: RegistrationServiceSite | null }} RenumberedPair
+ */
+
+/**
  * @template S
  * @typedef {{ site: S, nearMatches: NearMatch[] }} UnpairedSite
  */
@@ -48,7 +55,7 @@
 /**
  * @typedef {{
  *   sameNumber: SitePair[],
- *   differentNumber: SitePair[],
+ *   differentNumber: RenumberedPair[],
  *   reExOnly: UnpairedSite<OverseasSiteRow>[],
  *   registrationServiceOnly: UnpairedSite<RegistrationServiceSite>[]
  * }} OverseasSiteMatches
@@ -171,16 +178,14 @@ const collapseApplications = (rows) => {
 }
 
 /**
- * A site with no number sorts after its registration's numbered sites.
+ * A site with no number sorts after the numbered sites.
  *
- * @template {OverseasSiteRow} S
- * @param {S} a
- * @param {S} b
+ * @param {KeyedSite<unknown>} a
+ * @param {KeyedSite<unknown>} b
  */
-const byRegistrationThenOrsId = (a, b) =>
-  `${a.registrationNumber} ${a.orsId}`.localeCompare(
-    `${b.registrationNumber} ${b.orsId}`
-  )
+const byOrsId = (a, b) =>
+  Number(a.key.orsId === null) - Number(b.key.orsId === null) ||
+  (a.key.orsId ?? '').localeCompare(b.key.orsId ?? '')
 
 /**
  * @template {OverseasSiteRow} S
@@ -190,12 +195,15 @@ const byRegistrationThenOrsId = (a, b) =>
 const byRegistration = (sites) => {
   /** @type {Map<string, KeyedSite<S>[]>} */
   const registrations = new Map()
-  for (const site of [...sites].sort(byRegistrationThenOrsId)) {
+  for (const site of sites) {
     const registration = registrationOf(site)
     registrations.set(registration, [
       ...(registrations.get(registration) ?? []),
       { site, key: comparable(site) }
     ])
+  }
+  for (const keyedSites of registrations.values()) {
+    keyedSites.sort(byOrsId)
   }
   return registrations
 }
@@ -258,11 +266,18 @@ export const matchOverseasSites = (reExRows, registrationServiceRows) => {
     pairWhere(false)
 
     for (const [r, s] of pairs) {
-      const group =
-        r.key.orsId === s.key.orsId
-          ? matches.sameNumber
-          : matches.differentNumber
-      group.push({ reEx: r.site, registrationService: s.site })
+      if (r.key.orsId === s.key.orsId) {
+        matches.sameNumber.push({ reEx: r.site, registrationService: s.site })
+      } else {
+        const holder = registrationServiceSites.find(
+          ({ key }) => key.orsId === r.key.orsId
+        )
+        matches.differentNumber.push({
+          reEx: r.site,
+          registrationService: s.site,
+          reExNumberHolder: holder?.site ?? null
+        })
+      }
     }
 
     const pairedRegistrationService = new Set(pairs.values())
