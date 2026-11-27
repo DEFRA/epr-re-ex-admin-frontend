@@ -324,6 +324,40 @@ const renumberedPairsIn = (renumbered, registrationServiceSites) => {
 }
 
 /**
+ * Pairs the sites of one registration on their details, first where the
+ * numbers agree and then where they differ. A registration service site with
+ * no number never pairs.
+ *
+ * @param {KeyedSite<OverseasSiteRow>[]} reExSites
+ * @param {KeyedSite<RegistrationServiceSite>[]} registrationServiceSites
+ */
+const pairSitesIn = (reExSites, registrationServiceSites) => {
+  /** @type {Map<KeyedSite<OverseasSiteRow>, KeyedSite<RegistrationServiceSite>>} */
+  const pairs = new Map()
+  const unpaired = new Set(
+    registrationServiceSites.filter(({ key }) => key.orsId !== null)
+  )
+  /** @param {boolean} keepsNumber */
+  const pairWhere = (keepsNumber) => {
+    for (const r of reExSites.filter((site) => !pairs.has(site))) {
+      const partner = [...unpaired].find(
+        ({ key }) =>
+          r.key.detailsKey !== null &&
+          key.detailsKey === r.key.detailsKey &&
+          (key.orsId === r.key.orsId) === keepsNumber
+      )
+      if (partner) {
+        pairs.set(r, partner)
+        unpaired.delete(partner)
+      }
+    }
+  }
+  pairWhere(true)
+  pairWhere(false)
+  return pairs
+}
+
+/**
  * Matches re-ex's overseas sites to the registration service's within each
  * registration, where the registration service's numbers are unique. Sites
  * pair only when their details are the same, keeping the number where they
@@ -356,29 +390,8 @@ export const matchOverseasSites = (reExRows, registrationServiceRows) => {
     const reExSites = reEx.get(registration) ?? []
     const registrationServiceSites = registrationService.get(registration) ?? []
 
-    /** @type {Map<typeof reExSites[number], typeof registrationServiceSites[number]>} */
-    const pairs = new Map()
+    const pairs = pairSitesIn(reExSites, registrationServiceSites)
     const unpairedReExSites = () => reExSites.filter((site) => !pairs.has(site))
-    const unpaired = new Set(
-      registrationServiceSites.filter(({ key }) => key.orsId !== null)
-    )
-    /** @param {boolean} keepsNumber */
-    const pairWhere = (keepsNumber) => {
-      for (const r of unpairedReExSites()) {
-        const partner = [...unpaired].find(
-          ({ key }) =>
-            r.key.detailsKey !== null &&
-            key.detailsKey === r.key.detailsKey &&
-            (key.orsId === r.key.orsId) === keepsNumber
-        )
-        if (partner) {
-          pairs.set(r, partner)
-          unpaired.delete(partner)
-        }
-      }
-    }
-    pairWhere(true)
-    pairWhere(false)
 
     const renumbered = new Map(
       [...pairs].filter(([r, s]) => r.key.orsId !== s.key.orsId)
