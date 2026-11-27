@@ -238,23 +238,44 @@ const byRegistration = (sites) => {
 }
 
 /**
+ * @callback RenumberedPairBuilder
+ * @param {KeyedSite<OverseasSiteRow>} reExSite
+ * @param {KeyedSite<RegistrationServiceSite>} partner
+ * @returns {RenumberedPair}
+ */
+
+/**
  * Builds each renumbered pair in a registration, with how it takes re-ex's
- * number back, found by following the sites that hold that number.
+ * number back, found by following the sites that hold that number. A site
+ * paired with a re-ex site that has no number has nothing to move to, so it
+ * keeps its own.
  *
  * @param {Map<KeyedSite<OverseasSiteRow>, KeyedSite<RegistrationServiceSite>>} renumbered - re-ex site to its partner
  * @param {KeyedSite<RegistrationServiceSite>[]} registrationServiceSites - every site the registration service holds in the registration
+ * @returns {RenumberedPairBuilder}
  */
 const renumberedPairsIn = (renumbered, registrationServiceSites) => {
   /** @type {Map<KeyedSite<RegistrationServiceSite>, KeyedSite<OverseasSiteRow>>} */
   const movingTo = new Map(
-    [...renumbered].map(([reExSite, partner]) => [partner, reExSite])
+    [...renumbered]
+      .filter(([reExSite]) => reExSite.key.orsId !== null)
+      .map(([reExSite, partner]) => [partner, reExSite])
   )
+
+  /** @type {Map<string, KeyedSite<RegistrationServiceSite>[]>} */
+  const sitesByNumber = new Map()
+  for (const site of registrationServiceSites) {
+    if (site.key.orsId !== null) {
+      sitesByNumber.set(site.key.orsId, [
+        ...(sitesByNumber.get(site.key.orsId) ?? []),
+        site
+      ])
+    }
+  }
 
   /** @param {string | null} orsId */
   const holdersOf = (orsId) =>
-    orsId === null
-      ? []
-      : registrationServiceSites.filter(({ key }) => key.orsId === orsId)
+    (orsId !== null && sitesByNumber.get(orsId)) || []
 
   /**
    * @param {KeyedSite<RegistrationServiceSite>} start
@@ -291,11 +312,6 @@ const renumberedPairsIn = (renumbered, registrationServiceSites) => {
     return passesBackTo(partner, holders, new Set()) ? 'swap' : 'chain'
   }
 
-  /**
-   * @param {KeyedSite<OverseasSiteRow>} reExSite
-   * @param {KeyedSite<RegistrationServiceSite>} partner
-   * @returns {RenumberedPair}
-   */
   return (reExSite, partner) => ({
     reEx: reExSite.site,
     registrationService: partner.site,

@@ -58,13 +58,17 @@ const nearMatchReasons = {
 /** @param {string | null | undefined} orsId */
 const orsIdText = (orsId) => orsId ?? 'None'
 
+/** @param {Pick<OverseasSiteRow, 'overseasReprocessorName' | 'addressLine1'>} site */
+const siteText = (site) =>
+  `${toDisplayValue(site.overseasReprocessorName)}, ${toDisplayValue(site.addressLine1)}`
+
 /** @param {NearMatch[]} nearMatches */
 const nearMatchesText = (nearMatches) =>
   nearMatches.length
     ? nearMatches
         .map(
-          ({ reason, orsId, overseasReprocessorName, addressLine1 }) =>
-            `Check: ORS ID ${orsIdText(orsId)}, ${toDisplayValue(overseasReprocessorName)}, ${toDisplayValue(addressLine1)} (${nearMatchReasons[reason]})`
+          (nearMatch) =>
+            `Check: ORS ID ${orsIdText(nearMatch.orsId)}, ${siteText(nearMatch)} (${nearMatchReasons[nearMatch.reason]})`
         )
         .join('; ')
     : '-'
@@ -127,10 +131,6 @@ const renumberingLabels = {
   swap: 'Swap'
 }
 
-/** @param {OverseasSiteRow} site */
-const siteText = (site) =>
-  `${toDisplayValue(site.overseasReprocessorName)}, ${toDisplayValue(site.addressLine1)}`
-
 /** @param {NumberHolder} holder */
 const holderText = ({ site, movesTo }) => {
   const move = movesTo ? 'moves to ' + movesTo : 'keeps it'
@@ -145,7 +145,9 @@ const renumberingText = ({ renumbering, reExNumberHolders }) =>
 
 /** @param {OverseasSiteRow[]} reExSites */
 const numberNeededByText = (reExSites) =>
-  reExSites.length ? `Clash: ${reExSites.map(siteText).join('; ')}` : '-'
+  reExSites.length
+    ? `${renumberingLabels.clash}: ${reExSites.map(siteText).join('; ')}`
+    : '-'
 
 /** @param {OverseasSiteMatches['differentNumber']} pairs */
 const differentNumberGroup = (pairs) => ({

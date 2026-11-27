@@ -373,6 +373,28 @@ describe('matchOverseasSites', () => {
     )
   })
 
+  test('Should flag a clash when the site holding the number pairs with a re-ex site that has none, since it has no number to move to', () => {
+    const matches = matchOverseasSites(
+      [
+        reExSite({ orsId: '001' }),
+        reExSite({ orsId: null, ...indusRecycling })
+      ],
+      [
+        registrationServiceSite({ orsId: '004' }),
+        registrationServiceSite({ orsId: '001', ...indusRecycling })
+      ]
+    )
+
+    expect(matches.differentNumber[0]).toEqual(
+      expect.objectContaining({
+        renumbering: 'clash',
+        reExNumberHolders: [
+          { site: expect.objectContaining({ orsId: '001' }), movesTo: null }
+        ]
+      })
+    )
+  })
+
   test('Should find nothing holding the number of a re-ex site that has none, even a registration service site with no number', () => {
     const matches = matchOverseasSites(
       [reExSite({ orsId: null })],
