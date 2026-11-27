@@ -42,31 +42,34 @@
 
 /**
  * How a renumbered site can take re-ex's number back, given the registration
- * service sites on its registration that already hold that number. The
+ * service site on its registration that already holds that number. The
  * registration service holds each number once per registration, so:
  * - free: nothing holds it
- * - clash: a site that is not itself renumbered keeps it, so a person must
- *   decide what that site gets
+ * - clash: the site holding it is not itself renumbered, so it keeps it and a
+ *   person must decide what that site gets
  * - chain: the site holding it moves to another number first
  * - swap: the sites pass their numbers round, so one needs a spare number
  *   while they move
- * @typedef {'free' | 'clash' | 'chain' | 'swap'} Renumbering
+ * - blocked: the sites holding it move in a chain that ends at a site keeping
+ *   its number
+ * @typedef {{ renumbering: 'free' }
+ *   | { renumbering: 'clash', holder: RegistrationServiceSite }
+ *   | {
+ *       renumbering: 'chain' | 'swap',
+ *       holder: RegistrationServiceSite,
+ *       holderMovesTo: string
+ *     }
+ *   | {
+ *       renumbering: 'blocked',
+ *       keptBy: RegistrationServiceSite,
+ *       keptNumber: string
+ *     }
+ * } NumberReturn
  */
 
-/**
- * A registration service site holding a number a renumbered site needs back,
- * with the re-ex number it is itself renumbered to, if it is.
- * @typedef {{ site: RegistrationServiceSite, movesTo: string | null }} NumberHolder
- */
+/** @typedef {NumberReturn['renumbering']} Renumbering */
 
-/**
- * A pair whose numbers differ, with how it takes re-ex's number back and the
- * registration service sites that already hold that number.
- * @typedef {SitePair & {
- *   renumbering: Renumbering,
- *   reExNumberHolders: NumberHolder[]
- * }} RenumberedPair
- */
+/** @typedef {SitePair & NumberReturn} RenumberedPair */
 
 /**
  * @template S
@@ -238,6 +241,23 @@ const byRegistration = (sites) => {
 }
 
 /**
+ * The re-ex number each registration service number moves to. A site paired
+ * with a re-ex site that has no number has nothing to move to, so it keeps its
+ * own.
+ *
+ * @param {Map<KeyedSite<OverseasSiteRow>, KeyedSite<RegistrationServiceSite>>} renumbered - re-ex site to its partner
+ * @returns {Map<string | null, string>}
+ */
+const numberMovesIn = (renumbered) =>
+  new Map(
+    [...renumbered].flatMap(([reExSite, partner]) =>
+      reExSite.key.orsId === null
+        ? []
+        : [[partner.key.orsId, reExSite.key.orsId]]
+    )
+  )
+
+/**
  * @callback RenumberedPairBuilder
  * @param {KeyedSite<OverseasSiteRow>} reExSite
  * @param {KeyedSite<RegistrationServiceSite>} partner
@@ -246,80 +266,83 @@ const byRegistration = (sites) => {
 
 /**
  * Builds each renumbered pair in a registration, with how it takes re-ex's
- * number back, found by following the sites that hold that number. A site
- * paired with a re-ex site that has no number has nothing to move to, so it
- * keeps its own.
+ * number back, found by following the sites that hold each number in turn.
+ * The registration service holds each number once per registration, so the
+ * sites carrying one number are copies of one site edited between
+ * applications, and where one copy moves they all do.
  *
  * @param {Map<KeyedSite<OverseasSiteRow>, KeyedSite<RegistrationServiceSite>>} renumbered - re-ex site to its partner
+ * @param {Map<string | null, string>} numberMoves - from numberMovesIn
  * @param {KeyedSite<RegistrationServiceSite>[]} registrationServiceSites - every site the registration service holds in the registration
  * @returns {RenumberedPairBuilder}
  */
-const renumberedPairsIn = (renumbered, registrationServiceSites) => {
-  /** @type {Map<KeyedSite<RegistrationServiceSite>, KeyedSite<OverseasSiteRow>>} */
-  const movingTo = new Map(
-    [...renumbered]
-      .filter(([reExSite]) => reExSite.key.orsId !== null)
-      .map(([reExSite, partner]) => [partner, reExSite])
+const renumberedPairsIn = (
+  renumbered,
+  numberMoves,
+  registrationServiceSites
+) => {
+  /** @type {Map<string | null, RegistrationServiceSite>} */
+  const holders = new Map(
+    [...renumbered.values()].map(({ key, site }) => [key.orsId, site])
   )
-
-  /** @type {Map<string, KeyedSite<RegistrationServiceSite>[]>} */
-  const sitesByNumber = new Map()
-  for (const site of registrationServiceSites) {
-    if (site.key.orsId !== null) {
-      sitesByNumber.set(site.key.orsId, [
-        ...(sitesByNumber.get(site.key.orsId) ?? []),
-        site
-      ])
+  for (const { key, site } of registrationServiceSites) {
+    if (key.orsId !== null && !holders.has(key.orsId)) {
+      holders.set(key.orsId, site)
     }
   }
 
-  /** @param {string | null} orsId */
-  const holdersOf = (orsId) =>
-    (orsId !== null && sitesByNumber.get(orsId)) || []
-
   /**
-   * @param {KeyedSite<RegistrationServiceSite>} start
-   * @param {KeyedSite<RegistrationServiceSite>[]} holders
-   * @param {Set<KeyedSite<RegistrationServiceSite>>} seen
-   * @returns {boolean}
+   * Follows the sites holding each number from `number` until the numbers run
+   * free, come back to `start`, or reach a site that keeps its number. A loop
+   * that misses `start` needs re-ex to give two sites one number, and ends the
+   * chain.
+   *
+   * @param {string | null} start
+   * @param {string} number
+   * @returns {'chain' | 'swap' | { keptBy: RegistrationServiceSite, keptNumber: string }}
    */
-  const passesBackTo = (start, holders, seen) =>
-    holders.some((holder) => {
-      if (holder === start) {
-        return true
+  const endOfChain = (start, number) => {
+    const seen = new Set()
+    let next = number
+    while (next !== start) {
+      const holder = holders.get(next)
+      const onward = numberMoves.get(next)
+      if (!holder || seen.has(next)) {
+        return 'chain'
       }
-      const next = movingTo.get(holder)
-      if (!next || seen.has(holder)) {
-        return false
+      if (onward === undefined) {
+        return { keptBy: holder, keptNumber: next }
       }
-      seen.add(holder)
-      return passesBackTo(start, holdersOf(next.key.orsId), seen)
-    })
+      seen.add(next)
+      next = onward
+    }
+    return 'swap'
+  }
 
   /**
    * @param {KeyedSite<OverseasSiteRow>} reExSite
    * @param {KeyedSite<RegistrationServiceSite>} partner
-   * @returns {Renumbering}
+   * @returns {NumberReturn}
    */
-  const renumberingOf = (reExSite, partner) => {
-    const holders = holdersOf(reExSite.key.orsId)
-    if (!holders.length) {
-      return 'free'
+  const numberReturnOf = (reExSite, partner) => {
+    const holder = holders.get(reExSite.key.orsId)
+    const holderMovesTo = numberMoves.get(reExSite.key.orsId)
+    if (!holder) {
+      return { renumbering: 'free' }
     }
-    if (holders.some((holder) => !movingTo.has(holder))) {
-      return 'clash'
+    if (holderMovesTo === undefined) {
+      return { renumbering: 'clash', holder }
     }
-    return passesBackTo(partner, holders, new Set()) ? 'swap' : 'chain'
+    const end = endOfChain(partner.key.orsId, holderMovesTo)
+    return typeof end === 'string'
+      ? { renumbering: end, holder, holderMovesTo }
+      : { renumbering: 'blocked', ...end }
   }
 
   return (reExSite, partner) => ({
     reEx: reExSite.site,
     registrationService: partner.site,
-    renumbering: renumberingOf(reExSite, partner),
-    reExNumberHolders: holdersOf(reExSite.key.orsId).map((holder) => ({
-      site: holder.site,
-      movesTo: movingTo.get(holder)?.key.orsId ?? null
-    }))
+    ...numberReturnOf(reExSite, partner)
   })
 }
 
@@ -396,8 +419,10 @@ export const matchOverseasSites = (reExRows, registrationServiceRows) => {
     const renumbered = new Map(
       [...pairs].filter(([r, s]) => r.key.orsId !== s.key.orsId)
     )
+    const numberMoves = numberMovesIn(renumbered)
     const renumberedPair = renumberedPairsIn(
       renumbered,
+      numberMoves,
       registrationServiceSites
     )
     for (const [r, s] of pairs) {
@@ -425,9 +450,13 @@ export const matchOverseasSites = (reExRows, registrationServiceRows) => {
       matches.registrationServiceOnly.push({
         site: s.site,
         nearMatches: nearMatchesOf(s.key, reExKeys),
-        numberNeededBy: [...renumbered.keys()]
-          .filter(({ key }) => key.orsId !== null && key.orsId === s.key.orsId)
-          .map(({ site }) => site)
+        numberNeededBy: numberMoves.has(s.key.orsId)
+          ? []
+          : [...renumbered.keys()]
+              .filter(
+                ({ key }) => key.orsId !== null && key.orsId === s.key.orsId
+              )
+              .map(({ site }) => site)
       })
     }
   }

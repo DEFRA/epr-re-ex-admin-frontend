@@ -20,7 +20,7 @@ import { matchOverseasSites } from './overseas-site-matching.js'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  * @import { OverseasSiteRow } from './overseas-sites-csv.js'
  * @import { RegistrationServiceSiteRow } from './controller.registration-service-download.js'
- * @import { NearMatch, NearMatchReason, OverseasSiteMatches, RegistrationServiceSite, NumberHolder, RenumberedPair, Renumbering } from './overseas-site-matching.js'
+ * @import { NearMatch, NearMatchReason, OverseasSiteMatches, RegistrationServiceSite, NumberReturn, Renumbering } from './overseas-site-matching.js'
  */
 
 const logger = createLogger()
@@ -128,20 +128,23 @@ const sameNumberGroup = (pairs) => ({
 const renumberingLabels = {
   clash: 'Clash',
   chain: 'Chain',
-  swap: 'Swap'
+  swap: 'Swap',
+  blocked: 'Blocked'
 }
 
-/** @param {NumberHolder} holder */
-const holderText = ({ site, movesTo }) => {
-  const move = movesTo ? 'moves to ' + movesTo : 'keeps it'
-  return `${siteText(site)} (${move})`
+/** @param {NumberReturn} numberReturn */
+const numberReturnText = (numberReturn) => {
+  switch (numberReturn.renumbering) {
+    case 'free':
+      return '-'
+    case 'clash':
+      return `${renumberingLabels.clash}: ${siteText(numberReturn.holder)} (keeps it)`
+    case 'blocked':
+      return `${renumberingLabels.blocked}: ${siteText(numberReturn.keptBy)} keeps ${numberReturn.keptNumber}`
+    default:
+      return `${renumberingLabels[numberReturn.renumbering]}: ${siteText(numberReturn.holder)} (moves to ${numberReturn.holderMovesTo})`
+  }
 }
-
-/** @param {RenumberedPair} pair */
-const renumberingText = ({ renumbering, reExNumberHolders }) =>
-  renumbering === 'free'
-    ? '-'
-    : `${renumberingLabels[renumbering]}: ${reExNumberHolders.map(holderText).join('; ')}`
 
 /** @param {OverseasSiteRow[]} reExSites */
 const numberNeededByText = (reExSites) =>
@@ -166,7 +169,7 @@ const differentNumberGroup = (pairs) => ({
     ...cells([pair.reEx.orsId, pair.registrationService.orsId]),
     ...siteCells(pair.reEx),
     { text: applicationsText(pair.registrationService) },
-    { text: renumberingText(pair) }
+    { text: numberReturnText(pair) }
   ])
 })
 
