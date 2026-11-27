@@ -30,6 +30,7 @@
 
         {% if groups %}
           <p class="govuk-body">Sites are matched within each registration on destination country, reprocessor name and address line 1. Re-ex's sites are read for {{ year }}, and the registration service's from every application it holds. Nothing is paired on the ORS ID alone. A site marked "Check" may be a near miss, and a person must judge it.</p>
+          <p class="govuk-body">The registration service holds each ORS ID once in a registration. A site that takes re-ex's ORS ID back is marked "Clash" where a site that is not renumbered keeps that ORS ID, and a person must decide what that site gets. It is marked "Chain" where the site holding it moves first, and "Swap" where the sites pass their ORS IDs round, so one needs a spare ORS ID while they move.</p>
 
           <h2 class="govuk-heading-l">Same site, same ORS ID ({{ groups.sameNumber.rows.length }})</h2>
           {{ groupTable(groups.sameNumber) }}
