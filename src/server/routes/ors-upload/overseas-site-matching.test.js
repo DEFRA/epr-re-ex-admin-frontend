@@ -3,6 +3,7 @@ import { matchOverseasSites } from './overseas-site-matching.js'
 /**
  * @import { OverseasSiteRow } from './overseas-sites-csv.js'
  * @import { RegistrationServiceSiteRow } from './controller.registration-service-download.js'
+ * @import { OverseasSiteMatches } from './overseas-site-matching.js'
  */
 
 /**
@@ -57,6 +58,26 @@ const indusRecycling = {
   addressLine1: '4 Port Lane',
   cityOrTown: 'Mumbai'
 }
+
+const gangesMetals = {
+  overseasReprocessorName: 'Ganges Metals',
+  addressLine1: '3 River Street'
+}
+
+const volgaFibres = {
+  overseasReprocessorName: 'Volga Fibres',
+  addressLine1: '5 Quay Road'
+}
+
+/**
+ * How each renumbered pair takes re-ex's number back, without the pair.
+ *
+ * @param {OverseasSiteMatches} matches
+ */
+const numberReturns = (matches) =>
+  matches.differentNumber.map(
+    ({ reEx, registrationService, ...numberReturn }) => numberReturn
+  )
 
 describe('matchOverseasSites', () => {
   test('Should pair sites whose details and number are the same', () => {
@@ -148,14 +169,14 @@ describe('matchOverseasSites', () => {
       {
         reEx: expect.objectContaining({ orsId: '001' }),
         registrationService: expect.objectContaining({ orsId: '004' }),
-        reExNumberHolder: null
+        renumbering: 'free'
       }
     ])
     expect(matches.reExOnly).toEqual([])
     expect(matches.registrationServiceOnly).toEqual([])
   })
 
-  test('Should name the registration service site that already holds the number of a renumbered site', () => {
+  test('Should flag a clash when a registration service only site keeps the number a renumbered site needs back, such as one added after the numbering bug', () => {
     const matches = matchOverseasSites(
       [reExSite({ orsId: '001' })],
       [
@@ -168,11 +189,215 @@ describe('matchOverseasSites', () => {
       {
         reEx: expect.objectContaining({ orsId: '001' }),
         registrationService: expect.objectContaining({ orsId: '004' }),
-        reExNumberHolder: expect.objectContaining({
+        renumbering: 'clash',
+        holder: expect.objectContaining({
           orsId: '001',
           overseasReprocessorName: 'Indus Recycling'
         })
       }
+    ])
+    expect(matches.registrationServiceOnly).toEqual([
+      {
+        site: expect.objectContaining({ orsId: '001' }),
+        nearMatches: expect.any(Array),
+        numberNeededBy: [
+          expect.objectContaining({
+            orsId: '001',
+            overseasReprocessorName: 'Bengal Steelworks'
+          })
+        ]
+      }
+    ])
+  })
+
+  test('Should mark a chain when the site holding the number is itself renumbered to a free number', () => {
+    const matches = matchOverseasSites(
+      [
+        reExSite({ orsId: '001' }),
+        reExSite({ orsId: '002', ...indusRecycling })
+      ],
+      [
+        registrationServiceSite({ orsId: '003' }),
+        registrationServiceSite({ orsId: '001', ...indusRecycling })
+      ]
+    )
+
+    expect(numberReturns(matches)).toEqual([
+      {
+        renumbering: 'chain',
+        holder: expect.objectContaining({ orsId: '001' }),
+        holderMovesTo: '002'
+      },
+      { renumbering: 'free' }
+    ])
+    expect(matches.registrationServiceOnly).toEqual([])
+  })
+
+  test('Should mark a swap when two sites trade numbers', () => {
+    const matches = matchOverseasSites(
+      [
+        reExSite({ orsId: '001' }),
+        reExSite({ orsId: '002', ...indusRecycling })
+      ],
+      [
+        registrationServiceSite({ orsId: '002' }),
+        registrationServiceSite({ orsId: '001', ...indusRecycling })
+      ]
+    )
+
+    expect(numberReturns(matches)).toEqual([
+      {
+        renumbering: 'swap',
+        holder: expect.objectContaining({ orsId: '001' }),
+        holderMovesTo: '002'
+      },
+      {
+        renumbering: 'swap',
+        holder: expect.objectContaining({ orsId: '002' }),
+        holderMovesTo: '001'
+      }
+    ])
+  })
+
+  test('Should mark a swap when three sites pass their numbers round', () => {
+    const matches = matchOverseasSites(
+      [
+        reExSite({ orsId: '001' }),
+        reExSite({ orsId: '002', ...indusRecycling }),
+        reExSite({ orsId: '003', ...gangesMetals })
+      ],
+      [
+        registrationServiceSite({ orsId: '002' }),
+        registrationServiceSite({ orsId: '003', ...indusRecycling }),
+        registrationServiceSite({ orsId: '001', ...gangesMetals })
+      ]
+    )
+
+    expect(
+      matches.differentNumber.map(({ renumbering }) => renumbering)
+    ).toEqual(['swap', 'swap', 'swap'])
+  })
+
+  test('Should mark a chain that runs into a swap between two other sites as a chain, which only re-ex giving two sites one number can make', () => {
+    const matches = matchOverseasSites(
+      [
+        reExSite({ orsId: '001' }),
+        reExSite({ orsId: '002', ...indusRecycling }),
+        reExSite({ orsId: '001', ...gangesMetals })
+      ],
+      [
+        registrationServiceSite({ orsId: '009' }),
+        registrationServiceSite({ orsId: '001', ...indusRecycling }),
+        registrationServiceSite({ orsId: '002', ...gangesMetals })
+      ]
+    )
+
+    expect(
+      matches.differentNumber.map(({ reEx, renumbering }) => [
+        reEx.overseasReprocessorName,
+        renumbering
+      ])
+    ).toEqual([
+      ['Bengal Steelworks', 'chain'],
+      ['Ganges Metals', 'swap'],
+      ['Indus Recycling', 'swap']
+    ])
+  })
+
+  test('Should mark a chain that ends at a site keeping its number as blocked by that site, and the end of it as the clash', () => {
+    const matches = matchOverseasSites(
+      [
+        reExSite({ orsId: '001' }),
+        reExSite({ orsId: '002', ...indusRecycling })
+      ],
+      [
+        registrationServiceSite({ orsId: '005' }),
+        registrationServiceSite({ orsId: '001', ...indusRecycling }),
+        registrationServiceSite({ orsId: '002', ...volgaFibres })
+      ]
+    )
+
+    expect(numberReturns(matches)).toEqual([
+      {
+        renumbering: 'blocked',
+        keptBy: expect.objectContaining(volgaFibres),
+        keptNumber: '002'
+      },
+      {
+        renumbering: 'clash',
+        holder: expect.objectContaining(volgaFibres)
+      }
+    ])
+  })
+
+  test('Should treat the copies of a site edited between years as one site, so the copy left unpaired gives up the number with the copy that moves', () => {
+    const matches = matchOverseasSites(
+      [
+        reExSite({ orsId: '001' }),
+        reExSite({ orsId: '002', ...indusRecycling })
+      ],
+      [
+        registrationServiceSite({ orsId: '003' }),
+        registrationServiceSite({
+          orsId: '001',
+          year: 2027,
+          ...indusRecycling
+        }),
+        registrationServiceSite({
+          orsId: '001',
+          year: 2028,
+          ...indusRecycling,
+          addressLine1: '4a Port Lane'
+        })
+      ]
+    )
+
+    expect(numberReturns(matches)).toEqual([
+      {
+        renumbering: 'chain',
+        holder: expect.objectContaining({ addressLine1: '4 Port Lane' }),
+        holderMovesTo: '002'
+      },
+      { renumbering: 'free' }
+    ])
+    expect(matches.registrationServiceOnly).toEqual([
+      expect.objectContaining({
+        site: expect.objectContaining({ addressLine1: '4a Port Lane' }),
+        numberNeededBy: []
+      })
+    ])
+  })
+
+  test('Should flag a clash when the site holding the number pairs with a re-ex site that has none, since it has no number to move to', () => {
+    const matches = matchOverseasSites(
+      [
+        reExSite({ orsId: '001' }),
+        reExSite({ orsId: null, ...indusRecycling })
+      ],
+      [
+        registrationServiceSite({ orsId: '004' }),
+        registrationServiceSite({ orsId: '001', ...indusRecycling })
+      ]
+    )
+
+    expect(numberReturns(matches)[0]).toEqual({
+      renumbering: 'clash',
+      holder: expect.objectContaining({ orsId: '001' })
+    })
+  })
+
+  test('Should find nothing holding the number of a re-ex site that has none, even a registration service site with no number', () => {
+    const matches = matchOverseasSites(
+      [reExSite({ orsId: null })],
+      [
+        registrationServiceSite({ orsId: '004' }),
+        registrationServiceSite({ orsId: null, ...indusRecycling })
+      ]
+    )
+
+    expect(numberReturns(matches)).toEqual([{ renumbering: 'free' }])
+    expect(matches.registrationServiceOnly).toEqual([
+      expect.objectContaining({ numberNeededBy: [] })
     ])
   })
 
@@ -197,7 +422,8 @@ describe('matchOverseasSites', () => {
             overseasReprocessorName: 'Bengal Steelworks',
             addressLine1: '12 Mill Road'
           }
-        ]
+        ],
+        numberNeededBy: []
       }
     ])
   })
@@ -274,7 +500,8 @@ describe('matchOverseasSites', () => {
             overseasReprocessorName: 'Bengal Steelworks',
             addressLine1: '12 Mill Road'
           }
-        ]
+        ],
+        numberNeededBy: []
       }
     ])
   })
@@ -309,7 +536,8 @@ describe('matchOverseasSites', () => {
             overseasReprocessorName: 'Bengal Steelworks',
             addressLine1: '12 Mill Road'
           }
-        ]
+        ],
+        numberNeededBy: []
       }
     ])
   })
@@ -345,7 +573,8 @@ describe('matchOverseasSites', () => {
             overseasReprocessorName: 'Bengal Steelworks',
             addressLine1: '12 Mill Road'
           }
-        ]
+        ],
+        numberNeededBy: []
       }
     ])
   })
@@ -419,7 +648,11 @@ describe('matchOverseasSites', () => {
       { site: expect.objectContaining({ orsId: '002' }), nearMatches: [] }
     ])
     expect(matches.registrationServiceOnly).toEqual([
-      { site: expect.objectContaining({ orsId: '101' }), nearMatches: [] }
+      {
+        site: expect.objectContaining({ orsId: '101' }),
+        nearMatches: [],
+        numberNeededBy: []
+      }
     ])
   })
 

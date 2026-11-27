@@ -41,11 +41,35 @@
  */
 
 /**
- * A pair whose numbers differ, with the registration service site that already
- * holds re-ex's number in that registration, if any. The registration service
- * cannot take re-ex's number back until that site gives it up.
- * @typedef {SitePair & { reExNumberHolder: RegistrationServiceSite | null }} RenumberedPair
+ * How a renumbered site can take re-ex's number back, given the registration
+ * service site on its registration that already holds that number. The
+ * registration service holds each number once per registration, so:
+ * - free: nothing holds it
+ * - clash: the site holding it is not itself renumbered, so it keeps it and a
+ *   person must decide what that site gets
+ * - chain: the site holding it moves to another number first
+ * - swap: the sites pass their numbers round, so one needs a spare number
+ *   while they move
+ * - blocked: the sites holding it move in a chain that ends at a site keeping
+ *   its number
+ * @typedef {{ renumbering: 'free' }
+ *   | { renumbering: 'clash', holder: RegistrationServiceSite }
+ *   | {
+ *       renumbering: 'chain' | 'swap',
+ *       holder: RegistrationServiceSite,
+ *       holderMovesTo: string
+ *     }
+ *   | {
+ *       renumbering: 'blocked',
+ *       keptBy: RegistrationServiceSite,
+ *       keptNumber: string
+ *     }
+ * } NumberReturn
  */
+
+/** @typedef {NumberReturn['renumbering']} Renumbering */
+
+/** @typedef {SitePair & NumberReturn} RenumberedPair */
 
 /**
  * @template S
@@ -53,11 +77,19 @@
  */
 
 /**
+ * A registration service site left unpaired, with the re-ex sites whose number
+ * it keeps. Each of those is a clash.
+ * @typedef {UnpairedSite<RegistrationServiceSite> & {
+ *   numberNeededBy: OverseasSiteRow[]
+ * }} UnpairedRegistrationServiceSite
+ */
+
+/**
  * @typedef {{
  *   sameNumber: SitePair[],
  *   differentNumber: RenumberedPair[],
  *   reExOnly: UnpairedSite<OverseasSiteRow>[],
- *   registrationServiceOnly: UnpairedSite<RegistrationServiceSite>[]
+ *   registrationServiceOnly: UnpairedRegistrationServiceSite[]
  * }} OverseasSiteMatches
  */
 
@@ -209,6 +241,146 @@ const byRegistration = (sites) => {
 }
 
 /**
+ * The re-ex number each registration service number moves to. A site paired
+ * with a re-ex site that has no number has nothing to move to, so it keeps its
+ * own.
+ *
+ * @param {Map<KeyedSite<OverseasSiteRow>, KeyedSite<RegistrationServiceSite>>} renumbered - re-ex site to its partner
+ * @returns {Map<string | null, string>}
+ */
+const numberMovesIn = (renumbered) =>
+  new Map(
+    [...renumbered].flatMap(([reExSite, partner]) =>
+      reExSite.key.orsId === null
+        ? []
+        : [[partner.key.orsId, reExSite.key.orsId]]
+    )
+  )
+
+/**
+ * @callback RenumberedPairBuilder
+ * @param {KeyedSite<OverseasSiteRow>} reExSite
+ * @param {KeyedSite<RegistrationServiceSite>} partner
+ * @returns {RenumberedPair}
+ */
+
+/**
+ * Builds each renumbered pair in a registration, with how it takes re-ex's
+ * number back, found by following the sites that hold each number in turn.
+ * The registration service holds each number once per registration, so the
+ * sites carrying one number are copies of one site edited between
+ * applications, and where one copy moves they all do.
+ *
+ * @param {Map<KeyedSite<OverseasSiteRow>, KeyedSite<RegistrationServiceSite>>} renumbered - re-ex site to its partner
+ * @param {Map<string | null, string>} numberMoves - from numberMovesIn
+ * @param {KeyedSite<RegistrationServiceSite>[]} registrationServiceSites - every site the registration service holds in the registration
+ * @returns {RenumberedPairBuilder}
+ */
+const renumberedPairsIn = (
+  renumbered,
+  numberMoves,
+  registrationServiceSites
+) => {
+  /** @type {Map<string | null, RegistrationServiceSite>} */
+  const holders = new Map(
+    [...renumbered.values()].map(({ key, site }) => [key.orsId, site])
+  )
+  for (const { key, site } of registrationServiceSites) {
+    if (key.orsId !== null && !holders.has(key.orsId)) {
+      holders.set(key.orsId, site)
+    }
+  }
+
+  /**
+   * Follows the sites holding each number from `number` until the numbers run
+   * free, come back to `start`, or reach a site that keeps its number. A loop
+   * that misses `start` needs re-ex to give two sites one number, and ends the
+   * chain.
+   *
+   * @param {string | null} start
+   * @param {string} number
+   * @returns {'chain' | 'swap' | { keptBy: RegistrationServiceSite, keptNumber: string }}
+   */
+  const endOfChain = (start, number) => {
+    const seen = new Set()
+    let next = number
+    while (next !== start) {
+      const holder = holders.get(next)
+      const onward = numberMoves.get(next)
+      if (!holder || seen.has(next)) {
+        return 'chain'
+      }
+      if (onward === undefined) {
+        return { keptBy: holder, keptNumber: next }
+      }
+      seen.add(next)
+      next = onward
+    }
+    return 'swap'
+  }
+
+  /**
+   * @param {KeyedSite<OverseasSiteRow>} reExSite
+   * @param {KeyedSite<RegistrationServiceSite>} partner
+   * @returns {NumberReturn}
+   */
+  const numberReturnOf = (reExSite, partner) => {
+    const holder = holders.get(reExSite.key.orsId)
+    const holderMovesTo = numberMoves.get(reExSite.key.orsId)
+    if (!holder) {
+      return { renumbering: 'free' }
+    }
+    if (holderMovesTo === undefined) {
+      return { renumbering: 'clash', holder }
+    }
+    const end = endOfChain(partner.key.orsId, holderMovesTo)
+    return typeof end === 'string'
+      ? { renumbering: end, holder, holderMovesTo }
+      : { renumbering: 'blocked', ...end }
+  }
+
+  return (reExSite, partner) => ({
+    reEx: reExSite.site,
+    registrationService: partner.site,
+    ...numberReturnOf(reExSite, partner)
+  })
+}
+
+/**
+ * Pairs the sites of one registration on their details, first where the
+ * numbers agree and then where they differ. A registration service site with
+ * no number never pairs.
+ *
+ * @param {KeyedSite<OverseasSiteRow>[]} reExSites
+ * @param {KeyedSite<RegistrationServiceSite>[]} registrationServiceSites
+ */
+const pairSitesIn = (reExSites, registrationServiceSites) => {
+  /** @type {Map<KeyedSite<OverseasSiteRow>, KeyedSite<RegistrationServiceSite>>} */
+  const pairs = new Map()
+  const unpaired = new Set(
+    registrationServiceSites.filter(({ key }) => key.orsId !== null)
+  )
+  /** @param {boolean} keepsNumber */
+  const pairWhere = (keepsNumber) => {
+    for (const r of reExSites.filter((site) => !pairs.has(site))) {
+      const partner = [...unpaired].find(
+        ({ key }) =>
+          r.key.detailsKey !== null &&
+          key.detailsKey === r.key.detailsKey &&
+          (key.orsId === r.key.orsId) === keepsNumber
+      )
+      if (partner) {
+        pairs.set(r, partner)
+        unpaired.delete(partner)
+      }
+    }
+  }
+  pairWhere(true)
+  pairWhere(false)
+  return pairs
+}
+
+/**
  * Matches re-ex's overseas sites to the registration service's within each
  * registration, where the registration service's numbers are unique. Sites
  * pair only when their details are the same, keeping the number where they
@@ -241,42 +413,23 @@ export const matchOverseasSites = (reExRows, registrationServiceRows) => {
     const reExSites = reEx.get(registration) ?? []
     const registrationServiceSites = registrationService.get(registration) ?? []
 
-    /** @type {Map<typeof reExSites[number], typeof registrationServiceSites[number]>} */
-    const pairs = new Map()
+    const pairs = pairSitesIn(reExSites, registrationServiceSites)
     const unpairedReExSites = () => reExSites.filter((site) => !pairs.has(site))
-    const unpaired = new Set(
-      registrationServiceSites.filter(({ key }) => key.orsId !== null)
-    )
-    /** @param {boolean} keepsNumber */
-    const pairWhere = (keepsNumber) => {
-      for (const r of unpairedReExSites()) {
-        const partner = [...unpaired].find(
-          ({ key }) =>
-            r.key.detailsKey !== null &&
-            key.detailsKey === r.key.detailsKey &&
-            (key.orsId === r.key.orsId) === keepsNumber
-        )
-        if (partner) {
-          pairs.set(r, partner)
-          unpaired.delete(partner)
-        }
-      }
-    }
-    pairWhere(true)
-    pairWhere(false)
 
+    const renumbered = new Map(
+      [...pairs].filter(([r, s]) => r.key.orsId !== s.key.orsId)
+    )
+    const numberMoves = numberMovesIn(renumbered)
+    const renumberedPair = renumberedPairsIn(
+      renumbered,
+      numberMoves,
+      registrationServiceSites
+    )
     for (const [r, s] of pairs) {
-      if (r.key.orsId === s.key.orsId) {
-        matches.sameNumber.push({ reEx: r.site, registrationService: s.site })
+      if (renumbered.has(r)) {
+        matches.differentNumber.push(renumberedPair(r, s))
       } else {
-        const holder = registrationServiceSites.find(
-          ({ key }) => key.orsId === r.key.orsId
-        )
-        matches.differentNumber.push({
-          reEx: r.site,
-          registrationService: s.site,
-          reExNumberHolder: holder?.site ?? null
-        })
+        matches.sameNumber.push({ reEx: r.site, registrationService: s.site })
       }
     }
 
@@ -296,7 +449,14 @@ export const matchOverseasSites = (reExRows, registrationServiceRows) => {
     )) {
       matches.registrationServiceOnly.push({
         site: s.site,
-        nearMatches: nearMatchesOf(s.key, reExKeys)
+        nearMatches: nearMatchesOf(s.key, reExKeys),
+        numberNeededBy: numberMoves.has(s.key.orsId)
+          ? []
+          : [...renumbered.keys()]
+              .filter(
+                ({ key }) => key.orsId !== null && key.orsId === s.key.orsId
+              )
+              .map(({ site }) => site)
       })
     }
   }

@@ -20,7 +20,7 @@ import { matchOverseasSites } from './overseas-site-matching.js'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  * @import { OverseasSiteRow } from './overseas-sites-csv.js'
  * @import { RegistrationServiceSiteRow } from './controller.registration-service-download.js'
- * @import { NearMatch, NearMatchReason, OverseasSiteMatches, RegistrationServiceSite } from './overseas-site-matching.js'
+ * @import { NearMatch, NearMatchReason, OverseasSiteMatches, RegistrationServiceSite, NumberReturn, Renumbering } from './overseas-site-matching.js'
  */
 
 const logger = createLogger()
@@ -58,13 +58,17 @@ const nearMatchReasons = {
 /** @param {string | null | undefined} orsId */
 const orsIdText = (orsId) => orsId ?? 'None'
 
+/** @param {Pick<OverseasSiteRow, 'overseasReprocessorName' | 'addressLine1'>} site */
+const siteText = (site) =>
+  `${toDisplayValue(site.overseasReprocessorName)}, ${toDisplayValue(site.addressLine1)}`
+
 /** @param {NearMatch[]} nearMatches */
 const nearMatchesText = (nearMatches) =>
   nearMatches.length
     ? nearMatches
         .map(
-          ({ reason, orsId, overseasReprocessorName, addressLine1 }) =>
-            `Check: ORS ID ${orsIdText(orsId)}, ${toDisplayValue(overseasReprocessorName)}, ${toDisplayValue(addressLine1)} (${nearMatchReasons[reason]})`
+          (nearMatch) =>
+            `Check: ORS ID ${orsIdText(nearMatch.orsId)}, ${siteText(nearMatch)} (${nearMatchReasons[nearMatch.reason]})`
         )
         .join('; ')
     : '-'
@@ -120,6 +124,34 @@ const sameNumberGroup = (pairs) => ({
   ])
 })
 
+/** @type {Record<Exclude<Renumbering, 'free'>, string>} */
+const renumberingLabels = {
+  clash: 'Clash',
+  chain: 'Chain',
+  swap: 'Swap',
+  blocked: 'Blocked'
+}
+
+/** @param {NumberReturn} numberReturn */
+const numberReturnText = (numberReturn) => {
+  switch (numberReturn.renumbering) {
+    case 'free':
+      return '-'
+    case 'clash':
+      return `${renumberingLabels.clash}: ${siteText(numberReturn.holder)} (keeps it)`
+    case 'blocked':
+      return `${renumberingLabels.blocked}: ${siteText(numberReturn.keptBy)} keeps ${numberReturn.keptNumber}`
+    default:
+      return `${renumberingLabels[numberReturn.renumbering]}: ${siteText(numberReturn.holder)} (moves to ${numberReturn.holderMovesTo})`
+  }
+}
+
+/** @param {OverseasSiteRow[]} reExSites */
+const numberNeededByText = (reExSites) =>
+  reExSites.length
+    ? `${renumberingLabels.clash}: ${reExSites.map(siteText).join('; ')}`
+    : '-'
+
 /** @param {OverseasSiteMatches['differentNumber']} pairs */
 const differentNumberGroup = (pairs) => ({
   id: 'different-number',
@@ -132,16 +164,12 @@ const differentNumberGroup = (pairs) => ({
     applicationsHead,
     { text: 'Re-ex ORS ID already held by' }
   ],
-  rows: pairs.map(({ reEx, registrationService, reExNumberHolder }) => [
-    ...registrationCells(reEx),
-    ...cells([reEx.orsId, registrationService.orsId]),
-    ...siteCells(reEx),
-    { text: applicationsText(registrationService) },
-    {
-      text: reExNumberHolder
-        ? `${toDisplayValue(reExNumberHolder.overseasReprocessorName)}, ${toDisplayValue(reExNumberHolder.addressLine1)}`
-        : '-'
-    }
+  rows: pairs.map((pair) => [
+    ...registrationCells(pair.reEx),
+    ...cells([pair.reEx.orsId, pair.registrationService.orsId]),
+    ...siteCells(pair.reEx),
+    { text: applicationsText(pair.registrationService) },
+    { text: numberReturnText(pair) }
   ])
 })
 
@@ -172,14 +200,16 @@ const registrationServiceOnlyGroup = (sites) => ({
     { text: 'ORS ID' },
     ...siteHead,
     applicationsHead,
-    { text: 'Compare with re-ex' }
+    { text: 'Compare with re-ex' },
+    { text: 'ORS ID needed back by' }
   ],
-  rows: sites.map(({ site, nearMatches }) => [
+  rows: sites.map(({ site, nearMatches, numberNeededBy }) => [
     ...registrationCells(site),
     { text: site.orsId ?? 'Check: None' },
     ...siteCells(site),
     { text: applicationsText(site) },
-    { text: nearMatchesText(nearMatches) }
+    { text: nearMatchesText(nearMatches) },
+    { text: numberNeededByText(numberNeededBy) }
   ])
 })
 

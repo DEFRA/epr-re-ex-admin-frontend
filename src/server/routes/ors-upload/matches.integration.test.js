@@ -209,7 +209,7 @@ describe('overseas sites matches integration', () => {
         'India',
         '3 River Street',
         '2027 Approved',
-        'Volga Fibres, 5 Quay Road'
+        'Clash: Volga Fibres, 5 Quay Road (keeps it)'
       ],
       [
         '500049',
@@ -261,7 +261,8 @@ describe('overseas sites matches integration', () => {
         'India',
         '5 Quay Road',
         '2027 Approved',
-        'Check: ORS ID 002, Ganges Metals, 3 River Street (same ORS ID)'
+        'Check: ORS ID 002, Ganges Metals, 3 River Street (same ORS ID)',
+        'Clash: Ganges Metals, 3 River Street'
       ],
       [
         '500049',
@@ -271,7 +272,8 @@ describe('overseas sites matches integration', () => {
         'India',
         '9 Dock Road',
         '2027 Started (deselected)',
-        'Check: ORS ID 003, Indus Recycling, 4 Port Lane (same ORS ID)'
+        'Check: ORS ID 003, Indus Recycling, 4 Port Lane (same ORS ID)',
+        '-'
       ],
       [
         '500049',
@@ -281,8 +283,42 @@ describe('overseas sites matches integration', () => {
         'India',
         '1 Calle Uno',
         '2027 Submitted',
-        'Check: ORS ID 004, Andes Paper, 1 Calle Uno (same details)'
+        'Check: ORS ID 004, Andes Paper, 1 Calle Uno (same details)',
+        '-'
       ]
+    ])
+  })
+
+  test('Should say which renumbered sites must move in order, as a chain or a swap, and which are blocked', async () => {
+    stubBackend({
+      reEx: [
+        reExSite('001', 'Bengal Steelworks', '12 Mill Road'),
+        reExSite('002', 'Ganges Metals', '3 River Street'),
+        reExSite('003', 'Indus Recycling', '4 Port Lane'),
+        reExSite('004', 'Andes Paper', '1 Calle Uno'),
+        reExSite('007', 'Rhine Metals', '8 Canal Street'),
+        reExSite('009', 'Volga Fibres', '5 Quay Road')
+      ],
+      registrationService: [
+        registrationServiceSite('005', 'Bengal Steelworks', '12 Mill Road'),
+        registrationServiceSite('001', 'Ganges Metals', '3 River Street'),
+        registrationServiceSite('004', 'Indus Recycling', '4 Port Lane'),
+        registrationServiceSite('003', 'Andes Paper', '1 Calle Uno'),
+        registrationServiceSite('010', 'Rhine Metals', '8 Canal Street'),
+        registrationServiceSite('007', 'Volga Fibres', '5 Quay Road'),
+        registrationServiceSite('009', 'Danube Glass', '2 Dock Lane')
+      ]
+    })
+
+    const { $ } = await getPage()
+
+    expect(tableRows($, 'different-number').map((row) => row.at(-1))).toEqual([
+      'Chain: Ganges Metals, 3 River Street (moves to 002)',
+      '-',
+      'Swap: Andes Paper, 1 Calle Uno (moves to 004)',
+      'Swap: Indus Recycling, 4 Port Lane (moves to 003)',
+      'Blocked: Danube Glass, 2 Dock Lane keeps 009',
+      'Clash: Danube Glass, 2 Dock Lane (keeps it)'
     ])
   })
 
